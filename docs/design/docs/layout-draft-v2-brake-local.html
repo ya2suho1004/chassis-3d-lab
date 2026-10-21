@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제동력 구역 국소 미터 도면 v2 (부분 실측 · 확인 필요 항목 있음)</title>
+<style>
+  :root{--ink:#1d1d1f;--mut:#6b6b70;--line:#c9c9ce;--bg:#f7f7f8;--warn:#b42318;--warnbg:#fde8e6}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+  header{padding:16px;background:#fff;border-bottom:1px solid var(--line)}
+  h1{font-size:20px;margin:0 0 6px} h2{font-size:17px;margin:0 0 10px}
+  .banner{display:inline-block;background:var(--warnbg);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:6px 10px;font-weight:700;margin:6px 0}
+  .meta,.small{color:var(--mut);font-size:13px}
+  main{padding:16px;max-width:1200px;margin:0 auto}
+  section{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:16px}
+  svg{width:100%;max-height:900px;height:auto;border:1px solid var(--line);background:#fff;border-radius:6px}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+  th{background:#f0f0f2}
+  .k{display:inline-block;padding:1px 6px;border-radius:4px;font-size:12px;font-weight:700}
+  .k.m{background:#e3f2e3;color:#1b5e20}.k.s{background:#e8f0fe;color:#1a3f9c}.k.q{background:#fde8e6;color:#b42318}.k.a{background:#f0f0f2;color:#555}
+  @media print{header{display:none}body{background:#fff}section{border:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>제동력 구역 국소 미터 도면 v2</h1>
+  <div class="banner">부분 실측 기록 · 제동력 구역만 축척 있음 · 나머지 장비·전체 외곽은 이 도면에 없음(v1-1 참조) · layoutConfirmed = false</div>
+  <div class="meta">실측: 2026-10-21 교사 MOON, 줄자 (collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt). 검산·확인 필요: 같은 폴더 .notes.txt. 작성 2026-10-21 Claude Code. 원점 = 롤러 두 축 가운데, x = 동쪽 +, z = 남쪽 +(그림에서 아래), 1 m = 1 단위.</div>
+</header>
+<main>
+<section>
+  <h2>1. 도면 (위 = 북쪽)</h2>
+  <p class="small">실선 = 실측값 <span class="k m">실측</span> · 가는 점선 = 제원값/대칭 가정 <span class="k s">제원·가정</span> · 빨간 물음표 = 교사 확인 필요 <span class="k q">확인</span> · 회색 = 위치 미확정(크기만) <span class="k a">미확정</span></p>
+  <svg id="plan" viewBox="-5.6 -9.2 9.2 22.2" xmlns="http://www.w3.org/2000/svg" aria-label="제동력 구역 국소 도면"></svg>
+</section>
+<section>
+  <h2>2. 값 목록</h2>
+  <table>
+    <thead><tr><th style="width:8%">항목</th><th style="width:34%">내용</th><th style="width:12%">값(m)</th><th style="width:10%">구분</th><th>비고</th></tr></thead>
+    <tbody>
+      <tr><td>P1-1</td><td>기준점(롤러 두 축 가운데) 바닥 테이프</td><td>(0, 0)</td><td><span class="k m">실측</span></td><td>원점</td></tr>
+      <tr><td>P1-2</td><td>기준점 → 북쪽 벽 수직 거리</td><td>8.20</td><td><span class="k m">실측</span></td><td>z = −8.20. 벽의 동서 범위 미확정</td></tr>
+      <tr><td>P1-3</td><td>기준점 → 조작부 쪽 벽(동쪽) 수직 거리</td><td>2.00</td><td><span class="k m">실측</span></td><td>2026-10-21 사용자 확인: 조작부 쪽 벽까지. 남는 문제 C-1b: 장비 폭 3.00이 원점 대칭이면 동쪽 여유 0.50뿐이라 조작부(깊이 0.50, 거리 1.30)와 겹침 → 장비가 서쪽으로 치우쳤을 가능성</td></tr>
+      <tr><td>P1-4</td><td>롤러 장비 외곽(덮개 포함) 동서 × 남북</td><td>3.00 × 1.20</td><td><span class="k m">실측</span></td><td>중심 = 원점으로 가정(대칭 여부 C-1과 함께 확인)</td></tr>
+      <tr><td>P1-5</td><td>앞바퀴 축 위치(모닝 JA 축거)</td><td>2.40</td><td><span class="k s">제원</span></td><td>진입 방향: 북·남 모두 가능(사용자 확인 2026-10-21). 두 방향 모두 점선. 시뮬레이션 기본 방향은 0A 확인지에서 선택</td></tr>
+      <tr><td>P1-6</td><td>기준점 → 조작부 앞면 중앙 직선거리</td><td>1.30</td><td><span class="k m">실측</span></td><td>방향 미확인 → 반지름 1.30 원으로 표시. 동서·남북 거리 필요</td></tr>
+      <tr><td>P1-7</td><td>조작부 본체 가로 / 세로 / 높이, 화면 높이</td><td>0.70 / 0.50 / 1.50, 1.30</td><td><span class="k m">실측</span></td><td>위치는 P1-6 확정 후</td></tr>
+      <tr><td>P1-8</td><td>기준점 → 기록 책상 직선거리</td><td>1.10</td><td><span class="k m">실측</span></td><td>방향 미확인 → 반지름 1.10 원</td></tr>
+      <tr><td>P1-9</td><td>차량 자리 → 동쪽 벽 통로 폭</td><td>1.80</td><td><span class="k q">확인</span></td><td>C-1b. 벽이 x=+2.00이면 차 옆(x≈0.8)에서 벽까지는 약 1.20. 1.80은 다른 지점(장비 서쪽? 책상 쪽?)에서 잰 값일 수 있음</td></tr>
+      <tr><td>P1-9b</td><td>기준점 → 토 측정 구역 북쪽 거리</td><td>3.50</td><td><span class="k m">실측</span></td><td>구역의 어느 점까지인지 미확인. x 미측정</td></tr>
+      <tr><td>P1-10</td><td>ABS 측정 차량 구역(돌출부) 남북 × 동서</td><td>10.00 × 4.10</td><td><span class="k q">확인</span></td><td>C-2: 10.00이 맞는지 확인. 위치(남쪽 경계)·연결부 폭 미확정 → 회색 가정 위치</td></tr>
+      <tr><td>P2-1</td><td>기둥 총수</td><td>4</td><td><span class="k m">실측</span></td><td>이 도면에는 그리지 않음(위치 미측정)</td></tr>
+      <tr><td>P2-3</td><td>기둥 간격(1→2→3→4 동일)</td><td>4.00</td><td><span class="k m">실측</span></td><td>중심 간/면 간 미확인(C-4)</td></tr>
+      <tr><td>P2-5</td><td>리프트 바닥판 가로(3대 동일)</td><td>2.20</td><td><span class="k m">실측</span></td><td>세로·위치·간격 미측정</td></tr>
+    </tbody>
+  </table>
+  <p class="small">이 도면은 부분 실측 기록이다. 전체 외곽·기둥·리프트·다른 장비의 좌표는 없으며, 스키마 형식 검사를 통과한 <code>layout.surveyed.partial.json</code>도 ‘실측 완료’나 ‘승인’을 뜻하지 않는다.</p>
+</section>
+</main>
+<script>
+const svg=document.getElementById('plan'); const NS='http://www.w3.org/2000/svg';
+function el(n,a,txt){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e;}
+const F=0.3; // 글자 크기(m 단위)
+// 1 m 모눈
+for(let x=-5;x<=3;x++) svg.appendChild(el('line',{x1:x,y1:-9,x2:x,y2:13,stroke:'#eee','stroke-width':0.02}));
+for(let z=-9;z<=13;z++) svg.appendChild(el('line',{x1:-5.5,y1:z,x2:3.5,y2:z,stroke:'#eee','stroke-width':0.02}));
+// 축척 막대
+svg.appendChild(el('line',{x1:-5.2,y1:12.4,x2:-4.2,y2:12.4,stroke:'#333','stroke-width':0.08}));
+svg.appendChild(el('text',{x:-5.2,y:12.2,'font-size':F,fill:'#333'},'1 m'));
+svg.appendChild(el('text',{x:-5.2,y:-8.75,'font-size':F,'font-weight':700,fill:'#333'},'▲ 북쪽'));
+// 북쪽 벽 (z=-8.20) — 실측, 동서 범위 미확정
+svg.appendChild(el('line',{x1:-5.5,y1:-8.2,x2:2.0,y2:-8.2,stroke:'#333','stroke-width':0.18}));
+svg.appendChild(el('text',{x:-3.4,y:-8.4,'font-size':F,fill:'#333'},'북쪽 벽  z = −8.20 (실측, 동서 범위 미확정)'));
+// 동쪽 벽 (x=2.00) — 확인 필요(C-1)
+svg.appendChild(el('line',{x1:2.0,y1:-8.2,x2:2.0,y2:13,stroke:'#333','stroke-width':0.18}));
+svg.appendChild(el('text',{x:2.15,y:-6.5,'font-size':F,fill:'#333',transform:'rotate(90 2.15 -6.5)'},'조작부 쪽 벽(동쪽) x = +2.00 (P1-3 실측, 2026-10-21 사용자 확인)'));
+// 롤러 장비 3.00×1.20 (중심 원점 가정)
+svg.appendChild(el('rect',{x:-1.5,y:-0.6,width:3.0,height:1.2,fill:'#fde8e6',stroke:'#b42318','stroke-width':0.08}));
+svg.appendChild(el('text',{x:0,y:0.1,'text-anchor':'middle','font-size':F,'font-weight':700,fill:'#222'},'롤러 장비 3.00 × 1.20 (실측)'));
+svg.appendChild(el('text',{x:0,y:0.45,'text-anchor':'middle','font-size':F*0.8,fill:'#b42318'},'? 중심=원점 가정 — 벽까지 2.00이면 동쪽 여유 0.50. 장비가 서쪽으로 치우쳤는지 확인(C-1b)'));
+// 원점
+svg.appendChild(el('circle',{cx:0,cy:0,r:0.12,fill:'#111'}));
+svg.appendChild(el('text',{x:0.18,y:-0.15,'font-size':F*0.9,fill:'#111'},'P1-1 (0,0)'));
+// 차량 윤곽 (모닝 제원 추정 3.6×1.6, 후륜축=원점). 북 진입(앞바퀴 북쪽) 점선, 남 진입 연한 점선
+svg.appendChild(el('rect',{x:-0.8,y:-3.0,width:1.6,height:3.6,fill:'none',stroke:'#1a3f9c','stroke-width':0.06,'stroke-dasharray':'0.25 0.15'}));
+svg.appendChild(el('line',{x1:-0.9,y1:-2.4,x2:0.9,y2:-2.4,stroke:'#1a3f9c','stroke-width':0.06}));
+svg.appendChild(el('text',{x:-0.75,y:-2.55,'font-size':F*0.8,fill:'#1a3f9c'},'북쪽 진입 시 앞바퀴 축 z=−2.40 (제원)'));
+svg.appendChild(el('rect',{x:-0.8,y:-0.6,width:1.6,height:3.6,fill:'none',stroke:'#1a3f9c','stroke-width':0.06,'stroke-dasharray':'0.25 0.15'}));
+svg.appendChild(el('line',{x1:-0.9,y1:2.4,x2:0.9,y2:2.4,stroke:'#1a3f9c','stroke-width':0.06}));
+svg.appendChild(el('text',{x:-0.75,y:2.75,'font-size':F*0.8,fill:'#1a3f9c'},'남쪽 진입 시 앞바퀴 축 z=+2.40 (제원)'));
+svg.appendChild(el('text',{x:-5.3,y:-1.6,'font-size':F,fill:'#1a3f9c','font-weight':700},'진입 방향: 북·남 모두 가능 (사용자 확인 2026-10-21). 시뮬레이션 기본값은 0A에서 선택'));
+// 통로 1.80 (P1-9) — C-1
+svg.appendChild(el('line',{x1:0.8,y1:-1.2,x2:2.6,y2:-1.2,stroke:'#b42318','stroke-width':0.05}));
+svg.appendChild(el('text',{x:0.85,y:-1.3,'font-size':F*0.8,fill:'#b42318'},'P1-9 통로 1.80? 벽이 x=+2.00이면 차 옆은 약 1.2 → 어디서 잰 값인지 확인(C-1b)'));
+// 조작부 반지름 1.30, 책상 반지름 1.10 (방향 미확인)
+svg.appendChild(el('circle',{cx:0,cy:0,r:1.3,fill:'none',stroke:'#1b5e20','stroke-width':0.05,'stroke-dasharray':'0.2 0.15'}));
+svg.appendChild(el('text',{x:-2.6,y:1.45,'font-size':F*0.8,fill:'#1b5e20'},'조작부 거리 1.30 (실측) — 방향 미확인'));
+svg.appendChild(el('circle',{cx:0,cy:0,r:1.1,fill:'none',stroke:'#6b4e00','stroke-width':0.05,'stroke-dasharray':'0.12 0.12'}));
+svg.appendChild(el('text',{x:-2.6,y:1.85,'font-size':F*0.8,fill:'#6b4e00'},'책상 거리 1.10 (실측) — 방향 미확인'));
+// 조작부 가정 상자(크기 실측 0.70×0.50, 위치 가정)
+svg.appendChild(el('rect',{x:1.1,y:-1.9,width:0.7,height:0.5,fill:'#fff8c4',stroke:'#8a6d00','stroke-width':0.05,'stroke-dasharray':'0.15 0.1'}));
+svg.appendChild(el('text',{x:1.1,y:-2.0,'font-size':F*0.7,fill:'#8a6d00'},'조작부 0.70×0.50 (크기 실측, 위치 가정)'));
+// 토 측정 구역 z=-3.50
+svg.appendChild(el('line',{x1:-5.5,y1:-3.5,x2:1.9,y2:-3.5,stroke:'#1a3f9c','stroke-width':0.05,'stroke-dasharray':'0.3 0.2'}));
+svg.appendChild(el('text',{x:-5.4,y:-3.65,'font-size':F*0.8,fill:'#1a3f9c'},'토 측정 구역: 원점에서 북쪽 3.50 (실측, 기준 점·x 미확인)'));
+// ABS 돌출부 (크기 실측 10.00×4.10, 위치 가정: 동쪽 벽에 붙고 차량 자리 남쪽)
+svg.appendChild(el('rect',{x:-2.1,y:2.0,width:4.1,height:10.0,fill:'#f0f0f2',stroke:'#777','stroke-width':0.06,'stroke-dasharray':'0.3 0.2'}));
+svg.appendChild(el('text',{x:-2.0,y:2.5,'font-size':F*0.85,fill:'#555','font-weight':700},'ABS 측정 차량 구역 (별도 차량)'));
+svg.appendChild(el('text',{x:-2.0,y:2.9,'font-size':F*0.75,fill:'#555'},'크기 10.00 × 4.10 (실측, C-2 숫자 확인)'));
+svg.appendChild(el('text',{x:-2.0,y:3.3,'font-size':F*0.75,fill:'#b42318'},'? 위치는 가정 — 남쪽 경계·연결부 폭 미확정'));
+</script>
+</body>
+</html>

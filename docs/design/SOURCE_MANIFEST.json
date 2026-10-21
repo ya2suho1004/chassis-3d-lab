@@ -1,0 +1,123 @@
+{
+  "checkedDate": "2026-10-16",
+  "sourceRoot": "/Users/moon/AI-Work/01_school/thesis",
+  "sourceGitHead": "dfd12f110aab2db603905fb1dde82a321808c4cd",
+  "sourceGitStatusAtStart": " M 07_radar/2026-10-15_잼선생_인수메모.md\n M 07_simulation/HANDOFF_3D실습장_프롬프트.md\n?? 07_simulation/CODEX_3D실습장_큰틀설계_프롬프트.md\n",
+  "sourceFilesUnchanged": true,
+  "sourcePdfsMatchReadCopies": true,
+  "sourceGitStatusUnchanged": true,
+  "sourceGitHeadUnchanged": true,
+  "sourceFiles": [
+    {
+      "path": "CLAUDE.md",
+      "bytes": 3099,
+      "sha256": "6c520c71c122261991297381392ecd853c7c4da27a26b1565d13459695a00a85"
+    },
+    {
+      "path": "07_simulation/HANDOFF_3D실습장_프롬프트.md",
+      "bytes": 9949,
+      "sha256": "3a858a1c87addd38fb344dcae9720f1c5e9abd8e1e5294a5d144e006dc35017a"
+    },
+    {
+      "path": "02_proposal/연구계획서_1쪽_v3_2026-09-16.md",
+      "bytes": 5301,
+      "sha256": "97f2dccecd3be48188c4c25a32617e18c7dce2c313039f6f0e393521da8c796a"
+    },
+    {
+      "path": "01_literature/course_AI융합교육교과프로젝트/worksheet_2-4_교수학습전략_2026-09-29.md",
+      "bytes": 3812,
+      "sha256": "8c08425f2c5ee1795e463d902742538458978f1a92aae825fdbc9382d072d9a6"
+    },
+    {
+      "path": "01_literature/analysis/김민혁 2024.md",
+      "bytes": 11388,
+      "sha256": "e60be501f6fad63175fad9040929f94ae6ca5b0667122a0d8627b8e1a0f4aa30"
+    },
+    {
+      "path": "01_literature/analysis/한형종 2019.md",
+      "bytes": 11580,
+      "sha256": "03a46863cec5ff551afde419843593a16b59a7e9267fe9751f4ea3fa1bef2190"
+    },
+    {
+      "path": "07_simulation/digital_textbook/섀시_디지털교과서_설계명세서.md",
+      "bytes": 28669,
+      "sha256": "0b7bd82efaecbdd53bb73335fd487e59fdc4282a1c1f29557f54248fb106bb5c"
+    },
+    {
+      "path": "07_simulation/digital_textbook/00_색인.md",
+      "bytes": 10273,
+      "sha256": "5907c1b493fb0577495e699c81c5818020e0d85a329452d2162d267e202a5c29"
+    },
+    {
+      "path": "07_simulation/digital_textbook/01_JSON_검토.md",
+      "bytes": 3866,
+      "sha256": "830f165163b04e523c26180f07379936ba5bb94ed0729aa8836380db094e763e"
+    },
+    {
+      "path": "07_simulation/craftsman_exam/text/00_섀시_과제_답안_정리.md",
+      "bytes": 9911,
+      "sha256": "03bac722c665739876491e0d998b2d4f628775df71b6d38e499570409b4a7dae"
+    },
+    {
+      "path": "07_simulation/ncs_module/text/00_index.md",
+      "bytes": 9605,
+      "sha256": "adb78d5279eeab9609189a1ec8f5d53526dbb26e680c85942850e42b18583820"
+    },
+    {
+      "path": "07_simulation/ncs_module/text/01_수행내용_장비_안전_절차.md",
+      "bytes": 58881,
+      "sha256": "83a3518d1d7a3ef133662c31aaec575913fe1de3ff40778ab30dc35cb58ee09e"
+    },
+    {
+      "path": "07_simulation/ncs_module/text/LM1506030327_제동장치_정비.md",
+      "bytes": 128981,
+      "sha256": "776acc635607167c1732db9c65a4c9bf48cad610accb03eb64de2e376f663662"
+    },
+    {
+      "path": "07_simulation/digital_textbook/chassis-textbook/src/data/tasks.json",
+      "bytes": 91140,
+      "sha256": "9c0cb21fa0bf9c3616cdb2fd6025ed01986369e43206ecb824315ce064585dd1"
+    },
+    {
+      "path": "07_simulation/digital_textbook/chassis-textbook/src/data/standards.json",
+      "bytes": 3956,
+      "sha256": "1add945a6e30c7954a5655d9c1039278d45fdd7b68f0bd64e62a60188a3b33c2"
+    },
+    {
+      "path": "07_simulation/digital_textbook/chassis-textbook/src/data/forms.json",
+      "bytes": 12422,
+      "sha256": "39fda6d89b3d1af7fef0df4788176dfb61c7e9e135f2411e77496b5d8bd77aa0"
+    },
+    {
+      "path": "07_simulation/digital_textbook/chassis-textbook/src/lib/judge.js",
+      "bytes": 4394,
+      "sha256": "f763e216de3c3239f918b21d600e415a2627016a5db2838e80ed5ad1d6df8b95"
+    },
+    {
+      "path": "07_simulation/digital_textbook/chassis-textbook/package.json",
+      "bytes": 423,
+      "sha256": "72af93d72ca60fbce7d77c6ffe46ea3b47387fc0f999465d6b2807684e4a7ec4"
+    }
+  ],
+  "sourcePdfs": [
+    {
+      "path": "/Users/moon/obsidian/raw/논문/학위논문/김민혁 2024.pdf",
+      "sha256": "2af7bcc48fa8121a9cdf7f7dc5700a9467d81eb1d6c6977b6f7ede1ddcdd88fe",
+      "bytes": 2713408
+    },
+    {
+      "path": "/Users/moon/obsidian/raw/논문/학위논문/한형종 2019.pdf",
+      "sha256": "3af3d8a547962d65a525614dc51fcc275f15769f28cfafd5f3ec9ad217de9cd3",
+      "bytes": 16913061
+    },
+    {
+      "path": "/Users/moon/AI-Work/01_school/thesis/07_simulation/ncs_module/LM1506030327_23v4_+제동장치+정비.pdf",
+      "sha256": "a442a9ad4b85ee674ddc4f1ec49781e170038dd1e8c86c62c2fc4b93d7ddb7fd",
+      "bytes": 38134033
+    }
+  ],
+  "limitations": [
+    "원문 파일 전체를 산출물에 포함하지 않음",
+    "기존 소스 UI와 실제 학교기기 실행은 미검증"
+  ]
+}

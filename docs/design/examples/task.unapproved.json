@@ -1,0 +1,103 @@
+{
+  "schemaVersion": "1.0.0",
+  "taskId": "braking-force",
+  "taskDefinitionVersion": "0.1.0-draft",
+  "title": "제동력 측정 및 판독",
+  "approvalStatus": "pending",
+  "measurement": {
+    "measurementSetVersion": "unapproved",
+    "sourceType": "teacherApprovedCase",
+    "unit": null,
+    "caseId": null,
+    "left": null,
+    "right": null,
+    "axleWeight": null,
+    "axlePosition": null
+  },
+  "ruleset": {
+    "deviationMaxPercent": null,
+    "sumMinFrontPercent": null,
+    "sumMinRearPercent": null,
+    "decisionPrecision": null,
+    "sourceDocument": null,
+    "sourcePage": null,
+    "approvedAt": null,
+    "rulesetVersion": "unapproved",
+    "approvalStatus": "pending"
+  },
+  "steps": [
+    {
+      "stepId": "preparation",
+      "instruction": "[교사 확인 필요] 실제 시험기 지침에 따른 준비 절차",
+      "equipmentId": "brake-tester-01",
+      "prerequisites": [],
+      "requiredSafetyConditions": [],
+      "actionType": "inspect",
+      "completionCondition": "teacherApprovalRequired",
+      "onBlockedFeedbackKey": "configurationPending",
+      "source": {
+        "document": "NCS LM1506030327_23v4 및 학교 시험기 지침",
+        "printedPage": "98-100",
+        "pdfPage": 110,
+        "confirmation": "pending"
+      }
+    }
+  ],
+  "feedback": {
+    "configurationPending": {
+      "what": "공식 과제 설정이 아직 확정되지 않았습니다.",
+      "why": "학교 시험기 절차와 적용 기준을 확인해야 합니다.",
+      "how": "교사 확인 뒤 승인된 과제 버전을 사용합니다."
+    }
+  },
+  "requiredResponseItems": [
+    {
+      "itemId": "left",
+      "kind": "measurement",
+      "unit": null,
+      "gradingRuleId": null,
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    },
+    {
+      "itemId": "right",
+      "kind": "measurement",
+      "unit": null,
+      "gradingRuleId": null,
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    },
+    {
+      "itemId": "axleWeight",
+      "kind": "measurement",
+      "unit": null,
+      "gradingRuleId": null,
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    },
+    {
+      "itemId": "deviation",
+      "kind": "calculation",
+      "unit": "%",
+      "gradingRuleId": null,
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    },
+    {
+      "itemId": "sum",
+      "kind": "calculation",
+      "unit": "%",
+      "gradingRuleId": null,
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    },
+    {
+      "itemId": "vehicleCondition",
+      "kind": "judgment",
+      "unit": null,
+      "gradingRuleId": null,
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    }
+  ]
+}

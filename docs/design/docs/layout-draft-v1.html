@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>섀시 실습장 상대 배치 개념도 v1 (임시 · 실측 전)</title>
+<style>
+  :root{--ink:#1d1d1f;--mut:#6b6b70;--line:#c9c9ce;--bg:#f7f7f8;--warn:#b42318;--warnbg:#fde8e6;--eq:#e8f0fe;--eqline:#3b6fd6;--veh:#fff4d6;--vehline:#c98a00;--pil:#dcdcdc;--chk:#eef9ee;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+  header{padding:16px;background:#fff;border-bottom:1px solid var(--line)}
+  h1{font-size:20px;margin:0 0 6px}
+  .banner{display:inline-block;background:var(--warnbg);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:6px 10px;font-weight:700;margin:6px 0}
+  .meta{color:var(--mut);font-size:13px}
+  main{padding:16px;max-width:1400px;margin:0 auto}
+  section{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:16px}
+  h2{font-size:17px;margin:0 0 10px}
+  svg{width:100%;height:auto;border:1px solid var(--line);background:#fff;border-radius:6px}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;font-size:13px;margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:18px;height:14px;border:2px solid;border-radius:3px;display:inline-block}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+  th{background:#f0f0f2}
+  td.v label{display:inline-block;margin-right:8px;white-space:nowrap}
+  input[type=text]{width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font:inherit}
+  textarea{width:100%;min-height:160px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:4px;padding:8px}
+  button{font:inherit;padding:8px 14px;border-radius:6px;border:1px solid var(--eqline);background:var(--eqline);color:#fff;cursor:pointer}
+  button.sec{background:#fff;color:var(--eqline)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+  ol li{margin-bottom:4px}
+  .small{font-size:13px;color:var(--mut)}
+  @media print{header,.noprint{display:none}body{background:#fff}section{border:none;page-break-inside:avoid}svg{border:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>대구공고 섀시정비 실습실 — 상대 배치 개념도 v1</h1>
+  <div class="banner">임시 개념 배치 · 치수·좌표·축척 없음 · 실측 전 · layoutConfirmed = false</div>
+  <div class="meta">근거: 손 스케치(assets/hand-sketch.jpg) + 번호 사진 44장 + review/layout-review.txt 대응표 · 작성 2026-10-20 Claude Code · v1: v0 교사 눈검토(23항목 모두 ‘위치 맞음’, collaboration/layout-draft-review.user-original.json) 반영. 방위·열린 면·학생 시작점·ABS 돌출·44번 남쪽 바깥 표시 추가. v0의 ‘맞음’은 v1의 새 표시까지 승인한 것이 아니므로 아래 체크표로 다시 확인 · 위치 관계는 스케치의 위/아래/좌/우를 그대로 옮긴 것이며 모눈 한 칸을 거리로 바꾸지 않았다.</div>
+</header>
+<main>
+
+<section>
+  <h2>1. 개념도 (스케치 방향 그대로)</h2>
+  <p class="small">파란 상자 = 장비·실습대, 노란 상자 = 차량이 올라가는 작업 위치, 회색 네모 = 기둥(스케치의 원 기호; 사진에서는 사각 단면), 빨간 숫자 = 사진 번호(촬영 지점 참고이며 학생 동선이 아님). 상자 크기는 스케치 비례일 뿐 실제 크기가 아니다.</p>
+  <svg id="map" viewBox="0 0 2000 1300" xmlns="http://www.w3.org/2000/svg" aria-label="상대 배치 개념도"></svg>
+  <div class="legend">
+    <span><i class="sw" style="border-color:var(--eqline);background:var(--eq)"></i>장비·실습대</span>
+    <span><i class="sw" style="border-color:var(--vehline);background:var(--veh)"></i>차량 작업 위치</span>
+    <span><i class="sw" style="border-color:#888;background:var(--pil)"></i>기둥 기호</span>
+    <span><i class="sw" style="border-color:#d33;background:#fff;border-radius:50%"></i>사진 번호(촬영 지점)</span>
+    <span><i class="sw" style="border-color:#d33;background:#fff;border-style:dashed"></i>사진 대응 미지정(교사 확인)</span>
+  </div>
+  <p class="small">경계(사용자 확정 2026-10-20): <b>스케치 위쪽 = 북쪽.</b> 위(북)·오른쪽(동) 변은 막힌 면(굵은 실선), 왼쪽(서) 변은 엔진 실습 구역으로, 아래(남) 변은 전기 실습 구역으로 트인 면(점선). 섀시 구역 별도 입구 없음. 학생 시작점 후보는 왼쪽 변 가운데(엔진 구역에서 들어오는 곳). ‘자동차 ABS 측정’은 별도 차량이며 직사각형 구역의 오른쪽 아래 모서리 바깥으로 튀어나온 공간. 휠얼라인먼트(44)는 아래(남) 변 너머.</p>
+</section>
+
+<section>
+  <h2>2. 장비별 확인 (교사용 체크 — v1 재확인용)</h2>
+  <p class="small"><b>v1에서 새로 그린 것(추가 확인 필요):</b> 북·동 벽 실선, 서·남 열린 변 점선, 학생 시작점 S, 나침반, ABS 차량 ‘돌출’ 메모, 44번 ‘남쪽 변 너머’ 문구. 장비 23항목의 위치는 v0와 같다. 학생 시작점은 ‘지정된 상대 위치’이며 전체 이동 동선 승인이 아니다.</p>
+  <p class="small">각 줄에서 하나를 고르고, 필요하면 메모를 적어 주세요. ‘많이 다름’이면 어디로 옮겨야 하는지 메모에 적어 주세요.</p>
+  <table id="checklist">
+    <thead><tr><th style="width:12%">설계 ID</th><th style="width:22%">명칭(스케치 표기)</th><th style="width:10%">사진</th><th style="width:34%">위치가 맞습니까?</th><th>메모</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section>
+  <h2>3. 전체 질문</h2>
+  <table id="global">
+    <tbody>
+      <tr><td style="width:40%">Q1. 스케치의 <b>위쪽</b>은 실제로 어느 방위입니까?</td>
+          <td class="v" data-key="sketchTopDirection"><label><input type="radio" name="g1" value="north">북</label><label><input type="radio" name="g1" value="south">남</label><label><input type="radio" name="g1" value="east">동</label><label><input type="radio" name="g1" value="west">서</label><label><input type="radio" name="g1" value="unsure">모름</label></td></tr>
+      <tr><td>Q2. 엔진·전기 구역으로 트인 곳은 스케치의 어느 변·어느 부분입니까? (예: 아래 변 왼쪽 절반)</td>
+          <td data-key="openEdgeNote"><input type="text" placeholder="예: 아래쪽 변 전체 / 왼쪽 변 위쪽 절반"></td></tr>
+      <tr><td>Q3. 학생이 과제를 시작할 위치 후보는 어디입니까? (실제 들어오는 방향 기준)</td>
+          <td data-key="studentStartNote"><input type="text" placeholder="예: 왼쪽 변 가운데, 엔진 구역에서 들어오는 쪽"></td></tr>
+      <tr><td>Q4. 스케치·사진에 없는데 실제로 있는 장비·물건(소화기, 보호구함, 공구함 등)이 있습니까?</td>
+          <td data-key="missingItemsNote"><input type="text" placeholder="예: 리프트 2 옆 소화기, 입구 쪽 보호구함"></td></tr>
+      <tr><td>Q5. ‘자동차 ABS 측정’(오른쪽 아래)은 어떤 장비·차량입니까? 대응 사진 번호가 있습니까?</td>
+          <td data-key="absVehicleNote"><input type="text" placeholder="예: 제동력 차량과 같은 차 / 별도 차량, 사진 없음"></td></tr>
+      <tr><td>Q6. 44번 휠얼라인먼트 구역은 스케치 기준 어느 방향 뒤쪽입니까? MVP 화면에 넣을까요?</td>
+          <td data-key="alignmentNote"><input type="text" placeholder="예: 아래 변 너머 / 넣지 않음"></td></tr>
+      <tr><td>검토자 코드·날짜 (이름 대신 코드)</td>
+          <td data-key="reviewer"><input type="text" placeholder="예: T-01 / 2026-10-21"></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="noprint">
+  <h2>4. 결과 내보내기</h2>
+  <p class="small">버튼을 누르면 체크 결과가 JSON 글로 만들어집니다. 복사해서 Claude/Codex에 붙여 넣거나 파일로 저장해 <code>collaboration/layout-draft-review.json</code>으로 전달해 주세요. 이 페이지는 아무것도 서버로 보내지 않습니다.</p>
+  <div class="row"><button id="btnJson">결과 JSON 만들기</button><button class="sec" id="btnCopy">복사</button><button class="sec" id="btnDl">파일로 저장</button><button class="sec" onclick="window.print()">인쇄</button></div>
+  <textarea id="out" readonly placeholder="여기에 결과가 나타납니다"></textarea>
+</section>
+
+<section>
+  <h2>5. 실측 항목 목록 초안 (체크 결과 받은 뒤 확정)</h2>
+  <p class="small">줄자·레이저 거리계로 재고, 사진 번호와 함께 적어 주세요. 걸음 수로 어림하지 않습니다. 단위 m, 소수 둘째 자리.</p>
+  <ol>
+    <li><b>기준점</b>: 제동력 롤러(27·28번) 중심 ↔ 가장 가까운 기둥·벽까지 거리. 이 점을 좌표 원점 후보로 씁니다.</li>
+    <li><b>외곽</b>: 섀시 구역의 가로·세로(트인 변까지 포함한 범위), 천장 높이, 막힌 두 벽의 길이, 창·셔터의 위치와 폭.</li>
+    <li><b>기둥</b>: 전체 개수, 간격, 단면 크기(한 변).</li>
+    <li><b>리프트 3대</b>: 각 리프트의 가로·세로, 리프트 사이 간격, 리프트 앞·뒤 통로 폭.</li>
+    <li><b>제동력 장비</b>: 롤러 장비 가로·세로, 차량 진입 방향, 조작부(14번)까지 거리, 기록 책상 위치.</li>
+    <li><b>벽 쪽 실습대(29번)</b>: 전체 길이·깊이, 4칸 구분 위치.</li>
+    <li><b>변속기 분해조립 실습대(9·24번)</b>: 길이·폭, 리프트와의 거리.</li>
+    <li><b>그 외 장비</b>: 각 장비의 가로·세로 대략값(0.5m 단위면 충분)과 가장 가까운 기둥·벽까지 거리.</li>
+    <li><b>트인 연결부</b>: 남·서 변에서 엔진·전기 구역으로 이어지는 부분의 시작·끝 위치와 폭.</li>
+    <li><b>학생 시작점·대기 교실</b>: 대기 교실에서 섀시 구역으로 들어오는 경로와 첫 지점.</li>
+  </ol>
+</section>
+
+</main>
+<script>
+// ---- 데이터: 스케치 좌표(상대, 단위 없음). 사진 번호는 review/layout-review.txt 7절 기준 ----
+const ITEMS = [
+ {id:"transmission-simulator-01", label:"변속기 시뮬레이터", photos:[10], ctx:[22,23], x:280,y:150,w:220,h:170, kind:"eq"},
+ {id:"wheel-balancer-01", label:"휠밸런스 측정", photos:[43], x:550,y:150,w:140,h:105, kind:"eq"},
+ {id:"tire-changer-01", label:"타이어 탈부착", photos:[37], x:740,y:150,w:140,h:125, kind:"eq"},
+ {id:"shock-absorber-stand-01", label:"쇽업소버 분해", photos:[16], ctx:[21], x:1050,y:150,w:90,h:110, kind:"eq", round:true},
+ {id:"camber-caster-vehicle-01", label:"캠버·캐스터 측정 차량 (스케치: 사이드브레이크 클릭수 / 브레이크·클러치 작동거리·유격 측정)", short:"캠버·캐스터 측정 차량", photos:[34,35,36], x:1205,y:150,w:295,h:125, kind:"veh"},
+ {id:"parts-bench-01/톤휠", label:"톤휠 간극", photos:[41], ctx:[29], x:1640,y:150,w:150,h:70, kind:"eq"},
+ {id:"parts-bench-01/디스크", label:"디스크 두께·런아웃", photos:[11], ctx:[29], x:1640,y:230,w:150,h:90, kind:"eq"},
+ {id:"parts-bench-01/차동", label:"차동기어 백래시", photos:[30], ctx:[29], x:1640,y:335,w:150,h:80, kind:"eq"},
+ {id:"parts-bench-01/현가", label:"현가장치 시뮬레이터", photos:[42], x:1640,y:425,w:150,h:80, kind:"eq"},
+ {id:"min-turning-radius-01", label:"최소회전반경 측정 차량", photos:[31,32], x:280,y:410,w:400,h:125, kind:"veh"},
+ {id:"transmission-bench-01", label:"변속기 분해조립", photos:[9,24], x:1150,y:345,w:75,h:335, kind:"eq", vert:true},
+ {id:"toe-gauge-zone-01", label:"토 측정", photos:[38,39,40], x:1430,y:380,w:95,h:110, kind:"eq"},
+ {id:"brake-tester-01", label:"자동차 제동력·사이드슬립 측정 (롤러)", short:"제동력·사이드슬립 측정 차량", photos:[26,27,28], x:1550,y:560,w:170,h:320, kind:"veh", mvp:true},
+ {id:"brake-control-panel-01", label:"노란색 공용 조작부 (ABS TESTER)", short:"노란 조작부", photos:[14,15], x:1740,y:760,w:60,h:120, kind:"eq", mvp:true},
+ {id:"at-mt-bench-01", label:"자동변속기 분해조립", photos:[25], x:285,y:590,w:125,h:110, kind:"eq"},
+ {id:"mt-endplay-bench-01", label:"수동변속기 엔드플레이", photos:[17,18], x:460,y:590,w:135,h:110, kind:"eq"},
+ {id:"propshaft-axle-stand-01", label:"추진축·엑슬축 분해", photos:[33], x:615,y:590,w:155,h:110, kind:"eq"},
+ {id:"lining-shoe-stand-01", label:"브레이크 라이닝슈", photos:[12,13], x:650,y:790,w:110,h:75, kind:"eq"},
+ {id:"lift-zone-01/a", label:"리프트 & 자동차 (왼쪽)", photos:[1,2,3,4,5,6,7,8], x:390,y:760,w:250,h:360, kind:"veh"},
+ {id:"lift-zone-01/b", label:"리프트 & 자동차 (가운데)", photos:[8], ctx:[1,2,3], x:830,y:780,w:200,h:340, kind:"veh"},
+ {id:"lift-zone-01/c", label:"리프트 & 자동차 (오른쪽)", photos:[4,5], ctx:[3,6], x:1260,y:770,w:150,h:350, kind:"veh"},
+ {id:"abs-vehicle-01", label:"자동차 ABS 측정 (스케치 표기, 사진 대응 미지정)", short:"자동차 ABS 측정", photos:[], x:1645,y:985,w:135,h:215, kind:"veh", unsure:true},
+ {id:"wheel-alignment-01", label:"휠얼라인먼트 (스케치 메모: ‘뒤에 있음’, 도면 밖)", short:"휠얼라인먼트 ‘뒤에 있음’", photos:[44], x:1470,y:1150,w:150,h:60, kind:"eq", outside:true},
+];
+const PILLARS = [[290,940],[730,925],[1130,910],[1510,915]];
+const CAMERAS = [[1760,550,19],[1600,120,20],[1080,95,21],[210,240,22],[300,120,23],[1365,390,24]];
+
+const svg = document.getElementById('map');
+const NS = 'http://www.w3.org/2000/svg';
+function el(n, a, txt){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e;}
+// 모눈
+for(let x=200;x<=1850;x+=50) svg.appendChild(el('line',{x1:x,y1:100,x2:x,y2:1250,stroke:'#eee'}));
+for(let y=100;y<=1250;y+=50) svg.appendChild(el('line',{x1:200,y1:y,x2:1850,y2:y,stroke:'#eee'}));
+svg.appendChild(el('text',{x:205,y:1285,'font-size':22,fill:'#888'},'모눈은 스케치의 모눈을 흉내 낸 것일 뿐, 거리 단위가 아닙니다.'));
+// 기둥
+PILLARS.forEach(([x,y],i)=>{svg.appendChild(el('rect',{x:x-30,y:y-30,width:60,height:60,fill:'#dcdcdc',stroke:'#888','stroke-width':3}));svg.appendChild(el('text',{x:x,y:y+8,'text-anchor':'middle','font-size':20,fill:'#444'},'기둥'+(i+1)));});
+// 장비
+ITEMS.forEach(it=>{
+  const g=el('g',{});
+  const fill = it.kind==='veh'?'#fff4d6':'#e8f0fe', stroke = it.kind==='veh'?'#c98a00':'#3b6fd6';
+  const r=el('rect',{x:it.x,y:it.y,width:it.w,height:it.h,rx:it.round?it.w/2:8,fill:fill,stroke:stroke,'stroke-width':it.mvp?6:3});
+  if(it.unsure||it.outside) r.setAttribute('stroke-dasharray','10 8');
+  g.appendChild(r);
+  const name=(it.short||it.label), lines=[];
+  // 줄바꿈
+  const fs = (it.w<160||it.h<100) ? 19 : 22;
+  const maxc = it.vert? 4 : Math.max(5, Math.floor(it.w/(fs+1)));
+  for(let s=name; s.length; s=s.slice(maxc)) lines.push(s.slice(0,maxc));
+  const lh = fs+4;
+  const cy = it.y + (it.h - 24)/2 - (lines.length-1)*lh/2 + fs/2;
+  const cx = it.x+it.w/2;
+  lines.forEach((ln,i)=>g.appendChild(el('text',{x:cx,y:cy+i*lh,'text-anchor':'middle','font-size':fs,'font-weight':700,fill:'#222'},ln)));
+  const ph = it.photos.length? '사진 '+it.photos.join('·') : '사진 없음';
+  g.appendChild(el('text',{x:cx,y:it.y+it.h-10,'text-anchor':'middle','font-size':18,fill:'#c33'},ph));
+  g.appendChild(el('text',{x:it.x+4,y:it.y+18,'font-size':15,fill:'#555'},it.id));
+  if(it.mvp) g.appendChild(el('text',{x:cx,y:it.y-8,'text-anchor':'middle','font-size':18,'font-weight':700,fill:'#3b6fd6'},'MVP 작동 과제'));
+  svg.appendChild(g);
+});
+// 촬영 지점
+CAMERAS.forEach(([x,y,n])=>{svg.appendChild(el('circle',{cx:x,cy:y,r:22,fill:'#fff',stroke:'#d33','stroke-width':3}));svg.appendChild(el('text',{x:x,y:y+7,'text-anchor':'middle','font-size':20,fill:'#d33','font-weight':700},n));});
+svg.appendChild(el('text',{x:1480,y:1235,'font-size':18,fill:'#555'},'↓ 남쪽(아래) 변 너머 (거리 미확인)'));
+// v0.1: 방위·경계·시작점 (사용자 확정 2026-10-20)
+svg.appendChild(el('line',{x1:200,y1:110,x2:1850,y2:110,stroke:'#333','stroke-width':10}));            // 북 벽
+svg.appendChild(el('line',{x1:1850,y1:110,x2:1850,y2:1230,stroke:'#333','stroke-width':10}));          // 동 벽
+svg.appendChild(el('line',{x1:200,y1:110,x2:200,y2:1230,stroke:'#2a7','stroke-width':8,'stroke-dasharray':'26 16'})); // 서 열림
+svg.appendChild(el('line',{x1:200,y1:1230,x2:1850,y2:1230,stroke:'#2a7','stroke-width':8,'stroke-dasharray':'26 16'}));// 남 열림
+svg.appendChild(el('text',{x:1025,y:98,'text-anchor':'middle','font-size':22,'font-weight':700,fill:'#333'},'북쪽 벽 (막힘)'));
+svg.appendChild(el('text',{x:1890,y:670,'font-size':22,'font-weight':700,fill:'#333',transform:'rotate(90 1890 670)'},'동쪽 벽 (막힘)'));
+svg.appendChild(el('text',{x:150,y:670,'font-size':22,'font-weight':700,fill:'#2a7',transform:'rotate(-90 150 670)'},'서쪽: 엔진 구역으로 트임'));
+svg.appendChild(el('text',{x:1025,y:1265,'text-anchor':'middle','font-size':22,'font-weight':700,fill:'#2a7'},'남쪽: 전기 구역으로 트임 (휠얼라인먼트 44는 이 너머)'));
+// 학생 시작점 후보
+svg.appendChild(el('circle',{cx:215,cy:670,r:26,fill:'#2a7',stroke:'#fff','stroke-width':4}));
+svg.appendChild(el('text',{x:215,y:678,'text-anchor':'middle','font-size':22,'font-weight':700,fill:'#fff'},'S'));
+svg.appendChild(el('text',{x:250,y:700,'font-size':18,fill:'#2a7','font-weight':700},'학생 시작점 후보 (사용자 답, 실측 전)'));
+// 나침반
+svg.appendChild(el('circle',{cx:1930,cy:60,r:36,fill:'#fff',stroke:'#333','stroke-width':3}));
+svg.appendChild(el('path',{d:'M1930 30 L1942 66 L1930 58 L1918 66 Z',fill:'#333'}));
+svg.appendChild(el('text',{x:1930,y:112,'text-anchor':'middle','font-size':20,'font-weight':700,fill:'#333'},'N'));
+// ABS 구역 돌출 표시
+svg.appendChild(el('text',{x:1640,y:975,'font-size':16,fill:'#555'},'별도 차량 · 구역 모서리 바깥으로 돌출(사용자 답)'));
+
+// 체크표
+const tb=document.querySelector('#checklist tbody');
+const OPTS=[['ok','위치 맞음'],['slight','조금 다름'],['wrong','많이 다름'],['absent','없는 장비']];
+ITEMS.forEach((it,i)=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><code>${it.id}</code></td><td>${it.label}${it.ctx?`<div class="small">전경 참고: ${it.ctx.join('·')}</div>`:''}</td><td>${it.photos.join(', ')||'—'}</td>
+   <td class="v">${OPTS.map(([v,l])=>`<label><input type="radio" name="it${i}" value="${v}">${l}</label>`).join('')}</td>
+   <td><input type="text" data-memo="${i}" placeholder="옮길 곳·빠진 것"></td>`;
+  tb.appendChild(tr);
+});
+function collect(){
+  const items=ITEMS.map((it,i)=>({equipmentId:it.id,label:it.label,photoIds:it.photos,
+    teacherVerdict:(document.querySelector(`input[name=it${i}]:checked`)||{}).value||null,
+    note:document.querySelector(`input[data-memo="${i}"]`).value||null}));
+  const global={};
+  document.querySelectorAll('#global td[data-key]').forEach(td=>{const k=td.dataset.key;const r=td.querySelector('input[type=radio]:checked');const t=td.querySelector('input[type=text]');global[k]=r?r.value:(t?(t.value||null):null);});
+  return {layoutDraftVersion:"v1",reviewDate:new Date().toISOString().slice(0,10),source:"design-current/docs/layout-draft-v1.html",
+    layoutConfirmed:false,metricScaleKnown:false,studentRouteConfirmed:false,
+    directionalBoundaries:{north:"closed",east:"closed",south:"open",west:"open",sketchTopDirection:global.sketchTopDirection||null},
+    globalAnswers:global,items,
+    note:"교사 눈검토 결과. 좌표·치수 없음. 실측 전까지 layoutConfirmed=false 유지."};
+}
+const out=document.getElementById('out');
+document.getElementById('btnJson').onclick=()=>{out.value=JSON.stringify(collect(),null,2);};
+document.getElementById('btnCopy').onclick=async()=>{if(!out.value)out.value=JSON.stringify(collect(),null,2);try{await navigator.clipboard.writeText(out.value);alert('복사했습니다.');}catch(e){out.select();}};
+document.getElementById('btnDl').onclick=()=>{if(!out.value)out.value=JSON.stringify(collect(),null,2);const b=new Blob([out.value],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='layout-draft-review.json';a.click();};
+</script>
+</body>
+</html>

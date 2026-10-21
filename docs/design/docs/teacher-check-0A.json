@@ -1,0 +1,155 @@
+{
+  "checkId": "0A-brake",
+  "checkedAt": "2026-10-21",
+  "reviewer": "2026. 10. 21.",
+  "approvalStatus": "pending",
+  "note": "교사 확인지 결과. 앱 설정 반영은 이 결과로 task/ruleset 승인 버전을 만든 뒤.",
+  "axlePosition": "rear",
+  "unit": "kg",
+  "cases": {
+    "lv1": {
+      "status": "ok",
+      "note": null,
+      "draft": {
+        "left": 240,
+        "right": 200,
+        "axleWeight": 600,
+        "axlePosition": "rear",
+        "unit": "kg"
+      }
+    },
+    "lv2": {
+      "status": "ok",
+      "note": null,
+      "draft": {
+        "left": 250,
+        "right": 190,
+        "axleWeight": 600,
+        "axlePosition": "rear",
+        "unit": "kg"
+      }
+    }
+  },
+  "ruleset": {
+    "deviationMaxPercent": {
+      "status": "approve",
+      "value": 8
+    },
+    "sumMinRearPercent": {
+      "status": "approve",
+      "value": 20
+    },
+    "sumMinFrontPercent": {
+      "status": "approve",
+      "value": 50
+    },
+    "sourceDocument": "자동차정비기능사 답안지 작성 책(골든벨), 예전에 만들어둔 섀시 디지털교과서 html제작 지침 참고.",
+    "boundaryInclusive": true
+  },
+  "precision": {
+    "written": "truncate1",
+    "compareWith": "written",
+    "inputsIntegerOnly": true
+  },
+  "steps": [
+    {
+      "stepId": "ppe",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "tire",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "equip",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "enter",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "axle",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "mode",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "lower",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "motor",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "press",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "read",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "off",
+      "verdict": "ok",
+      "memo": null
+    },
+    {
+      "stepId": "calc",
+      "verdict": "ok",
+      "memo": null
+    }
+  ],
+  "extraSteps": null,
+  "safetyConditions": [
+    {
+      "conditionId": "s-ppe",
+      "verdict": "keep",
+      "memo": null
+    },
+    {
+      "conditionId": "s-lift",
+      "verdict": "keep",
+      "memo": null
+    },
+    {
+      "conditionId": "s-motor",
+      "verdict": "keep",
+      "memo": null
+    },
+    {
+      "conditionId": "s-exit",
+      "verdict": "keep",
+      "memo": null
+    },
+    {
+      "conditionId": "s-accel",
+      "verdict": "keep",
+      "memo": null
+    },
+    {
+      "conditionId": "s-engine",
+      "verdict": "keep",
+      "memo": null
+    }
+  ],
+  "extraSafety": null,
+  "tester": {
+    "model": "기입 안해도 돼",
+    "displayType": "digital"
+  },
+  "_receivedBy": "Claude Code 2026-10-21(한국). 사용자 채팅 붙여넣기 원문과 값 동일(steps/safetyConditions의 draft 문구는 생략, 과제 JSON에 있음). 모든 항목 승인."
+}

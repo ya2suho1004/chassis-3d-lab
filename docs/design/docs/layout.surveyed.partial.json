@@ -1,0 +1,263 @@
+{
+  "schemaVersion": "1.0.0",
+  "layoutVersion": "surveyed-partial-2026-10-21",
+  "layoutConfirmed": false,
+  "sourceStatus": "surveyed",
+  "coordinateSystem": {
+    "unit": "m",
+    "originDescription": "P1-1: 제동력 롤러 두 롤러 축의 가운데(바닥 테이프 표시). 2026-10-21 교사 MOON 줄자 실측",
+    "axesDescription": "x=동쪽 +, z=남쪽 +, y=높이. 스케치 위=북(사용자 확정 2026-10-20)"
+  },
+  "room": {
+    "widthMeters": null,
+    "lengthMeters": null,
+    "heightMeters": null
+  },
+  "boundary": [],
+  "doors": [],
+  "columns": [
+    {
+      "columnId": "pillar-1",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "기둥 4개 확인(P2-1). 간격 4.00(P2-3, 중심/면 기준 미확인). 위치·단면 미측정"
+    },
+    {
+      "columnId": "pillar-2",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "P2-1/P2-3 참조. 위치·단면 미측정"
+    },
+    {
+      "columnId": "pillar-3",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "P2-1/P2-3 참조. 위치·단면 미측정"
+    },
+    {
+      "columnId": "pillar-4",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "P2-1/P2-3 참조. 위치·단면 미측정"
+    }
+  ],
+  "safetyAisles": [],
+  "equipment": [
+    {
+      "equipmentId": "brake-tester-01",
+      "label": "제동력 롤러 장비(빨간 덮개 포함)",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 3.0,
+        "lengthMeters": 1.2,
+        "heightMeters": null
+      },
+      "interactiveForMvp": true,
+      "accessPoints": [],
+      "surveyReference": "P1-4 실측 동서3.00×남북1.20. 중심=원점 가정(서쪽 치우침 여부 C-1b 확인 필요). 차량 진입 북·남 모두 가능(사용자 확인). 사진 27·28"
+    },
+    {
+      "equipmentId": "brake-control-panel-01",
+      "label": "노란 공용 조작부(ABS TESTER, DKM-6000)",
+      "position": {
+        "x": null,
+        "y": 0,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 0.7,
+        "lengthMeters": 0.5,
+        "heightMeters": 1.5
+      },
+      "interactiveForMvp": true,
+      "accessPoints": [],
+      "surveyReference": "P1-6 원점에서 1.30(방향 미확인). P1-7 실측 0.70×0.50×1.50, 화면 높이 1.30. 사진 14"
+    },
+    {
+      "equipmentId": "brake-record-desk-01",
+      "label": "기록용 책상",
+      "position": {
+        "x": null,
+        "y": 0,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P1-8 원점에서 1.10(방향 미확인). 사진 26·27"
+    },
+    {
+      "equipmentId": "toe-gauge-zone-01",
+      "label": "토 측정 구역",
+      "position": {
+        "x": null,
+        "y": 0,
+        "z": -3.5,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "원점에서 북쪽 3.50(P1-9 보조값, 기준 점 미확인). x 미측정. 사진 38~40"
+    },
+    {
+      "equipmentId": "abs-vehicle-zone-01",
+      "label": "ABS 측정 차량 구역(남동쪽 아래 돌출부)",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 4.1,
+        "lengthMeters": 10.0,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P1-10 실측 남북10.00×동서4.10(C-2 숫자 확인 필요). 연결부 폭 미측정(사진 2장 대기). 사진 없음"
+    },
+    {
+      "equipmentId": "lift-zone-01/a",
+      "label": "리프트 왼쪽",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 2.2,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P2-5 바닥판 가로 2.20. 세로·위치 미측정. 사진 1~8"
+    },
+    {
+      "equipmentId": "lift-zone-01/b",
+      "label": "리프트 가운데",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 2.2,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P2-5 바닥판 가로 2.20. 세로·위치 미측정"
+    },
+    {
+      "equipmentId": "lift-zone-01/c",
+      "label": "리프트 오른쪽",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 2.2,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P2-5 바닥판 가로 2.20. 세로·위치 미측정"
+    },
+    {
+      "equipmentId": "wall-north",
+      "label": "북쪽 벽(막힘) — 벽을 장비 행으로 임시 기록",
+      "position": {
+        "x": null,
+        "y": 0,
+        "z": -8.2,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P1-2 원점→북쪽 벽 8.20. boundary 다각형은 서·남 변 길이 미측정이라 비워 둠"
+    },
+    {
+      "equipmentId": "wall-east",
+      "label": "조작부 쪽 벽 = 동쪽 벽(막힘) — 벽을 장비 행으로 임시 기록",
+      "position": {
+        "x": 2.0,
+        "y": 0,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P1-3 원점→조작부 쪽 벽 2.00 (2026-10-21 사용자 확인: 조작부 쪽 벽). 장비 폭 3.00과의 관계는 C-1b 확인 중"
+    }
+  ]
+}

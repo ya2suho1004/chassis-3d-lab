@@ -1,0 +1,777 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "enum": [
+        "1.0.0",
+        "1.1.0"
+      ]
+    },
+    "taskId": {
+      "const": "braking-force"
+    },
+    "taskDefinitionVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "approvalStatus": {
+      "enum": [
+        "pending",
+        "approved"
+      ]
+    },
+    "measurement": {
+      "type": "object",
+      "properties": {
+        "measurementSetVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "sourceType": {
+          "enum": [
+            "teacherApprovedCase",
+            "demoSynthetic"
+          ]
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "enum": [
+                "N",
+                "kN",
+                "kgf",
+                "kg"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "caseId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "left": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "right": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "axleWeight": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "axlePosition": {
+          "anyOf": [
+            {
+              "enum": [
+                "front",
+                "rear"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "measurementSetVersion",
+        "sourceType",
+        "unit",
+        "caseId",
+        "left",
+        "right",
+        "axleWeight",
+        "axlePosition"
+      ],
+      "additionalProperties": false
+    },
+    "ruleset": {
+      "type": "object",
+      "properties": {
+        "rulesetVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "approvalStatus": {
+          "enum": [
+            "pending",
+            "approved"
+          ]
+        },
+        "deviationMaxPercent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sumMinFrontPercent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sumMinRearPercent": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decisionPrecision": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "unrounded",
+                    "rounded"
+                  ]
+                },
+                "digits": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 6
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "rounding": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "halfUp",
+                        "halfEven",
+                        "truncate"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "mode",
+                "digits",
+                "rounding"
+              ],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "mode": {
+                        "const": "rounded"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "digits": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 6
+                      },
+                      "rounding": {
+                        "enum": [
+                          "halfUp",
+                          "halfEven",
+                          "truncate"
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceDocument": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourcePage": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "rulesetVersion",
+        "approvalStatus",
+        "deviationMaxPercent",
+        "sumMinFrontPercent",
+        "sumMinRearPercent",
+        "decisionPrecision",
+        "sourceDocument",
+        "sourcePage",
+        "approvedAt"
+      ],
+      "additionalProperties": false
+    },
+    "requiredResponseItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "kind": {
+            "enum": [
+              "measurement",
+              "calculation",
+              "judgment"
+            ]
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gradingRuleId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answerTolerance": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "precisionPolicyRef": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "kind",
+          "unit",
+          "gradingRuleId",
+          "answerTolerance",
+          "precisionPolicyRef"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 32
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stepId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "instruction": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "equipmentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 32
+          },
+          "requiredSafetyConditions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "maxItems": 32
+          },
+          "actionType": {
+            "enum": [
+              "confirm",
+              "inspect",
+              "operate",
+              "read",
+              "submit"
+            ]
+          },
+          "completionCondition": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "onBlockedFeedbackKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "document": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "printedPage": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "pdfPage": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "confirmation": {
+                "enum": [
+                  "pending",
+                  "approved"
+                ]
+              }
+            },
+            "required": [
+              "document",
+              "printedPage",
+              "pdfPage",
+              "confirmation"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "stepId",
+          "instruction",
+          "equipmentId",
+          "prerequisites",
+          "requiredSafetyConditions",
+          "actionType",
+          "completionCondition",
+          "onBlockedFeedbackKey",
+          "source"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 32
+    },
+    "feedback": {
+      "type": "object",
+      "maxProperties": 64,
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "what": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "why": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "how": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "what",
+          "why",
+          "how"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "taskId",
+    "taskDefinitionVersion",
+    "title",
+    "approvalStatus",
+    "measurement",
+    "ruleset",
+    "requiredResponseItems",
+    "steps",
+    "feedback"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chassis-3d-lab:task:1.1.0-proposal",
+  "title": "(제안) 제동력 과제 계약 1.1.0: measurement.unit에 kg 추가 (04 §12 P-2)",
+  "$comment": "approved의 출처 진위·실제차량 적합성·경계정책은 별도 readiness 검증.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "approvalStatus": {
+            "const": "approved"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "measurement": {
+            "properties": {
+              "unit": {
+                "enum": [
+                  "N",
+                  "kN",
+                  "kgf",
+                  "kg"
+                ]
+              },
+              "caseId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "left": {
+                "type": "number",
+                "minimum": 0
+              },
+              "right": {
+                "type": "number",
+                "minimum": 0
+              },
+              "axleWeight": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "axlePosition": {
+                "enum": [
+                  "front",
+                  "rear"
+                ]
+              }
+            }
+          },
+          "ruleset": {
+            "properties": {
+              "approvalStatus": {
+                "const": "approved"
+              },
+              "deviationMaxPercent": {
+                "type": "number",
+                "minimum": 0
+              },
+              "sumMinFrontPercent": {
+                "type": "number",
+                "minimum": 0
+              },
+              "sumMinRearPercent": {
+                "type": "number",
+                "minimum": 0
+              },
+              "decisionPrecision": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "unrounded",
+                      "rounded"
+                    ]
+                  },
+                  "digits": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 6
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "rounding": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "halfUp",
+                          "halfEven",
+                          "truncate"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "mode",
+                  "digits",
+                  "rounding"
+                ],
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "mode": {
+                          "const": "rounded"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "digits": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 6
+                        },
+                        "rounding": {
+                          "enum": [
+                            "halfUp",
+                            "halfEven",
+                            "truncate"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "sourceDocument": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "sourcePage": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "approvedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          },
+          "requiredResponseItems": {
+            "items": {
+              "properties": {
+                "gradingRuleId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "measurement",
+                          "calculation"
+                        ]
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 16
+                      },
+                      "precisionPolicyRef": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "gradingRuleId": {
+                        "const": "absoluteTolerance"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "answerTolerance": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "steps": {
+            "items": {
+              "properties": {
+                "source": {
+                  "properties": {
+                    "confirmation": {
+                      "const": "approved"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

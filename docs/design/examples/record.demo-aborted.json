@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0.0",
+  "recordId": "00000000-0000-4000-8000-000000000001",
+  "anonymousStudentCode": "D-00",
+  "classConditionCode": "DEMO",
+  "sessionCode": "DEMO-ONLY",
+  "taskId": "braking-force",
+  "sessionSnapshotId": "00000000-0000-4000-8000-000000000004",
+  "difficultyMode": "guided",
+  "attemptRole": "practice",
+  "retryOfRecordId": null,
+  "retryCount": 0,
+  "runPurpose": "demo",
+  "researchEligible": false,
+  "configurationApproval": {
+    "taskApproved": false,
+    "rulesetApproved": false,
+    "layoutConfirmed": false,
+    "researchUseApproved": false
+  },
+  "displayMode": "threeD",
+  "experiencedDisplayModes": [
+    "threeD"
+  ],
+  "completionStatus": "aborted",
+  "startedAt": "2000-01-01T00:00:00Z",
+  "completedAt": "2000-01-01T00:00:00Z",
+  "durationSeconds": 0,
+  "timing": {
+    "pauseCount": 0,
+    "resumeCount": 0,
+    "timeQuality": "continuous"
+  },
+  "versions": {
+    "taskDefinitionVersion": "0.1.0-draft",
+    "rulesetVersion": "unapproved",
+    "measurementSetVersion": "unapproved",
+    "layoutVersion": "unapproved",
+    "judgeEngineVersion": "design-only",
+    "sessionConfigVersion": "unapproved",
+    "researchProtocolVersion": "unapproved",
+    "feedbackPolicyVersion": "unapproved"
+  },
+  "stepEvents": [
+    {
+      "eventId": "00000000-0000-4000-8000-000000000002",
+      "sequence": 1,
+      "elapsedMs": 0,
+      "type": "taskStarted"
+    },
+    {
+      "eventId": "00000000-0000-4000-8000-000000000003",
+      "sequence": 2,
+      "elapsedMs": 0,
+      "type": "taskFinalized",
+      "reasonCode": "DEMO_CONFIG_UNAPPROVED"
+    }
+  ],
+  "errorCount": 0,
+  "errorTypes": {},
+  "safetyViolationCount": 0,
+  "safetyViolationTypes": {},
+  "hintCount": 0,
+  "measurementInputs": [],
+  "calculationAnswers": [],
+  "vehicleVerdict": null,
+  "judgmentAnswers": [],
+  "judgmentCorrect": null,
+  "npcInspectionResult": "notCompleted",
+  "npcInspectionCount": 0,
+  "clientAppVersion": "design-only"
+}
