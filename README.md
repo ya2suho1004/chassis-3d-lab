@@ -4,13 +4,13 @@
 
 - 설계 정본: 인계 폴더(Codex 협업) `design-current/`. 이 저장소의 `docs/design/`은 2026-10-21 시점 사본(사진 제외).
 - 한글 요약: `docs/01_설계안_2026-10-20.md`, `docs/02_설계안_v2_2026-10-20.md`.
-- 진행 단계: 로드맵(`docs/design/docs/06_MVP_ROADMAP.md`) **1단계 완료 + 2단계 전반부(화면 시연) 완료** — 3D·저장·전송은 아직 없음.
+- 진행 단계: 로드맵(`docs/design/docs/06_MVP_ROADMAP.md`) **1단계 + 2단계(화면 시연·기기 저장) 완료** — 3D·전송은 아직 없음.
 
 ## 실행
 
 ```bash
 npm install
-npm test          # vitest, 57 tests
+npm test          # vitest, 72 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (http://localhost:5173)
 ```
@@ -18,6 +18,17 @@ npm run dev       # 시연 화면 (http://localhost:5173)
 ## 2단계 전반부: 시연 화면 (`src/screens/`)
 
 시작(세션 코드·익명 코드·사례·안내 방식) → 과제 화면(NPC 작업지시서, 12단계 체크리스트, 안전 확인·위험 행동 버튼, 계기 화면, 판독 입력, 기록표, 힌트, NPC 검사) → 결과(실습 결과·기기 저장·온라인 접수 3상태, 요약, 최초/최종 답 표, 연구 기록 payload JSON). 모든 수행은 `runPurpose=demo`, `researchEligible=false`. 피드백은 실제 표시 직후 `feedbackShown` 이벤트로 기록한다.
+
+## 2단계 후반부: 기기 저장 (`src/records/`)
+
+| 파일 | 역할 | 지키는 원칙 |
+|---|---|---|
+| `repository.ts` | IndexedDB 저장소(초안·확정 기록·현재 포인터) | ‘저장됨’은 transaction complete. recordId 1회 발급·초안 덮어쓰기·확정 1회(ALREADY_FROZEN). 확정 payload+envelope를 한 트랜잭션에 쓰고 초안 삭제. 실패는 `{status:'failed'}`로 반환. 네트워크 없음 |
+| `csv.ts` | 요약 CSV | 고정 헤더, UTF-8 BOM, 쉼표·따옴표·개행 이스케이프, 수식 문자(= + - @) 차단, null은 빈 칸 |
+| `types.ts` | `DeliveryEnvelope` | delivery.schema 대응. 연구 payload와 분리 |
+| 엔진 추가 | `pauseRun / resumeRun / serializeRun / rehydrateRun` | 숨김·새로고침 공백은 학습시간 제외(`timeQuality: resumed`). 복원 시 모터는 정지 상태 |
+
+화면: 시작 시 초안 저장이 끝나야 과제로 진입 · 조작마다 자동저장(상단에 ‘이 기기 저장됨/실패’) · 화면 숨김 시 일시중지 · 새로고침 후 ‘이어서 하기/새 수행’ · 완료·중단 시 확정 저장 · ‘다음 학생’은 포인터만 초기화(확정 기록 보존) · 시작 화면 하단 교사용 요약 CSV(시연 PIN 0000, 보안 통제 아님).
 
 ## 1단계 결과물 (`src/domain/`)
 
@@ -34,4 +45,4 @@ npm run dev       # 시연 화면 (http://localhost:5173)
 
 ## 아직 없는 것
 
-3D(three.js), IndexedDB 저장·새로고침 복원, Apps Script 전송·접수번호, 교사 설정, 배치 좌표(실측 진행 중). 2단계 후반부부터.
+3D(three.js), Apps Script 전송·접수번호·재전송, 교사 설정 화면, 여러 탭 잠금, 배치 좌표(실측 진행 중). 3단계·0C부터.

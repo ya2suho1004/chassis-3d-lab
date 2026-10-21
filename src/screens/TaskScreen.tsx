@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import type { SessionContext } from '../domain/record'
-import { attempt, markFeedbackShown, requestHint, submitResponse, type TaskRun } from '../domain/taskEngine'
+import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, type TaskRun } from '../domain/taskEngine'
+import { buildRecordPayload } from '../domain/record'
+import type { Repository } from '../records/repository'
+import type { DeliveryEnvelope } from '../records/types'
 import { inspectPerformance, type InspectionIssue } from '../domain/npcInspection'
 import type { FeedbackText } from '../domain/types'
 
@@ -12,8 +15,46 @@ type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: stri
 const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정' }
 const ISSUE_LABEL: Record<string, string> = { STEP_NOT_COMPLETED: '단계 미완료', UNANSWERED: '미응답', FINAL_INCORRECT: '최종 답 오답', NOT_EVALUABLE: '채점 불가', SAFETY_NOT_SATISFIED: '안전 조건 미충족' }
 
-export function TaskScreen({ session, initialRun, onFinish }: { session: SessionContext; initialRun: TaskRun; onFinish: (run: TaskRun, status: 'completed' | 'aborted') => void }) {
+export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repository; session: SessionContext; initialRun: TaskRun; onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void }) {
   const [run, setRun] = useState(initialRun)
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'failed'>('saved')
+  const runRef = useRef(run)
+  runRef.current = run
+
+  // 의미 있는 상태 변화마다 초안을 자동 저장한다(네트워크 없음). 실패는 화면에 표시한다.
+  useEffect(() => {
+    if (run === initialRun) return
+    let cancelled = false
+    setSaveStatus('saving')
+    repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(run), savedAt: new Date().toISOString() }).then((r) => {
+      if (!cancelled) setSaveStatus(r.status === 'saved' ? 'saved' : 'failed')
+    })
+    return () => { cancelled = true }
+  }, [run, repo, session, initialRun])
+
+  // 화면 숨김 → 일시중지, 복귀 → 재개 (학습시간에서 숨김 구간 제외)
+  useEffect(() => {
+    const onVis = () => {
+      const cur = runRef.current
+      if (document.visibilityState === 'hidden') { const r = pauseRun(cur, 'hidden'); if (r.outcome === 'confirmed') setRun(r.run) }
+      else { const r = resumeRun(cur, 'visible'); if (r.outcome === 'confirmed') setRun(r.run) }
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [])
+
+  const finish = async (finalRun: TaskRun, status: 'completed' | 'aborted') => {
+    // 결과 확정: payload + envelope를 같은 트랜잭션으로 저장(초안 삭제). 저장이 끝난 뒤에만 결과 화면으로.
+    try {
+      const payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status, experiencedDisplayModes: ['diagram'] })
+      const r = await repo.freezeRecord(payload)
+      if (r.status === 'failed') return onFinish(finalRun, status, null, r.errorCode ?? 'FREEZE_FAILED')
+      const stored = await repo.loadRecord(session.recordId)
+      onFinish(finalRun, status, stored?.envelope ?? null, null)
+    } catch (e) {
+      onFinish(finalRun, status, null, (e as Error).message)
+    }
+  }
   const [shown, setShown] = useState<Shown | null>(null)
   const [inputs, setInputs] = useState<Record<string, string>>({})
   const [graded, setGraded] = useState<Record<string, boolean | null>>({})
@@ -75,7 +116,7 @@ export function TaskScreen({ session, initialRun, onFinish }: { session: Session
     const r = inspectPerformance(run)
     setRun(r.run)
     setInspection({ result: r.result, issues: r.issues })
-    if (r.result === 'passed') onFinish(r.run, 'completed')
+    if (r.result === 'passed') void finish(r.run, 'completed')
   }
 
   const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${m.left}   R ${m.right}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---' }
@@ -84,7 +125,7 @@ export function TaskScreen({ session, initialRun, onFinish }: { session: Session
     <main className="screen task">
       <header className="topbar">
         <div><b>{task.title}</b> · 코드 {session.anonymousStudentCode} · {run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</div>
-        <div className="small">오류 {run.errorCount} · 안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount}</div>
+        <div className="small">오류 {run.errorCount} · 안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>{run.paused && ' · 일시중지'}</div>
       </header>
 
       <section className="npc card">
@@ -164,7 +205,7 @@ export function TaskScreen({ session, initialRun, onFinish }: { session: Session
       <section className="card">
         <div className="row">
           <button className="primary" onClick={inspect}>NPC 검사 받기</button>
-          <button onClick={() => onFinish(run, 'aborted')}>중단하고 끝내기</button>
+          <button onClick={() => void finish(run, 'aborted')}>중단하고 끝내기</button>
         </div>
         {inspection && inspection.result !== 'passed' && (
           <div className="feedback explanatory"><b>NPC: 보완이 필요합니다 ({inspection.issues.length}건)</b>

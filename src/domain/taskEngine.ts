@@ -52,6 +52,12 @@ export interface TaskRun {
   hintCount: number
   /** 같은 수행 안에서 NPC 검사를 받은 횟수 */
   npcInspectionCount: number
+  /** 일시중지 상태(화면 숨김 등). 조작 거부, 경과시간 정지 */
+  paused: boolean
+  pausedAtMs: number | null
+  pauseCount: number
+  resumeCount: number
+  timeQuality: 'continuous' | 'resumed' | 'uncertain'
   /** 중복 집계 방지용 */
   countedActionIds: string[]
 }
@@ -61,7 +67,7 @@ export type Attempt =
   | { type: 'confirmSafety'; conditionId: string }
   | { type: 'hazard'; hazardId: string }
 
-export type Outcome = 'completed' | 'blocked' | 'incomplete' | 'alreadyCompleted' | 'confirmed' | 'ignored' | 'eventLimit' | 'invalid' | 'graded'
+export type Outcome = 'completed' | 'blocked' | 'incomplete' | 'alreadyCompleted' | 'confirmed' | 'ignored' | 'eventLimit' | 'invalid' | 'graded' | 'paused'
 
 export interface AttemptResult {
   run: TaskRun
@@ -154,6 +160,11 @@ export function createTaskRun(task: ApprovedTask, opts: { difficultyMode: Diffic
     safetyViolationTypes: {},
     hintCount: 0,
     npcInspectionCount: 0,
+    paused: false,
+    pausedAtMs: null,
+    pauseCount: 0,
+    resumeCount: 0,
+    timeQuality: 'continuous',
     countedActionIds: [],
   }
   depsByRun.set(base, deps)
@@ -203,6 +214,7 @@ function attemptStep(run: TaskRun, step: TaskStep, actionId: string): AttemptRes
 }
 
 export function attempt(run: TaskRun, a: Attempt, actionId: string): AttemptResult {
+  if (run.paused) return { run, outcome: 'paused', reasonCode: 'PAUSED', feedbackKey: null }
   if (run.eventLimitReached) return { run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
   if (a.type === 'step') {
     const step = run.task.steps.find((s) => s.stepId === a.stepId)
@@ -225,6 +237,7 @@ export interface SubmitOutcome extends AttemptResult {
 }
 
 export function submitResponse(run: TaskRun, itemId: string, rawInput: string, actionId: string): SubmitOutcome {
+  if (run.paused) return { run, outcome: 'paused', reasonCode: 'PAUSED', feedbackKey: null, grading: null }
   if (run.eventLimitReached) return { run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null, grading: null }
   const { sheet, result } = submitAnswer(run.responses, itemId, rawInput)
   if (result.reasonCode === 'EMPTY_INPUT') return { run, outcome: 'ignored', reasonCode: 'EMPTY_INPUT', feedbackKey: null, grading: result }
@@ -248,6 +261,7 @@ export function submitResponse(run: TaskRun, itemId: string, rawInput: string, a
 }
 
 export function requestHint(run: TaskRun, actionId: string): AttemptResult {
+  if (run.paused) return { run, outcome: 'paused', reasonCode: 'PAUSED', feedbackKey: null }
   if (run.eventLimitReached) return { run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
   const ev = appendEvent(run, { type: 'hintRequested', actionId, stepId: run.nextStepId ?? undefined })
   if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
@@ -258,4 +272,42 @@ export function requestHint(run: TaskRun, actionId: string): AttemptResult {
 export function markFeedbackShown(run: TaskRun, kind: NonNullable<StepEvent['feedbackKind']>, feedbackKey: string, itemId?: string): AttemptResult {
   const ev = appendEvent(run, { type: 'feedbackShown', feedbackKind: kind, feedbackKey, itemId })
   return { run: ev.run, outcome: ev.ok ? 'confirmed' : 'eventLimit', reasonCode: ev.ok ? null : 'EVENT_LIMIT', feedbackKey: null }
+}
+
+// ---------- 일시중지·재개·직렬화 (활성 학습시간 보존) ----------
+// 원칙(04 §7 timing, 02 §8): 숨김·새로고침 공백은 학습시간에 넣지 않는다. 복원 시 모터 같은 순간 장비 상태는 안전한 정지 상태로 되돌린다.
+
+export function pauseRun(run: TaskRun, reason: 'hidden' | 'manual'): AttemptResult {
+  if (run.paused) return { run, outcome: 'ignored', reasonCode: 'ALREADY_PAUSED', feedbackKey: null }
+  const ev = appendEvent(run, { type: 'paused', reasonCode: reason })
+  const now = depsOf(run).now()
+  return { run: carry(ev.run, { ...ev.run, paused: true, pausedAtMs: now, pauseCount: ev.run.pauseCount + 1 }), outcome: 'confirmed', reasonCode: null, feedbackKey: null }
+}
+
+export function resumeRun(run: TaskRun, reason: 'visible' | 'manual' | 'restored'): AttemptResult {
+  if (!run.paused) return { run, outcome: 'ignored', reasonCode: 'NOT_PAUSED', feedbackKey: null }
+  const now = depsOf(run).now()
+  const gap = run.pausedAtMs === null ? 0 : Math.max(0, now - run.pausedAtMs)
+  // 시작 기준점을 숨긴 시간만큼 뒤로 밀어 경과시간이 이어지게 한다
+  const shifted = carry(run, { ...run, paused: false, pausedAtMs: null, startedAtMs: run.startedAtMs + gap, resumeCount: run.resumeCount + 1, timeQuality: run.timeQuality === 'uncertain' ? 'uncertain' : 'resumed' })
+  const ev = appendEvent(shifted, { type: 'resumed', reasonCode: reason })
+  return { run: ev.run, outcome: 'confirmed', reasonCode: null, feedbackKey: null }
+}
+
+/** 저장용 스냅샷: 모두 평범한 JSON 값이다(시계·ID 생성기는 들어 있지 않다). */
+export type RunSnapshot = Omit<TaskRun, 'startedAtMs' | 'pausedAtMs'> & { lastElapsedMs: number; snapshotVersion: 1 }
+
+export function serializeRun(run: TaskRun): RunSnapshot {
+  const { startedAtMs: _s, pausedAtMs: _p, ...rest } = run
+  const lastElapsedMs = run.events.length ? run.events[run.events.length - 1]!.elapsedMs : 0
+  return { ...rest, lastElapsedMs, snapshotVersion: 1 }
+}
+
+/** 새로고침·재시작 뒤 복원. 경과시간은 마지막 이벤트에서 이어 가고, 복원 이벤트와 resumeCount를 남긴다. */
+export function rehydrateRun(snap: RunSnapshot, deps: EngineDeps = defaultDeps()): TaskRun {
+  const { lastElapsedMs, snapshotVersion: _v, ...rest } = snap
+  const now = deps.now()
+  const base: TaskRun = { ...rest, startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality: rest.timeQuality === 'uncertain' ? 'uncertain' : 'resumed' }
+  depsByRun.set(base, deps)
+  return appendEvent(base, { type: 'resumed', reasonCode: 'restored' }).run
 }

@@ -2,8 +2,14 @@ import { useMemo } from 'react'
 import { buildRecordPayload, type SessionContext } from '../domain/record'
 import type { TaskRun } from '../domain/taskEngine'
 import { summarizeResponses } from '../domain/grading'
+import type { DeliveryEnvelope } from '../records/types'
+import { toSummaryCsv } from '../records/csv'
 
-export function ResultScreen({ session, run, completionStatus, onNextStudent }: { session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; onNextStudent: () => void }) {
+const UPLOAD_LABEL: Record<string, string> = { pending: '대기(전송 기능 없음)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
+
+export function ResultScreen({ session, run, completionStatus, envelope, saveError, onNextStudent }: {
+  session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; onNextStudent: () => void
+}) {
   const payload = useMemo(() => {
     try {
       return { ok: true as const, value: buildRecordPayload(run, session, { completedAtIso: new Date().toISOString(), completionStatus, experiencedDisplayModes: ['diagram'] }) }
@@ -14,30 +20,32 @@ export function ResultScreen({ session, run, completionStatus, onNextStudent }: 
   const sum = summarizeResponses(run.responses)
   const json = payload.ok ? JSON.stringify(payload.value, null, 2) : ''
 
-  const download = () => {
-    const b = new Blob([json], { type: 'application/json' })
+  const dl = (text: string, name: string, type: string) => {
     const a = document.createElement('a')
-    a.href = URL.createObjectURL(b)
-    a.download = `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.json`
+    a.href = URL.createObjectURL(new Blob([text], { type }))
+    a.download = name
     a.click()
   }
+  const fallbackEnvelope: DeliveryEnvelope = { recordId: session.recordId, localSaveStatus: 'failed', uploadStatus: 'pending', uploadedAt: null, receiptId: null, payloadHash: null, uploadAttemptCount: 0, lastErrorCode: saveError, nextRetryAt: null }
+  const env = envelope ?? fallbackEnvelope
 
   return (
     <main className="screen result">
       <h1>수행 결과 — {completionStatus === 'completed' ? 'NPC 검사 통과' : '중단'}</h1>
       <div className="status3">
         <span>실습 결과: <b>{payload.ok ? payload.value.npcInspectionResult === 'passed' ? '통과' : payload.value.npcInspectionResult === 'needsCorrection' ? '보완' : '미완료' : '—'}</b></span>
-        <span>이 기기 저장: <b>없음(2단계 전반부)</b></span>
-        <span>온라인 접수: <b>없음(시연)</b></span>
+        <span>이 기기 저장: <b className={env.localSaveStatus === 'saved' ? 'ok' : 'bad'}>{env.localSaveStatus === 'saved' ? '저장됨' : '실패'}</b></span>
+        <span>온라인 접수: <b>{UPLOAD_LABEL[env.uploadStatus] ?? env.uploadStatus}</b></span>
       </div>
+      {saveError && <p className="error" role="alert">이 기기에 확정 기록을 저장하지 못했습니다 ({saveError}). 아래 JSON·CSV를 내려받아 교사에게 전달하세요. 손실 방지를 보장하지는 않습니다.</p>}
       <section className="card grid2">
         <div>
           <h2>요약</h2>
           <ul>
-            <li>활성 학습시간: {payload.ok ? payload.value.durationSeconds : '—'} 초</li>
+            <li>활성 학습시간: {payload.ok ? payload.value.durationSeconds : '—'} 초 (숨김·새로고침 공백 제외, 품질 {run.timeQuality})</li>
             <li>학습 오류: {run.errorCount} ({Object.entries(run.errorTypes).map(([k, v]) => `${k} ${v}`).join(', ') || '없음'})</li>
             <li>안전 위반: {run.safetyViolationCount} ({Object.entries(run.safetyViolationTypes).map(([k, v]) => `${k} ${v}`).join(', ') || '없음'})</li>
-            <li>힌트 요청: {run.hintCount}</li>
+            <li>힌트 요청: {run.hintCount} · 일시중지 {run.pauseCount} · 재개 {run.resumeCount}</li>
             <li>NPC 검사 횟수: {run.npcInspectionCount}</li>
           </ul>
         </div>
@@ -60,11 +68,13 @@ export function ResultScreen({ session, run, completionStatus, onNextStudent }: 
       </section>
       <section className="card">
         <h2>연구 기록 payload (record.schema 1.0.0 형식 · 시연이므로 researchEligible=false)</h2>
-        {payload.ok ? <textarea readOnly value={json} rows={14} aria-label="payload" /> : <p className="error">{payload.error}</p>}
+        {payload.ok ? <textarea readOnly value={json} rows={12} aria-label="payload" /> : <p className="error">{payload.error}</p>}
         <div className="row">
-          <button onClick={download} disabled={!payload.ok}>JSON 내려받기</button>
+          <button onClick={() => dl(json, `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.json`, 'application/json')} disabled={!payload.ok}>JSON 내려받기</button>
+          <button onClick={() => payload.ok && dl(toSummaryCsv([{ payload: payload.value, envelope: env }]), `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.csv`, 'text/csv;charset=utf-8')} disabled={!payload.ok}>이 수행 CSV 내려받기</button>
           <button className="primary" onClick={onNextStudent}>다음 학생</button>
         </div>
+        <p className="small">‘다음 학생’은 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않으며 전송 기능이 생기면 원래 코드로 보내집니다.</p>
       </section>
     </main>
   )

@@ -121,7 +121,7 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
     startedAt: session.startedAtIso,
     completedAt: fin.completedAtIso,
     durationSeconds,
-    timing: { pauseCount: fin.pauseCount ?? 0, resumeCount: fin.resumeCount ?? 0, timeQuality: fin.timeQuality ?? 'continuous' },
+    timing: { pauseCount: fin.pauseCount ?? run.pauseCount, resumeCount: fin.resumeCount ?? run.resumeCount, timeQuality: fin.timeQuality ?? run.timeQuality },
     versions: {
       taskDefinitionVersion: run.task.taskDefinitionVersion,
       rulesetVersion: run.task.ruleset.rulesetVersion,
