@@ -140,7 +140,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
     <main className="screen task">
       <header className="topbar">
         <div><b>{task.title}</b> · 코드 {session.anonymousStudentCode} · {run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</div>
-        <div className="small">오류 {run.errorCount} · 안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>{run.paused && ' · 일시중지'}</div>
+        <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>{run.paused && ' · 일시중지'}</div>
       </header>
 
       <section className="npc card">
