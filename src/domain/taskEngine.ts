@@ -50,6 +50,8 @@ export interface TaskRun {
   safetyViolationCount: number
   safetyViolationTypes: Record<string, number>
   hintCount: number
+  /** 같은 수행 안에서 NPC 검사를 받은 횟수 */
+  npcInspectionCount: number
   /** 중복 집계 방지용 */
   countedActionIds: string[]
 }
@@ -111,7 +113,8 @@ function nextStepOf(task: ApprovedTask, completed: string[]): string | null {
   return s ? s.stepId : null
 }
 
-function addEvent(run: TaskRun, ev: Omit<StepEvent, 'eventId' | 'sequence' | 'elapsedMs'>): { run: TaskRun; ok: boolean } {
+/** 의미 이벤트 추가. 다른 도메인 모듈(NPC 검사 등)도 사용한다. */
+export function appendEvent(run: TaskRun, ev: Omit<StepEvent, 'eventId' | 'sequence' | 'elapsedMs'>): { run: TaskRun; ok: boolean } {
   if (run.events.length >= EVENT_LIMIT) return { run: carry(run, { ...run, eventLimitReached: true }), ok: false }
   const d = depsOf(run)
   const e: StepEvent = { eventId: d.newId(), sequence: run.events.length + 1, elapsedMs: Math.max(0, d.now() - run.startedAtMs), ...ev }
@@ -150,14 +153,15 @@ export function createTaskRun(task: ApprovedTask, opts: { difficultyMode: Diffic
     safetyViolationCount: 0,
     safetyViolationTypes: {},
     hintCount: 0,
+    npcInspectionCount: 0,
     countedActionIds: [],
   }
   depsByRun.set(base, deps)
-  return addEvent(base, { type: 'taskStarted' }).run
+  return appendEvent(base, { type: 'taskStarted' }).run
 }
 
 function blocked(run: TaskRun, actionId: string, kind: 'safety' | 'error', key: string, reasonCode: string, feedbackKey: string, stepId?: string): AttemptResult {
-  const ev = addEvent(run, { type: 'actionBlocked', stepId, actionId, reasonCode, feedbackKey })
+  const ev = appendEvent(run, { type: 'actionBlocked', stepId, actionId, reasonCode, feedbackKey })
   if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
   return { run: countBlocked(ev.run, actionId, kind, key), outcome: 'blocked', reasonCode, feedbackKey }
 }
@@ -193,7 +197,7 @@ function attemptStep(run: TaskRun, step: TaskStep, actionId: string): AttemptRes
   if (step.stepId === 'off') motorOn = false
   const nextStepId = nextStepOf(run.task, completedSteps)
   const updated = carry(run, { ...run, completedSteps, satisfiedSafety, motorOn, nextStepId, allStepsCompleted: nextStepId === null })
-  const ev = addEvent(updated, { type: 'stepCompleted', stepId: step.stepId, actionId })
+  const ev = appendEvent(updated, { type: 'stepCompleted', stepId: step.stepId, actionId })
   if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
   return { run: ev.run, outcome: 'completed', reasonCode: null, feedbackKey: null }
 }
@@ -230,7 +234,7 @@ export function submitResponse(run: TaskRun, itemId: string, rawInput: string, a
     return { ...b, outcome: b.outcome === 'blocked' ? 'invalid' : b.outcome, grading: result }
   }
   const withSheet = carry(run, { ...run, responses: sheet })
-  const ev = addEvent(withSheet, { type: 'answerSubmitted', itemId, actionId, reasonCode: result.correct ? undefined : 'INCORRECT' })
+  const ev = appendEvent(withSheet, { type: 'answerSubmitted', itemId, actionId, reasonCode: result.correct ? undefined : 'INCORRECT' })
   if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null, grading: result }
   let out = ev.run
   if (result.correct === false) {
@@ -245,13 +249,13 @@ export function submitResponse(run: TaskRun, itemId: string, rawInput: string, a
 
 export function requestHint(run: TaskRun, actionId: string): AttemptResult {
   if (run.eventLimitReached) return { run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
-  const ev = addEvent(run, { type: 'hintRequested', actionId, stepId: run.nextStepId ?? undefined })
+  const ev = appendEvent(run, { type: 'hintRequested', actionId, stepId: run.nextStepId ?? undefined })
   if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
   return { run: carry(ev.run, { ...ev.run, hintCount: ev.run.hintCount + 1 }), outcome: 'confirmed', reasonCode: null, feedbackKey: null }
 }
 
 /** 실제 화면에 피드백이 표시된 직후 UI가 호출한다. 읽음 증거가 아니다. */
 export function markFeedbackShown(run: TaskRun, kind: NonNullable<StepEvent['feedbackKind']>, feedbackKey: string, itemId?: string): AttemptResult {
-  const ev = addEvent(run, { type: 'feedbackShown', feedbackKind: kind, feedbackKey, itemId })
+  const ev = appendEvent(run, { type: 'feedbackShown', feedbackKind: kind, feedbackKey, itemId })
   return { run: ev.run, outcome: ev.ok ? 'confirmed' : 'eventLimit', reasonCode: ev.ok ? null : 'EVENT_LIMIT', feedbackKey: null }
 }

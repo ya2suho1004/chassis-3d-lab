@@ -11,7 +11,7 @@ const task2 = lv2 as ApprovedTask
 let tick = 0
 let n = 0
 const deps = () => ({ now: () => (tick += 1000), newId: () => `00000000-0000-4000-8000-${String(++n).padStart(12, '0')}` })
-const aid = () => `a-${++n}`
+const aid = () => `10000000-0000-4000-8000-${String(++n).padStart(12, '0')}` // actionId는 계약상 UUID
 
 function start(task = task1, mode: 'guided' | 'unguided' = 'guided') {
   tick = 0
