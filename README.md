@@ -10,10 +10,23 @@
 
 ```bash
 npm install
-npm test          # vitest, 77 tests
+npm test          # vitest, 89 tests
 npx tsc --noEmit  # 타입 검사
-npm run dev       # 시연 화면 (http://localhost:5173)
+npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
+
+## 3단계: 3D 실습장 (`src/scene/`, `src/screens/LabScreen.tsx`)
+
+| 파일 | 역할 | 지키는 원칙 |
+|---|---|---|
+| `src/data/layout/layout.dev-provisional.json` | 개발용 임시 배치(장비 23·기둥 4·벽·트인 변·시작점·NPC) | `sourceStatus=devProvisional`, `layoutConfirmed=false`, `metricScaleKnown=false`. 항목마다 근거(`basis`: measured / measured-partial / sketch / assumption / teacher)를 적는다. 제동력 구역만 2026-10-21 실측값, 나머지는 스케치 비례·가정 |
+| `scene/layoutModel.ts` | 배치 읽기·발자국(footprint)·근접 판정 | 원점은 임시 배치의 북서 모서리, x=동, z=남, 단위 m. 접근점 반경 1.3m 안이면 ‘근처’ |
+| `scene/pathfind.ts` | 격자(0.5m) A* 길찾기 | 장비·기둥·벽 밖을 막고 아바타 반경만큼 띄운다. 막힌 곳이 목적지면 경로 없음(null) |
+| `scene/LabScene.tsx` | three.js(R3F) 장면 | 단순 도형만, 그림자 없음, 저사양 체크 시 해상도·안티에일리어싱 낮춤. 바닥 탭 이동, 드래그 회전, 3인칭 추적 카메라, 장비 라벨(drei Html). 사진·NCS 그림 사용 안 함 |
+| `screens/LabScreen.tsx` | 실습장 HUD | 장비 탭 → 설명 카드·도감, 지정 위치 이동 버튼(교관·시험기·조작부·시작점), NPC 교관 근처(2m)에서 ‘과제 수령’ → 수행 번호 발급·초안 저장. 과제 패널은 3D 모드에서 해당 장비 접근점에 서야 단계 수행 가능(‘이동 필요’) |
+| 엔진 추가 | `changeDisplayMode` | 3D↔도식 전환을 `displayModeChanged` 이벤트(from/to/사유)로 남기고 `experiencedDisplayModes`에 누적. 기록 payload의 `displayMode`는 시작 모드 |
+
+화면 흐름: 시작 → 실습장(둘러보기·도감) → NPC 교관에게 과제 수령 → 과제 패널(3D 옆) → NPC 검사 또는 중단 → 결과. 도식 모드로 바꾸면 3D 없이 과제 패널만 보인다(저사양 대체).
 
 ## 2단계 전반부: 시연 화면 (`src/screens/`)
 
@@ -46,4 +59,4 @@ npm run dev       # 시연 화면 (http://localhost:5173)
 
 ## 아직 없는 것
 
-3D(three.js), Apps Script 전송·접수번호·재전송, 교사 설정 화면, 여러 탭 잠금, 배치 좌표(실측 진행 중). 3단계·0C부터.
+Apps Script 전송·접수번호·재전송(0C), 교사 설정 화면, 여러 탭 잠금, 실측 기반 실제 배치(임시 배치는 실제 학교 재현이 아님), 장비별 작업 애니메이션, 과제 동작 매핑(U1~U8).
