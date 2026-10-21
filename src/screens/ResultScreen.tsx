@@ -47,6 +47,7 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
             <li>안전 위반: {run.safetyViolationCount} ({Object.entries(run.safetyViolationTypes).map(([k, v]) => `${k} ${v}`).join(', ') || '없음'})</li>
             <li>힌트 요청: {run.hintCount} · 일시중지 {run.pauseCount} · 재개 {run.resumeCount}</li>
             <li>NPC 검사 횟수: {run.npcInspectionCount}</li>
+            <li>수업 시점: {session.usagePhase === 'preview' ? '대기 중 예습' : session.usagePhase === 'review' ? '실습 후 복습' : '기타'} · 도움 방식: {run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</li>
           </ul>
         </div>
         <div>
@@ -67,7 +68,7 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
         </div>
       </section>
       <section className="card">
-        <h2>연구 기록 payload (record.schema 1.0.0 형식 · 시연이므로 researchEligible=false)</h2>
+        <h2>연구 기록 payload (record.schema 1.1.0 형식 · 시연이므로 researchEligible=false)</h2>
         {payload.ok ? <textarea readOnly value={json} rows={12} aria-label="payload" /> : <p className="error">{payload.error}</p>}
         <div className="row">
           <button onClick={() => dl(json, `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.json`, 'application/json')} disabled={!payload.ok}>JSON 내려받기</button>

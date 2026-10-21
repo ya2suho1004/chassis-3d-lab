@@ -1,0 +1,847 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "layoutVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "layoutConfirmed": {
+      "type": "boolean"
+    },
+    "sourceStatus": {
+      "enum": [
+        "surveyPending",
+        "surveyed",
+        "teacherApproved"
+      ]
+    },
+    "coordinateSystem": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "const": "m"
+        },
+        "originDescription": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "axesDescription": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unit",
+        "originDescription",
+        "axesDescription"
+      ],
+      "additionalProperties": false
+    },
+    "room": {
+      "type": "object",
+      "properties": {
+        "widthMeters": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lengthMeters": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "heightMeters": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "widthMeters",
+        "lengthMeters",
+        "heightMeters"
+      ],
+      "additionalProperties": false
+    },
+    "boundary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "z": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "z"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 100
+    },
+    "doors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "doorId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "z": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rotationYDegrees": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z",
+              "rotationYDegrees"
+            ],
+            "additionalProperties": false
+          },
+          "widthMeters": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "surveyReference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "doorId",
+          "position",
+          "widthMeters",
+          "surveyReference"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 30
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "columnId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "z": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rotationYDegrees": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z",
+              "rotationYDegrees"
+            ],
+            "additionalProperties": false
+          },
+          "size": {
+            "type": "object",
+            "properties": {
+              "widthMeters": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lengthMeters": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "heightMeters": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "widthMeters",
+              "lengthMeters",
+              "heightMeters"
+            ],
+            "additionalProperties": false
+          },
+          "surveyReference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "columnId",
+          "position",
+          "size",
+          "surveyReference"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 100
+    },
+    "safetyAisles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "aisleId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "z": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "z"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 2,
+            "maxItems": 100
+          },
+          "widthMeters": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "teacherConfirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "aisleId",
+          "path",
+          "widthMeters",
+          "teacherConfirmed"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 30
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "equipmentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "z": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "rotationYDegrees": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z",
+              "rotationYDegrees"
+            ],
+            "additionalProperties": false
+          },
+          "size": {
+            "type": "object",
+            "properties": {
+              "widthMeters": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lengthMeters": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "heightMeters": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "widthMeters",
+              "lengthMeters",
+              "heightMeters"
+            ],
+            "additionalProperties": false
+          },
+          "interactiveForMvp": {
+            "type": "boolean"
+          },
+          "accessPoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "accessPointId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "position": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "y": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "z": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "rotationYDegrees": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y",
+                    "z",
+                    "rotationYDegrees"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "accessPointId",
+                "position"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 10
+          },
+          "surveyReference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "equipmentId",
+          "label",
+          "position",
+          "size",
+          "interactiveForMvp",
+          "accessPoints",
+          "surveyReference"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 100
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "layoutVersion",
+    "layoutConfirmed",
+    "sourceStatus",
+    "coordinateSystem",
+    "room",
+    "boundary",
+    "doors",
+    "columns",
+    "safetyAisles",
+    "equipment"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chassis-3d-lab:layout:1.0.0",
+  "title": "실제 학교 배치 조사 계약: 미측정 좌표는 null",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "layoutConfirmed": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sourceStatus": {
+            "const": "teacherApproved"
+          },
+          "coordinateSystem": {
+            "properties": {
+              "originDescription": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "axesDescription": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              }
+            }
+          },
+          "room": {
+            "properties": {
+              "widthMeters": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "lengthMeters": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "heightMeters": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          },
+          "boundary": {
+            "minItems": 3
+          },
+          "doors": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "position": {
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "rotationYDegrees": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "widthMeters": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "surveyReference": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              }
+            }
+          },
+          "columns": {
+            "items": {
+              "properties": {
+                "position": {
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "rotationYDegrees": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "size": {
+                  "properties": {
+                    "widthMeters": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "lengthMeters": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "heightMeters": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                "surveyReference": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              }
+            }
+          },
+          "safetyAisles": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "teacherConfirmed": {
+                  "const": true
+                }
+              }
+            }
+          },
+          "equipment": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "position": {
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "rotationYDegrees": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "size": {
+                  "properties": {
+                    "widthMeters": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "lengthMeters": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "heightMeters": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  }
+                },
+                "accessPoints": {
+                  "items": {
+                    "properties": {
+                      "position": {
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          },
+                          "z": {
+                            "type": "number"
+                          },
+                          "rotationYDegrees": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "surveyReference": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "interactiveForMvp": {
+                        "const": true
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "accessPoints": {
+                        "minItems": 1
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "catalogVersion": "1.1.0",
+  "current": {
+    "task": {
+      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+      "path": "task.schema.json"
+    },
+    "record": {
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "path": "record.schema.json"
+    },
+    "layout": {
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0",
+      "path": "layout.schema.json"
+    },
+    "delivery": {
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0",
+      "path": "delivery.schema.json"
+    },
+    "submission": {
+      "schemaId": "urn:chassis-3d-lab:submission:1.1.0",
+      "path": "submission.schema.json"
+    }
+  },
+  "legacy": {
+    "1.0.0": {
+      "task": "legacy/1.0.0/task.schema.json",
+      "record": "legacy/1.0.0/record.schema.json",
+      "layout": "legacy/1.0.0/layout.schema.json",
+      "delivery": "legacy/1.0.0/delivery.schema.json",
+      "submission": "legacy/1.0.0/submission.schema.json"
+    }
+  },
+  "recordIngestionVersions": [
+    "1.0.0",
+    "1.1.0"
+  ],
+  "rules": [
+    "Select by schemaVersion before validation; no silent payload upgrade.",
+    "Keep frozen record bytes and payloadHash; never inject usagePhase into legacy outbox.",
+    "ProtocolVersion remains 1; delivery schema remains 1.0.0."
+  ]
+}

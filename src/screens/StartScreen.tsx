@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { createDemoSession, listTasks, validateStudentCode, APP_VERSION } from '../app/session'
 import type { SessionContext } from '../domain/record'
 import type { DifficultyMode } from '../domain/taskEngine'
+import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
 import type { Repository } from '../records/repository'
 import { toSummaryCsv } from '../records/csv'
@@ -14,6 +15,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
   const [sessionCode] = useState('DEMO-ONLY')
   const [taskIdx, setTaskIdx] = useState(0)
   const [mode, setMode] = useState<DifficultyMode>('guided')
+  const [phase, setPhase] = useState<UsagePhase>('preview')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [counts, setCounts] = useState<{ records: number; outbox: number } | null>(null)
@@ -32,7 +34,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
     setError(null)
     setBusy(true)
     const task = tasks[taskIdx]!
-    const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: mode === 'guided' ? 'practice' : 'primary' }), task, mode)
+    const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase }), task, mode)
     setBusy(false)
     if (err) setError(err)
   }
@@ -73,7 +75,13 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
         ))}
       </section>
       <section className="card">
-        <h2>도움 방식</h2>
+        <h2>수업 시점 (언제 하는가)</h2>
+        <label className="radio"><input type="radio" name="phase" checked={phase === 'preview'} onChange={() => setPhase('preview')} /> 대기 중 예습 — 실제 실습 순번을 기다리는 동안</label>
+        <label className="radio"><input type="radio" name="phase" checked={phase === 'review'} onChange={() => setPhase('review')} /> 실습 후 복습 — 실제 실습을 마치고 다시 확인</label>
+        <label className="radio"><input type="radio" name="phase" checked={phase === 'other'} onChange={() => setPhase('other')} /> 기타(시연·연습)</label>
+      </section>
+      <section className="card">
+        <h2>도움 방식 (어떻게 돕는가)</h2>
         <label className="radio"><input type="radio" name="mode" checked={mode === 'guided'} onChange={() => setMode('guided')} /> 안내 있음 (견습) — 다음 할 일을 알려 줌</label>
         <label className="radio"><input type="radio" name="mode" checked={mode === 'unguided'} onChange={() => setMode('unguided')} /> 안내 없음 (정비사) — 순서를 스스로 찾음, 안전 경고는 유지</label>
       </section>

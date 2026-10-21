@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0.0",
+  "schemaVersion": "1.1.0",
   "layoutVersion": "unapproved",
   "layoutConfirmed": false,
   "sourceStatus": "surveyPending",
@@ -36,5 +36,7 @@
       "accessPoints": [],
       "surveyReference": null
     }
-  ]
+  ],
+  "openings": [],
+  "siteMeasurements": []
 }

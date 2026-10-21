@@ -1,9 +1,11 @@
-// 기록 payload 생성 — docs/design/contracts/record.schema.json (1.0.0) 형식
+// 기록 payload 생성 — docs/design/contracts/record.schema.json (1.1.0) 형식
 // 원칙(04 §7~8, 05 §4): 확정 연구 내용(recordPayload)만 만든다. 저장·전송 상태(deliveryEnvelope)는 넣지 않는다.
 // durationSeconds는 이벤트 경과시간(단조시계)에서 오며 completedAt−startedAt으로 계산하지 않는다.
 // researchEligible은 승인 4종·runPurpose=research·completed·NPC passed가 모두 참일 때만 true다.
 import { summarizeResponses } from './grading'
 import type { DifficultyMode, StepEvent, TaskRun } from './taskEngine'
+
+export type UsagePhase = 'preview' | 'review' | 'other'
 
 export interface SessionContext {
   recordId: string
@@ -15,6 +17,8 @@ export interface SessionContext {
   retryOfRecordId: string | null
   retryCount: number
   runPurpose: 'demo' | 'research'
+  /** 수업 시점: 대기 중 예습 / 실습 후 복습 / 기타. 안내 방식·수행 목적과 별개 축 */
+  usagePhase: UsagePhase
   configurationApproval: { taskApproved: boolean; rulesetApproved: boolean; layoutConfirmed: boolean; researchUseApproved: boolean }
   displayMode: 'threeD' | 'diagram'
   versions: { layoutVersion: string; judgeEngineVersion: string; sessionConfigVersion: string; researchProtocolVersion: string; feedbackPolicyVersion: string }
@@ -32,7 +36,7 @@ export interface FinalizeOptions {
 }
 
 export interface RecordPayload {
-  schemaVersion: '1.0.0'
+  schemaVersion: '1.1.0'
   recordId: string
   anonymousStudentCode: string
   classConditionCode: string
@@ -44,6 +48,7 @@ export interface RecordPayload {
   retryOfRecordId: string | null
   retryCount: number
   runPurpose: 'demo' | 'research'
+  usagePhase: UsagePhase
   researchEligible: boolean
   configurationApproval: SessionContext['configurationApproval']
   displayMode: 'threeD' | 'diagram'
@@ -101,7 +106,7 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
   const durationSeconds = lastEvent ? Math.round(lastEvent.elapsedMs / 1000) : 0
 
   return {
-    schemaVersion: '1.0.0',
+    schemaVersion: '1.1.0',
     recordId: session.recordId,
     anonymousStudentCode: session.anonymousStudentCode,
     classConditionCode: session.classConditionCode,
@@ -113,6 +118,7 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
     retryOfRecordId: session.retryOfRecordId,
     retryCount: session.retryCount,
     runPurpose: session.runPurpose,
+    usagePhase: session.usagePhase,
     researchEligible,
     configurationApproval: approvals,
     displayMode: session.displayMode,

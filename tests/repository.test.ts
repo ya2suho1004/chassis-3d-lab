@@ -19,7 +19,7 @@ beforeEach(async () => {
 })
 
 function draftFor(code = 'A-01') {
-  const session = createDemoSession({ studentCode: code, sessionCode: 'DEMO-ONLY', attemptRole: 'practice' })
+  const session = createDemoSession({ studentCode: code, sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview' })
   const run = createTaskRun(task, { difficultyMode: 'guided' })
   return { session, run }
 }

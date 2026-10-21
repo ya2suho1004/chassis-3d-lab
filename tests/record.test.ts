@@ -24,6 +24,7 @@ const demoSession: SessionContext = {
   retryOfRecordId: null,
   retryCount: 0,
   runPurpose: 'demo',
+  usagePhase: 'preview',
   configurationApproval: { taskApproved: true, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false },
   displayMode: 'threeD',
   versions: { layoutVersion: 'surveyed-partial-2026-10-21', judgeEngineVersion: '0.1.0', sessionConfigVersion: 'unapproved', researchProtocolVersion: 'unapproved', feedbackPolicyVersion: 'unapproved' },
@@ -53,9 +54,11 @@ const ajv = new Ajv2020({ allErrors: true, strict: false })
 addFormats(ajv)
 const validate = ajv.compile(recordSchema)
 
-describe('기록 payload — 계약 1.0.0 형식', () => {
-  test('완료 수행은 record.schema.json 검사를 통과한다', () => {
+describe('기록 payload — 계약 1.1.0 형식', () => {
+  test('완료 수행은 record.schema.json(1.1.0) 검사를 통과하고 usagePhase를 담는다', () => {
     const payload = buildRecordPayload(fullRun(), demoSession, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'completed' })
+    expect(payload.schemaVersion).toBe('1.1.0')
+    expect(payload.usagePhase).toBe('preview')
     const ok = validate(payload)
     expect(validate.errors ?? []).toEqual([])
     expect(ok).toBe(true)

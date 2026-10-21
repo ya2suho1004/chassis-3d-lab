@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
+import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
 import type { SessionContext } from '../domain/record'
 import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, type TaskRun } from '../domain/taskEngine'
 import { buildRecordPayload } from '../domain/record'
@@ -65,6 +66,9 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
   const m = task.measurement
   const done = (id: string) => run.completedSteps.includes(id)
   const guidance = guidanceFor(run)
+  const showMarks = answerFeedbackAllowed(run)
+  const mark = (id: string) => (!showMarks ? (graded[id] !== undefined ? '저장' : '') : graded[id] === true ? '✓' : graded[id] === false ? '✗' : '')
+  const markClass = (id: string) => (!showMarks ? '' : graded[id] === true ? 'ok' : graded[id] === false ? 'bad' : '')
 
   const show = (r: TaskRun, s: Shown, feedbackKey: string | null, itemId?: string) => {
     // 실제로 화면에 표시한 직후에만 feedbackShown을 기록한다 (읽음 증거 아님)
@@ -101,8 +105,19 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
     if (res.outcome === 'ignored') return setShown({ kind: 'guidance', title: '값을 입력하세요', text: null, plain: `${ITEM_LABEL[itemId]} 칸이 비어 있습니다.` })
     if (res.outcome === 'invalid') return show(res.run, { kind: 'explanatory', title: '입력 형식 오류', text: null, plain: res.reasonCode === 'FORMAT_INTEGER_REQUIRED' ? '정수만 입력합니다 (예: 240).' : '숫자만 입력합니다 (예: 6.6).' }, null)
     setGraded((g) => ({ ...g, [itemId]: res.grading?.correct ?? null }))
+    // 무안내 모드: 필수 응답 6개의 최초 답이 모두 저장되기 전에는 정오를 알려 주지 않는다(feedbackPolicy, 제안 상태)
+    if (!answerFeedbackAllowed(res.run)) {
+      setRun(res.run)
+      const remaining = res.run.responses.items.filter((i) => i.firstInput === null && i.firstAnswer === null).length
+      return setShown({ kind: 'guidance', title: `${ITEM_LABEL[itemId]} 입력 저장`, text: null, plain: remaining > 0 ? `저장했습니다. 남은 입력 ${remaining}개를 모두 제출하면 정오를 알려 줍니다.` : '모든 최초 응답이 저장되었습니다.' })
+    }
     if (res.grading?.correct === false) return show(res.run, { kind: 'explanatory', title: `${ITEM_LABEL[itemId]} — 다시 확인하세요`, text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey, itemId)
     setRun(res.run)
+    const wrongNow = res.run.responses.items.filter((i) => i.finalCorrect === false).map((i) => ITEM_LABEL[i.itemId] ?? i.itemId)
+    if (run.difficultyMode === 'unguided' && !answerFeedbackAllowed(run) && wrongNow.length > 0) {
+      // 방금 마지막 최초 응답이 저장됨 → 틀린 항목 이름만 알려 준다(정답은 알려 주지 않음)
+      return setShown({ kind: 'explanatory', title: '최초 응답이 모두 저장되었습니다', text: null, plain: `다시 확인할 항목: ${wrongNow.join(', ')}. 해당 칸을 고쳐 다시 입력하면 설명을 보여 줍니다.` })
+    }
     setShown({ kind: 'guidance', title: `${ITEM_LABEL[itemId]} 입력 확인`, text: null, plain: '맞습니다. 다음으로 진행하세요.' })
   }
 
@@ -181,7 +196,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
               <label>{ITEM_LABEL[id]}</label>
               <input inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={id === 'axleWeight' ? !done('enter') : !done('press')} aria-label={ITEM_LABEL[id]} />
               <button onClick={() => submit(id)} disabled={id === 'axleWeight' ? !done('enter') : !done('press')}>입력</button>
-              <span className={`mark ${graded[id] === true ? 'ok' : graded[id] === false ? 'bad' : ''}`}>{graded[id] === true ? '✓' : graded[id] === false ? '✗' : ''}</span>
+              <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
             </div>
           ))}
 
@@ -189,12 +204,12 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
           <table className="sheet">
             <thead><tr><th>항목</th><th>산출값</th><th>기준</th><th></th></tr></thead>
             <tbody>
-              <tr><td>편차 (%)</td><td><input inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!done('off')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!done('off')}>입력</button> <span className={`mark ${graded.deviation === true ? 'ok' : graded.deviation === false ? 'bad' : ''}`}>{graded.deviation === true ? '✓' : graded.deviation === false ? '✗' : ''}</span></td></tr>
-              <tr><td>합 (%)</td><td><input inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!done('off')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!done('off')}>입력</button> <span className={`mark ${graded.sum === true ? 'ok' : graded.sum === false ? 'bad' : ''}`}>{graded.sum === true ? '✓' : graded.sum === false ? '✗' : ''}</span></td></tr>
+              <tr><td>편차 (%)</td><td><input inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!done('off')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('deviation')}`}>{mark('deviation')}</span></td></tr>
+              <tr><td>합 (%)</td><td><input inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!done('off')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('sum')}`}>{mark('sum')}</span></td></tr>
               <tr><td>판정</td><td>
                 <label className="radio"><input type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
                 <label className="radio"><input type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
-              </td><td>편차·합 모두 기준 안이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('off')}>입력</button> <span className={`mark ${graded.vehicleCondition === true ? 'ok' : graded.vehicleCondition === false ? 'bad' : ''}`}>{graded.vehicleCondition === true ? '✓' : graded.vehicleCondition === false ? '✗' : ''}</span></td></tr>
+              </td><td>편차·합 모두 기준 안이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
               <tr><td>정비 및 조치할 사항</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="양호면 '없음'" aria-label="조치" /> <span className="small">(시연에서는 채점·기록하지 않음)</span></td></tr>
             </tbody>
           </table>

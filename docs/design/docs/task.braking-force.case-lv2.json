@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.1.0",
   "taskId": "braking-force",
-  "taskDefinitionVersion": "1.0.0-teacher-2026-10-21",
-  "title": "제동력 측정 및 판독 — Lv2 사례(편제동 불량): 후 좌 250 / 우 190 / 축중 600 kg",
-  "approvalStatus": "approved",
+  "taskDefinitionVersion": "1.1.0-review-case-2-2026-10-21",
+  "title": "제동력 측정 및 판독 — 사례 2",
+  "approvalStatus": "pending",
   "measurement": {
     "measurementSetVersion": "1.0.0-teacher-2026-10-21",
     "sourceType": "teacherApprovedCase",
@@ -12,10 +12,11 @@
     "left": 250,
     "right": 190,
     "axleWeight": 600,
-    "axlePosition": "rear"
+    "axlePosition": "rear",
+    "inputsIntegerOnly": true
   },
   "ruleset": {
-    "rulesetVersion": "1.0.0-teacher-2026-10-21",
+    "rulesetVersion": "1.1.0-school-0A-2026-10-21",
     "approvalStatus": "approved",
     "deviationMaxPercent": 8,
     "sumMinFrontPercent": 50,
@@ -27,7 +28,9 @@
     },
     "sourceDocument": "자동차정비기능사 답안지 작성 책(골든벨); 섀시 디지털교과서 html 제작 지침; NCS LM1506030327 p.99~100 (교사 확인 0A, 2026-10-21). 경계값 포함(≤8, ≥20/≥50 양호)",
     "sourcePage": "쪽 미기재(교사 확인지에 쪽 없음)",
-    "approvedAt": "2026-10-21T00:00:00+09:00"
+    "approvedAt": null,
+    "judgmentValueSource": "written",
+    "approvedOn": "2026-10-21"
   },
   "requiredResponseItems": [
     {
@@ -365,5 +368,18 @@
       "why": "편차 8% 이내, 뒤축 합 20% 이상이면 양호입니다(경계값 포함).",
       "how": "계산한 편차와 합을 기준과 하나씩 비교하세요."
     }
+  },
+  "vocabularyVersion": "1.1.0",
+  "teacherReviewReference": "collaboration/teacher-check-0A.json",
+  "feedbackPolicy": {
+    "version": "1.1.0-design",
+    "status": "proposed",
+    "unguidedAnswerFeedback": "afterAllFirstResponses",
+    "answerFeedbackKeys": [
+      "wrong_reading",
+      "wrong_calc",
+      "wrong_verdict"
+    ],
+    "safetyFeedback": "immediate"
   }
 }

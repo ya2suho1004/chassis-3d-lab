@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "schemaVersion": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "taskId": {
       "const": "braking-force"
@@ -43,7 +43,8 @@
               "enum": [
                 "N",
                 "kN",
-                "kgf"
+                "kgf",
+                "kg"
               ]
             },
             {
@@ -108,6 +109,9 @@
               "type": "null"
             }
           ]
+        },
+        "inputsIntegerOnly": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -118,9 +122,58 @@
         "left",
         "right",
         "axleWeight",
-        "axlePosition"
+        "axlePosition",
+        "inputsIntegerOnly"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "inputsIntegerOnly": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "left": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "right": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "axleWeight": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
     },
     "ruleset": {
       "type": "object",
@@ -280,6 +333,23 @@
               "type": "null"
             }
           ]
+        },
+        "judgmentValueSource": {
+          "enum": [
+            "raw",
+            "written"
+          ]
+        },
+        "approvedOn": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -291,9 +361,150 @@
         "decisionPrecision",
         "sourceDocument",
         "sourcePage",
-        "approvedAt"
+        "approvedAt",
+        "judgmentValueSource",
+        "approvedOn"
       ],
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "approvalStatus": {
+                "const": "approved"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "approvalStatus": {
+                "const": "approved"
+              },
+              "deviationMaxPercent": {
+                "type": "number",
+                "minimum": 0
+              },
+              "sumMinFrontPercent": {
+                "type": "number",
+                "minimum": 0
+              },
+              "sumMinRearPercent": {
+                "type": "number",
+                "minimum": 0
+              },
+              "decisionPrecision": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "unrounded",
+                      "rounded"
+                    ]
+                  },
+                  "digits": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 6
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "rounding": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "halfUp",
+                          "halfEven",
+                          "truncate"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "mode",
+                  "digits",
+                  "rounding"
+                ],
+                "additionalProperties": false,
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "mode": {
+                          "const": "rounded"
+                        }
+                      }
+                    },
+                    "then": {
+                      "properties": {
+                        "digits": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 6
+                        },
+                        "rounding": {
+                          "enum": [
+                            "halfUp",
+                            "halfEven",
+                            "truncate"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "sourceDocument": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              "sourcePage": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "approvedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "anyOf": [
+              {
+                "properties": {
+                  "approvedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "approvedOn": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
     },
     "requiredResponseItems": {
       "type": "array",
@@ -327,9 +538,11 @@
           "gradingRuleId": {
             "anyOf": [
               {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
+                "enum": [
+                  "decimalExact",
+                  "absoluteTolerance",
+                  "vehicleVerdictMatch"
+                ]
               },
               {
                 "type": "null"
@@ -350,9 +563,10 @@
           "precisionPolicyRef": {
             "anyOf": [
               {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
+                "enum": [
+                  "integer",
+                  "truncate1"
+                ]
               },
               {
                 "type": "null"
@@ -412,9 +626,14 @@
           "requiredSafetyConditions": {
             "type": "array",
             "items": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
+              "enum": [
+                "s-ppe",
+                "s-lift",
+                "s-motor",
+                "s-exit",
+                "s-accel",
+                "s-engine"
+              ]
             },
             "maxItems": 32
           },
@@ -428,9 +647,20 @@
             ]
           },
           "completionCondition": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
+            "enum": [
+              "teacherApprovalRequired",
+              "ppeConfirmed",
+              "inspected",
+              "vehicleCentered",
+              "axleWeightRead",
+              "brakeModeSelected",
+              "liftLowered",
+              "motorOn",
+              "pedalPressed",
+              "readingsSubmitted",
+              "vehicleExited",
+              "answersSubmitted"
+            ]
           },
           "onBlockedFeedbackKey": {
             "type": "string",
@@ -529,6 +759,61 @@
         ],
         "additionalProperties": false
       }
+    },
+    "vocabularyVersion": {
+      "const": "1.1.0"
+    },
+    "teacherReviewReference": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "feedbackPolicy": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "approved"
+          ]
+        },
+        "unguidedAnswerFeedback": {
+          "const": "afterAllFirstResponses"
+        },
+        "answerFeedbackKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "safetyFeedback": {
+          "const": "immediate"
+        }
+      },
+      "required": [
+        "version",
+        "status",
+        "unguidedAnswerFeedback",
+        "answerFeedbackKeys",
+        "safetyFeedback"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -541,11 +826,14 @@
     "ruleset",
     "requiredResponseItems",
     "steps",
-    "feedback"
+    "feedback",
+    "vocabularyVersion",
+    "teacherReviewReference",
+    "feedbackPolicy"
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:chassis-3d-lab:task:1.0.0",
+  "$id": "urn:chassis-3d-lab:task:1.1.0",
   "title": "제동력 단일 MVP 과제 계약: 미승인값은 null",
   "$comment": "approved의 출처 진위·실제차량 적합성·경계정책은 별도 readiness 검증.",
   "allOf": [
@@ -565,7 +853,8 @@
                 "enum": [
                   "N",
                   "kN",
-                  "kgf"
+                  "kgf",
+                  "kg"
                 ]
               },
               "caseId": {
@@ -691,18 +980,45 @@
                 "maxLength": 64
               },
               "approvedAt": {
-                "type": "string",
-                "format": "date-time"
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
-            }
+            },
+            "anyOf": [
+              {
+                "properties": {
+                  "approvedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "approvedOn": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            ]
           },
           "requiredResponseItems": {
             "items": {
               "properties": {
                 "gradingRuleId": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64
+                  "enum": [
+                    "decimalExact",
+                    "absoluteTolerance",
+                    "vehicleVerdictMatch"
+                  ]
                 }
               },
               "allOf": [
@@ -725,9 +1041,10 @@
                         "maxLength": 16
                       },
                       "precisionPolicyRef": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 64
+                        "enum": [
+                          "integer",
+                          "truncate1"
+                        ]
                       }
                     }
                   }
@@ -761,6 +1078,21 @@
                       "const": "approved"
                     }
                   }
+                },
+                "completionCondition": {
+                  "enum": [
+                    "ppeConfirmed",
+                    "inspected",
+                    "vehicleCentered",
+                    "axleWeightRead",
+                    "brakeModeSelected",
+                    "liftLowered",
+                    "motorOn",
+                    "pedalPressed",
+                    "readingsSubmitted",
+                    "vehicleExited",
+                    "answersSubmitted"
+                  ]
                 }
               }
             }

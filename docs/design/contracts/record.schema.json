@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "schemaVersion": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "recordId": {
       "type": "string",
@@ -640,10 +640,18 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 64
+    },
+    "usagePhase": {
+      "enum": [
+        "preview",
+        "review",
+        "other"
+      ]
     }
   },
   "required": [
     "schemaVersion",
+    "usagePhase",
     "recordId",
     "anonymousStudentCode",
     "classConditionCode",
@@ -682,7 +690,7 @@
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:chassis-3d-lab:record:1.0.0",
+  "$id": "urn:chassis-3d-lab:record:1.1.0",
   "title": "확정 수행 내용: 검토용 계약, 전송 상태는 별도",
   "$comment": "날짜순서·유형별 합·정오 합계·단위·버전·승인 진위·모드 활성·JCS/용량은 별도 의미검증 필수.",
   "allOf": [

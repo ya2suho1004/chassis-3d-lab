@@ -6,7 +6,7 @@ import type { SessionContext } from '../domain/record'
 import type { TaskRun } from '../domain/taskEngine'
 import type { ApprovedTask, FeedbackText } from '../domain/types'
 
-export const APP_VERSION = '0.2.0-demo'
+export const APP_VERSION = '0.2.1-demo'
 
 /** 기본 코드 규칙: 학급 글자 1개 + 하이픈 + 두 자리 번호 (예: A-01). 실제 규칙은 세션 설정에서 승인. */
 const CODE_RE = /^[A-Z]-\d{2}$/
@@ -21,7 +21,7 @@ export function listTasks(): ApprovedTask[] {
   return [lv1 as ApprovedTask, lv2 as ApprovedTask]
 }
 
-export function createDemoSession(opts: { studentCode: string; sessionCode: string; attemptRole: SessionContext['attemptRole'] }): SessionContext {
+export function createDemoSession(opts: { studentCode: string; sessionCode: string; attemptRole: SessionContext['attemptRole']; usagePhase: SessionContext['usagePhase'] }): SessionContext {
   return {
     recordId: crypto.randomUUID(),
     anonymousStudentCode: opts.studentCode,
@@ -32,6 +32,7 @@ export function createDemoSession(opts: { studentCode: string; sessionCode: stri
     retryOfRecordId: null,
     retryCount: 0,
     runPurpose: 'demo',
+    usagePhase: opts.usagePhase,
     configurationApproval: { taskApproved: true, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false },
     displayMode: 'diagram',
     versions: {

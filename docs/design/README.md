@@ -51,3 +51,14 @@
 추천 구조는 React/Vite/TypeScript + Three/R3F, IndexedDB, 같은 출처 제출 중계, Apps Script와 교사 비공개 Sheet입니다. Cloudflare Pages+Functions는 호스팅 우선 제안이며 설정·배포·운영비 검증은 하지 않았습니다.
 
 평면 스케치와 사진 묶음은 2026-10-20에 확보했습니다(`../review/`, `../evidence/`). 가장 먼저 할 일은 **교사가 눈으로 확인할 상대 배치 초안을 검토하고, 실측 치수·개방 연결부·학생 시작점과 제동력 시험기의 조작 순서·판정 기준을 확정하는 것**입니다. 1차 협업 결과는 `../collaboration/CLAUDE_REVIEW.txt`, 다음 단계 추천은 `../collaboration/NEXT_STEP.txt`에 있습니다. 구현은 설계 검토 후 인수 프롬프트의 0단계부터 시작합니다.
+
+## 2026-10-21 Codex 계약·독립 검토
+
+- [13 과제·등록 사전 검토](docs/13_TASK_DATA_REVIEW_AND_VOCABULARY.md)
+- [14 부분 실측 검토](docs/14_PARTIAL_SURVEY_REVIEW.md)
+- [15 직접 제출 수신·7개 시험 묶음](docs/15_DIRECT_SUBMISSION_TEST_DESIGN.md)
+- [16 계약1.1.0·호환 결정](docs/16_CONTRACT_1_1_DECISIONS_AND_COMPATIBILITY.md)
+- [검증 결과](DESIGN_VALIDATION.md):로컬계약검증과실제제품검증을구분한다.
+- [Claude 회신](../collaboration/CODEX_RETURN_2026-10-21_CONTRACTS.txt)
+
+기존1.0.0 계약·예시는legacy/1.0.0에보존했다. 상위pending인과제를운영승인완료로읽지않는다.

@@ -1,0 +1,470 @@
+{
+  "checkedAt": "2026-10-21",
+  "checks": [
+    {
+      "name": "legacy_task.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_layout.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_record.demo-aborted",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_delivery.pending",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_submission.demo-request",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "record_preview_valid",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "record_review_valid",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "record_missing_phase",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'usagePhase' is a required property"
+      ]
+    },
+    {
+      "name": "record_phase_not_difficulty",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'guided' is not one of ['preview', 'review', 'other']"
+      ]
+    },
+    {
+      "name": "demo_research_true",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'research' was expected",
+        "'completed' was expected"
+      ]
+    },
+    {
+      "name": "unapproved_research_run",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "True was expected",
+        "True was expected"
+      ]
+    },
+    {
+      "name": "delivery_mixed_into_payload",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "Additional properties are not allowed ('uploadStatus' was unexpected)"
+      ]
+    },
+    {
+      "name": "missing_event_id",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "None is not of type 'string'"
+      ]
+    },
+    {
+      "name": "missing_feedbackShown_fields",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'feedbackKind' is a required property",
+        "'feedbackKey' is a required property"
+      ]
+    },
+    {
+      "name": "missing_displayModeChanged_fields",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'fromDisplayMode' is a required property",
+        "'toDisplayMode' is a required property"
+      ]
+    },
+    {
+      "name": "event_limit",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "[{'eventId': '00000000-0000-4000-8000-000000000002', 'sequence': 1, 'elapsedMs': 0, 'type': 'taskStarted'}, {'eventId': '00000000-0000-4000-8000-000000000002', 'sequence': 1, 'elap"
+      ]
+    },
+    {
+      "name": "npc_not_passed",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "[] should be non-empty",
+        "[] should be non-empty"
+      ]
+    },
+    {
+      "name": "ack_requires_receipt_hash_time",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "None is not of type 'string'",
+        "None is not of type 'string'"
+      ]
+    },
+    {
+      "name": "submission_current_record",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "submission_legacy_record",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "client_secret_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "{'protocolVersion': '1', 'payload': {'schemaVersion': '1.1.0', 'recordId': '00000000-0000-4000-8000-000000000001', 'anonymousStudentCode': 'D-00', 'classConditionCode': 'DEMO', 'se"
+      ]
+    },
+    {
+      "name": "layout_pending_openings_empty",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "confirmed_opening_without_fake_door",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "confirmed_no_access_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "{'schemaVersion': '1.1.0', 'layoutVersion': 'synthetic-approval-test', 'layoutConfirmed': True, 'sourceStatus': 'teacherApproved', 'coordinateSystem': {'unit': 'm', 'originDescript"
+      ]
+    },
+    {
+      "name": "confirmed_unknown_opening_point",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "None is not of type 'number'"
+      ]
+    },
+    {
+      "name": "confirmed_unmeasured_room",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "None is not of type 'number'"
+      ]
+    },
+    {
+      "name": "task_pending_kg",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "integer_input_case_rejects_fraction",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "2.5 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "unknown_unit",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'kgf-auto' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "unregistered_condition",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'eval(userText)' is not one of ['teacherApprovalRequired', 'ppeConfirmed', 'inspected', 'vehicleCentered', 'axleWeightRead', 'brakeModeSelected', 'liftLowered', 'motorOn', 'pedalPr"
+      ]
+    },
+    {
+      "name": "missing_required_responses",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'requiredResponseItems' is a required property"
+      ]
+    },
+    {
+      "name": "pending_rules_cannot_approve",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'approved' was expected",
+        "None is not of type 'number'"
+      ]
+    },
+    {
+      "name": "valid_opening_semantics",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "name": "zero_length_opening_rejected",
+      "passed": true,
+      "errors": [
+        "zeroLengthOpening"
+      ]
+    },
+    {
+      "name": "duplicate_opening_id_rejected",
+      "passed": true,
+      "errors": [
+        "duplicateOpeningId"
+      ]
+    },
+    {
+      "name": "task_references_valid",
+      "passed": true,
+      "errors": []
+    },
+    {
+      "name": "unknown_step_ref_rejected",
+      "passed": true,
+      "errors": [
+        "unknownPrerequisite"
+      ]
+    },
+    {
+      "name": "cyclic_steps_rejected",
+      "passed": true,
+      "errors": [
+        "cyclicPrerequisites"
+      ]
+    },
+    {
+      "name": "duplicate_step_id_rejected",
+      "passed": true,
+      "errors": [
+        "duplicateStepId",
+        "unknownPrerequisite",
+        "cyclicPrerequisites"
+      ]
+    },
+    {
+      "name": "missing_feedback_target_rejected",
+      "passed": true,
+      "errors": [
+        "unknownFeedback"
+      ]
+    },
+    {
+      "name": "missing_answer_feedback_rejected",
+      "passed": true,
+      "errors": [
+        "unknownAnswerFeedback"
+      ]
+    },
+    {
+      "name": "judgment_grading_type_rejected",
+      "passed": true,
+      "errors": [
+        "gradingKindMismatch"
+      ]
+    },
+    {
+      "name": "unregistered_grading_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'runExpression' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "unregistered_precision_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'roundWhatever' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "negative_measurement_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "-1 is not valid under any of the given schemas",
+        "-1 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "zero_axle_weight_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "0 is not valid under any of the given schemas",
+        "0 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "approved_ruleset_requires_dates",
+      "passed": false,
+      "expected": "reject",
+      "errors": []
+    },
+    {
+      "name": "approved_ruleset_requires_decisionPrecision",
+      "passed": false,
+      "expected": "reject",
+      "errors": []
+    },
+    {
+      "name": "approved_ruleset_requires_deviationMaxPercent",
+      "passed": false,
+      "expected": "reject",
+      "errors": []
+    },
+    {
+      "name": "measurement_grading_kind_rejected",
+      "passed": false,
+      "errors": []
+    },
+    {
+      "name": "calculation_precision_kind_rejected",
+      "passed": false,
+      "errors": []
+    },
+    {
+      "name": "exact_grading_no_tolerance",
+      "passed": false,
+      "errors": []
+    },
+    {
+      "name": "step_completion_binding_rejected",
+      "passed": false,
+      "errors": []
+    },
+    {
+      "name": "unknown_calculation_binding_rejected",
+      "passed": false,
+      "errors": []
+    },
+    {
+      "name": "truncate_policy_requires_written_comparison",
+      "passed": false,
+      "errors": []
+    },
+    {
+      "name": "duplicate_response_ids_rejected",
+      "passed": false,
+      "errors": []
+    },
+    {
+      "name": "independent_case_arithmetic_task.braking-force.case-lv1.json",
+      "passed": true
+    },
+    {
+      "name": "independent_case_arithmetic_task.braking-force.case-lv2.json",
+      "passed": true
+    },
+    {
+      "name": "boundary_comparison_uses_written_not_raw",
+      "passed": true
+    },
+    {
+      "name": "inclusive_sum_boundary",
+      "passed": true
+    },
+    {
+      "name": "current_example_task.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_layout.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_record.demo-aborted",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_delivery.pending",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_submission.demo-request",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "task.braking-force.case-lv1.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "task.braking-force.case-lv2.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "layout.partial-survey.v1.1.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "rounded_policy_requires_digits_and_method",
+      "passed": true
+    }
+  ],
+  "passed": 59,
+  "failed": 10,
+  "applicationExecuted": false
+}

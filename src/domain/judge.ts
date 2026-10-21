@@ -15,6 +15,8 @@ export interface BrakeRuleset {
   sumMinRearPercent: number | null
   sumMinFrontPercent: number | null
   decisionPrecision: DecisionPrecision | null
+  /** 판정 비교값 출처. 기본 written(기재값). raw면 원값으로 비교하고 기재값은 따로 보고 */
+  judgmentValueSource?: 'written' | 'raw'
 }
 
 export interface BrakeInputs {
@@ -103,8 +105,9 @@ export function calculateVehicleVerdict(inputs: BrakeInputs, ruleset: BrakeRules
   const deviation = applyPrecision(deviationRaw, ruleset.decisionPrecision)
   const sum = applyPrecision(sumRaw, ruleset.decisionPrecision)
 
-  const deviationOk = deviation <= ruleset.deviationMaxPercent // 경계 포함(교사 확정)
-  const sumOk = sum >= sumMin
+  const useRaw = ruleset.judgmentValueSource === 'raw'
+  const deviationOk = (useRaw ? deviationRaw : deviation) <= ruleset.deviationMaxPercent // 경계 포함(교사 확정)
+  const sumOk = (useRaw ? sumRaw : sum) >= sumMin
 
   return {
     status: 'evaluable',

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:chassis-3d-lab:submission:1.0.0",
+  "$id": "urn:chassis-3d-lab:submission:1.1.0",
   "title": "제출 request / 정상 ack / 오류: oneOf 구분",
   "$defs": {
     "request": {
@@ -10,7 +10,14 @@
           "const": "1"
         },
         "payload": {
-          "$ref": "urn:chassis-3d-lab:record:1.0.0"
+          "oneOf": [
+            {
+              "$ref": "urn:chassis-3d-lab:record:1.0.0"
+            },
+            {
+              "$ref": "urn:chassis-3d-lab:record:1.1.0"
+            }
+          ]
         }
       },
       "required": [

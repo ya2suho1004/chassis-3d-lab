@@ -4,9 +4,9 @@ import type { RecordPayload } from '../src/domain/record'
 import type { DeliveryEnvelope } from '../src/records/types'
 
 const payload = {
-  schemaVersion: '1.0.0', recordId: '00000000-0000-4000-8000-000000000001', anonymousStudentCode: 'A-01', classConditionCode: 'DEMO', sessionCode: 'DEMO-ONLY',
+  schemaVersion: '1.1.0', recordId: '00000000-0000-4000-8000-000000000001', anonymousStudentCode: 'A-01', classConditionCode: 'DEMO', sessionCode: 'DEMO-ONLY',
   sessionSnapshotId: '00000000-0000-4000-8000-000000000002', taskId: 'braking-force', difficultyMode: 'guided', attemptRole: 'practice', retryOfRecordId: null, retryCount: 0,
-  runPurpose: 'demo', researchEligible: false, configurationApproval: { taskApproved: true, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false },
+  runPurpose: 'demo', usagePhase: 'review', researchEligible: false, configurationApproval: { taskApproved: true, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false },
   displayMode: 'diagram', experiencedDisplayModes: ['diagram'], completionStatus: 'completed', startedAt: '2026-10-21T13:00:00Z', completedAt: '2026-10-21T13:10:00Z', durationSeconds: 67,
   timing: { pauseCount: 0, resumeCount: 0, timeQuality: 'continuous' },
   versions: { taskDefinitionVersion: '1.0.0-teacher-2026-10-21', rulesetVersion: '1.0.0-teacher-2026-10-21', measurementSetVersion: '1.0.0-teacher-2026-10-21', layoutVersion: 'surveyed-partial', judgeEngineVersion: '0.1.0', sessionConfigVersion: 'unapproved', researchProtocolVersion: 'unapproved', feedbackPolicyVersion: 'unapproved' },
@@ -23,8 +23,10 @@ describe('CSV — 요약 행', () => {
   test('헤더가 고정되고 recordId·버전·연구 내용·접수 상태가 한 행에 들어간다', () => {
     const csv = toSummaryCsv([{ payload, envelope }])
     const [header, row] = csv.replace('\ufeff', '').split('\r\n')
-    expect(header!.startsWith('recordId,schemaVersion,anonymousStudentCode,classConditionCode,sessionCode,sessionSnapshotId,taskId,difficultyMode,attemptRole,runPurpose,researchEligible,completionStatus')).toBe(true)
+    expect(header!.startsWith('recordId,schemaVersion,anonymousStudentCode,classConditionCode,sessionCode,sessionSnapshotId,taskId,difficultyMode,attemptRole,runPurpose,usagePhase,researchEligible,completionStatus')).toBe(true)
     expect(header).toContain('judgmentCorrect')
+    expect(header).toContain('usagePhase')
+    expect(row).toContain(',review,')
     expect(header).toContain('uploadStatus')
     expect(row).toContain('00000000-0000-4000-8000-000000000001')
     expect(row).toContain('calc:1')

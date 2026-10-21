@@ -1,7 +1,7 @@
 {
   "protocolVersion": "1",
   "payload": {
-    "schemaVersion": "1.0.0",
+    "schemaVersion": "1.1.0",
     "recordId": "00000000-0000-4000-8000-000000000001",
     "anonymousStudentCode": "D-00",
     "classConditionCode": "DEMO",
@@ -70,6 +70,7 @@
     "judgmentCorrect": null,
     "npcInspectionResult": "notCompleted",
     "npcInspectionCount": 0,
-    "clientAppVersion": "design-only"
+    "clientAppVersion": "design-only",
+    "usagePhase": "other"
   }
 }

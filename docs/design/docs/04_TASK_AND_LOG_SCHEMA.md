@@ -229,16 +229,17 @@ UTF-8, 고정 헤더, 쉼표·따옴표·개행을 이스케이프한다. 사용
 - 같은 ID/같은 payload 재전송은 같은 receipt, 다른 payload는 충돌이다.
 - JCS·hash·32 KiB·48 KiB·200개 한도는 실제 구현에서 경계 시험한다. 문서와 JSON 형식 검사만으로 동작을 증명하지 않는다.
 
-## 12. 2026-10-20 계약 변경 제안 (미적용)
+## 12. 현장자료 반영 계약 개정 — 2026-10-21 결정
 
-현장자료 대조에서 현재 계약(`schemaVersion 1.0.0`)으로 표현할 수 없는 사실이 둘 나왔다. 기존 enum·필드에 값을 섞지 않고 **다음 버전 제안**으로만 적는다. `contracts/`와 `examples/`는 바꾸지 않았다.
+P-1 usagePhase,P-2 kg,P-3 기재값 판정,P-4 openings를1.1.0에 채택했다. 정확한 필드·적용 범위·구버전 보존·검증 책임은 [16 계약 결정](16_CONTRACT_1_1_DECISIONS_AND_COMPATIBILITY.md)이 정본이다.
 
-| 제안 | 내용 | 근거 | 영향 |
-|---|---|---|---|
-| P-1 `usagePhase` | `recordPayload`에 수업 시점 `usagePhase: preview \| review \| other`를 추가. `difficultyMode`(안내 방식)·`attemptRole`(수행 목적)과 독립 | 2026-10-20 사용자 설명: ‘대기 중 예습 → 실제 실습 → 실습 후 복습’이 핵심 흐름이며 안내/무안내와 다른 개념 | record.schema 1.1.0, CSV 열 추가, Apps Script 검증 목록 추가. 채택 전에는 세션 코드 규칙으로 구분 |
-| P-2 `measurement.unit`에 `kg` 추가 | 26번 사진의 고정 예시는 ‘kg’로 적혀 있다. 사용자 확인: kg를 kgf·N으로 바꾸지 않는다 | `task.schema.json` enum이 N·kN·kgf뿐이라 현장 표기를 그대로 담을 수 없음 | task.schema 1.1.0. 판정식은 같은 단위끼리 비율이므로 값 변환 없음. 화면·CSV에 표기 단위 그대로 출력 |
-| P-3 절사 정책 | 26번의 ‘소수 첫째 자리 기재, 둘째 자리 절사(3.456→3.4)’는 기존 `decisionPrecision {mode:rounded, digits:1, rounding:truncate}`로 표현 가능. 다만 **적용 범위**(중간 계산/최종 기재/판정)가 미확정 | `evidence/teacher-confirmed.json` observed.pending → **2026-10-20 사용자 확정: 최종 기재(기록표에 적는 측정값·산출값)에 적용**. 중간 계산은 원값 | 필드 추가 없음. 기재 항목의 `precisionPolicyRef`를 `{rounded, 1, truncate}`로 연결. 판정 비교를 기재값(절사값)으로 할지 원값으로 할지는 경계 사례에서만 차이가 나므로 [설계 제안] 기재값 기준으로 두고 교사 최종 확인 |
+| 항목 | 현행 표현 |
+|---|---|
+| 사용 시점 | record.usagePhase=preview/review/other. difficultyMode·attemptRole과 별도 |
+| 학교 표기 | task.measurement.unit에kg 허용. inputsIntegerOnly는 측정 입력 정책 |
+| 기재값 비교 | ruleset.judgmentValueSource=written,기존 decisionPrecision은 rounded/1/truncate |
+| 개방 연결 | layout.openings의 시작·끝 좌표/연결 구역. 승인 시 doors 또는 openings가 하나 이상 |
+| 부분 실측 | layout.siteMeasurements 원장. 미확정 벽을equipment/가짜boundary로 만들지 않음 |
+| 등록 연산 | vocabularyVersion=1.1.0과 [정의 사전](../contracts/task-vocabulary.v1.1.0.json). 코드 실행 검증은 미실시 |
 
-| P-4 열린 경계 표현 | `layout.schema.json`은 `layoutConfirmed=true`일 때 `doors` 최소 1개를 요구한다. 그러나 섀시 구역은 별도 문이 없는 개방 구조다(사용자 확정). 가짜 문을 넣어 맞추지 않고, `openings`(트인 변 구간: 시작·끝 좌표, 연결 구역 이름) 같은 항목을 추가하고 `doors` 최소 1개 조건을 `doors 또는 openings 최소 1개`로 바꾸는 개정을 제안 | Codex 검토 2026-10-21, 실측 1차 | layout.schema 1.1.0. 승인 단계 전에 결정. 현재는 `layoutConfirmed=false`라 충돌이 발생하지 않음 |
-
-채택 여부는 교사·연구자가 정하며, 채택 시 `schemaVersion`을 올리고 예시·검증을 함께 갱신한다.
+교사 수치·단계 확인과 정식 과제 운영승인을 구별한다. 두 사례는 [13 검토](13_TASK_DATA_REVIEW_AND_VOCABULARY.md)의 기술 항목이 남아 top pending을 유지하고,ruleset 교사 확인은 날짜로 보존한다. 무안내 답 노출은 제안 feedbackPolicy로 제한하고 안전 경고는 즉시 표시한다. 세부 계약 실행은 아직 구현하지 않았다.

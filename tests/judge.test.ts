@@ -46,6 +46,13 @@ describe('calculateVehicleVerdict — 정밀도 정책', () => {
     expect(r.verdict).toBe('pass')
   })
 
+  test('judgmentValueSource=raw 이면 기재값은 절사하되 판정은 원값으로 비교한다', () => {
+    const raw: BrakeRuleset = { ...approved, judgmentValueSource: 'raw' }
+    const r = calculateVehicleVerdict({ left: 180.04, right: 100, axleWeight: 1000, axlePosition: 'rear' }, raw)
+    expect(r.deviationPercent).toBe(8) // 기재값
+    expect(r.verdict).toBe('fail') // 원값 8.004 > 8
+  })
+
   test('같은 입력이라도 원값 비교(unrounded) 정책이면 불량', () => {
     const unrounded: BrakeRuleset = { ...approved, decisionPrecision: { mode: 'unrounded', digits: null, rounding: null } }
     const r = calculateVehicleVerdict({ left: 180.04, right: 100, axleWeight: 1000, axlePosition: 'rear' }, unrounded)

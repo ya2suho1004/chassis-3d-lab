@@ -16,18 +16,19 @@ describe('세션 — 익명 코드', () => {
   })
 
   test('demo 세션은 runPurpose=demo, 연구사용 미승인, 새 recordId(UUID)를 가진다', () => {
-    const s = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice' })
+    const s = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview' })
     expect(s.runPurpose).toBe('demo')
     expect(s.configurationApproval.researchUseApproved).toBe(false)
     expect(s.configurationApproval.layoutConfirmed).toBe(false)
     expect(s.recordId).toMatch(/^[0-9a-f-]{36}$/)
     expect(s.anonymousStudentCode).toBe('A-01')
+    expect(s.usagePhase).toBe('preview')
     expect(s.startedAtIso).toMatch(/^\d{4}-\d{2}-\d{2}T/)
   })
 
   test('두 번 만들면 recordId가 다르다', () => {
-    const a = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice' })
-    const b = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice' })
+    const a = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview' })
+    const b = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview' })
     expect(a.recordId).not.toBe(b.recordId)
   })
 })
@@ -45,10 +46,18 @@ describe('세션 — 안내와 피드백', () => {
     expect(feedbackFor(task, 'no-such-key')).toBeNull()
   })
 
-  test('과제 목록은 승인 사례 2개(양호·편제동 불량)를 준다', () => {
+  test('과제 목록은 사례 2개를 주고, 규칙은 교사 승인·과제 전체는 pending(동작 매핑 미완료)이다', () => {
     const list = listTasks()
     expect(list.map((t) => t.measurement.caseId)).toEqual(['case-rear-ok-240-200-600', 'case-rear-deviation-250-190-600'])
-    expect(list.every((t) => t.approvalStatus === 'approved')).toBe(true)
+    expect(list.every((t) => t.ruleset.approvalStatus === 'approved')).toBe(true)
+    expect(list.every((t) => t.approvalStatus === 'pending')).toBe(true)
+  })
+
+  test('학생에게 보이는 제목에는 정답 수치·양호/불량이 없다', () => {
+    for (const t of listTasks()) {
+      expect(t.title).not.toMatch(/\d{3}/)
+      expect(t.title).not.toMatch(/양호|불량/)
+    }
   })
 
   test('안내문은 완료된 단계를 건너뛰고 다음 단계를 가리킨다', () => {

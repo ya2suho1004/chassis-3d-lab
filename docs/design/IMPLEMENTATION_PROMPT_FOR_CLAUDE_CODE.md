@@ -98,3 +98,7 @@ IndexedDB에 수행 초안·의미 이벤트·확정 payload·deliveryEnvelope�
 
 아직 실행·연결·승인되지 않은 항목을 완료로 표시하지 않는다.
 ```
+
+## 2026-10-21 인수 전 추가 읽기
+
+docs/16_CONTRACT_1_1_DECISIONS_AND_COMPATIBILITY.md와13~15를먼저읽는다. 이파일의과거구현문안은현재실행요청이아니다.1.0.0보존/1.1.0필드/등록사전/과제pending과미확정동작을반영하여사용자가선택한범위만구현한다.

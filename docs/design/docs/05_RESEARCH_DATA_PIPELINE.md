@@ -172,7 +172,7 @@ ACK를 확인하면 `receiptId`를 envelope에 넣고 **`uploadedAt`에 서버�
 
 1. Pages Function이 POST·JSON·요청 크기·프로토콜·schema를 먼저 검증한다.
 2. 함수가 서버에 보관한 비밀과 검증된 payload를 Apps Script의 고정 `/exec` URL로 전달한다. 학생이 전송 목적지 URL을 지정할 수 없게 한다.
-3. Apps Script `doPost`가 서버 간 비밀과 schema를 검증한다. 비밀이 없는 직접 호출은 저장하지 않는다.
+3. 이 중계 전용 Apps Script `doPost`는 서버 간 비밀과 schema를 검증하며 비밀 없는 호출을 저장하지 않는다. 별도 격리된 직접 시험 배포의 수신 규칙은 [15 직접 시험 설계](15_DIRECT_SUBMISSION_TEST_DESIGN.md)를 따른다. 기존 중계 배포에서 인증을 제거해 재사용하지 않는다.
 4. 함수는 ContentService의 리다이렉트를 서버에서 처리한다. 허용된 Google 호스트, 응답 크기, 최종 MIME·JSON·ack를 확인한다. 로그인 화면·권한 HTML·Google 오류 문구를 접수 성공으로 바꾸지 않는다.
 5. 브라우저에는 필요한 ack 또는 정제된 오류 코드만 반환하고 `Cache-Control: no-store`를 제안한다. 원본 payload나 내부 Google URL·비밀을 오류 설명에 덧붙이지 않는다.
 
@@ -336,3 +336,7 @@ Google Form을 비상 경로로 쓰는 경우에도 [공식 도움말](https://s
 2026-10-16에 위 링크의 본문을 실제 열어 확인했다. 저장·전송 설계는 Google Web Apps/ContentService/Lock/Quotas/Range, Cloudflare Routing/React API/Secrets/Pricing, Vite env, IndexedDB·Storage·Fetch 표준, WebKit 저장 정책, RFC 8785를 근거로 제안했다. [ContentService 공식 리다이렉트 설명](https://developers.google.com/apps-script/guides/content#redirects)과 [TextOutput 공개 메서드](https://developers.google.com/apps-script/reference/content/text-output)는 임의 CORS 헤더 설정을 전제로 하지 않는 이유다. 문서에 메서드가 없다는 사실을 ‘모든 배포의 직접 fetch는 항상 실패한다’로 확대하지 않았다.
 
 현재 미확인 사항은 실제 학교 계정 배포 허용, 앱/Google/Sheet의 실제 통신, 원본 용량 경계, 수업 동시 부하, 공용기기 정책, 비용, 연구·보관 승인이다. 이 항목은 구현·운영 전 확인으로 남는다.
+
+## 16. 2026-10-21 직접 시험·계약 1.1.0 보충
+
+[15](15_DIRECT_SUBMISSION_TEST_DESIGN.md)의 직접 경로 시험은 전부 NOT_RUN이다. request는 record1.0.0/1.1.0을 명시적으로 선택 검증하고,ack·protocolVersion1은 유지한다. 기존 freeze된 payload에사용시점 등을 추가해 hash를 바꾸지 않는다. 상세 호환 결정은 [16](16_CONTRACT_1_1_DECISIONS_AND_COMPATIBILITY.md)을 따른다.

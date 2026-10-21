@@ -13,7 +13,7 @@ export function csvCell(v: unknown): string {
 const COLUMNS: Array<[string, (p: RecordPayload, e: DeliveryEnvelope) => unknown]> = [
   ['recordId', (p) => p.recordId], ['schemaVersion', (p) => p.schemaVersion], ['anonymousStudentCode', (p) => p.anonymousStudentCode],
   ['classConditionCode', (p) => p.classConditionCode], ['sessionCode', (p) => p.sessionCode], ['sessionSnapshotId', (p) => p.sessionSnapshotId],
-  ['taskId', (p) => p.taskId], ['difficultyMode', (p) => p.difficultyMode], ['attemptRole', (p) => p.attemptRole], ['runPurpose', (p) => p.runPurpose],
+  ['taskId', (p) => p.taskId], ['difficultyMode', (p) => p.difficultyMode], ['attemptRole', (p) => p.attemptRole], ['runPurpose', (p) => p.runPurpose], ['usagePhase', (p) => p.usagePhase],
   ['researchEligible', (p) => p.researchEligible], ['completionStatus', (p) => p.completionStatus], ['retryOfRecordId', (p) => p.retryOfRecordId], ['retryCount', (p) => p.retryCount],
   ['displayMode', (p) => p.displayMode], ['experiencedDisplayModes', (p) => p.experiencedDisplayModes.join('|')],
   ['startedAt', (p) => p.startedAt], ['completedAt', (p) => p.completedAt], ['durationSeconds', (p) => p.durationSeconds],

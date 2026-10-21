@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "schemaVersion": {
-      "const": "1.0.0"
+      "const": "1.1.0"
     },
     "layoutVersion": {
       "type": "string",
@@ -605,6 +605,235 @@
         "additionalProperties": false
       },
       "maxItems": 100
+    },
+    "openings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "openingId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "start": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "z": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "x",
+              "z"
+            ],
+            "additionalProperties": false
+          },
+          "end": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "z": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "x",
+              "z"
+            ],
+            "additionalProperties": false
+          },
+          "connectsTo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "surveyReference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "openingId",
+          "start",
+          "end",
+          "connectsTo",
+          "surveyReference"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 50
+    },
+    "siteMeasurements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "measurementId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "targetId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "quantityKind": {
+            "enum": [
+              "distance",
+              "dimensions",
+              "count",
+              "specification"
+            ]
+          },
+          "values": {
+            "type": "object",
+            "minProperties": 1,
+            "maxProperties": 12,
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "unit": {
+            "enum": [
+              "m",
+              "count"
+            ]
+          },
+          "sourceType": {
+            "enum": [
+              "reportedMeasured",
+              "reportedSpecification",
+              "assumption"
+            ]
+          },
+          "verificationStatus": {
+            "enum": [
+              "accepted",
+              "referenceUnclear",
+              "unresolved"
+            ]
+          },
+          "referenceFrom": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "referenceTo": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "derivedConstraint": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "axis": {
+                    "enum": [
+                      "x",
+                      "z"
+                    ]
+                  },
+                  "value": {
+                    "type": "number"
+                  },
+                  "assumption": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  }
+                },
+                "required": [
+                  "axis",
+                  "value",
+                  "assumption"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rawReference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "notes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          }
+        },
+        "required": [
+          "measurementId",
+          "targetId",
+          "quantityKind",
+          "values",
+          "unit",
+          "sourceType",
+          "verificationStatus",
+          "referenceFrom",
+          "referenceTo",
+          "derivedConstraint",
+          "rawReference",
+          "notes"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 200
     }
   },
   "required": [
@@ -618,11 +847,13 @@
     "doors",
     "columns",
     "safetyAisles",
-    "equipment"
+    "equipment",
+    "openings",
+    "siteMeasurements"
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:chassis-3d-lab:layout:1.0.0",
+  "$id": "urn:chassis-3d-lab:layout:1.1.0",
   "title": "실제 학교 배치 조사 계약: 미측정 좌표는 null",
   "allOf": [
     {
@@ -672,7 +903,6 @@
             "minItems": 3
           },
           "doors": {
-            "minItems": 1,
             "items": {
               "properties": {
                 "position": {
@@ -839,8 +1069,60 @@
                 }
               ]
             }
+          },
+          "openings": {
+            "items": {
+              "properties": {
+                "start": {
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "end": {
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "connectsTo": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "surveyReference": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                }
+              }
+            }
           }
-        }
+        },
+        "anyOf": [
+          {
+            "properties": {
+              "doors": {
+                "minItems": 1
+              }
+            }
+          },
+          {
+            "properties": {
+              "openings": {
+                "minItems": 1
+              }
+            }
+          }
+        ]
       }
     }
   ]
