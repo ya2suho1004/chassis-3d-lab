@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0B 실측 2차 확인지 — 제동력 구역 보완·ABS 돌출부·기둥·리프트</title>
+<style>
+  :root{--ink:#1d1d1f;--mut:#6b6b70;--line:#c9c9ce;--bg:#f7f7f8;--acc:#3b6fd6;--warn:#b42318;--warnbg:#fde8e6;--ok:#1b7f3b}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+  header{padding:16px;background:#fff;border-bottom:1px solid var(--line)}
+  h1{font-size:20px;margin:0 0 6px} h2{font-size:17px;margin:0 0 10px} h3{font-size:15px;margin:12px 0 6px}
+  .banner{display:inline-block;background:var(--warnbg);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:6px 10px;font-weight:700;margin:6px 0}
+  .meta,.small{color:var(--mut);font-size:13px}
+  main{padding:16px;max-width:1100px;margin:0 auto}
+  section{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:16px}
+  table{border-collapse:collapse;width:100%;font-size:14px}
+  th,td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;text-align:left}
+  th{background:#f0f0f2}
+  td.v label{display:inline-block;margin-right:8px;white-space:nowrap}
+  input[type=text]{width:100%;padding:6px;border:1px solid var(--line);border-radius:4px;font:inherit}
+  input[type=number]{width:96px;padding:6px;border:1px solid var(--line);border-radius:4px;font:inherit;font-size:16px}
+  textarea{width:100%;min-height:160px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:4px;padding:8px}
+  button{font:inherit;padding:10px 14px;border-radius:6px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;min-height:44px}
+  button.sec{background:#fff;color:var(--acc)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;align-items:center}
+  .key{display:inline-block;background:#fff3cd;border:1px solid #d9b300;border-radius:4px;padding:0 6px;font-weight:700}
+  .chk{font-weight:700}
+  .chk.ok{color:var(--ok)} .chk.bad{color:var(--warn)}
+  svg{max-width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:6px}
+  @media print{header,.noprint{display:none}body{background:#fff}section{border:none;page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+  <h1>0B 실측 2차 확인지 — 제동력 구역 보완·ABS 돌출부·기둥·리프트</h1>
+  <div class="banner">줄자·거리계로 잰 값만 적습니다 · 모르면 비워 둠(비운 칸은 null) · 단위 m, 소수 둘째 자리</div>
+  <div class="meta">근거: 1차 실측(2026-10-21, 측정자 MOON) 검산 결과 C-1b·C-2·C-3·C-4, 준비표 P1-6·P1-8·P1-9·P2. 작성 2026-10-21 Claude Code. 결과는 아래 ‘JSON 만들기’로 내보내 <b>collaboration/LAYOUT_SURVEY2_결과.json</b> 으로 전달.</div>
+</header>
+<main>
+
+<section>
+  <h2>0. 측정 정보</h2>
+  <div class="row">
+    <label>측정일 <input type="text" data-text="measuredOn" placeholder="2026-10-22" style="width:140px"></label>
+    <label>측정자 코드 <input type="text" data-text="measurerCode" placeholder="MOON" style="width:100px"></label>
+    <label>도구 <input type="text" data-text="tool" placeholder="줄자 / 레이저 거리계" style="width:180px"></label>
+  </div>
+  <p class="small">원점(P1-1) = 제동력 롤러 두 축의 가운데 지점(바닥 테이프). 방향은 <b>동 = 조작부 쪽 벽</b>(1차 답), <b>북 = 8.20 벽</b>. 동쪽·남쪽이 +.</p>
+</section>
+
+<section>
+  <h2>1. 제동력 구역 — 그림의 <span class="key">a</span>~<span class="key">h</span> 칸을 채우세요</h2>
+  <svg viewBox="0 0 760 430" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="13">
+    <!-- 북쪽 벽 -->
+    <line x1="40" y1="30" x2="700" y2="30" stroke="#333" stroke-width="4"/>
+    <text x="300" y="22" fill="#333">북쪽 벽 (원점에서 8.20, 1차 실측)</text>
+    <!-- 동쪽 벽 -->
+    <line x1="700" y1="30" x2="700" y2="410" stroke="#333" stroke-width="4"/>
+    <text x="640" y="400" fill="#333">동쪽 벽</text>
+    <text x="560" y="416" fill="#b42318" font-size="12">원점→동쪽 벽 2.00 (1차, 조작부 쪽)</text>
+    <!-- 원점 -->
+    <g transform="translate(470,250)">
+      <line x1="-8" y1="-8" x2="8" y2="8" stroke="#b42318" stroke-width="2"/><line x1="-8" y1="8" x2="8" y2="-8" stroke="#b42318" stroke-width="2"/>
+      <text x="-14" y="26" fill="#b42318" font-weight="700">원점 P1-1</text>
+    </g>
+    <!-- 롤러 장비: 폭 3.00(동서) × 1.20(남북). 위치(치우침)가 질문 a·b -->
+    <rect x="300" y="214" width="320" height="72" fill="none" stroke="#1b5e20" stroke-width="2" stroke-dasharray="6 4"/>
+    <text x="305" y="208" fill="#1b5e20">롤러 장비(덮개 포함) 동서 3.00 × 남북 1.20 — 원점에서 어느 쪽으로 치우쳤는지가 질문</text>
+    <line x1="300" y1="300" x2="470" y2="300" stroke="#1b5e20" stroke-width="1.5" marker-end="url(#m)"/><line x1="470" y1="300" x2="300" y2="300" stroke="#1b5e20" stroke-width="1.5" marker-end="url(#m)"/>
+    <text x="370" y="318" fill="#1b5e20" font-weight="700">a 원점→서쪽 끝</text>
+    <line x1="470" y1="300" x2="620" y2="300" stroke="#1b5e20" stroke-width="1.5" marker-end="url(#m)"/><line x1="620" y1="300" x2="470" y2="300" stroke="#1b5e20" stroke-width="1.5" marker-end="url(#m)"/>
+    <text x="500" y="318" fill="#1b5e20" font-weight="700">b 원점→동쪽 끝</text>
+    <!-- 차량(남북 방향 진입) -->
+    <rect x="430" y="140" width="80" height="220" fill="none" stroke="#607d8b" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <text x="434" y="134" fill="#607d8b" font-size="12">차량(북 또는 남 진입)</text>
+    <!-- 조작부 -->
+    <rect x="655" y="190" width="30" height="42" fill="#ffd600" stroke="#8a6d00"/>
+    <text x="600" y="186" fill="#8a6d00" font-weight="700">c 조작부(노란)</text>
+    <text x="600" y="172" fill="#8a6d00" font-size="12">앞면(버튼면) 중앙: 동서 / 남북</text>
+    <!-- 책상 -->
+    <rect x="560" y="340" width="60" height="30" fill="#efe6d8" stroke="#8d6e63"/>
+    <text x="520" y="384" fill="#8d6e63" font-weight="700">d 기록 책상 상판 중앙: 동서 / 남북</text>
+    <!-- 통로 e -->
+    <line x1="510" y1="110" x2="700" y2="110" stroke="#3b6fd6" stroke-width="1.5" marker-end="url(#mb)"/><line x1="700" y1="110" x2="510" y2="110" stroke="#3b6fd6" stroke-width="1.5" marker-end="url(#mb)"/>
+    <text x="380" y="100" fill="#3b6fd6" font-weight="700">e 1차 ‘통로 1.80’은 어디서 어디까지?</text>
+    <!-- 서쪽 통로 f -->
+    <line x1="130" y1="250" x2="300" y2="250" stroke="#3b6fd6" stroke-width="1.5" marker-end="url(#mb)"/><line x1="300" y1="250" x2="130" y2="250" stroke="#3b6fd6" stroke-width="1.5" marker-end="url(#mb)"/>
+    <text x="140" y="240" fill="#3b6fd6" font-weight="700">f 장비 서쪽 끝→서쪽 이웃까지</text>
+    <rect x="60" y="150" width="70" height="200" fill="none" stroke="#9e9e9e" stroke-dasharray="4 3"/>
+    <text x="62" y="144" fill="#9e9e9e" font-size="12">서쪽 이웃 장비(이름 적기)</text>
+    <!-- 토 측정 g -->
+    <rect x="420" y="50" width="100" height="40" fill="none" stroke="#7b1fa2" stroke-dasharray="4 3"/>
+    <text x="424" y="66" fill="#7b1fa2" font-size="12">토 측정 구역</text>
+    <text x="300" y="84" fill="#7b1fa2" font-weight="700">g 북쪽 3.50은 이 구역의 어느 점까지?</text>
+    <!-- h 조작부 방향 -->
+    <text x="600" y="256" fill="#8a6d00" font-weight="700">h 버튼면이 향하는 쪽</text>
+    <defs>
+      <marker id="m" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#1b5e20"/></marker>
+      <marker id="mb" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#3b6fd6"/></marker>
+    </defs>
+  </svg>
+  <table style="margin-top:10px">
+    <tr><th style="width:34%">칸</th><th>값 (m)</th></tr>
+    <tr><td><span class="key">a</span> 원점 → 롤러 장비(덮개 포함) <b>서쪽 끝</b></td><td><input type="number" step="0.01" data-num="testerWestEnd" placeholder="예 2.00"> <span class="small">a+b가 3.00 근처여야 합니다 → <span id="chkAB" class="chk"></span></span></td></tr>
+    <tr><td><span class="key">b</span> 원점 → 롤러 장비 <b>동쪽 끝</b></td><td><input type="number" step="0.01" data-num="testerEastEnd" placeholder="예 1.00"> <span class="small">b가 2.00(동쪽 벽)보다 크면 안 됩니다</span></td></tr>
+    <tr><td><span class="key">c</span> 조작부 <b>앞면(버튼면) 중앙</b>의 바닥 위치<br><span class="small">원점에서 동쪽으로 몇 m, 남쪽으로 몇 m (북쪽이면 음수)</span></td><td>동서 <input type="number" step="0.01" data-num="panelDx" placeholder="동 +"> &nbsp; 남북 <input type="number" step="0.01" data-num="panelDz" placeholder="남 +"> <span class="small">1차 직선거리 1.30 → <span id="chkC" class="chk"></span></span></td></tr>
+    <tr><td><span class="key">d</span> 기록 책상 <b>상판 중앙</b>의 바닥 위치</td><td>동서 <input type="number" step="0.01" data-num="deskDx" placeholder="동 +"> &nbsp; 남북 <input type="number" step="0.01" data-num="deskDz" placeholder="남 +"> <span class="small">1차 직선거리 1.10 → <span id="chkD" class="chk"></span></span></td></tr>
+    <tr><td><span class="key">e</span> 1차 ‘차량 자리→동쪽 벽 통로 1.80’의 시작점·끝점</td><td class="v" data-key="aisle">
+      <label><input type="radio" name="aisle" value="carSideToEastWall">차 옆면 → 동쪽 벽</label><br>
+      <label><input type="radio" name="aisle" value="testerEastEndToEastWall">장비 동쪽 끝 → 동쪽 벽</label><br>
+      <label><input type="radio" name="aisle" value="testerEastEndToPanel">장비 동쪽 끝 → 조작부</label><br>
+      <label><input type="radio" name="aisle" value="other">다른 곳 →</label> <input type="text" data-text="aisleNote" placeholder="어디서 어디까지" style="width:60%"><br>
+      <span class="small">다시 잰 값이 있으면: </span><input type="number" step="0.01" data-num="aisleEastRemeasured" placeholder="m">
+    </td></tr>
+    <tr><td><span class="key">f</span> 장비 서쪽 끝 → 서쪽 이웃(토 측정 구역 또는 다른 장비)까지 통로 폭</td><td><input type="number" step="0.01" data-num="westAisle" placeholder="m"> 이웃 이름 <input type="text" data-text="westNeighbor" placeholder="예: 토 측정 구역" style="width:50%"></td></tr>
+    <tr><td><span class="key">g</span> 1차 ‘토 측정 구역 북쪽 3.50’은 어느 점까지</td><td class="v" data-key="toePoint">
+      <label><input type="radio" name="toePoint" value="southEdge">구역 남쪽 끝</label>
+      <label><input type="radio" name="toePoint" value="center">구역 중심</label>
+      <label><input type="radio" name="toePoint" value="northEdge">구역 북쪽 끝</label>
+      <label><input type="radio" name="toePoint" value="unknown">모름</label><br>
+      <span class="small">토 측정 구역 크기(동서 × 남북): </span><input type="number" step="0.01" data-num="toeW" placeholder="동서"> × <input type="number" step="0.01" data-num="toeD" placeholder="남북">
+    </td></tr>
+    <tr><td><span class="key">h</span> 조작부 버튼면이 향하는 쪽 / 책상에서 학생이 앉는 쪽</td><td class="v">
+      조작부 <span data-key="panelFacing"><label><input type="radio" name="panelFacing" value="W">서</label><label><input type="radio" name="panelFacing" value="S">남</label><label><input type="radio" name="panelFacing" value="N">북</label><label><input type="radio" name="panelFacing" value="E">동</label></span><br>
+      책상 <span data-key="deskFacing"><label><input type="radio" name="deskFacing" value="W">서</label><label><input type="radio" name="deskFacing" value="S">남</label><label><input type="radio" name="deskFacing" value="N">북</label><label><input type="radio" name="deskFacing" value="E">동</label></span>
+    </td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>2. ABS 측정 차량 구역(돌출부) — C-2</h2>
+  <table>
+    <tr><th style="width:34%">항목</th><th>확인</th></tr>
+    <tr><td>2-1. 1차에 적은 ‘남북 10.00 × 동서 4.10’이 맞습니까?</td><td class="v" data-key="absSize">
+      <label><input type="radio" name="absSize" value="ok">맞음(별도 작업장 크기)</label><br>
+      <label><input type="radio" name="absSize" value="fix">고침 →</label> 남북 <input type="number" step="0.01" data-num="absNS" placeholder="m"> × 동서 <input type="number" step="0.01" data-num="absEW" placeholder="m">
+    </td></tr>
+    <tr><td>2-2. 돌출부는 주 구역의 어디에 붙어 있습니까?</td><td class="v" data-key="absAttach">
+      <label><input type="radio" name="absAttach" value="southOfEastWall">동쪽 벽 아래(남동 모서리에서 남쪽으로 이어짐)</label><br>
+      <label><input type="radio" name="absAttach" value="eastOfSouthEdge">남쪽 변 오른쪽(남동 모서리에서 동쪽으로 이어짐)</label><br>
+      <label><input type="radio" name="absAttach" value="other">다른 위치 →</label> <input type="text" data-text="absAttachNote" style="width:60%">
+    </td></tr>
+    <tr><td>2-3. 돌출부 시작점: 원점에서 돌출부의 <b>북쪽 끝</b>(또는 서쪽 끝)까지</td><td>동서 <input type="number" step="0.01" data-num="absStartDx" placeholder="동 +"> &nbsp; 남북 <input type="number" step="0.01" data-num="absStartDz" placeholder="남 +"> <span class="small">(모르면 비움)</span></td></tr>
+    <tr><td>2-4. 본 구역과 이어지는 입구(연결부) 폭</td><td><input type="number" step="0.01" data-num="absEntrance" placeholder="m"> <span class="small">벽·기둥으로 좁아지는 부분이 없으면 ‘전체 트임’ 체크 →</span> <label><input type="checkbox" data-bool="absFullyOpen"> 전체 트임</label></td></tr>
+    <tr><td>2-5. 연결부 사진 2장(사진 번호 또는 파일명)</td><td><input type="text" data-text="absPhotos" placeholder="예: IMG_1234, IMG_1235"> <div class="small">사진은 이 Mac의 인계 폴더 collaboration/photos-survey2/ 에 복사. Git·웹에 올리지 않음.</div></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>3. 기둥 — C-4</h2>
+  <table>
+    <tr><th style="width:34%">항목</th><th>값</th></tr>
+    <tr><td>3-1. 1차 ‘기둥 간격 4.00’은</td><td class="v" data-key="pillarSpacingBasis"><label><input type="radio" name="pillarSpacingBasis" value="centerToCenter">기둥 중심 ↔ 중심</label><label><input type="radio" name="pillarSpacingBasis" value="faceToFace">기둥 면 ↔ 면(사이 빈 폭)</label></td></tr>
+    <tr><td>3-2. 기둥 단면(한 기둥) 동서 × 남북</td><td><input type="number" step="0.01" data-num="pillarEW" placeholder="동서"> × <input type="number" step="0.01" data-num="pillarNS" placeholder="남북"></td></tr>
+    <tr><td>3-3. 기둥 줄의 방향</td><td class="v" data-key="pillarRowDir"><label><input type="radio" name="pillarRowDir" value="EW">동서로 한 줄</label><label><input type="radio" name="pillarRowDir" value="NS">남북으로 한 줄</label><label><input type="radio" name="pillarRowDir" value="other">기타 →</label> <input type="text" data-text="pillarRowNote" style="width:50%"></td></tr>
+    <tr><td>3-4. 기둥 1개(원점에서 가장 가까운 것)의 <b>중심</b> 위치</td><td>동서 <input type="number" step="0.01" data-num="pillarNearDx" placeholder="동 +"> &nbsp; 남북 <input type="number" step="0.01" data-num="pillarNearDz" placeholder="남 +"> &nbsp; 번호 <input type="text" data-text="pillarNearId" placeholder="v1-1 기둥 번호" style="width:120px"></td></tr>
+  </table>
+  <p class="small">기둥 하나의 위치와 간격·방향만 알면 나머지 기둥은 계산할 수 있습니다.</p>
+</section>
+
+<section>
+  <h2>4. 리프트 3대</h2>
+  <table>
+    <tr><th style="width:34%">항목</th><th>값</th></tr>
+    <tr><td>4-1. 리프트 바닥판 남북 길이(세로)</td><td><input type="number" step="0.01" data-num="liftNS" placeholder="m"> <span class="small">(가로 2.20은 1차 접수)</span></td></tr>
+    <tr><td>4-2. 리프트 사이 빈 간격(1↔2, 2↔3)</td><td><input type="number" step="0.01" data-num="liftGap12" placeholder="1↔2"> &nbsp; <input type="number" step="0.01" data-num="liftGap23" placeholder="2↔3"></td></tr>
+    <tr><td>4-3. 리프트 1(왼쪽) 바닥판 <b>북서 모서리</b> 위치</td><td>동서 <input type="number" step="0.01" data-num="lift1Dx" placeholder="동 +, 서쪽이면 −"> &nbsp; 남북 <input type="number" step="0.01" data-num="lift1Dz" placeholder="남 +"> <span class="small">원점에서 멀면 ‘가까운 기둥 중심에서’로 재고 아래에 적기 →</span> <input type="text" data-text="lift1Ref" placeholder="예: 기둥2 중심에서 서 1.5, 남 2.0" style="width:50%"></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>5. 전체 외곽(있으면 좋음, 없어도 됨)</h2>
+  <table>
+    <tr><th style="width:34%">항목</th><th>값 (m)</th></tr>
+    <tr><td>5-1. 북쪽 벽 길이(동쪽 벽 모서리 → 서쪽 트인 변 끝)</td><td><input type="number" step="0.01" data-num="northWallLen"></td></tr>
+    <tr><td>5-2. 동쪽 벽 길이(북쪽 벽 모서리 → 남쪽 트인 변 끝, 돌출부 제외)</td><td><input type="number" step="0.01" data-num="eastWallLen"></td></tr>
+    <tr><td>5-3. 천장 높이(바닥 → 보 아래)</td><td><input type="number" step="0.01" data-num="ceiling"></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>6. 메모</h2>
+  <input type="text" data-text="notes" placeholder="재면서 이상했던 점, 추정으로 적은 칸 등">
+</section>
+
+<section class="noprint">
+  <h2>7. 결과 내보내기</h2>
+  <div class="row"><button onclick="make()">JSON 만들기</button><button class="sec" onclick="copyJson()">복사</button><button class="sec" onclick="saveJson()">파일로 저장</button><button class="sec" onclick="window.print()">인쇄</button></div>
+  <textarea id="out" readonly placeholder="‘JSON 만들기’를 누르면 여기에 나옵니다. 복사해서 전달하세요."></textarea>
+</section>
+</main>
+<script>
+function radio(n){const r=document.querySelector(`input[name="${n}"]:checked`);return r?r.value:null;}
+function text(k){const e=document.querySelector(`[data-text="${k}"]`);return e&&e.value.trim()?e.value.trim():null;}
+function num(k){const e=document.querySelector(`[data-num="${k}"]`);return e&&e.value!==''?Number(e.value):null;}
+function bool(k){const e=document.querySelector(`[data-bool="${k}"]`);return !!(e&&e.checked);}
+function fmt(x){return x===null?'—':x.toFixed(2);}
+function check(){
+  const a=num('testerWestEnd'),b=num('testerEastEnd');const ab=document.getElementById('chkAB');
+  if(a!==null&&b!==null){const s=a+b;ab.textContent=`a+b = ${fmt(s)}`+(Math.abs(s-3.0)<=0.05?' ✓':' ✗ 3.00과 다름');ab.className='chk '+(Math.abs(s-3.0)<=0.05?'ok':'bad');}else ab.textContent='';
+  const pairs=[['chkC','panelDx','panelDz',1.30],['chkD','deskDx','deskDz',1.10]];
+  for(const [id,kx,kz,ref] of pairs){const x=num(kx),z=num(kz);const el=document.getElementById(id);if(x!==null&&z!==null){const d=Math.hypot(x,z);el.textContent=`직선거리 ${fmt(d)}`+(Math.abs(d-ref)<=0.1?' ✓':' ✗ 1차와 다름');el.className='chk '+(Math.abs(d-ref)<=0.1?'ok':'bad');}else el.textContent='';}
+}
+document.addEventListener('input',check);
+function collect(){return {
+  checkId:"0B-survey2", schemaNote:"교사 실측 2차 결과. 좌표는 원점 P1-1(롤러 중심), 동 +x, 남 +z, 단위 m. 비어 있으면 null. 승인 배치가 아님(layoutConfirmed=false 유지).",
+  measuredOn:text('measuredOn'), measurerCode:text('measurerCode'), tool:text('tool'), exportedAt:new Date().toISOString().slice(0,10),
+  brakeZone:{
+    testerWestEnd:num('testerWestEnd'), testerEastEnd:num('testerEastEnd'),
+    panelFront:{dx:num('panelDx'),dz:num('panelDz'),facing:radio('panelFacing')},
+    deskCenter:{dx:num('deskDx'),dz:num('deskDz'),facing:radio('deskFacing')},
+    aisleEast180:{definition:radio('aisle'),note:text('aisleNote'),remeasured:num('aisleEastRemeasured')},
+    westAisle:{width:num('westAisle'),neighbor:text('westNeighbor')},
+    toeZone:{point350:radio('toePoint'),width:num('toeW'),depth:num('toeD')}
+  },
+  absZone:{
+    size:{status:radio('absSize'),ns:radio('absSize')==='fix'?num('absNS'):(radio('absSize')==='ok'?10.00:null),ew:radio('absSize')==='fix'?num('absEW'):(radio('absSize')==='ok'?4.10:null)},
+    attach:{where:radio('absAttach'),note:text('absAttachNote')},
+    start:{dx:num('absStartDx'),dz:num('absStartDz')},
+    entranceWidth:num('absEntrance'), fullyOpen:bool('absFullyOpen'), photos:text('absPhotos')
+  },
+  pillars:{spacingBasis:radio('pillarSpacingBasis'),section:{ew:num('pillarEW'),ns:num('pillarNS')},rowDirection:radio('pillarRowDir'),rowNote:text('pillarRowNote'),nearest:{id:text('pillarNearId'),dx:num('pillarNearDx'),dz:num('pillarNearDz')}},
+  lifts:{depthNS:num('liftNS'),gap12:num('liftGap12'),gap23:num('liftGap23'),lift1NorthWest:{dx:num('lift1Dx'),dz:num('lift1Dz'),ref:text('lift1Ref')}},
+  outline:{northWallLength:num('northWallLen'),eastWallLength:num('eastWallLen'),ceiling:num('ceiling')},
+  notes:text('notes')
+};}
+function make(){document.getElementById('out').value=JSON.stringify(collect(),null,2);}
+async function copyJson(){make();const t=document.getElementById('out');t.select();try{await navigator.clipboard.writeText(t.value);alert('복사했습니다.');}catch(e){document.execCommand('copy');alert('복사했습니다(구형 방식).');}}
+function saveJson(){make();const b=new Blob([document.getElementById('out').value],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='LAYOUT_SURVEY2_결과.json';a.click();}
+</script>
+</body>
+</html>
