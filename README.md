@@ -4,15 +4,20 @@
 
 - 설계 정본: 인계 폴더(Codex 협업) `design-current/`. 이 저장소의 `docs/design/`은 2026-10-21 시점 사본(사진 제외).
 - 한글 요약: `docs/01_설계안_2026-10-20.md`, `docs/02_설계안_v2_2026-10-20.md`.
-- 진행 단계: 로드맵(`docs/design/docs/06_MVP_ROADMAP.md`) **1단계 완료** — 3D·화면·저장·전송 없이 과제 규칙만 구현.
+- 진행 단계: 로드맵(`docs/design/docs/06_MVP_ROADMAP.md`) **1단계 완료 + 2단계 전반부(화면 시연) 완료** — 3D·저장·전송은 아직 없음.
 
 ## 실행
 
 ```bash
 npm install
-npm test          # vitest, 50 tests
+npm test          # vitest, 57 tests
 npx tsc --noEmit  # 타입 검사
+npm run dev       # 시연 화면 (http://localhost:5173)
 ```
+
+## 2단계 전반부: 시연 화면 (`src/screens/`)
+
+시작(세션 코드·익명 코드·사례·안내 방식) → 과제 화면(NPC 작업지시서, 12단계 체크리스트, 안전 확인·위험 행동 버튼, 계기 화면, 판독 입력, 기록표, 힌트, NPC 검사) → 결과(실습 결과·기기 저장·온라인 접수 3상태, 요약, 최초/최종 답 표, 연구 기록 payload JSON). 모든 수행은 `runPurpose=demo`, `researchEligible=false`. 피드백은 실제 표시 직후 `feedbackShown` 이벤트로 기록한다.
 
 ## 1단계 결과물 (`src/domain/`)
 
@@ -29,4 +34,4 @@ npx tsc --noEmit  # 타입 검사
 
 ## 아직 없는 것
 
-화면(React), 3D(three.js), IndexedDB 저장, Apps Script 전송, 교사 설정, 배치 좌표(실측 진행 중). 2단계부터.
+3D(three.js), IndexedDB 저장·새로고침 복원, Apps Script 전송·접수번호, 교사 설정, 배치 좌표(실측 진행 중). 2단계 후반부부터.
