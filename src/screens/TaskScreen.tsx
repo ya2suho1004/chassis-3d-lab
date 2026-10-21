@@ -27,16 +27,15 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
   proximity?: Proximity | null
   onRunChange?: (run: TaskRun) => void
 }) {
-  const [run, setRunState] = useState(initialRun)
-  const setRun = (r: TaskRun | ((prev: TaskRun) => TaskRun)) => {
-    setRunState((prev) => {
-      const next = typeof r === 'function' ? r(prev) : r
-      onRunChange?.(next)
-      return next
-    })
-  }
-  // 부모(3D 화면)가 모드 전환 등으로 run을 바꾸면 따라간다
-  useEffect(() => { if (initialRun !== runRef.current) setRunState(initialRun) }, [initialRun])
+  const [run, setRun] = useState(initialRun)
+  // 부모와 마지막으로 주고받은 run. 부모→패널 갱신과 패널→부모 알림이 서로 되돌리지 않게 한다.
+  const externalRef = useRef(initialRun)
+  useEffect(() => {
+    if (initialRun !== externalRef.current) { externalRef.current = initialRun; setRun(initialRun) }
+  }, [initialRun])
+  useEffect(() => {
+    if (run !== externalRef.current) { externalRef.current = run; onRunChange?.(run) }
+  }, [run, onRunChange])
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'failed'>('saved')
   const runRef = useRef(run)
   runRef.current = run
@@ -72,7 +71,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
   const finish = async (finalRun: TaskRun, status: 'completed' | 'aborted') => {
     // 결과 확정: payload + envelope를 같은 트랜잭션으로 저장(초안 삭제). 저장이 끝난 뒤에만 결과 화면으로.
     try {
-      const payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status, experiencedDisplayModes: ['diagram'] })
+      const payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status })
       const r = await repo.freezeRecord(payload)
       if (r.status === 'failed') return onFinish(finalRun, status, null, r.errorCode ?? 'FREEZE_FAILED')
       const stored = await repo.loadRecord(session.recordId)

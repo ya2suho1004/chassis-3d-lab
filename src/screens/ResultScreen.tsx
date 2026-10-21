@@ -12,7 +12,7 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
 }) {
   const payload = useMemo(() => {
     try {
-      return { ok: true as const, value: buildRecordPayload(run, session, { completedAtIso: new Date().toISOString(), completionStatus, experiencedDisplayModes: ['diagram'] }) }
+      return { ok: true as const, value: buildRecordPayload(run, session, { completedAtIso: new Date().toISOString(), completionStatus }) }
     } catch (e) {
       return { ok: false as const, error: (e as Error).message }
     }

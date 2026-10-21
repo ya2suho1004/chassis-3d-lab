@@ -98,4 +98,15 @@ describe('화면 모드 전환 기록', () => {
     expect(r.displayMode).toBe('diagram')
     expect(r.experiencedDisplayModes).toEqual(['threeD', 'diagram'])
   })
+
+  test('기록 payload의 displayMode는 시작 모드(threeD), 경험 모드는 전환 이력을 담는다', async () => {
+    const { buildRecordPayload } = await import('../src/domain/record')
+    const { createDemoSession } = await import('../src/app/session')
+    let r = createTaskRun(lv1 as ApprovedTask, { difficultyMode: 'guided', displayMode: 'threeD' })
+    r = changeDisplayMode(r, 'diagram', 'userChoice').run
+    const session = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview' })
+    const p = buildRecordPayload(r, session, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'aborted' })
+    expect(p.displayMode).toBe('threeD')
+    expect(p.experiencedDisplayModes).toEqual(['threeD', 'diagram'])
+  })
 })
