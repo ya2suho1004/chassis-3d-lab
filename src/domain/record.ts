@@ -122,7 +122,7 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
     researchEligible,
     configurationApproval: approvals,
     displayMode: session.displayMode,
-    experiencedDisplayModes: fin.experiencedDisplayModes ?? [session.displayMode],
+    experiencedDisplayModes: fin.experiencedDisplayModes ?? run.experiencedDisplayModes,
     completionStatus: fin.completionStatus,
     startedAt: session.startedAtIso,
     completedAt: fin.completedAtIso,

@@ -16,11 +16,36 @@ type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: stri
 const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정' }
 const ISSUE_LABEL: Record<string, string> = { STEP_NOT_COMPLETED: '단계 미완료', UNANSWERED: '미응답', FINAL_INCORRECT: '최종 답 오답', NOT_EVALUABLE: '채점 불가', SAFETY_NOT_SATISFIED: '안전 조건 미충족' }
 
-export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repository; session: SessionContext; initialRun: TaskRun; onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void }) {
-  const [run, setRun] = useState(initialRun)
+export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
+
+export function TaskScreen({ repo, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange }: {
+  repo: Repository; session: SessionContext; initialRun: TaskRun
+  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
+  /** 실습장 화면 안에 끼워 넣을 때 true(머리글 생략) */
+  embedded?: boolean
+  /** 3D 모드에서 장비 근접 여부. null이면 게이팅 없음(도식 모드) */
+  proximity?: Proximity | null
+  onRunChange?: (run: TaskRun) => void
+}) {
+  const [run, setRunState] = useState(initialRun)
+  const setRun = (r: TaskRun | ((prev: TaskRun) => TaskRun)) => {
+    setRunState((prev) => {
+      const next = typeof r === 'function' ? r(prev) : r
+      onRunChange?.(next)
+      return next
+    })
+  }
+  // 부모(3D 화면)가 모드 전환 등으로 run을 바꾸면 따라간다
+  useEffect(() => { if (initialRun !== runRef.current) setRunState(initialRun) }, [initialRun])
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'failed'>('saved')
   const runRef = useRef(run)
   runRef.current = run
+  const needsMove = (stepId: string) => {
+    if (!proximity) return null
+    const st = task.steps.find((x) => x.stepId === stepId)
+    if (!st?.equipmentId) return null
+    return proximity.nearIds.includes(st.equipmentId) ? null : proximity.labelOf(st.equipmentId)
+  }
 
   // 의미 있는 상태 변화마다 초안을 자동 저장한다(네트워크 없음). 실패는 화면에 표시한다.
   useEffect(() => {
@@ -78,6 +103,8 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
   }
 
   const doStep = (stepId: string) => {
+    const far = needsMove(stepId)
+    if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
     const res = attempt(run, { type: 'step', stepId }, newId())
     if (res.outcome === 'completed') { setRun(res.run); setShown(null); return }
     if (res.outcome === 'blocked') {
@@ -137,9 +164,9 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
   const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${m.left}   R ${m.right}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---' }
 
   return (
-    <main className="screen task">
+    <main className={embedded ? 'embedded task' : 'screen task'}>
       <header className="topbar">
-        <div><b>{task.title}</b> · 코드 {session.anonymousStudentCode} · {run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</div>
+        <div><b>{task.title}</b> · {embedded ? '' : `코드 ${session.anonymousStudentCode} · `}{run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</div>
         <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>{run.paused && ' · 일시중지'}</div>
       </header>
 
@@ -168,7 +195,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish }: { repo: Repo
                   {!isDone && (
                     <span className="btns">
                       {s.stepId === 'lower' && !run.satisfiedSafety.includes('s-lift') && <button onClick={confirmLift}>주변 확인</button>}
-                      <button onClick={() => doStep(s.stepId)}>수행</button>
+                      <button onClick={() => doStep(s.stepId)} className={needsMove(s.stepId) ? 'far' : ''}>{needsMove(s.stepId) ? '이동 필요' : '수행'}</button>
                     </span>
                   )}
                   {isDone && <span className="ok">완료</span>}

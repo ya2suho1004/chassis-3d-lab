@@ -14,6 +14,8 @@ export type EventType =
   | 'taskStarted' | 'stepCompleted' | 'actionBlocked' | 'answerSubmitted' | 'hintRequested'
   | 'feedbackShown' | 'npcInspected' | 'paused' | 'resumed' | 'displayModeChanged' | 'taskFinalized'
 
+export type DisplayMode = 'threeD' | 'diagram'
+
 export interface StepEvent {
   eventId: string
   sequence: number
@@ -25,6 +27,8 @@ export interface StepEvent {
   itemId?: string
   feedbackKey?: string
   feedbackKind?: 'safety' | 'explanatory' | 'hint' | 'guidance'
+  fromDisplayMode?: DisplayMode
+  toDisplayMode?: DisplayMode
 }
 
 export interface EngineDeps {
@@ -58,6 +62,9 @@ export interface TaskRun {
   pauseCount: number
   resumeCount: number
   timeQuality: 'continuous' | 'resumed' | 'uncertain'
+  /** 현재 화면 모드와 경험한 모드 목록(시작 모드는 기록의 displayMode) */
+  displayMode: DisplayMode
+  experiencedDisplayModes: DisplayMode[]
   /** 중복 집계 방지용 */
   countedActionIds: string[]
 }
@@ -140,7 +147,7 @@ function countBlocked(run: TaskRun, actionId: string, kind: 'safety' | 'error', 
   return carry(run, { ...run, countedActionIds: counted, errorCount: run.errorCount + 1, errorTypes: bump(run.errorTypes, key) })
 }
 
-export function createTaskRun(task: ApprovedTask, opts: { difficultyMode: DifficultyMode }, deps: EngineDeps = defaultDeps()): TaskRun {
+export function createTaskRun(task: ApprovedTask, opts: { difficultyMode: DifficultyMode; displayMode?: DisplayMode }, deps: EngineDeps = defaultDeps()): TaskRun {
   const startedAtMs = deps.now()
   const base: TaskRun = {
     task,
@@ -165,6 +172,8 @@ export function createTaskRun(task: ApprovedTask, opts: { difficultyMode: Diffic
     pauseCount: 0,
     resumeCount: 0,
     timeQuality: 'continuous',
+    displayMode: opts.displayMode ?? 'threeD',
+    experiencedDisplayModes: [opts.displayMode ?? 'threeD'],
     countedActionIds: [],
   }
   depsByRun.set(base, deps)
@@ -310,4 +319,13 @@ export function rehydrateRun(snap: RunSnapshot, deps: EngineDeps = defaultDeps()
   const base: TaskRun = { ...rest, startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality: rest.timeQuality === 'uncertain' ? 'uncertain' : 'resumed' }
   depsByRun.set(base, deps)
   return appendEvent(base, { type: 'resumed', reasonCode: 'restored' }).run
+}
+
+/** 3D ↔ 도식 전환. 시작 모드는 기록의 displayMode로 남고, 여기서는 경험 모드 목록과 전환 이벤트를 남긴다. */
+export function changeDisplayMode(run: TaskRun, to: DisplayMode, reason: 'userChoice' | 'webglUnavailable' | 'performance'): AttemptResult {
+  if (run.displayMode === to) return { run, outcome: 'ignored', reasonCode: 'SAME_MODE', feedbackKey: null }
+  const ev = appendEvent(run, { type: 'displayModeChanged', fromDisplayMode: run.displayMode, toDisplayMode: to, reasonCode: reason })
+  if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
+  const experienced = ev.run.experiencedDisplayModes.includes(to) ? ev.run.experiencedDisplayModes : [...ev.run.experiencedDisplayModes, to]
+  return { run: carry(ev.run, { ...ev.run, displayMode: to, experiencedDisplayModes: experienced }), outcome: 'confirmed', reasonCode: null, feedbackKey: null }
 }
