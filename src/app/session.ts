@@ -40,7 +40,7 @@ export function createDemoSession(opts: { studentCode: string; sessionCode: stri
       judgeEngineVersion: '0.1.0',
       sessionConfigVersion: 'unapproved',
       researchProtocolVersion: 'unapproved',
-      feedbackPolicyVersion: 'unapproved',
+      feedbackPolicyVersion: '1.1.0-design-approved-2026-10-26', // 교사 확인 0E(2026-10-26): 무안내는 최초 응답 6개 저장 뒤 정답 피드백
     },
     clientAppVersion: APP_VERSION,
     startedAtIso: new Date().toISOString(),

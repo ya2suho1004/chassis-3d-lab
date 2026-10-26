@@ -1,6 +1,6 @@
 // 피드백 노출 정책 — task.feedbackPolicy (docs/design/docs/13 §8, 16 §2)
 // 안내 모드: 정답 관련 피드백 즉시. 무안내 모드: 필수 응답 6개의 최초 답이 모두 저장된 뒤에만 정답 관련 피드백.
-// 안전 피드백은 모드와 관계없이 즉시. 이 정책은 '제안(proposed)' 상태이며 feedbackPolicyVersion에 고정해 기록한다.
+// 안전 피드백은 모드와 관계없이 즉시. 이 정책은 교사 확인 0E(2026-10-26)로 승인(approved)됐으며 feedbackPolicyVersion에 고정해 기록한다.
 import type { TaskRun } from './taskEngine'
 
 const SAFETY_KEYS = new Set(['blocked_ppe', 'blocked_safety_lift', 'blocked_safety_motor', 'blocked_safety_accel', 'blocked_safety_exit'])

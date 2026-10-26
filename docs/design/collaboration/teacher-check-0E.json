@@ -1,0 +1,28 @@
+{
+  "checkId": "0E-action-mapping",
+  "checkedAt": "2026-10-26",
+  "reviewer": null,
+  "note": "교사 확인지 0E 결과. 과제·피드백 버전 갱신과 Codex 계약 개정은 이 결과로 진행.",
+  "u1": { "fixingAction": "unknown", "note": null, "readInstruction": "keep" },
+  "u2": { "split": "ok", "note": null, "liftRecheck": "ok" },
+  "u3": { "engineOffBeforeInspection": "ok" },
+  "u7": {
+    "feedback": {
+      "blocked_ppe": { "choice": "proposed", "note": null },
+      "blocked_order": { "choice": "proposed", "note": null },
+      "blocked_safety_lift": { "choice": "proposed", "note": null },
+      "blocked_safety_motor": { "choice": "proposed", "note": null },
+      "blocked_safety_accel": { "choice": "proposed", "note": null },
+      "blocked_safety_exit": { "choice": "proposed", "note": null },
+      "wrong_reading": { "choice": "proposed", "note": null },
+      "wrong_calc": { "choice": "proposed", "note": null },
+      "wrong_verdict": { "choice": "proposed", "note": null },
+      "blocked_safety_engine": { "choice": "proposed", "note": null }
+    },
+    "unguidedPolicy": "approve",
+    "policyNote": null
+  },
+  "u8": { "actionField": "explain", "note": null },
+  "u6": { "usualEntry": "both" },
+  "notes": null
+}
