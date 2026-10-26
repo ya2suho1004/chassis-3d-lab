@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ABS 구역 연결 방향 확인 (C-8 대안)</title>
+<style>
+:root{--ink:#1d1d1f;--mut:#6b6b70;--line:#c9c9ce;--bg:#f7f7f8;--acc:#3b6fd6;--warn:#b42318;--warnbg:#fde8e6}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
+header{padding:16px;background:#fff;border-bottom:1px solid var(--line)} h1{font-size:20px;margin:0 0 6px} h2{font-size:17px;margin:0 0 10px}
+.banner{display:inline-block;background:var(--warnbg);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:6px 10px;font-weight:700;margin:6px 0}
+.meta,.small{color:var(--mut);font-size:13px} main{padding:16px;max-width:900px;margin:0 auto}
+section{background:#fff;border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:16px}
+label.radio{display:block;padding:8px 0;font-size:16px} input[type=text]{width:100%;padding:6px;border:1px solid var(--line);border-radius:4px;font:inherit}
+textarea{width:100%;min-height:120px;font:12px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:4px;padding:8px}
+button{font:inherit;padding:10px 14px;border-radius:6px;border:1px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;min-height:44px} button.sec{background:#fff;color:var(--acc)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+@media print{header,.noprint{display:none}body{background:#fff}section{border:none}}
+</style></head><body>
+<header><h1>ABS 구역 연결 방향 확인 (C-8 대안)</h1>
+<div class="banner">현장 측정 없이 답할 수 있는 두 가지만 · 치수는 묻지 않습니다 · 배치·연구 승인이 아닙니다</div>
+<div class="meta">문안: Codex 회신 C §4(2026-10-26). 결과는 ‘JSON 만들기’로 내보내 <b>collaboration/LAYOUT_SURVEY2_followup_C8.json</b> 으로 전달. 사진은 맥의 <b>collaboration/photos-survey2/</b> 폴더에만 넣습니다(인터넷 업로드 금지).</div></header>
+<main>
+<section><h2>1. 연결 변의 방향</h2>
+<p>ABS 구역으로 실제 드나드는 연결 변은 본 구역(섀시 실습실)의 어느 쪽 변입니까? (스케치 위 = 북)</p>
+<label class="radio"><input type="radio" name="dir" value="north"> 북쪽 변</label>
+<label class="radio"><input type="radio" name="dir" value="east"> 동쪽 변 (조작부 쪽 벽)</label>
+<label class="radio"><input type="radio" name="dir" value="south"> 남쪽 변 (전기 실습 구역 쪽)</label>
+<label class="radio"><input type="radio" name="dir" value="west"> 서쪽 변 (엔진 실습 구역 쪽)</label>
+<label class="radio"><input type="radio" name="dir" value="unknown"> 모름 / 현장에서 다시 봐야 함</label>
+<p class="small">연결 변이 벽의 일부라면(벽에 뚫린 문·통로) 그 벽의 방향을 고르면 됩니다.</p></section>
+<section><h2>2. 연결부 사진 2장</h2>
+<p>① 본 구역에서 ABS 구역을 바라본 사진, ② ABS 구역에서 본 구역을 바라본 사진. 파일명만 적어 주세요.</p>
+<p>① 본 구역 → ABS <input type="text" data-text="photoMainToAbs" placeholder="예: IMG_2401.jpg"></p>
+<p>② ABS → 본 구역 <input type="text" data-text="photoAbsToMain" placeholder="예: IMG_2402.jpg"></p>
+<p>메모(선택) <input type="text" data-text="note" placeholder="예: 셔터가 있음, 평소 열려 있음"></p></section>
+<section class="noprint"><h2>3. 결과 내보내기</h2>
+<div class="row"><button onclick="make()">JSON 만들기</button><button class="sec" onclick="copyJson()">복사</button><button class="sec" onclick="saveJson()">파일로 저장</button><button class="sec" onclick="window.print()">인쇄</button></div>
+<textarea id="out" readonly placeholder="‘JSON 만들기’를 누르면 여기에 나옵니다."></textarea></section>
+</main>
+<script>
+function radio(n){const r=document.querySelector(`input[name="${n}"]:checked`);return r?r.value:null;}
+function text(k){const e=document.querySelector(`[data-text="${k}"]`);return e&&e.value.trim()?e.value.trim():null;}
+function collect(){return {checkId:"0B-followup-C8-direction",schemaNote:"현장 측정 없이 답한 연결 변 방향과 사진 파일명. 치수·좌표·출입 폭을 만들어내지 않음. 배치·연구 승인이 아님.",exportedAt:new Date().toISOString().slice(0,10),absZone:{connectionSide:radio('dir'),photos:{mainToAbs:text('photoMainToAbs'),absToMain:text('photoAbsToMain')},note:text('note')}};}
+function make(){document.getElementById('out').value=JSON.stringify(collect(),null,2);}
+async function copyJson(){make();const t=document.getElementById('out');t.select();try{await navigator.clipboard.writeText(t.value);alert('복사했습니다.');}catch(e){document.execCommand('copy');alert('복사했습니다(구형 방식).');}}
+function saveJson(){make();const b=new Blob([document.getElementById('out').value],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='LAYOUT_SURVEY2_followup_C8.json';a.click();}
+</script></body></html>
