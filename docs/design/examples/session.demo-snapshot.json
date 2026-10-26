@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "sessionSnapshotId": "00000000-0000-4000-8000-000000000005",
+  "sessionCode": "DEMO-ONLY",
+  "classConditionCode": "DEMO",
+  "taskId": "braking-force",
+  "difficultyMode": "guided",
+  "usagePhase": "other",
+  "runPurpose": "demo",
+  "displayMode": "threeD",
+  "configurationApproval": {
+    "taskApproved": false,
+    "rulesetApproved": true,
+    "layoutConfirmed": false,
+    "researchUseApproved": false
+  },
+  "versions": {
+    "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+    "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+    "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+    "layoutVersion": "partial-survey-2026-10-26",
+    "judgeEngineVersion": "design-only",
+    "sessionConfigVersion": "1.2.0-design-2026-10-26",
+    "researchProtocolVersion": "unapproved",
+    "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+  },
+  "sessionConfiguration": {
+    "vehicleEntryDirection": null
+  }
+}

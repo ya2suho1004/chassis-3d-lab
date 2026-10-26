@@ -39,7 +39,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
     setError(null)
     setBusy(true)
     const task = tasks[taskIdx]!
-    const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase, vehicleEntryDirection: entryDir }), task, mode)
+    const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase, vehicleEntryDirection: entryDir, task, difficultyMode: mode }), task, mode)
     setBusy(false)
     if (err) setError(err)
   }
@@ -130,7 +130,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
         {sendLog && (
           <ul className="sendlog" aria-label="전송 결과">
             {sendLog.length === 0 && <li>보낼 기록이 없습니다.</li>}
-            {sendLog.map((r) => (<li key={r.recordId}>{r.recordId.slice(0, 8)}… — {OUTCOME_LABEL[r.outcome]}{r.code && r.outcome !== 'acknowledged' ? ` (${r.code})` : ''}</li>))}
+            {sendLog.map((r) => (<li key={r.recordId}>{r.recordId.slice(0, 8)}… — {r.code === 'RATE_LIMITED' ? '신규 접수 상한 도달 — 교사 설정 확인(자동 회복 없음)' : OUTCOME_LABEL[r.outcome]}{r.code && r.outcome !== 'acknowledged' ? ` (${r.code})` : ''}</li>))}
           </ul>
         )}
         <div>전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</div>

@@ -1,5 +1,7 @@
 # 16. 계약 1.1.0 결정과 호환 정책
 
+> **2026-10-26 버전 안내:** 이 문서는 1.1.0 도입 결정의 보존 기록이다. 현행 task·vocabulary는 1.2.0, 새 session-snapshot은 1.0.0이며 [17 개정 결정](17_U_ITEMS_CONTRACT_REVISION_2026-10-26.md)을 함께 읽는다. record/layout/submission1.1.0·delivery1.0.0과 §4의 과거 기록 무변경·버전별 수신 원칙은 유지한다.
+
 2026-10-21 · Codex 설계·계약 검토 · 앱 구현·제출 실행·운영 승인 아님
 
 이 문서는 [Claude 요청](../../collaboration/CLAUDE_TO_CODEX_2026-10-21.txt)의 네 작업에 대한 기술 결정을 고정한다. 교사가 확인한 값은 [0A 원문](../../collaboration/teacher-check-0A.json)에 보존한다. 원자료 스냅샷의 과거 미확정 문장보다 이 결정과 새 교사 응답을 우선하되, 실제 장비 동작·연구 승인으로 확대하지 않는다.

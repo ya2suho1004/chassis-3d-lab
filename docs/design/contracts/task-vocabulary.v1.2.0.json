@@ -1,0 +1,773 @@
+{
+  "vocabularyVersion": "1.2.0",
+  "title": "제동력 MVP 과제 데이터 사전",
+  "contractStatus": "definedForDesignReview",
+  "implementationVerification": "notPerformed",
+  "notExecutableCode": true,
+  "scope": "task.schema 1.2.0에서 사용할 등록명의 의미·허용상태·검증 규칙. 교사 응답·장비 동작·앱 구현·운영 안전·연구 승인을 대체하지 않는다.",
+  "commonValidationRules": [
+    "등록명은 대소문자를 구별하며 별칭·공백 보정·알 수 없는 이름의 기본값 대입을 허용하지 않는다.",
+    "문자열은 설명용 데이터이며 JavaScript 식이나 eval 입력으로 실행하지 않는다.",
+    "기록된 과거 단계 완료와 현재 안전 상태를 구분한다. 알 수 없는 필수 상태는 true로 간주하지 않는다."
+  ],
+  "truthStateSemantics": {
+    "true": "해당 행동 시점에 충족이 확인됨",
+    "false": "해당 조건이 충족되지 않음",
+    "unknown": "미확인·적용 동작 미정. 완료나 안전 통과로 사용하지 않음"
+  },
+  "completionConditions": {
+    "teacherApprovalRequired": {
+      "meaning": "미승인 형식 예시가 실행되지 않도록 남기는 차단용 이름.",
+      "allowedStates": [
+        false
+      ],
+      "validationRules": [
+        "task.approvalStatus=pending에서만 허용한다.",
+        "이 조건으로 단계를 완료하거나 approved 과제를 시작할 수 없다."
+      ],
+      "allowedTaskApprovalStates": [
+        "pending"
+      ],
+      "stepIds": [
+        "preparation"
+      ]
+    },
+    "ppeConfirmed": {
+      "meaning": "해당 수행에서 안전화·보안경 확인을 마쳤고 현재 착용 상태가 충족됨.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "단순 안전수칙 읽음만으로 충족 처리하지 않는다.",
+        "보호구 확인 행동과 현재 상태를 확인하며 알 수 없으면 완료하지 않는다."
+      ],
+      "stepIds": [
+        "ppe"
+      ]
+    },
+    "inspected": {
+      "meaning": "현재 stepId에 해당하는 점검 항목을 확인하고 그 결과를 남김.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "tire와 equip를 서로 다른 점검 결과로 저장한다. 공용 inspected=true 하나로 둘을 완료하지 않는다.",
+        "점검 항목이 빠졌거나 확인 불가능하면 완료하지 않는다. 이상 발견 시 자동으로 정상 처리하지 않는다.",
+        "tire는 마모·공기압의 육안 점검이라는 0A 문구 범위이며 수치 압력을 측정했다고 간주하지 않는다."
+      ],
+      "stepIds": [
+        "tire",
+        "equip"
+      ]
+    },
+    "vehicleCentered": {
+      "meaning": "선택된 진입 방향에 따라 시험할 뒤축이 롤러 중앙에 정위치함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "측정 세트 axlePosition=rear와 일치해야 한다.",
+        "북/남 방향을 자동 선택하지 않는다.",
+        "센터 위치 확인 상태는 뒤 단계에서 차량이 이동하면 안전 검사 시 다시 평가한다."
+      ],
+      "stepIds": [
+        "enter"
+      ]
+    },
+    "axleWeightRead": {
+      "meaning": "축중 표시를 판독해 유효한 축중 응답을 제출함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "axleWeight 응답이 integer 정책으로 문법·범위 검사를 통과해야 한다.",
+        "제출은 완료 조건이며 정답 여부는 decimalExact가 별도로 판정한다.",
+        "빈 값·0·음수·비유한 값은 축중 응답으로 완료 처리하지 않는다."
+      ],
+      "stepIds": [
+        "axle"
+      ]
+    },
+    "brakeModeSelected": {
+      "meaning": "BRAKE 모드를 선택하고 표시 0 상태를 확인함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "14번 사진은 BRAKE라는 이름의 존재만 뒷받침한다. METER ON/OFF와의 동작 등가는 확인이 필요하다.",
+        "디지털 표시 0 확인을 뜻하며 아날로그 지침 모델을 승인한 것으로 해석하지 않는다.",
+        "영점 이상 또는 표시 확인 불가능 상태는 완료하지 않는다."
+      ],
+      "stepIds": [
+        "mode"
+      ],
+      "implementationGate": "장비 동작 매핑 확인 전 실제 측정 동작의 완료 조건으로 확정하지 않는다."
+    },
+    "liftLowered": {
+      "meaning": "하강 조작 전 주변 안전 확인을 하고 리프트가 하강한 상태를 확인함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "하강 행동 시점에 s-lift와 s-ppe가 true여야 한다.",
+        "하강 명령을 보낸 것만으로 하강 완료라고 간주하지 않는다."
+      ],
+      "stepIds": [
+        "lower"
+      ]
+    },
+    "motorOn": {
+      "meaning": "안전 조건이 충족된 상태에서 MOTOR ON과 정상 롤러 회전을 확인함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "s-motor와 s-ppe가 현재 true여야 한다.",
+        "NCS의 P/L 점등 확인과 현장 디지털 장비 대응은 동작 매핑 확인 범위에 포함한다.",
+        "롤러 회전 여부가 불명확하면 완료하지 않는다."
+      ],
+      "stepIds": [
+        "motor"
+      ]
+    },
+    "pedalPressed": {
+      "meaning": "측정 중 가속 페달을 조작하지 않고 브레이크를 서서히 끝까지 조작함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "s-accel과 s-ppe가 현재 true여야 한다.",
+        "가상 조작 완료는 실제 답력·촉각·정비 숙련도를 측정한 결과가 아니다."
+      ],
+      "stepIds": [
+        "press"
+      ]
+    },
+    "readingsSubmitted": {
+      "meaning": "최대 제동력의 표시 고정·정지 확인 후 좌·우 판독 응답을 제출함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "left/right 각각 integer 정책으로 유효한 응답을 제출해야 한다.",
+        "정답 여부는 별도 채점한다. 틀린 답도 최초 제출로 보존한다.",
+        "NCS p.99(11)의 METER OFF·롤러 정지·표시 고정과 현장 장비 동작의 대응이 먼저 정의되어야 한다.",
+        "현재 과제 instruction에는 정지·고정 확인이 빠져 있으므로 본 사전만으로 해결되었다고 간주하지 않는다."
+      ],
+      "stepIds": [
+        "read"
+      ],
+      "implementationGate": "METER OFF에 대응하는 현장 정지·고정 조작 확인"
+    },
+    "vehicleExited": {
+      "meaning": "MOTOR OFF, 롤러 정지 확인, 주변 안전 확인 후 리프트 상승과 차량 이탈을 순서대로 마침.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "off 전체의 진입 전에 s-exit=true를 요구하여 MOTOR OFF를 막는 순환 차단을 만들지 않는다.",
+        "MOTOR OFF는 허용된 정지 행동으로 처리하고 실제 이탈 행동 직전에 s-exit을 평가한다.",
+        "리프트 상승 직전에 s-lift, 장비 조작 시 s-ppe를 평가한다.",
+        "MOTOR OFF 명령만으로 롤러가 멈췄다고 간주하지 않는다."
+      ],
+      "stepIds": [
+        "off"
+      ]
+    },
+    "answersSubmitted": {
+      "meaning": "과제 requiredResponseItems의 필수 응답을 모두 유효한 형식으로 제출함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "현재 두 과제의 필수 응답은 left/right/axleWeight/deviation/sum/vehicleCondition 6종이다.",
+        "전 항목 정답은 이 완료 조건과 다르며 NPC 최종 검사가 별도로 판단한다.",
+        "조치 기재는 0E U8에서 비채점 설명으로 확인됐다. 응답·채점·필수완료 항목을 추가하지 않고 자유 입력을 수집하지 않는다."
+      ],
+      "stepIds": [
+        "calc"
+      ]
+    }
+  },
+  "gradingRules": {
+    "decimalExact": {
+      "meaning": "항목의 정밀도 정책을 적용한 십진수 기준값과 제출값이 수치상 정확히 같은지 비교함.",
+      "allowedStates": [
+        "correct",
+        "incorrect",
+        "notEvaluable"
+      ],
+      "validationRules": [
+        "measurement는 제시값, calculation은 승인된 원본 측정값과 등록 산식으로 계산한 뒤 해당 정밀도 정책을 적용한 값을 기준으로 한다.",
+        "학생이 틀리게 판독한 값으로 기준 정답을 바꾸지 않는다.",
+        "문법·범위 검사를 먼저 하고 빈 문자열/NaN/Infinity를 0이나 정답으로 바꾸지 않는다.",
+        "허용오차를 자동 추가하지 않는다. answerTolerance는 null이어야 한다.",
+        "문자열 모양 대신 십진 수치로 비교한다. 계산 답 10과 10.0은 같은 수치이고 표시 형식은 truncate1이 정한다."
+      ],
+      "allowedKinds": [
+        "measurement",
+        "calculation"
+      ]
+    },
+    "absoluteTolerance": {
+      "meaning": "승인된 허용오차 이내인 응답을 정답으로 처리하는 예비 등록 연산.",
+      "allowedStates": [
+        "correct",
+        "incorrect",
+        "notEvaluable"
+      ],
+      "validationRules": [
+        "answerTolerance가 유한한 0 이상 수치로 명시되고 승인 근거가 있을 때만 사용한다.",
+        "현재 두 사례에서는 사용하지 않는다. 기본 허용오차를 만들지 않는다.",
+        "절대 차가 answerTolerance 이하인지 비교한다. 정밀도 정책을 생략하는 근거가 아니다."
+      ],
+      "allowedKinds": [
+        "measurement",
+        "calculation"
+      ],
+      "useStatus": "reservedRequiresExplicitApproval"
+    },
+    "vehicleVerdictMatch": {
+      "meaning": "학생의 양호/불량 답과 승인 기준으로 산출한 차량 판정을 비교함.",
+      "allowedStates": [
+        "correct",
+        "incorrect",
+        "notEvaluable"
+      ],
+      "validationRules": [
+        "kind=judgment에서만 사용한다. unit/answerTolerance/precisionPolicyRef는 null이어야 한다.",
+        "등록 차량 판정은 pass/fail이며 한국어 양호/불량 표시와 고정 대응한다.",
+        "기준·축·단위·정밀도·산식이 미확정이거나 입력 세트가 무효이면 notEvaluable이다.",
+        "학생 정오, 차량 판정, NPC 통과, 서버 접수 상태를 서로 바꾸어 쓰지 않는다."
+      ],
+      "allowedKinds": [
+        "judgment"
+      ]
+    }
+  },
+  "precisionPolicies": {
+    "integer": {
+      "meaning": "측정 판독 응답과 승인된 제시값은 유한한 정수이며 기재 시 소수 부분을 쓰지 않음.",
+      "allowedStates": [
+        "valid",
+        "invalid",
+        "notEvaluable"
+      ],
+      "validationRules": [
+        "left/right는 0 이상, axleWeight는 0 초과여야 한다.",
+        "입력 소수를 반올림하거나 절사해 정수로 수용하지 않는다.",
+        "0A inputsIntegerOnly는 측정 입력에 적용한다. 편차·합 계산 응답은 truncate1을 사용한다.",
+        "공백만 있는 입력, 비수치, 비유한 수치를 거절한다."
+      ],
+      "allowedKinds": [
+        "measurement"
+      ],
+      "fractionalDigits": 0
+    },
+    "truncate1": {
+      "meaning": "중간 계산은 원값을 유지하고 최종 산출값의 소수 둘째 자리 이하를 버려 첫째 자리까지 기재하며 판정도 그 값을 사용함.",
+      "allowedStates": [
+        "valid",
+        "invalid",
+        "notEvaluable"
+      ],
+      "validationRules": [
+        "ruleset.decisionPrecision은 mode=rounded/digits=1/rounding=truncate와 일치해야 한다. rounded라는 기존 필드명은 여기서 절사를 포함한다.",
+        "비음수 비율에서 3.456은 3.4, 6.666...은 6.6, 10은 10.0으로 표시한다.",
+        "십진 또는 유리수에 근거해 절사한다. 이진 부동소수 오차 때문에 10.0이 9.9로 바뀌어서는 안 된다.",
+        "최종 기준값과 비교에 같은 절사값을 쓴다. 화면만 절사하고 판정은 원값으로 하지 않는다.",
+        "학생 답을 또 절사해 오답을 정답으로 바꾸지 않는다. 첫째 자리보다 세밀한 비영 소수 응답은 허용하지 않는다.",
+        "동일 수치의 후행 0 표기는 표시 정책과 구분한다. 10/10.0은 같은 수치로 비교한다."
+      ],
+      "allowedKinds": [
+        "calculation"
+      ],
+      "fractionalDigits": 1,
+      "rounding": "truncate",
+      "comparisonValue": "written"
+    }
+  },
+  "calculationRules": {
+    "axlePercentDeviation": {
+      "meaning": "좌우 제동력의 절대차를 해당 축중으로 나눈 백분율.",
+      "allowedStates": [
+        "evaluable",
+        "notEvaluable"
+      ],
+      "validationRules": [
+        "left/right는 같은 승인 단위의 유한한 0 이상 값, axleWeight는 동일 표기 체계의 유한한 양수여야 한다.",
+        "분모는 전체 차량중량이 아니라 현재 측정 축중이다.",
+        "단위 변환을 암묵적으로 하지 않는다. kg는 두 교사 사례의 승인 표기이며 kgf와 일반적으로 같다고 선언하지 않는다.",
+        "본식은 설명용이며 eval로 실행하지 않는다."
+      ],
+      "formulaDescription": "abs(left-right) / axleWeight * 100",
+      "appliesToItems": [
+        "deviation"
+      ]
+    },
+    "axlePercentSum": {
+      "meaning": "좌우 제동력의 합을 해당 축중으로 나눈 백분율.",
+      "allowedStates": [
+        "evaluable",
+        "notEvaluable"
+      ],
+      "validationRules": [
+        "앞축/뒤축을 명시해야 한다. 알 수 없는 축을 rear로 간주하지 않는다.",
+        "분모는 현재 측정 축중이다. 전체 차량 총합·주차브레이크 산식으로 확대하지 않는다.",
+        "유한값·비음수·동일 승인 표기 체계·축중 양수 검사를 통과해야 한다.",
+        "본식은 설명용이며 eval로 실행하지 않는다."
+      ],
+      "formulaDescription": "(left+right) / axleWeight * 100",
+      "appliesToItems": [
+        "sum"
+      ]
+    }
+  },
+  "safetyConditions": {
+    "s-ppe": {
+      "meaning": "장비 조작 시 안전화·보안경 착용 확인이 현재 유효함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "ppe 완료 이력을 현재 착용 상태와 구분한다.",
+        "읽음 체크만으로 모든 안전조건을 충족했다고 처리하지 않는다."
+      ],
+      "evaluationScope": [
+        "장비 조작·점검·측정 행동"
+      ],
+      "teacherCheck": "keep",
+      "evidence": [
+        "NCS 인쇄 p.97/PDF109",
+        "0A SAFETY s-ppe"
+      ]
+    },
+    "s-lift": {
+      "meaning": "리프트를 움직이기 직전에 주변 사람·장애물 확인을 마침.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "하강과 상승 양쪽에 적용한다.",
+        "lower의 이전 확인을 off 상승 시점의 확인으로 자동 재사용하지 않는다."
+      ],
+      "evaluationScope": [
+        "lower 하강 직전",
+        "off 상승 직전"
+      ],
+      "teacherCheck": "keep",
+      "evidence": [
+        "NCS 인쇄 p.97/PDF109",
+        "0A SAFETY s-lift"
+      ]
+    },
+    "s-motor": {
+      "meaning": "MOTOR ON 직전에 시험 축이 롤러 중앙에 있고 필요한 선행 상태가 유효함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "enter 완료 기록만 보지 않고 현재 정위치를 검사한다.",
+        "현재 상태가 unknown이면 MOTOR ON을 차단한다."
+      ],
+      "evaluationScope": [
+        "motor ON 직전"
+      ],
+      "teacherCheck": "keep",
+      "evidence": [
+        "NCS 인쇄 p.98~99/PDF110~111의 정위치·구동 순서",
+        "0A SAFETY s-motor"
+      ]
+    },
+    "s-exit": {
+      "meaning": "실제 차량 이탈 직전에 MOTOR OFF 및 롤러 정지를 확인함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "off 단계 전체 진입조건으로 걸어 MOTOR OFF 자체를 막지 않는다.",
+        "정지 명령과 정지 확인을 구분한다."
+      ],
+      "evaluationScope": [
+        "off liftUp 직전 정지 확인",
+        "off exitVehicle 직전 정지·상승 완료 확인"
+      ],
+      "teacherCheck": "keep",
+      "evidence": [
+        "NCS 인쇄 p.99/PDF111(13)(14)",
+        "0A SAFETY s-exit"
+      ]
+    },
+    "s-accel": {
+      "meaning": "측정 중 가속 페달 조작을 하지 않음.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "press 한 단계만이 아니라 motor/read를 포함한 측정 상태 동안 금지 행동을 검사한다.",
+        "금지 행동이 시도되면 안전 사건으로 기록하고 일반 오류에 중복 합산하지 않는다."
+      ],
+      "evaluationScope": [
+        "측정 상태 동안의 가속 행동"
+      ],
+      "teacherCheck": "keep",
+      "evidence": [
+        "NCS 인쇄 p.97/PDF109",
+        "0A SAFETY s-accel"
+      ]
+    },
+    "s-engine": {
+      "meaning": "측정 외 점검은 시동 OFF 상태에서 수행함.",
+      "allowedStates": [
+        true,
+        false,
+        "unknown"
+      ],
+      "validationRules": [
+        "0A keep 문구를 보존한 조건이다. NCS 원문은 가능한 한 시동이 꺼진 상태로 작업이라고 적는다.",
+        "tire/equip 점검에 연결한다. 측정 중 무조건 시동 OFF라는 새 규칙으로 확대하지 않는다.",
+        "엔진 상태가 unknown이면 자동으로 OFF라 간주하지 않는다.",
+        "현재 task JSON에 연결이 없고 전용 피드백도 없으므로 동작 연결·피드백 정의 전 구현 완료라고 주장하지 않는다."
+      ],
+      "evaluationScope": [
+        "tire 점검 직전",
+        "equip 점검 직전"
+      ],
+      "teacherCheck": "keep",
+      "evidence": [
+        "NCS 인쇄 p.97/PDF109",
+        "0A SAFETY s-engine"
+      ],
+      "useStatus": "teacher0EApprovedTaskBinding"
+    }
+  },
+  "taskBindings": {
+    "taskId": "braking-force",
+    "requiredResponseItems": {
+      "left": {
+        "gradingRuleId": "decimalExact",
+        "precisionPolicyRef": "integer"
+      },
+      "right": {
+        "gradingRuleId": "decimalExact",
+        "precisionPolicyRef": "integer"
+      },
+      "axleWeight": {
+        "gradingRuleId": "decimalExact",
+        "precisionPolicyRef": "integer"
+      },
+      "deviation": {
+        "gradingRuleId": "decimalExact",
+        "precisionPolicyRef": "truncate1",
+        "calculationRuleId": "axlePercentDeviation"
+      },
+      "sum": {
+        "gradingRuleId": "decimalExact",
+        "precisionPolicyRef": "truncate1",
+        "calculationRuleId": "axlePercentSum"
+      },
+      "vehicleCondition": {
+        "gradingRuleId": "vehicleVerdictMatch",
+        "precisionPolicyRef": null
+      }
+    },
+    "validationRules": [
+      "steps.stepId와 requiredResponseItems.itemId는 각 배열 안에서 유일해야 한다.",
+      "prerequisites는 존재하는 stepId만 참조하며 자기 참조·순환 참조를 허용하지 않는다.",
+      "requiredSafetyConditions는 safetyConditions에 등록된 ID만 참조한다.",
+      "onBlockedFeedbackKey는 같은 task.feedback에 존재해야 한다."
+    ]
+  },
+  "feedbackExposurePolicy": {
+    "guided": "단계 설명을 제공할 수 있다. 최초 응답 전에 사례의 수치 정답·판정을 자동 제시하지 않는다.",
+    "unguided": "안전 경고는 항상 유지한다. 최초 응답 전 비안전 순서 안내·해법·정답·사례 수치의 자동 제시를 하지 않는다.",
+    "crossItemProtection": "좌/우/축중/편차/합/판정의 최초 응답을 동일한 일괄 제출에서 먼저 고정한 뒤 비안전 설명적 정오 피드백을 제시한다. 다른 정책은 feedbackPolicyVersion을 변경해 사전 고정한다.",
+    "eventRequirement": "표시 후 feedbackShown과 feedbackKind/feedbackKey/itemId를 남긴다. 안전 경고를 지연하지 않는다.",
+    "validationRules": [
+      "무안내의 보이는 제목에 사례 측정값·양호/불량을 넣지 않는다.",
+      "wrong_calc의 600이나 wrong_verdict의 수치 기준·판정 설명을 다른 항목의 최초 응답보다 먼저 노출하지 않는다.",
+      "피드백 표시는 이해·독립 수행의 증거로 다루지 않는다.",
+      "caseId의 ok/deviation 및 good/bad 같은 내부 판정 단서를 학생 화면의 사례명으로 출력하지 않는다.",
+      "전체 task JSON의 측정값·정답·해설을 학생 화면의 요약 자료로 그대로 노출하지 않는다.",
+      "브라우저로 전달한 설정을 비밀이라고 주장하지 않는다. 화면 노출 제어와 시험 보안은 구별한다."
+    ],
+    "approvalStatus": "approved",
+    "version": "1.1.0-design-approved-2026-10-26"
+  },
+  "entryDirectionOwnership": {
+    "owner": "sessionConfiguration",
+    "allowedValues": [
+      "north",
+      "south",
+      null
+    ],
+    "default": null,
+    "meaning": "차량이 어느 쪽에서 진입하는지. rear라는 측정 축과 독립이다.",
+    "validationRules": [
+      "학교에서 양방향이 가능하다는 사실을 보존한다. 과제 측정값으로 진입 방향을 추론하지 않는다.",
+      "세션에서 교사가 선택하고 수행 시작 시 스냅샷에 고정한다. 미선택은 null이며 방향 의존 3D 이동을 시작하지 않는다.",
+      "session.snapshot.schema.json의 sessionConfiguration.vehicleEntryDirection을 사용하고 record에는 sessionSnapshotId로만 참조한다. null은 누락과 구별하며 생성 단계에서 명시한다.",
+      "north/south는 layout 방위를 참조하며 차량 전진/후진의 뜻으로 자동 변환하지 않는다."
+    ]
+  },
+  "approvalProvenance": {
+    "teacherResponseFile": "collaboration/teacher-check-0A.json",
+    "teacherEnvelopeStatus": "pending",
+    "individualResponses": "cases ok·rules approve·steps ok·safety keep는 확인된 개별 응답이다.",
+    "validationRules": [
+      "개별 응답을 보존하며 최상위 pending을 approved로 자동 승격하지 않는다.",
+      "날짜만 있는 checkedAt에서 자정 승인 시각을 만들지 않는다.",
+      "source.confirmation은 해당 교사 응답 범위이며 NCS와 현장 장비 모든 동작의 등가 승인을 뜻하지 않는다."
+    ],
+    "teacher0EResponseFile": "collaboration/teacher-check-0E.json",
+    "teacher0ECheckedOn": "2026-10-26",
+    "teacher0EScope": "U2·U3 승인, 피드백10종·무안내 정책 승인, U8 비채점 설명, U6 세션마다 선택. U1 장비 수리 후 확인으로 task pending 유지."
+  },
+  "feedbackKeys": {
+    "blocked_ppe": {
+      "meaning": "보호구 확인 미충족",
+      "feedbackKind": "safety",
+      "allowedStates": [
+        "conditionObserved",
+        "conditionUnknown"
+      ],
+      "validationRules": [
+        "안전 경고는 모드·응답 제출 여부와 관계없이 즉시 제공한다.",
+        "미확인 상태를 관찰된 위험 상태라고 단정하지 않는다."
+      ],
+      "exposure": "alwaysWhenRelevant"
+    },
+    "blocked_order": {
+      "meaning": "선행 단계 미충족",
+      "feedbackKind": "guidance",
+      "allowedStates": [
+        "prerequisiteIncomplete",
+        "prerequisiteUnknown"
+      ],
+      "validationRules": [
+        "무안내 최초 응답 전 정답·해법·다음 단계의 자동 노출을 하지 않는다.",
+        "정오 해설은 최초 응답 묶음 고정 후 제공한다."
+      ],
+      "exposure": "subjectToFeedbackExposurePolicy"
+    },
+    "blocked_safety_lift": {
+      "meaning": "리프트 이동 전 주변 확인 미충족",
+      "feedbackKind": "safety",
+      "allowedStates": [
+        "conditionObserved",
+        "conditionUnknown"
+      ],
+      "validationRules": [
+        "안전 경고는 모드·응답 제출 여부와 관계없이 즉시 제공한다.",
+        "미확인 상태를 관찰된 위험 상태라고 단정하지 않는다."
+      ],
+      "exposure": "alwaysWhenRelevant"
+    },
+    "blocked_safety_motor": {
+      "meaning": "MOTOR ON 전 정위치 확인 미충족",
+      "feedbackKind": "safety",
+      "allowedStates": [
+        "conditionObserved",
+        "conditionUnknown"
+      ],
+      "validationRules": [
+        "안전 경고는 모드·응답 제출 여부와 관계없이 즉시 제공한다.",
+        "미확인 상태를 관찰된 위험 상태라고 단정하지 않는다."
+      ],
+      "exposure": "alwaysWhenRelevant"
+    },
+    "blocked_safety_accel": {
+      "meaning": "측정 중 금지된 가속 조작 시도",
+      "feedbackKind": "safety",
+      "allowedStates": [
+        "conditionObserved",
+        "conditionUnknown"
+      ],
+      "validationRules": [
+        "안전 경고는 모드·응답 제출 여부와 관계없이 즉시 제공한다.",
+        "미확인 상태를 관찰된 위험 상태라고 단정하지 않는다."
+      ],
+      "exposure": "alwaysWhenRelevant"
+    },
+    "blocked_safety_exit": {
+      "meaning": "실제 차량 이탈 전 정지 확인 미충족",
+      "feedbackKind": "safety",
+      "allowedStates": [
+        "conditionObserved",
+        "conditionUnknown"
+      ],
+      "validationRules": [
+        "안전 경고는 모드·응답 제출 여부와 관계없이 즉시 제공한다.",
+        "미확인 상태를 관찰된 위험 상태라고 단정하지 않는다."
+      ],
+      "exposure": "alwaysWhenRelevant"
+    },
+    "wrong_reading": {
+      "meaning": "제출한 판독값의 오답",
+      "feedbackKind": "explanatory",
+      "allowedStates": [
+        "submittedIncorrect"
+      ],
+      "validationRules": [
+        "무안내 최초 응답 전 정답·해법·다음 단계의 자동 노출을 하지 않는다.",
+        "정오 해설은 최초 응답 묶음 고정 후 제공한다."
+      ],
+      "exposure": "subjectToFeedbackExposurePolicy"
+    },
+    "wrong_calc": {
+      "meaning": "제출한 계산값의 오답",
+      "feedbackKind": "explanatory",
+      "allowedStates": [
+        "submittedIncorrect"
+      ],
+      "validationRules": [
+        "무안내 최초 응답 전 정답·해법·다음 단계의 자동 노출을 하지 않는다.",
+        "정오 해설은 최초 응답 묶음 고정 후 제공한다."
+      ],
+      "exposure": "subjectToFeedbackExposurePolicy"
+    },
+    "wrong_verdict": {
+      "meaning": "제출한 차량 판정의 오답",
+      "feedbackKind": "explanatory",
+      "allowedStates": [
+        "submittedIncorrect"
+      ],
+      "validationRules": [
+        "무안내 최초 응답 전 정답·해법·다음 단계의 자동 노출을 하지 않는다.",
+        "정오 해설은 최초 응답 묶음 고정 후 제공한다."
+      ],
+      "exposure": "subjectToFeedbackExposurePolicy"
+    },
+    "blocked_safety_engine": {
+      "meaning": "점검 전 시동 OFF 확인 미충족",
+      "feedbackKind": "safety",
+      "allowedStates": [
+        "conditionObserved",
+        "conditionUnknown"
+      ],
+      "validationRules": [
+        "tire/equip 점검에서 s-engine 확인이 없거나 false/unknown이면 즉시 차단 피드백을 제공한다.",
+        "측정 전 구간의 시동 OFF 의무로 확대하지 않는다.",
+        "엔진 동작 관측과 화면 확인 버튼을 구별한다."
+      ],
+      "exposure": "alwaysWhenRelevant"
+    }
+  },
+  "offSubActions": {
+    "motorOff": {
+      "parentStepId": "off",
+      "eventStepId": "off:motorOff",
+      "meaning": "MOTOR OFF 정지 행동. 명령과 실제 롤러 정지 확인을 구별한다.",
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "validationRules": [
+        "s-exit 또는 s-lift 충족을 정지 행동의 선행조건으로 요구하지 않는다.",
+        "이 행동만으로 off 전체 완료·정지 관측·read 표시 고정 성공을 선언하지 않는다."
+      ]
+    },
+    "liftUp": {
+      "parentStepId": "off",
+      "eventStepId": "off:liftUp",
+      "meaning": "MOTOR OFF와 롤러 정지 확인, 상승 직전 주변 재확인 뒤 리프트 상승 완료를 확인한다.",
+      "requiredSafetyConditions": [
+        "s-ppe",
+        "s-exit",
+        "s-lift"
+      ],
+      "validationRules": [
+        "motorOff 완료 후에만 순서상 허용한다.",
+        "s-exit은 이 시점의 MOTOR OFF·롤러 정지를 확인한다.",
+        "하강 때 s-lift 확인을 재사용하지 않고 상승 직전에 다시 확인한다.",
+        "상승 명령과 상승 완료 관측을 구별한다."
+      ]
+    },
+    "exitVehicle": {
+      "parentStepId": "off",
+      "eventStepId": "off:exitVehicle",
+      "meaning": "정지와 리프트 상승 완료를 확인한 뒤 차량 이탈을 마친다.",
+      "requiredSafetyConditions": [
+        "s-ppe",
+        "s-exit"
+      ],
+      "validationRules": [
+        "motorOff와 liftUp 완료, 현재 정지·상승 완료를 확인한 뒤 허용한다.",
+        "exitVehicle 뒤에만 parent off의 vehicleExited 완료를 기록한다."
+      ]
+    }
+  },
+  "stepEventSemantics": {
+    "eventType": "stepCompleted",
+    "subActionStepIdFormat": "off:<action>",
+    "registeredSubActionStepIds": [
+      "off:motorOff",
+      "off:liftUp",
+      "off:exitVehicle"
+    ],
+    "parentStepId": "off",
+    "subActionOrder": [
+      "motorOff",
+      "liftUp",
+      "exitVehicle"
+    ],
+    "aggregateRules": [
+      "off: 접두사는 하위 행동 분류에만 사용하며 등록되지 않은 접미사는 의미검증에서 거절한다.",
+      "12단계 완료 집계는 task.steps의 고유 stepId만 센다. off:<action>은 12단계 수에 더하지 않는다.",
+      "하위 행동 완료는 (recordId,parentStepId,action)별 한 번만 세고 eventId·sequence 중복을 따로 검사한다.",
+      "exitVehicle 완료 이벤트 직후 parent stepCompleted/off를 기록하며 off는 한 번만 집계한다.",
+      "stepCompleted/off만 있는 기존 기록을 신규 하위 행동 3개로 추정 확장하지 않는다. 기록된 경우에만 하위 행동을 분석한다.",
+      "하위 행동 3개가 있어도 parent off가 없으면 off 전체 완료를 추정하지 않는다.",
+      "record.schema 1.1.0 stepId 문자열(maxLength64)을 그대로 사용한다. 새로운 record 필드는 없다."
+    ],
+    "examples": [
+      {
+        "type": "stepCompleted",
+        "stepId": "off:motorOff"
+      },
+      {
+        "type": "stepCompleted",
+        "stepId": "off:liftUp"
+      },
+      {
+        "type": "stepCompleted",
+        "stepId": "off:exitVehicle"
+      },
+      {
+        "type": "stepCompleted",
+        "stepId": "off"
+      }
+    ]
+  }
+}

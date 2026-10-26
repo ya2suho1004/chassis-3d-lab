@@ -5,7 +5,7 @@
   "sourceStatus": "surveyed",
   "coordinateSystem": {
     "unit": "m",
-    "originDescription": "P1-1: 제동력 롤러 두 롤러 축의 가운데(바닥 테이프 표시). 2026-10-21 교사 MOON 줄자 실측 / 2차 2026-10-26 (0B 확인지, 측정자·도구 미기재)",
+    "originDescription": "P1-1: 제동력 롤러 두 롤러 축의 가운데(바닥 테이프 표시). 2026-10-21 교사 MOON 줄자 실측 / 2차: 0B 확인지 접수(내보낸 날짜 2026-10-26; 측정일·측정자·도구는 미기재, 추정하지 않음)",
     "axesDescription": "x=동쪽 +, z=남쪽 +, y=높이. 스케치 위=북(사용자 확정 2026-10-20)"
   },
   "room": {
@@ -95,7 +95,7 @@
       },
       "interactiveForMvp": true,
       "accessPoints": [],
-      "surveyReference": "P1-4 실측 동서3.00×남북1.20. 2차(S2-ab) 서쪽 끝 1.50·동쪽 끝 1.50 → 중심=원점 대칭 확정. 차량 진입 북·남 모두 가능. 사진 27·28"
+      "surveyReference": "P1-4 실측 동서3.00×남북1.20. 2차(S2-ab) 서쪽 끝 1.50·동쪽 끝 1.50 → 동서 대칭 확정(남북 배치는 미확인, z 범위는 가정). 차량 진입 북·남 모두 가능. 사진 27·28"
     },
     {
       "equipmentId": "brake-control-panel-01",
@@ -131,7 +131,7 @@
       },
       "interactiveForMvp": false,
       "accessPoints": [],
-      "surveyReference": "2차(S2-d) 동 1.10(1차 직선거리와 같음). 남북은 교사 답 0이 조작부와 겹쳐 미확정(C-6, 사진 28은 차 앞쪽 약 0.8). 사진 26·27"
+      "surveyReference": "2차(S2-d) 동 1.10(직접 답). 남북 답 0은 조작부 앞면과 같은 선이라 재확인(C-6) — 책상 크기 미측정이라 겹침을 수치로 단정하지 않음. 학생은 남쪽에 앉음(0B 문항 ‘앉는 쪽’). 사진 26·27"
     },
     {
       "equipmentId": "toe-gauge-zone-01",
@@ -281,7 +281,7 @@
       "referenceTo": "equipment east/south outer edge",
       "derivedConstraint": null,
       "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-4",
-      "notes": "Dimensions reported measured; midpoint relative to P1-1 is not established. Symmetry about origin confirmed by S2-ab (2026-10-26)."
+      "notes": "Dimensions reported measured; midpoint relative to P1-1 is not established. East-west symmetry confirmed by S2-ab (2026-10-26); north-south placement still unverified."
     },
     {
       "measurementId": "P1-5",
@@ -359,12 +359,12 @@
       },
       "unit": "m",
       "sourceType": "reportedMeasured",
-      "verificationStatus": "referenceUnclear",
+      "verificationStatus": "unresolved",
       "referenceFrom": "vehicle-place edge unspecified",
       "referenceTo": "east wall edge unspecified",
       "derivedConstraint": null,
       "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-9-aisle",
-      "notes": "Reported text retained; no geometry center inferred. 2026-10-26: measured vehicle→equipment, not to wall (S2-e)."
+      "notes": "Reported text retained; no geometry center inferred. 2026-10-26: measured vehicle→equipment, not to wall (S2-e). SUPERSEDED 2026-10-26 by S2-e: the 1.80 was measured from the vehicle to an (unspecified) equipment, NOT to the east wall. Do not reuse 1.80 as the east aisle width; east aisle width is unmeasured."
     },
     {
       "measurementId": "P1-9-toe",
@@ -461,7 +461,7 @@
       "referenceFrom": "P1-1 roller reference",
       "referenceTo": "roller tester west end / east end (cover included)",
       "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.testerWestEnd,testerEastEnd",
-      "notes": "a+b=3.00 = P1-4. Tester symmetric about origin; resolves C-1b.",
+      "notes": "a+b=3.00 = P1-4. East-west symmetry about origin confirmed (west end 1.50, east end 1.50). North-south split of 1.20 NOT measured; z extent remains assumed (docs/14 §4).",
       "derivedConstraint": {
         "axis": "x",
         "value": 1.5,
@@ -501,25 +501,25 @@
       "sourceType": "reportedMeasured",
       "verificationStatus": "unresolved",
       "referenceFrom": "P1-1 roller reference",
-      "referenceTo": "desk top center, floor projection; student faces south",
+      "referenceTo": "desk top center, floor projection; teacher answer facing=S means the student SITS on the south side (0B wording 앉는 쪽), not line of sight",
       "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.deskCenter",
-      "notes": "northSouth 0 conflicts with panel at same spot; photos 27/28 show desk beside rear door ~0.8 m toward car front. Likely first-survey straight distance re-entered as east-west. C-6: re-ask north-south only.",
+      "notes": "Direct answer eastWest=1.10 (same as first-survey straight distance). northSouth=0 would place the desk center 0.20 m west of the panel front on the same line; desk size is unmeasured so overlap cannot be asserted numerically. Photos 27/28 suggest the desk is beside the rear door, toward the car front, but that offset is not a measurement. C-6: re-ask east-west and north-south together from the same origin without presuming which is wrong.",
       "derivedConstraint": null
     },
     {
       "measurementId": "S2-e",
       "targetId": "east-aisle",
-      "quantityKind": "specification",
+      "quantityKind": "distance",
       "values": {
-        "width": 1.8
+        "distance": 1.8
       },
       "unit": "m",
       "sourceType": "reportedMeasured",
       "verificationStatus": "unresolved",
-      "referenceFrom": "brake vehicle",
-      "referenceTo": "\"equipment\" (unspecified)",
-      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.aisleEast180",
-      "notes": "Teacher: P1-9 1.80 was measured from the brake vehicle to the equipment, not to the east wall. Not an aisle-to-wall width. C-7.",
+      "referenceFrom": "brake vehicle (point unspecified)",
+      "referenceTo": "an equipment (unspecified) — teacher text: 제동력 차량에서 장비까지",
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-9 (value) ; collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.aisleEast180 (endpoint correction)",
+      "notes": "Correction of the endpoints of first-survey P1-9 (1.80): vehicle→equipment, not an aisle to the east wall. Equipment identity pending (C-7). East aisle width: unmeasured.",
       "derivedConstraint": null
     },
     {
@@ -535,7 +535,7 @@
       "referenceFrom": "roller tester west end (x=-1.50)",
       "referenceTo": "east face of column next to lifts",
       "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.westAisle",
-      "notes": "Column east face at x=-3.00. North-south position of column not measured (C-9).",
+      "notes": "Column east face at x=-3.00 (1.50 west of the tester west end). Column identity (which of pillar-1..4) and north-south position not answered (C-9); not attributed to a columnId here.",
       "derivedConstraint": {
         "axis": "x",
         "value": -3.0,
@@ -545,7 +545,7 @@
     {
       "measurementId": "S2-abs",
       "targetId": "abs-vehicle-zone-01",
-      "quantityKind": "specification",
+      "quantityKind": "dimensions",
       "values": {
         "northSouth": 10.0,
         "eastWest": 4.1
@@ -556,7 +556,7 @@
       "referenceFrom": "main zone south-east corner",
       "referenceTo": "protrusion extends east from the corner (teacher choice eastOfSouthEdge)",
       "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#absZone",
-      "notes": "Size 10.00×4.10 confirmed (C-2 resolved). Start point, entrance width, photos not provided (C-8).",
+      "notes": "Size 10.00×4.10 confirmed by teacher (C-2 resolved) — recorded separately from location. Attachment answer: eastOfSouthEdge. Start point, entrance width and photos not provided (C-8). fullyOpen=false is an unchecked form default, not an observation.",
       "derivedConstraint": null
     },
     {

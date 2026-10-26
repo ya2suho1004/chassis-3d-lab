@@ -2,8 +2,9 @@
 // 2단계 전반부: 저장·전송 없음. 모든 수행은 runPurpose=demo, researchUseApproved=false.
 import lv1 from '../data/tasks/task.braking-force.case-lv1.json'
 import lv2 from '../data/tasks/task.braking-force.case-lv2.json'
+import snapshots from '../data/session/demo-snapshots.json'
 import type { SessionContext } from '../domain/record'
-import type { TaskRun } from '../domain/taskEngine'
+import type { DifficultyMode, TaskRun } from '../domain/taskEngine'
 import type { ApprovedTask, FeedbackText } from '../domain/types'
 
 export const APP_VERSION = '0.3.0-demo'
@@ -21,30 +22,40 @@ export function listTasks(): ApprovedTask[] {
   return [lv1 as ApprovedTask, lv2 as ApprovedTask]
 }
 
-export function createDemoSession(opts: { studentCode: string; sessionCode: string; attemptRole: SessionContext['attemptRole']; usagePhase: SessionContext['usagePhase']; vehicleEntryDirection?: 'north' | 'south' | null }): SessionContext {
+/**
+ * 시연 세션 만들기 — 선택(사례·도움 방식·수업 시점·진입 방향)에 맞는 불변 스냅샷(src/data/session/demo-snapshots.json, 계약 session.snapshot 1.0.0)을 고정한다.
+ * 스냅샷의 versions·승인이 record에 그대로 들어가며, 수신점은 같은 목록(DemoSnapshots.gs)과 대조한다(docs/17 §4, Codex 검토 B2).
+ * 과제 전체는 pending(U1 보류)이므로 taskApproved=false. 목록에 없는 조합은 만들지 않는다.
+ */
+export function createDemoSession(opts: { studentCode: string; sessionCode: string; attemptRole: SessionContext['attemptRole']; usagePhase: SessionContext['usagePhase']; vehicleEntryDirection?: 'north' | 'south' | null; task?: ApprovedTask; difficultyMode?: DifficultyMode }): SessionContext {
+  const task = opts.task ?? (lv1 as ApprovedTask)
+  const mode = opts.difficultyMode ?? 'guided'
+  const dir = opts.vehicleEntryDirection ?? null
+  const snap = snapshots.find((s) => s.sessionCode === opts.sessionCode && s.versions.taskDefinitionVersion === task.taskDefinitionVersion && s.difficultyMode === mode && s.usagePhase === opts.usagePhase && s.sessionConfiguration.vehicleEntryDirection === dir)
+  if (!snap) throw new Error(`SNAPSHOT_NOT_FOUND: ${opts.sessionCode}/${task.taskDefinitionVersion}/${mode}/${opts.usagePhase}/${dir}`)
   return {
     recordId: crypto.randomUUID(),
     anonymousStudentCode: opts.studentCode,
-    classConditionCode: 'DEMO',
-    sessionCode: opts.sessionCode,
-    sessionSnapshotId: '00000000-0000-4000-8000-000000000001', // demo 고정 스냅샷(승인 아님)
+    classConditionCode: snap.classConditionCode,
+    sessionCode: snap.sessionCode,
+    sessionSnapshotId: snap.sessionSnapshotId,
     attemptRole: opts.attemptRole,
     retryOfRecordId: null,
     retryCount: 0,
     runPurpose: 'demo',
     usagePhase: opts.usagePhase,
-    configurationApproval: { taskApproved: true, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false },
-    displayMode: 'diagram',
+    configurationApproval: { ...snap.configurationApproval },
+    displayMode: 'threeD',
     versions: {
-      layoutVersion: 'surveyed-partial-2026-10-21',
-      judgeEngineVersion: '0.1.0',
-      sessionConfigVersion: 'unapproved',
-      researchProtocolVersion: 'unapproved',
-      feedbackPolicyVersion: '1.1.0-design-approved-2026-10-26', // 교사 확인 0E(2026-10-26): 무안내는 최초 응답 6개 저장 뒤 정답 피드백
+      layoutVersion: snap.versions.layoutVersion,
+      judgeEngineVersion: snap.versions.judgeEngineVersion,
+      sessionConfigVersion: snap.versions.sessionConfigVersion,
+      researchProtocolVersion: snap.versions.researchProtocolVersion,
+      feedbackPolicyVersion: snap.versions.feedbackPolicyVersion,
     },
     clientAppVersion: APP_VERSION,
     startedAtIso: new Date().toISOString(),
-    vehicleEntryDirection: opts.vehicleEntryDirection ?? null,
+    vehicleEntryDirection: dir,
   }
 }
 

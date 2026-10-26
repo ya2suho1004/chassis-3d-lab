@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "schemaVersion": {
-      "const": "1.1.0"
+      "const": "1.2.0"
     },
     "taskId": {
       "const": "braking-force"
@@ -761,7 +761,7 @@
       }
     },
     "vocabularyVersion": {
-      "const": "1.1.0"
+      "const": "1.2.0"
     },
     "teacherReviewReference": {
       "anyOf": [
@@ -833,9 +833,9 @@
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:chassis-3d-lab:task:1.1.0",
+  "$id": "urn:chassis-3d-lab:task:1.2.0",
   "title": "제동력 단일 MVP 과제 계약: 미승인값은 null",
-  "$comment": "approved의 출처 진위·실제차량 적합성·경계정책은 별도 readiness 검증.",
+  "$comment": "approved의 출처 진위·실제차량 적합성·경계정책은 별도 readiness 검증. 1.2.0은 vocabulary 1.2.0을 고정하며 record/전송 버전은 변경하지 않는다.",
   "allOf": [
     {
       "if": {

@@ -1,0 +1,791 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.1.0"
+    },
+    "recordId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "anonymousStudentCode": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,32}$"
+    },
+    "classConditionCode": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,32}$"
+    },
+    "sessionCode": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,32}$"
+    },
+    "sessionSnapshotId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "taskId": {
+      "const": "braking-force"
+    },
+    "difficultyMode": {
+      "enum": [
+        "guided",
+        "unguided",
+        "timedAssessment"
+      ]
+    },
+    "attemptRole": {
+      "enum": [
+        "practice",
+        "primary",
+        "remediation"
+      ]
+    },
+    "retryOfRecordId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "retryCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "runPurpose": {
+      "enum": [
+        "demo",
+        "research"
+      ]
+    },
+    "researchEligible": {
+      "type": "boolean"
+    },
+    "configurationApproval": {
+      "type": "object",
+      "properties": {
+        "taskApproved": {
+          "type": "boolean"
+        },
+        "rulesetApproved": {
+          "type": "boolean"
+        },
+        "layoutConfirmed": {
+          "type": "boolean"
+        },
+        "researchUseApproved": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "taskApproved",
+        "rulesetApproved",
+        "layoutConfirmed",
+        "researchUseApproved"
+      ],
+      "additionalProperties": false
+    },
+    "displayMode": {
+      "enum": [
+        "threeD",
+        "diagram"
+      ]
+    },
+    "experiencedDisplayModes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "threeD",
+          "diagram"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true
+    },
+    "completionStatus": {
+      "enum": [
+        "completed",
+        "aborted"
+      ]
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "durationSeconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "pauseCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resumeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timeQuality": {
+          "enum": [
+            "continuous",
+            "resumed",
+            "uncertain"
+          ]
+        }
+      },
+      "required": [
+        "pauseCount",
+        "resumeCount",
+        "timeQuality"
+      ],
+      "additionalProperties": false
+    },
+    "versions": {
+      "type": "object",
+      "properties": {
+        "taskDefinitionVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "rulesetVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "measurementSetVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "layoutVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "judgeEngineVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "sessionConfigVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "researchProtocolVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "feedbackPolicyVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "taskDefinitionVersion",
+        "rulesetVersion",
+        "measurementSetVersion",
+        "layoutVersion",
+        "judgeEngineVersion",
+        "sessionConfigVersion",
+        "researchProtocolVersion",
+        "feedbackPolicyVersion"
+      ],
+      "additionalProperties": false
+    },
+    "stepEvents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "elapsedMs": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "type": {
+            "enum": [
+              "taskStarted",
+              "stepCompleted",
+              "actionBlocked",
+              "answerSubmitted",
+              "hintRequested",
+              "feedbackShown",
+              "npcInspected",
+              "paused",
+              "resumed",
+              "displayModeChanged",
+              "taskFinalized"
+            ]
+          },
+          "stepId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "actionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reasonCode": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "itemId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "feedbackKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "feedbackKind": {
+            "enum": [
+              "safety",
+              "explanatory",
+              "hint",
+              "guidance"
+            ]
+          },
+          "fromDisplayMode": {
+            "enum": [
+              "threeD",
+              "diagram"
+            ]
+          },
+          "toDisplayMode": {
+            "enum": [
+              "threeD",
+              "diagram"
+            ]
+          }
+        },
+        "required": [
+          "eventId",
+          "sequence",
+          "elapsedMs",
+          "type"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "feedbackShown"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "feedbackKind",
+                "feedbackKey"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "displayModeChanged"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "fromDisplayMode",
+                "toDisplayMode",
+                "reasonCode"
+              ]
+            }
+          }
+        ]
+      },
+      "maxItems": 200
+    },
+    "errorCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "errorTypes": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "maxProperties": 32
+    },
+    "safetyViolationCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "safetyViolationTypes": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "maxProperties": 32
+    },
+    "hintCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "measurementInputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "presentedValue": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstInput": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstCorrect": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finalInput": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finalCorrect": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "unit",
+          "presentedValue",
+          "firstInput",
+          "firstCorrect",
+          "finalInput",
+          "finalCorrect"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 32
+    },
+    "calculationAnswers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "unit": {
+            "const": "%"
+          },
+          "computedReferenceValue": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstInput": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstCorrect": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finalInput": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 24
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finalCorrect": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "unit",
+          "computedReferenceValue",
+          "firstInput",
+          "firstCorrect",
+          "finalInput",
+          "finalCorrect"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 32
+    },
+    "vehicleVerdict": {
+      "anyOf": [
+        {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "judgmentAnswers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "firstAnswer": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pass",
+                  "fail"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "firstCorrect": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finalAnswer": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pass",
+                  "fail"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finalCorrect": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "itemId",
+          "firstAnswer",
+          "firstCorrect",
+          "finalAnswer",
+          "finalCorrect"
+        ],
+        "additionalProperties": false
+      },
+      "maxItems": 32
+    },
+    "judgmentCorrect": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "npcInspectionResult": {
+      "enum": [
+        "passed",
+        "needsCorrection",
+        "notCompleted"
+      ]
+    },
+    "npcInspectionCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "clientAppVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "usagePhase": {
+      "enum": [
+        "preview",
+        "review",
+        "other"
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "usagePhase",
+    "recordId",
+    "anonymousStudentCode",
+    "classConditionCode",
+    "sessionCode",
+    "sessionSnapshotId",
+    "taskId",
+    "difficultyMode",
+    "attemptRole",
+    "retryOfRecordId",
+    "retryCount",
+    "runPurpose",
+    "researchEligible",
+    "configurationApproval",
+    "displayMode",
+    "experiencedDisplayModes",
+    "completionStatus",
+    "startedAt",
+    "completedAt",
+    "durationSeconds",
+    "timing",
+    "versions",
+    "stepEvents",
+    "errorCount",
+    "errorTypes",
+    "safetyViolationCount",
+    "safetyViolationTypes",
+    "hintCount",
+    "measurementInputs",
+    "calculationAnswers",
+    "vehicleVerdict",
+    "judgmentAnswers",
+    "judgmentCorrect",
+    "npcInspectionResult",
+    "npcInspectionCount",
+    "clientAppVersion"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chassis-3d-lab:record:1.1.0",
+  "title": "확정 수행 내용: 검토용 계약, 전송 상태는 별도",
+  "$comment": "날짜순서·유형별 합·정오 합계·단위·버전·승인 진위·모드 활성·JCS/용량은 별도 의미검증 필수.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "runPurpose": {
+            "const": "research"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "configurationApproval": {
+            "properties": {
+              "taskApproved": {
+                "const": true
+              },
+              "rulesetApproved": {
+                "const": true
+              },
+              "layoutConfirmed": {
+                "const": true
+              },
+              "researchUseApproved": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "researchEligible": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "runPurpose": {
+            "const": "research"
+          },
+          "completionStatus": {
+            "const": "completed"
+          },
+          "configurationApproval": {
+            "properties": {
+              "taskApproved": {
+                "const": true
+              },
+              "rulesetApproved": {
+                "const": true
+              },
+              "layoutConfirmed": {
+                "const": true
+              },
+              "researchUseApproved": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "completionStatus": {
+            "const": "completed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "measurementInputs": {
+            "minItems": 1
+          },
+          "calculationAnswers": {
+            "minItems": 1
+          },
+          "judgmentAnswers": {
+            "minItems": 1
+          },
+          "npcInspectionResult": {
+            "const": "passed"
+          },
+          "npcInspectionCount": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  ]
+}

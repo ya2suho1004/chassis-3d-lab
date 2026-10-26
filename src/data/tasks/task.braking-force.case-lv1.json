@@ -1,7 +1,7 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "taskId": "braking-force",
-  "taskDefinitionVersion": "1.1.0-review-case-1-2026-10-21+u2u3u7u8-teacher0E-2026-10-26",
+  "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
   "title": "제동력 측정 및 판독 — 사례 1",
   "approvalStatus": "pending",
   "measurement": {
@@ -376,7 +376,7 @@
       "how": "시동이 꺼져 있는지 확인한 뒤 ‘시동 OFF 확인’을 누르고 점검을 진행하세요."
     }
   },
-  "vocabularyVersion": "1.1.0",
+  "vocabularyVersion": "1.2.0",
   "teacherReviewReference": "collaboration/teacher-check-0A.json; collaboration/teacher-check-0E.json",
   "feedbackPolicy": {
     "version": "1.1.0-design-approved-2026-10-26",

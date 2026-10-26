@@ -1,0 +1,579 @@
+{
+  "schemaVersion": "1.1.0",
+  "layoutVersion": "partial-survey-2026-10-26",
+  "layoutConfirmed": false,
+  "sourceStatus": "surveyed",
+  "coordinateSystem": {
+    "unit": "m",
+    "originDescription": "P1-1: 제동력 롤러 두 롤러 축의 가운데(바닥 테이프 표시). 2026-10-21 교사 MOON 줄자 실측 / 2차 2026-10-26 (0B 확인지, 측정자·도구 미기재)",
+    "axesDescription": "x=동쪽 +, z=남쪽 +, y=높이. 스케치 위=북(사용자 확정 2026-10-20)"
+  },
+  "room": {
+    "widthMeters": null,
+    "lengthMeters": null,
+    "heightMeters": null
+  },
+  "boundary": [],
+  "doors": [],
+  "columns": [
+    {
+      "columnId": "pillar-1",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "기둥 4개 확인(P2-1). 간격 4.00(P2-3, 중심/면 기준 미확인). 위치·단면 미측정"
+    },
+    {
+      "columnId": "pillar-2",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "P2-1/P2-3 참조. 위치·단면 미측정"
+    },
+    {
+      "columnId": "pillar-3",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "P2-1/P2-3 참조. 위치·단면 미측정"
+    },
+    {
+      "columnId": "pillar-4",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "surveyReference": "P2-1/P2-3 참조. 위치·단면 미측정"
+    }
+  ],
+  "safetyAisles": [],
+  "equipment": [
+    {
+      "equipmentId": "brake-tester-01",
+      "label": "제동력 롤러 장비(빨간 덮개 포함)",
+      "position": {
+        "x": null,
+        "y": 0,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 3.0,
+        "lengthMeters": 1.2,
+        "heightMeters": null
+      },
+      "interactiveForMvp": true,
+      "accessPoints": [],
+      "surveyReference": "P1-4 실측 동서3.00×남북1.20. 2차(S2-ab) 서쪽 끝 1.50·동쪽 끝 1.50 → 중심=원점 대칭 확정. 차량 진입 북·남 모두 가능. 사진 27·28"
+    },
+    {
+      "equipmentId": "brake-control-panel-01",
+      "label": "노란 공용 조작부(ABS TESTER, DKM-6000)",
+      "position": {
+        "x": 1.55,
+        "y": 0,
+        "z": 0.0,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 0.7,
+        "lengthMeters": 0.5,
+        "heightMeters": 1.5
+      },
+      "interactiveForMvp": true,
+      "accessPoints": [],
+      "surveyReference": "2차(S2-c) 앞면 중앙 동 1.30·남북 0, 버튼면 서향 → 본체 중심 x=1.55(깊이 0.50). P1-7 실측 0.70×0.50×1.50, 화면 높이 1.30. 덮개판과 0.20 겹침은 C-5 확인. 사진 14"
+    },
+    {
+      "equipmentId": "brake-record-desk-01",
+      "label": "기록용 책상",
+      "position": {
+        "x": 1.1,
+        "y": 0,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "2차(S2-d) 동 1.10(1차 직선거리와 같음). 남북은 교사 답 0이 조작부와 겹쳐 미확정(C-6, 사진 28은 차 앞쪽 약 0.8). 사진 26·27"
+    },
+    {
+      "equipmentId": "toe-gauge-zone-01",
+      "label": "토 측정 구역",
+      "position": {
+        "x": null,
+        "y": 0,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P1-9: reported north 3.50m; reference point on toe equipment unconfirmed; kept in siteMeasurements."
+    },
+    {
+      "equipmentId": "abs-vehicle-zone-01",
+      "label": "ABS 측정 차량 구역(남동쪽 아래 돌출부)",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P1-10 남북10.00×동서4.10 — 2차 확인 ‘맞음’(C-2 해소). 위치: 남동 모서리에서 동쪽으로(동쪽 벽 바깥). 시작점·입구 폭·사진 미제공(C-8)"
+    },
+    {
+      "equipmentId": "lift-zone-01/a",
+      "label": "리프트 왼쪽",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 2.2,
+        "lengthMeters": 4.0,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P2-5 바닥판 가로 2.20, 2차(S2-lift) 세로 4.00. 위치·사이 간격 미측정"
+    },
+    {
+      "equipmentId": "lift-zone-01/b",
+      "label": "리프트 가운데",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 2.2,
+        "lengthMeters": 4.0,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P2-5 바닥판 가로 2.20, 2차(S2-lift) 세로 4.00. 위치·사이 간격 미측정"
+    },
+    {
+      "equipmentId": "lift-zone-01/c",
+      "label": "리프트 오른쪽",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": 2.2,
+        "lengthMeters": 4.0,
+        "heightMeters": null
+      },
+      "interactiveForMvp": false,
+      "accessPoints": [],
+      "surveyReference": "P2-5 바닥판 가로 2.20, 2차(S2-lift) 세로 4.00. 위치·사이 간격 미측정"
+    }
+  ],
+  "openings": [],
+  "siteMeasurements": [
+    {
+      "measurementId": "P1-2",
+      "targetId": "north-wall",
+      "quantityKind": "distance",
+      "values": {
+        "distance": 8.2
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "north wall, perpendicular reference",
+      "derivedConstraint": {
+        "axis": "z",
+        "value": -8.2,
+        "assumption": "Axis-aligned north wall; wall endpoints unknown."
+      },
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-2",
+      "notes": "Reported text retained; no geometry center inferred."
+    },
+    {
+      "measurementId": "P1-3",
+      "targetId": "east-wall",
+      "quantityKind": "distance",
+      "values": {
+        "distance": 2
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "wall on control-panel side",
+      "derivedConstraint": {
+        "axis": "x",
+        "value": 2,
+        "assumption": "Axis-aligned east wall; wall endpoints unknown."
+      },
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-3",
+      "notes": "Reported text retained; no geometry center inferred."
+    },
+    {
+      "measurementId": "P1-4",
+      "targetId": "brake-tester-01",
+      "quantityKind": "dimensions",
+      "values": {
+        "eastWest": 3,
+        "northSouth": 1.2
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "equipment west/north outer edge",
+      "referenceTo": "equipment east/south outer edge",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-4",
+      "notes": "Dimensions reported measured; midpoint relative to P1-1 is not established. Symmetry about origin confirmed by S2-ab (2026-10-26)."
+    },
+    {
+      "measurementId": "P1-5",
+      "targetId": "brake-vehicle",
+      "quantityKind": "specification",
+      "values": {
+        "wheelbase": 2.4
+      },
+      "unit": "m",
+      "sourceType": "reportedSpecification",
+      "verificationStatus": "unresolved",
+      "referenceFrom": "rear axle",
+      "referenceTo": "front axle",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-5",
+      "notes": "Reported external vehicle specification, not on-site measurement; vehicle variant and travel direction not verified here."
+    },
+    {
+      "measurementId": "P1-6",
+      "targetId": "brake-control-panel-01",
+      "quantityKind": "distance",
+      "values": {
+        "distance": 1.3
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "front face center; ground projection/direction unknown",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-6",
+      "notes": "Reported text retained; no geometry center inferred. Direction resolved by S2-c: east, facing west."
+    },
+    {
+      "measurementId": "P1-7",
+      "targetId": "brake-control-panel-01",
+      "quantityKind": "dimensions",
+      "values": {
+        "width": 0.7,
+        "depth": 0.5,
+        "height": 1.5,
+        "screenHeight": 1.3
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "cabinet/bottom",
+      "referenceTo": "cabinet/top/screen",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-7",
+      "notes": "Reported dimensions; panel position/rotation unconfirmed."
+    },
+    {
+      "measurementId": "P1-8",
+      "targetId": "brake-record-desk-01",
+      "quantityKind": "distance",
+      "values": {
+        "distance": 1.1
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "desk reference point/direction unspecified",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-8",
+      "notes": "Reported text retained; no geometry center inferred."
+    },
+    {
+      "measurementId": "P1-9-aisle",
+      "targetId": "east-aisle",
+      "quantityKind": "distance",
+      "values": {
+        "width": 1.8
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "vehicle-place edge unspecified",
+      "referenceTo": "east wall edge unspecified",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-9-aisle",
+      "notes": "Reported text retained; no geometry center inferred. 2026-10-26: measured vehicle→equipment, not to wall (S2-e)."
+    },
+    {
+      "measurementId": "P1-9-toe",
+      "targetId": "toe-gauge-zone-01",
+      "quantityKind": "distance",
+      "values": {
+        "northDistance": 3.5
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "toe-zone reference unspecified",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-9-toe",
+      "notes": "Reported text retained; no geometry center inferred."
+    },
+    {
+      "measurementId": "P1-10",
+      "targetId": "abs-vehicle-zone-01",
+      "quantityKind": "dimensions",
+      "values": {
+        "northSouth": 10,
+        "eastWest": 4.1
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "south/north endpoints not specified",
+      "referenceTo": "opposite endpoints not specified",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P1-10",
+      "notes": "Keep 10.00m; comparing it to one-sided north-wall distance does not prove an error. Values confirmed by teacher 2026-10-26 (S2-abs); location still unresolved."
+    },
+    {
+      "measurementId": "P2-1",
+      "targetId": "columns",
+      "quantityKind": "count",
+      "values": {
+        "count": 4
+      },
+      "unit": "count",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "chassis zone",
+      "referenceTo": "all columns",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P2-1",
+      "notes": "Reported text retained; no geometry center inferred."
+    },
+    {
+      "measurementId": "P2-3",
+      "targetId": "columns",
+      "quantityKind": "distance",
+      "values": {
+        "spacing": 4
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "column reference unknown",
+      "referenceTo": "adjacent column reference unknown",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P2-3",
+      "notes": "Equal spacing reported; center-to-center vs face-to-face is unknown."
+    },
+    {
+      "measurementId": "P2-5",
+      "targetId": "lifts",
+      "quantityKind": "dimensions",
+      "values": {
+        "width": 2.2
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "lift side edge",
+      "referenceTo": "opposite side edge",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_MEASUREMENT_2026-10-21.txt#P2-5",
+      "notes": "All three widths reported equal; lengths/positions remain unknown."
+    },
+    {
+      "measurementId": "S2-ab",
+      "targetId": "brake-tester-01",
+      "quantityKind": "distance",
+      "values": {
+        "westEnd": 1.5,
+        "eastEnd": 1.5
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "roller tester west end / east end (cover included)",
+      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.testerWestEnd,testerEastEnd",
+      "notes": "a+b=3.00 = P1-4. Tester symmetric about origin; resolves C-1b.",
+      "derivedConstraint": {
+        "axis": "x",
+        "value": 1.5,
+        "assumption": "East end at x=+1.50; 0.50 clearance to east wall x=+2.00."
+      }
+    },
+    {
+      "measurementId": "S2-c",
+      "targetId": "brake-control-panel-01",
+      "quantityKind": "distance",
+      "values": {
+        "eastWest": 1.3,
+        "northSouth": 0.0
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "front (button face) center of panel, floor projection; faces west",
+      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.panelFront",
+      "notes": "Body x 1.30~1.80 overlaps tester cover east end (1.50) by 0.20; cover plate is floor level (photo 28) so plausible. C-5 photo check pending.",
+      "derivedConstraint": {
+        "axis": "x",
+        "value": 1.3,
+        "assumption": "Front face plane at x=+1.30, body depth 0.50 eastward."
+      }
+    },
+    {
+      "measurementId": "S2-d",
+      "targetId": "brake-record-desk-01",
+      "quantityKind": "distance",
+      "values": {
+        "eastWest": 1.1,
+        "northSouth": 0.0
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "unresolved",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "desk top center, floor projection; student faces south",
+      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.deskCenter",
+      "notes": "northSouth 0 conflicts with panel at same spot; photos 27/28 show desk beside rear door ~0.8 m toward car front. Likely first-survey straight distance re-entered as east-west. C-6: re-ask north-south only.",
+      "derivedConstraint": null
+    },
+    {
+      "measurementId": "S2-e",
+      "targetId": "east-aisle",
+      "quantityKind": "specification",
+      "values": {
+        "width": 1.8
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "unresolved",
+      "referenceFrom": "brake vehicle",
+      "referenceTo": "\"equipment\" (unspecified)",
+      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.aisleEast180",
+      "notes": "Teacher: P1-9 1.80 was measured from the brake vehicle to the equipment, not to the east wall. Not an aisle-to-wall width. C-7.",
+      "derivedConstraint": null
+    },
+    {
+      "measurementId": "S2-f",
+      "targetId": "west-aisle",
+      "quantityKind": "distance",
+      "values": {
+        "width": 1.5
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "roller tester west end (x=-1.50)",
+      "referenceTo": "east face of column next to lifts",
+      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.westAisle",
+      "notes": "Column east face at x=-3.00. North-south position of column not measured (C-9).",
+      "derivedConstraint": {
+        "axis": "x",
+        "value": -3.0,
+        "assumption": "Column east face plane; z unknown."
+      }
+    },
+    {
+      "measurementId": "S2-abs",
+      "targetId": "abs-vehicle-zone-01",
+      "quantityKind": "specification",
+      "values": {
+        "northSouth": 10.0,
+        "eastWest": 4.1
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "main zone south-east corner",
+      "referenceTo": "protrusion extends east from the corner (teacher choice eastOfSouthEdge)",
+      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#absZone",
+      "notes": "Size 10.00×4.10 confirmed (C-2 resolved). Start point, entrance width, photos not provided (C-8).",
+      "derivedConstraint": null
+    },
+    {
+      "measurementId": "S2-lift",
+      "targetId": "lifts",
+      "quantityKind": "dimensions",
+      "values": {
+        "depth": 4.0
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "lift floor plate north edge",
+      "referenceTo": "lift floor plate south edge",
+      "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#lifts.depthNS",
+      "notes": "Plates 2.20×4.00. Gaps and positions not measured.",
+      "derivedConstraint": null
+    }
+  ]
+}

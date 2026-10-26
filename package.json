@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:gs-schema": "node scripts/build-apps-script-schema.mjs"
+    "build:gs-schema": "node scripts/build-apps-script-schema.mjs",
+    "build:gs-snapshots": "node scripts/build-demo-snapshots.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.117.3",

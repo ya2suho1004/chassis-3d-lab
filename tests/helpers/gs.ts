@@ -23,5 +23,6 @@ export const fakeUtilities = {
     return Array.from(buf).map((b: number) => (b > 127 ? b - 256 : b))
   },
   newBlob(value: string) { return { getBytes: () => Array.from(Buffer.from(value, 'utf8')).map((b: number) => (b > 127 ? b - 256 : b)) } },
-  getUuid() { return '11111111-2222-4333-8444-555555555555' },
+  _n: 0,
+  getUuid() { this._n += 1; return `11111111-2222-4333-8444-${String(this._n).padStart(12, '0')}` },
 }

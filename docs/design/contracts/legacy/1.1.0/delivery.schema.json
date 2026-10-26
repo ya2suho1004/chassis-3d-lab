@@ -1,0 +1,130 @@
+{
+  "type": "object",
+  "properties": {
+    "recordId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "localSaveStatus": {
+      "enum": [
+        "unpersisted",
+        "saved",
+        "failed"
+      ]
+    },
+    "uploadStatus": {
+      "enum": [
+        "pending",
+        "uploading",
+        "confirmationPending",
+        "acknowledged",
+        "rejected",
+        "conflict"
+      ]
+    },
+    "uploadedAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "receiptId": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "payloadHash": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "uploadAttemptCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lastErrorCode": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nextRetryAt": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "recordId",
+    "localSaveStatus",
+    "uploadStatus",
+    "uploadedAt",
+    "receiptId",
+    "payloadHash",
+    "uploadAttemptCount",
+    "lastErrorCode",
+    "nextRetryAt"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chassis-3d-lab:delivery:1.0.0",
+  "title": "변경 가능한 저장·전송 상태: 연구 payload에서 제외",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "uploadStatus": {
+            "const": "acknowledged"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "receiptId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "payloadHash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  ]
+}

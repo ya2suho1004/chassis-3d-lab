@@ -5,7 +5,7 @@ import { loadGs, fakeUtilities } from './helpers/gs'
 import { fakeSheetServices } from './helpers/gsServices'
 
 const PROPS = { SHEET_ID: 'SHEET-TEST', TAB_NAME: 'canonical', ALLOWED_SESSION_CODES: 'DEMO-ONLY', ALLOWED_SNAPSHOT_IDS: '00000000-0000-4000-8000-000000000004', ACCEPT_UNTIL: '2027-12-31T00:00:00Z', MAX_NEW_ROWS: '50', LOCK_WAIT_MS: '10000' }
-const FILES = ['Jcs.gs', 'JsonStrict.gs', 'Validate.gs', 'Schemas.gs', 'Code.gs']
+const FILES = ['Jcs.gs', 'JsonStrict.gs', 'Validate.gs', 'Schemas.gs', 'DemoSnapshots.gs', 'Code.gs']
 function server(opts: Parameters<typeof fakeSheetServices>[0] = {}) {
   const svc = fakeSheetServices({ props: PROPS, ...opts })
   const gs = loadGs(FILES, { ...svc, Utilities: fakeUtilities })
@@ -60,7 +60,7 @@ describe('doPost — 설계 15 §3~§5 수신 계약 (시트 모의)', () => {
       ['추가 필드(deliveryEnvelope)', JSON.stringify({ protocolVersion: '1', payload: P, deliveryEnvelope: {} }), 'INVALID_PAYLOAD', 'text/plain'],
       ['protocol 2', JSON.stringify({ protocolVersion: '2', payload: P }), 'INVALID_PAYLOAD', 'text/plain'],
       ['payload 이중 인코딩', JSON.stringify({ protocolVersion: '1', payload: JSON.stringify(P) }), 'INVALID_PAYLOAD', 'text/plain'],
-      ['지원하지 않는 schemaVersion', reqOf({ ...P, schemaVersion: '1.0.0' }), 'UNSUPPORTED_SCHEMA', 'text/plain'],
+      ['지원하지 않는 schemaVersion', reqOf({ ...P, schemaVersion: '0.9.0' }), 'UNSUPPORTED_SCHEMA', 'text/plain'],
       ['잘못된 UUID', reqOf({ ...P, recordId: 'nope' }), 'INVALID_PAYLOAD', 'text/plain'],
       ['없는 세션', reqOf({ ...P, sessionCode: 'REAL-CLASS' }), 'SESSION_NOT_ALLOWED', 'text/plain'],
       ['없는 스냅샷', reqOf({ ...P, sessionSnapshotId: '00000000-0000-4000-8000-0000000000aa' }), 'SESSION_NOT_ALLOWED', 'text/plain'],

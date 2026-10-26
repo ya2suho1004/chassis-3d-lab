@@ -1,0 +1,11 @@
+{
+  "recordId": "00000000-0000-4000-8000-000000000001",
+  "localSaveStatus": "saved",
+  "uploadStatus": "pending",
+  "uploadedAt": null,
+  "receiptId": null,
+  "payloadHash": null,
+  "uploadAttemptCount": 0,
+  "lastErrorCode": null,
+  "nextRetryAt": null
+}

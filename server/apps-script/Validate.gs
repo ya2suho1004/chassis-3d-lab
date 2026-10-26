@@ -80,3 +80,43 @@ function validateRequestEnvelope(req) {
   if (!req.payload || typeof req.payload !== 'object' || Array.isArray(req.payload)) return { ok: false, code: 'INVALID_PAYLOAD' };
   return { ok: true };
 }
+
+/** 스키마가 표현하지 못하는 record 의미 조건(04 §5·§7·§8, Codex 검토 B3). 실패 목록을 돌려준다. 값을 고치지 않는다. */
+function validateRecordSemantics_(p) {
+  var errors = [];
+  var started = Date.parse(p.startedAt), completed = Date.parse(p.completedAt);
+  if (!(isFinite(started) && isFinite(completed))) errors.push('time: unparsable');
+  else {
+    if (completed < started) errors.push('time: completedAt before startedAt');
+    if (typeof p.durationSeconds === 'number' && p.durationSeconds > (completed - started) / 1000 + 1) errors.push('time: durationSeconds exceeds wall clock');
+  }
+  var events = Array.isArray(p.stepEvents) ? p.stepEvents : [];
+  var ids = Object.create(null); var lastMs = -1; var hints = 0; var npc = 0;
+  for (var i = 0; i < events.length; i++) {
+    var e = events[i];
+    if (e.sequence !== i + 1) errors.push('events: sequence gap at ' + i);
+    if (ids[e.eventId] === true) errors.push('events: duplicate eventId'); ids[e.eventId] = true;
+    if (typeof e.elapsedMs === 'number') { if (e.elapsedMs < lastMs) errors.push('events: elapsedMs decreases at ' + i); lastMs = e.elapsedMs; }
+    if (e.type === 'hintRequested') hints++;
+    if (e.type === 'npcInspected') npc++;
+  }
+  if (typeof p.hintCount === 'number' && p.hintCount !== hints) errors.push('hintCount != hintRequested events');
+  if (typeof p.npcInspectionCount === 'number' && p.npcInspectionCount !== npc) errors.push('npcInspectionCount != npcInspected events');
+  var sum = function (o) { var t = 0; if (o && typeof o === 'object') for (var k in o) if (typeof o[k] === 'number') t += o[k]; return t; };
+  if (sum(p.errorTypes) !== p.errorCount) errors.push('errorCount != sum(errorTypes)');
+  if (sum(p.safetyViolationTypes) !== p.safetyViolationCount) errors.push('safetyViolationCount != sum(safetyViolationTypes)');
+  var checkItems = function (arr, firstKey, finalKey, label) {
+    if (!Array.isArray(arr)) return;
+    for (var j = 0; j < arr.length; j++) {
+      var it = arr[j];
+      if (it.firstCorrect !== null && it.firstCorrect !== undefined && (it[firstKey] === null || it[firstKey] === undefined)) errors.push(label + ': firstCorrect without first value');
+      if (it.finalCorrect !== null && it.finalCorrect !== undefined && (it[finalKey] === null || it[finalKey] === undefined)) errors.push(label + ': finalCorrect without final value');
+    }
+  };
+  checkItems(p.measurementInputs, 'firstInput', 'finalInput', 'measurementInputs');
+  checkItems(p.calculationAnswers, 'firstInput', 'finalInput', 'calculationAnswers');
+  checkItems(p.judgmentAnswers, 'firstAnswer', 'finalAnswer', 'judgmentAnswers');
+  if (Array.isArray(p.experiencedDisplayModes) && p.experiencedDisplayModes.length > 0 && p.experiencedDisplayModes[0] !== p.displayMode) errors.push('experiencedDisplayModes[0] != displayMode');
+  if (p.researchEligible !== false) errors.push('researchEligible must be false for test intake');
+  return errors;
+}

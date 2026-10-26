@@ -1,5 +1,6 @@
 // 엄격한 JSON 파서 — 중복 객체 키·다중 문서·후행 문자·잘못된 문법·짝 없는 서로게이트 이스케이프·원문 제어 문자를 거절한다.
 // JSON.parse는 중복 키를 조용히 덮어쓰므로(설계 15 §3 2항) 수신 검증에는 이 파서를 쓴다.
+// 객체는 prototype 없이 만들어 '__proto__'·'constructor' 같은 키도 자기 속성으로 보존한다(Codex 검토 B1). 추가 필드 거절은 스키마 단계에서.
 var JSON_STRICT_MAX_DEPTH = 64;
 
 function parseJsonStrict(text) {
@@ -31,14 +32,14 @@ function expectWord_(p, w, v) { if (p.s.substr(p.i, w.length) !== w) throw new E
 
 function parseObject_(p, depth) {
   p.i++; // {
-  var obj = {}; var seen = {};
+  var obj = Object.create(null); var seen = Object.create(null);
   skipWs_(p);
   if (p.s[p.i] === '}') { p.i++; return obj; }
   for (;;) {
     skipWs_(p);
     if (p.s[p.i] !== '"') throw new Error('INVALID_JSON');
     var key = parseString_(p);
-    if (Object.prototype.hasOwnProperty.call(seen, key)) throw new Error('DUPLICATE_KEY');
+    if (seen[key] === true) throw new Error('DUPLICATE_KEY');
     seen[key] = true;
     skipWs_(p);
     if (p.s[p.i] !== ':') throw new Error('INVALID_JSON');

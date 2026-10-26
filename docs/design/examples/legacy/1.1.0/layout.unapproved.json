@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "1.1.0",
+  "layoutVersion": "unapproved",
+  "layoutConfirmed": false,
+  "sourceStatus": "surveyPending",
+  "coordinateSystem": {
+    "unit": "m",
+    "originDescription": null,
+    "axesDescription": null
+  },
+  "room": {
+    "widthMeters": null,
+    "lengthMeters": null,
+    "heightMeters": null
+  },
+  "boundary": [],
+  "doors": [],
+  "columns": [],
+  "safetyAisles": [],
+  "equipment": [
+    {
+      "equipmentId": "brake-tester-01",
+      "label": "제동력 시험기(실제 위치 확인 전)",
+      "position": {
+        "x": null,
+        "y": null,
+        "z": null,
+        "rotationYDegrees": null
+      },
+      "size": {
+        "widthMeters": null,
+        "lengthMeters": null,
+        "heightMeters": null
+      },
+      "interactiveForMvp": true,
+      "accessPoints": [],
+      "surveyReference": null
+    }
+  ],
+  "openings": [],
+  "siteMeasurements": []
+}

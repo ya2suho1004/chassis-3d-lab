@@ -10,7 +10,7 @@
 
 ```bash
 npm install
-npm test          # vitest, 159 tests
+npm test          # vitest, 192 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
@@ -22,7 +22,8 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 | `src/delivery/jcs.ts` | RFC 8785 정규화·SHA-256 | 키 UTF-16 순 정렬, NFC/NFD·trim·숫자 재절사 없음, 비유한 수·짝 없는 서로게이트 거절. 서버 `Jcs.gs`와 결과 동일 |
 | `src/delivery/submit.ts` | 제출 1건 전송·ack 검증 | `text/plain` POST, cors·omit·follow, 인증 헤더·쿼리 없음. JSON 모양·protocol·recordId·독립 계산 hash·receipt·시각이 모두 맞아야 acknowledged. HTML·opaque·네트워크 오류는 confirmationPending |
 | `src/delivery/outbox.ts` | 대기열 처리(교사 조작) | 같은 ID·같은 원본만 재전송, rejected·conflict는 자동 재시도 없음, 보내기 전 uploading 저장 |
-| `server/apps-script/*.gs` | Apps Script 수신점 | 엄격 파싱(중복 키 거절) → 스키마 → 시험 세션 허용 → 잠금 안 정본 1행(5열)·중복/충돌·flush·재읽기 → ack. 설정은 스크립트 속성 |
+| `server/apps-script/*.gs` | Apps Script 수신점 | 엄격 파싱(prototype 없는 객체, 중복 키 거절) → 버전별 스키마(record 1.0.0·1.1.0) → 의미 검증 → 허용 스냅샷 문맥 대조(`DemoSnapshots.gs`) → 잠금 안 정본 1행(5열)·기존 행 재검증·중복/충돌·flush·재읽기 → ack. 접수 창·행 상한 설정은 필수(fail-closed) |
+| `src/data/session/demo-snapshots.json` | 시연 세션 스냅샷 36개 | 선택(사례·모드·시점·진입 방향)마다 불변 ID·versions·승인(과제 pending). `npm run build:gs-snapshots`로 수신점 목록과 함께 생성 |
 | `server/dev/fakeSubmitServer.ts` | 개발 서버 가짜 수신점 | 같은 .gs 코드를 Node에서 실행. `/__fake-submit/control?mode=html|badhash|drop|lockbusy`로 D04·D07 재현. 운영 번들 제외 |
 
 실배포(Google 웹 앱·GitHub Pages·학교 기기)는 아직 하지 않았다. 절차는 `server/apps-script/README.md`, 시험 상태는 `docs/03_0C_전송_시험_계획_2026-10-26.md`.

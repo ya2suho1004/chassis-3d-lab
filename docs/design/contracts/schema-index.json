@@ -1,8 +1,8 @@
 {
-  "catalogVersion": "1.1.0",
+  "catalogVersion": "1.2.0",
   "current": {
     "task": {
-      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
       "path": "task.schema.json"
     },
     "record": {
@@ -20,6 +20,10 @@
     "submission": {
       "schemaId": "urn:chassis-3d-lab:submission:1.1.0",
       "path": "submission.schema.json"
+    },
+    "sessionSnapshot": {
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "path": "session.snapshot.schema.json"
     }
   },
   "legacy": {
@@ -29,6 +33,14 @@
       "layout": "legacy/1.0.0/layout.schema.json",
       "delivery": "legacy/1.0.0/delivery.schema.json",
       "submission": "legacy/1.0.0/submission.schema.json"
+    },
+    "1.1.0": {
+      "task": "legacy/1.1.0/task.schema.json",
+      "record": "legacy/1.1.0/record.schema.json",
+      "layout": "legacy/1.1.0/layout.schema.json",
+      "delivery": "legacy/1.1.0/delivery.schema.json",
+      "submission": "legacy/1.1.0/submission.schema.json",
+      "vocabulary": "legacy/1.1.0/task-vocabulary.v1.1.0.json"
     }
   },
   "recordIngestionVersions": [
@@ -38,6 +50,13 @@
   "rules": [
     "Select by schemaVersion before validation; no silent payload upgrade.",
     "Keep frozen record bytes and payloadHash; never inject usagePhase into legacy outbox.",
-    "ProtocolVersion remains 1; delivery schema remains 1.0.0."
-  ]
+    "ProtocolVersion remains 1; delivery schema remains 1.0.0.",
+    "Catalog version does not imply record/submission wire version. task 1.2.0 requires vocabulary 1.2.0.",
+    "Session snapshot schema 1.0.0 is a new independent contract; vehicleEntryDirection is never injected into recordPayload.",
+    "Existing snapshots/records/outbox remain immutable; changed direction or task/feedback policy requires a new sessionSnapshotId for future runs."
+  ],
+  "currentVocabulary": {
+    "version": "1.2.0",
+    "path": "task-vocabulary.v1.2.0.json"
+  }
 }

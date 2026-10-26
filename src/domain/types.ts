@@ -1,4 +1,4 @@
-// 과제 데이터 형식 — docs/design/contracts/task.schema.json (1.1.0) 과 대응
+// 과제 데이터 형식 — docs/design/contracts/task.schema.json (1.2.0) 과 대응
 // 주의: 과제 전체 approvalStatus는 '동작 매핑 미완료'로 pending일 수 있다. 교사 확인값은 ruleset.approvalStatus=approved로 보존된다(docs/design/docs/13).
 import type { AxlePosition, DecisionPrecision } from './judge'
 

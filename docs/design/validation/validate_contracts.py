@@ -8,7 +8,7 @@ from jsonschema import Draft202012Validator,FormatChecker
 from referencing import Registry,Resource
 NAMES=['task','record','layout','delivery','submission']
 def read(p):return json.loads(p.read_text())
-VOC=read(B/'contracts/task-vocabulary.v1.1.0.json')
+VOC=read(B/'contracts/task-vocabulary.v1.2.0.json')
 current={n:read(B/'contracts'/f'{n}.schema.json') for n in NAMES}
 legacy={n:read(B/'contracts/legacy/1.0.0'/f'{n}.schema.json') for n in NAMES}
 resources={s['$id']:Resource.from_contents(s) for s in [*legacy.values(),*current.values()]}
@@ -53,7 +53,7 @@ x=copy.deepcopy(a);x['openings']=[];check('confirmed_no_access_rejected','layout
 x=copy.deepcopy(a);x['openings'][0]['start']['x']=None;check('confirmed_unknown_opening_point','layout',x,False)
 x=copy.deepcopy(a);x['room']['heightMeters']=None;check('confirmed_unmeasured_room','layout',x,False)
 # New kg and written-value policy; approval data here is wholly synthetic.
-t=copy.deepcopy(oldex['task.unapproved']);t['schemaVersion']='1.1.0';t['vocabularyVersion']='1.1.0';t['teacherReviewReference']=None
+t=copy.deepcopy(oldex['task.unapproved']);t['schemaVersion']='1.2.0';t['vocabularyVersion']='1.2.0';t['teacherReviewReference']=None
 t['feedbackPolicy']={'version':'test-fixture','status':'proposed','unguidedAnswerFeedback':'afterAllFirstResponses','answerFeedbackKeys':[],'safetyFeedback':'immediate'}
 t['measurement'].update(unit='kg',left=240,right=200,axleWeight=600,axlePosition='rear',caseId='synthetic-case',inputsIntegerOnly=True)
 t['ruleset'].update(judgmentValueSource='written',approvedOn=None)
@@ -158,7 +158,7 @@ for filename in ['layout.partial-survey.v1.1.json']:
 # Precision must still reject incomplete rounded policies.
 p=current['task']['properties']['ruleset']['properties']['decisionPrecision']['anyOf'][0]
 checks.append({'name':'rounded_policy_requires_digits_and_method','passed':not Draft202012Validator(p).is_valid({'mode':'rounded','digits':None,'rounding':None})})
-result={'checkedAt':'2026-10-21','checks':checks,'passed':sum(c['passed'] for c in checks),'failed':sum(not c['passed'] for c in checks),'applicationExecuted':False}
+result={'checkedAt':'2026-10-26','checks':checks,'passed':sum(c['passed'] for c in checks),'failed':sum(not c['passed'] for c in checks),'applicationExecuted':False}
 report=B/'validation/results.json';report.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')
 print(json.dumps({k:v for k,v in result.items() if k!='checks'},ensure_ascii=False))
 for c in checks:

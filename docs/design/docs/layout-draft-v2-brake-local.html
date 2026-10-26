@@ -44,7 +44,7 @@
       <tr><td>P1-1</td><td>기준점(롤러 두 축 가운데) 바닥 테이프</td><td>(0, 0)</td><td><span class="k m">실측</span></td><td>원점</td></tr>
       <tr><td>P1-2</td><td>기준점 → 북쪽 벽 수직 거리</td><td>8.20</td><td><span class="k m">실측</span></td><td>z = −8.20. 벽의 동서 범위 미확정</td></tr>
       <tr><td>P1-3</td><td>기준점 → 조작부 쪽 벽(동쪽) 수직 거리</td><td>2.00</td><td><span class="k m">실측</span></td><td>2026-10-21 사용자 확인: 조작부 쪽 벽까지. 2차: 장비 대칭 확정(동쪽 여유 0.50), 조작부 본체(x 1.30~1.80)가 덮개판 끝과 0.20 겹침 — 덮개판이 바닥 높이라 가능(C-5 사진 확인)</td></tr>
-      <tr><td>P1-4</td><td>롤러 장비 외곽(덮개 포함) 동서 × 남북</td><td>3.00 × 1.20</td><td><span class="k m">실측</span></td><td>2차 실측: 서쪽 끝 1.50 · 동쪽 끝 1.50 → 중심=원점 대칭 확정(C-1b 해소)</td></tr>
+      <tr><td>P1-4</td><td>롤러 장비 외곽(덮개 포함) 동서 × 남북</td><td>3.00 × 1.20</td><td><span class="k m">실측</span></td><td>2차 실측: 서쪽 끝 1.50 · 동쪽 끝 1.50 → 동서 대칭 확정(C-1b 해소). 남북 ±0.60은 가정</td></tr>
       <tr><td>P1-5</td><td>앞바퀴 축 위치(모닝 JA 축거)</td><td>2.40</td><td><span class="k s">제원</span></td><td>진입 방향: 북·남 모두 가능(사용자 확인 2026-10-21). 두 방향 모두 점선. 시뮬레이션 기본 방향은 0A 확인지에서 선택</td></tr>
       <tr><td>P1-6</td><td>기준점 → 조작부 앞면 중앙 직선거리</td><td>1.30</td><td><span class="k m">실측</span></td><td>방향 미확인 → 반지름 1.30 원으로 표시. 동서·남북 거리 필요</td></tr>
       <tr><td>P1-7</td><td>조작부 본체 가로 / 세로 / 높이, 화면 높이</td><td>0.70 / 0.50 / 1.50, 1.30</td><td><span class="k m">실측</span></td><td>위치는 P1-6 확정 후</td></tr>
@@ -54,7 +54,7 @@
       <tr><td>P1-10</td><td>ABS 측정 차량 구역(돌출부) 남북 × 동서</td><td>10.00 × 4.10</td><td><span class="k q">확인</span></td><td>2차 확인 ‘맞음’(C-2 해소). 위치는 ‘남동 모서리에서 동쪽으로’(동쪽 벽 바깥) → 시작점·입구 폭·사진 미확정(C-8)</td></tr>
       <tr><td>S2-f</td><td>장비 서쪽 끝 → 리프트 옆 기둥 동쪽 면</td><td>1.50</td><td><span class="k m">실측</span></td><td>2차. 기둥 동쪽 면 x=−3.00. 남북 위치·단면 미측정(C-9)</td></tr>
       <tr><td>S2-lift</td><td>리프트 바닥판 남북(세로)</td><td>4.00</td><td><span class="k m">실측</span></td><td>2차. 가로 2.20과 함께 크기 확정. 위치·사이 간격 미측정</td></tr>
-      <tr><td>S2-d</td><td>책상 상판 중앙 남북 거리</td><td>?</td><td><span class="k q">확인</span></td><td>2차 답 ‘0’은 조작부 자리와 겹침(C-6). 사진 28: 뒷문 옆, 롤러보다 차 앞쪽 약 0.8</td></tr>
+      <tr><td>S2-d</td><td>책상 상판 중앙 남북 거리</td><td>?</td><td><span class="k q">확인</span></td><td>2차 답 ‘0’은 조작부 앞면과 같은 선(C-6). 책상 크기 미측정이라 겹침 단정 불가. 사진 28의 ‘차 앞쪽 약 0.8’은 실측 아님</td></tr>
       <tr><td>P2-1</td><td>기둥 총수</td><td>4</td><td><span class="k m">실측</span></td><td>이 도면에는 그리지 않음(위치 미측정)</td></tr>
       <tr><td>P2-3</td><td>기둥 간격(1→2→3→4 동일)</td><td>4.00</td><td><span class="k m">실측</span></td><td>중심 간/면 간 미확인(C-4)</td></tr>
       <tr><td>P2-5</td><td>리프트 바닥판 가로(3대 동일)</td><td>2.20</td><td><span class="k m">실측</span></td><td>세로·위치·간격 미측정</td></tr>
@@ -83,7 +83,7 @@ svg.appendChild(el('text',{x:2.15,y:-6.5,'font-size':F,fill:'#333',transform:'ro
 // 롤러 장비 3.00×1.20 (중심 원점 가정)
 svg.appendChild(el('rect',{x:-1.5,y:-0.6,width:3.0,height:1.2,fill:'#fde8e6',stroke:'#b42318','stroke-width':0.08}));
 svg.appendChild(el('text',{x:0,y:0.1,'text-anchor':'middle','font-size':F,'font-weight':700,fill:'#222'},'롤러 장비 3.00 × 1.20 (실측)'));
-svg.appendChild(el('text',{x:0,y:0.45,'text-anchor':'middle','font-size':F*0.8,fill:'#b42318'},'서쪽 끝 1.50 · 동쪽 끝 1.50 (2차 실측 2026-10-26) → 원점 대칭 확정, 벽까지 여유 0.50'));
+svg.appendChild(el('text',{x:0,y:0.45,'text-anchor':'middle','font-size':F*0.8,fill:'#b42318'},'서쪽 끝 1.50 · 동쪽 끝 1.50 (2차 실측) → 동서 대칭 확정(남북 배치 미확인), 벽까지 여유 0.50'));
 // 원점
 svg.appendChild(el('circle',{cx:0,cy:0,r:0.12,fill:'#111'}));
 svg.appendChild(el('text',{x:0.18,y:-0.15,'font-size':F*0.9,fill:'#111'},'P1-1 (0,0)'));
@@ -102,7 +102,7 @@ svg.appendChild(el('text',{x:0.85,y:-1.3,'font-size':F*0.8,fill:'#b42318'},'차 
 svg.appendChild(el('circle',{cx:0,cy:0,r:1.3,fill:'none',stroke:'#1b5e20','stroke-width':0.05,'stroke-dasharray':'0.2 0.15'}));
 svg.appendChild(el('text',{x:-2.6,y:1.45,'font-size':F*0.8,fill:'#1b5e20'},'조작부 거리 1.30 (1차) → 2차: 동쪽, 남북 0 (확정)'));
 svg.appendChild(el('circle',{cx:0,cy:0,r:1.1,fill:'none',stroke:'#6b4e00','stroke-width':0.05,'stroke-dasharray':'0.12 0.12'}));
-svg.appendChild(el('text',{x:-2.6,y:1.85,'font-size':F*0.8,fill:'#6b4e00'},'책상 거리 1.10 → 2차: 동 1.10, 남북 ‘0’은 조작부와 겹침 → 남북 재확인(C-6)'));
+svg.appendChild(el('text',{x:-2.6,y:1.85,'font-size':F*0.8,fill:'#6b4e00'},'책상 거리 1.10 → 2차: 동 1.10(직접 답). 남북 ‘0’은 조작부 앞면과 같은 선 → 동서·남북 함께 재확인(C-6)'));
 // 조작부 가정 상자(크기 실측 0.70×0.50, 위치 가정)
 svg.appendChild(el('rect',{x:1.3,y:-0.35,width:0.5,height:0.7,fill:'#fff8c4',stroke:'#8a6d00','stroke-width':0.08}));
 svg.appendChild(el('text',{x:1.3,y:-0.5,'font-size':F*0.7,fill:'#8a6d00'},'조작부 앞면 x=+1.30, 서향 (2차 실측) · 본체 0.50 깊이 → 벽까지 0.20'));

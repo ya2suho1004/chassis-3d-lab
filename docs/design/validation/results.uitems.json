@@ -1,0 +1,1970 @@
+{
+  "checkedAt": "2026-10-26T09:42:08.829Z",
+  "root": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current",
+  "project": "/Users/jamingchu/claude code/chassis-3d-lab",
+  "applicationExecuted": false,
+  "projectModified": false,
+  "dependenciesUsed": [
+    "node:fs",
+    "node:path",
+    "node:crypto",
+    "node:module",
+    "/Users/jamingchu/claude code/chassis-3d-lab/node_modules/ajv/dist/2020.js",
+    "/Users/jamingchu/claude code/chassis-3d-lab/node_modules/ajv-formats"
+  ],
+  "validatorOptions": {
+    "allErrors": true,
+    "strict": false,
+    "validateFormats": true,
+    "useDefaults": false,
+    "coerceTypes": false,
+    "removeAdditional": false
+  },
+  "checks": [
+    {
+      "name": "schemaId-content-consistency:1.1.0:record",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0"
+    },
+    {
+      "name": "schemaId-content-consistency:1.1.0:layout",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0"
+    },
+    {
+      "name": "schemaId-content-consistency:1.1.0:delivery",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0"
+    },
+    {
+      "name": "schemaId-content-consistency:1.1.0:submission",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:submission:1.1.0"
+    },
+    {
+      "name": "schemaId-content-consistency:1.0.0:delivery",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0"
+    },
+    {
+      "name": "compile:current:task",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0"
+    },
+    {
+      "name": "compile:current:record",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0"
+    },
+    {
+      "name": "compile:current:layout",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0"
+    },
+    {
+      "name": "compile:current:delivery",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0"
+    },
+    {
+      "name": "compile:current:submission",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:submission:1.1.0"
+    },
+    {
+      "name": "compile:current:session-snapshot",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0"
+    },
+    {
+      "name": "compile:1.1.0:task",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:task:1.1.0"
+    },
+    {
+      "name": "compile:1.1.0:record",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0"
+    },
+    {
+      "name": "compile:1.1.0:layout",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0"
+    },
+    {
+      "name": "compile:1.1.0:delivery",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0"
+    },
+    {
+      "name": "compile:1.1.0:submission",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:submission:1.1.0"
+    },
+    {
+      "name": "compile:1.0.0:task",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:task:1.0.0"
+    },
+    {
+      "name": "compile:1.0.0:record",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:record:1.0.0"
+    },
+    {
+      "name": "compile:1.0.0:layout",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:layout:1.0.0"
+    },
+    {
+      "name": "compile:1.0.0:delivery",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0"
+    },
+    {
+      "name": "compile:1.0.0:submission",
+      "passed": true,
+      "schemaId": "urn:chassis-3d-lab:submission:1.0.0"
+    },
+    {
+      "name": "example:delivery.pending.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example:layout.partial-survey.v1.1.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:layout.partial-survey.v1.1.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:layout.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:layout.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.0.0/delivery.pending.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.0.0",
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.0.0/layout.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.0.0",
+      "schemaId": "urn:chassis-3d-lab:layout:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:legacy/1.0.0/layout.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.0.0/record.demo-aborted.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.0.0",
+      "schemaId": "urn:chassis-3d-lab:record:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:legacy/1.0.0/record.demo-aborted.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.0.0/submission.demo-request.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.0.0",
+      "schemaId": "urn:chassis-3d-lab:submission:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.0.0/task.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.0.0",
+      "schemaId": "urn:chassis-3d-lab:task:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:legacy/1.0.0/task.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.1.0/delivery.pending.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:delivery:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.1.0/layout.partial-survey.v1.1.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:legacy/1.1.0/layout.partial-survey.v1.1.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.1.0/layout.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:layout:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:legacy/1.1.0/layout.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.1.0/record.demo-aborted.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:legacy/1.1.0/record.demo-aborted.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.1.0/submission.demo-request.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:submission:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example:legacy/1.1.0/task.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:legacy/1.1.0/task.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:record.demo-aborted.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:record.demo-aborted.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "example:session.demo-snapshot.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "example:submission.demo-request.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:submission:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "example:task.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": []
+    },
+    {
+      "name": "example-semantics:task.unapproved.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "project-source-present-lv1",
+      "passed": true
+    },
+    {
+      "name": "formal-task-lv1",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": []
+    },
+    {
+      "name": "formal-task-semantics-lv1",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "formal-task-metadata-lv1",
+      "passed": true
+    },
+    {
+      "name": "formal-task-approval-preserved-lv1",
+      "passed": true
+    },
+    {
+      "name": "teacher-review-reference-lv1",
+      "passed": true
+    },
+    {
+      "name": "approved-10-feedback-equality-lv1",
+      "passed": true,
+      "differences": []
+    },
+    {
+      "name": "feedback-policy-equality-lv1",
+      "passed": true
+    },
+    {
+      "name": "0A-measurement-preservation-lv1",
+      "passed": true
+    },
+    {
+      "name": "0A-rules-preservation-lv1",
+      "passed": true
+    },
+    {
+      "name": "0A-12-steps-preservation-lv1",
+      "passed": true
+    },
+    {
+      "name": "project-original-lv1-legacy1.1",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "project-original-semantics-lv1-legacy1.1",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "project-original-lv1-current1.2-expected-version-failure",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/schemaVersion",
+          "schemaPath": "#/properties/schemaVersion/const",
+          "keyword": "const",
+          "params": {
+            "allowedValue": "1.2.0"
+          },
+          "message": "must be equal to constant"
+        },
+        {
+          "instancePath": "/vocabularyVersion",
+          "schemaPath": "#/properties/vocabularyVersion/const",
+          "keyword": "const",
+          "params": {
+            "allowedValue": "1.2.0"
+          },
+          "message": "must be equal to constant"
+        }
+      ]
+    },
+    {
+      "name": "project-version-failure-pointers-lv1",
+      "passed": true
+    },
+    {
+      "name": "project-metadata-only-projection-lv1-current1.2",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": []
+    },
+    {
+      "name": "project-metadata-only-projection-semantics-lv1",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "project-diff-metadata-only-lv1",
+      "passed": true
+    },
+    {
+      "name": "independent-case-arithmetic-lv1",
+      "passed": true,
+      "deviation": 6.6,
+      "sum": 73.3,
+      "vehicleVerdict": "pass"
+    },
+    {
+      "name": "project-source-present-lv2",
+      "passed": true
+    },
+    {
+      "name": "formal-task-lv2",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": []
+    },
+    {
+      "name": "formal-task-semantics-lv2",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "formal-task-metadata-lv2",
+      "passed": true
+    },
+    {
+      "name": "formal-task-approval-preserved-lv2",
+      "passed": true
+    },
+    {
+      "name": "teacher-review-reference-lv2",
+      "passed": true
+    },
+    {
+      "name": "approved-10-feedback-equality-lv2",
+      "passed": true,
+      "differences": []
+    },
+    {
+      "name": "feedback-policy-equality-lv2",
+      "passed": true
+    },
+    {
+      "name": "0A-measurement-preservation-lv2",
+      "passed": true
+    },
+    {
+      "name": "0A-rules-preservation-lv2",
+      "passed": true
+    },
+    {
+      "name": "0A-12-steps-preservation-lv2",
+      "passed": true
+    },
+    {
+      "name": "project-original-lv2-legacy1.1",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "project-original-semantics-lv2-legacy1.1",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "project-original-lv2-current1.2-expected-version-failure",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/schemaVersion",
+          "schemaPath": "#/properties/schemaVersion/const",
+          "keyword": "const",
+          "params": {
+            "allowedValue": "1.2.0"
+          },
+          "message": "must be equal to constant"
+        },
+        {
+          "instancePath": "/vocabularyVersion",
+          "schemaPath": "#/properties/vocabularyVersion/const",
+          "keyword": "const",
+          "params": {
+            "allowedValue": "1.2.0"
+          },
+          "message": "must be equal to constant"
+        }
+      ]
+    },
+    {
+      "name": "project-version-failure-pointers-lv2",
+      "passed": true
+    },
+    {
+      "name": "project-metadata-only-projection-lv2-current1.2",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": []
+    },
+    {
+      "name": "project-metadata-only-projection-semantics-lv2",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "project-diff-metadata-only-lv2",
+      "passed": true
+    },
+    {
+      "name": "independent-case-arithmetic-lv2",
+      "passed": true,
+      "deviation": 10,
+      "sum": 73.3,
+      "vehicleVerdict": "fail"
+    },
+    {
+      "name": "docs-layout:docs/layout.surveyed.partial.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.0.0",
+      "schemaId": "urn:chassis-3d-lab:layout:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "docs-layout-semantics:docs/layout.surveyed.partial.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "docs-layout:docs/review-inputs/2026-10-21/layout.surveyed.partial.json",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.0.0",
+      "schemaId": "urn:chassis-3d-lab:layout:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "docs-layout-semantics:docs/review-inputs/2026-10-21/layout.surveyed.partial.json",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "catalog-version",
+      "passed": true
+    },
+    {
+      "name": "catalog-current:task",
+      "passed": true
+    },
+    {
+      "name": "catalog-current:record",
+      "passed": true
+    },
+    {
+      "name": "catalog-current:layout",
+      "passed": true
+    },
+    {
+      "name": "catalog-current:delivery",
+      "passed": true
+    },
+    {
+      "name": "catalog-current:submission",
+      "passed": true
+    },
+    {
+      "name": "catalog-session-snapshot",
+      "passed": true
+    },
+    {
+      "name": "current-task-contract-version",
+      "passed": true
+    },
+    {
+      "name": "unchanged-contract:record",
+      "passed": true
+    },
+    {
+      "name": "unchanged-contract:layout",
+      "passed": true
+    },
+    {
+      "name": "unchanged-contract:submission",
+      "passed": true
+    },
+    {
+      "name": "unchanged-contract:delivery",
+      "passed": true
+    },
+    {
+      "name": "current-vocabulary-version",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-engine-feedback-key",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-off-subactions",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-off-event-identifiers",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-off-registered-event-ids",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-off-action-order",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-off-subaction-event-bindings",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-motorOff-not-blocked-by-exit-or-lift",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-liftUp-safety-bindings",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-event-examples-parent-and-subactions",
+      "passed": true
+    },
+    {
+      "name": "vocabulary-schema-enum-consistency",
+      "passed": true
+    },
+    {
+      "name": "reject-task-schema-version-mismatch",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/schemaVersion",
+          "schemaPath": "#/properties/schemaVersion/const",
+          "keyword": "const",
+          "params": {
+            "allowedValue": "1.2.0"
+          },
+          "message": "must be equal to constant"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-vocabulary-version-mismatch",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/vocabularyVersion",
+          "schemaPath": "#/properties/vocabularyVersion/const",
+          "keyword": "const",
+          "params": {
+            "allowedValue": "1.2.0"
+          },
+          "message": "must be equal to constant"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-unregistered-condition",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/steps/0/completionCondition",
+          "schemaPath": "#/properties/steps/items/properties/completionCondition/enum",
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "teacherApprovalRequired",
+              "ppeConfirmed",
+              "inspected",
+              "vehicleCentered",
+              "axleWeightRead",
+              "brakeModeSelected",
+              "liftLowered",
+              "motorOn",
+              "pedalPressed",
+              "readingsSubmitted",
+              "vehicleExited",
+              "answersSubmitted"
+            ]
+          },
+          "message": "must be equal to one of the allowed values"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-unregistered-safety-enum",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/steps/1/requiredSafetyConditions/0",
+          "schemaPath": "#/properties/steps/items/properties/requiredSafetyConditions/items/enum",
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "s-ppe",
+              "s-lift",
+              "s-motor",
+              "s-exit",
+              "s-accel",
+              "s-engine"
+            ]
+          },
+          "message": "must be equal to one of the allowed values"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-invalid-unit",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/measurement/unit",
+          "schemaPath": "#/properties/measurement/properties/unit/anyOf/0/enum",
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "N",
+              "kN",
+              "kgf",
+              "kg"
+            ]
+          },
+          "message": "must be equal to one of the allowed values"
+        },
+        {
+          "instancePath": "/measurement/unit",
+          "schemaPath": "#/properties/measurement/properties/unit/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/measurement/unit",
+          "schemaPath": "#/properties/measurement/properties/unit/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-missing-required-response-items",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "",
+          "schemaPath": "#/required",
+          "keyword": "required",
+          "params": {
+            "missingProperty": "requiredResponseItems"
+          },
+          "message": "must have required property 'requiredResponseItems'"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-fractional-integer-input",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/left/anyOf/0/type",
+          "keyword": "type",
+          "params": {
+            "type": "integer"
+          },
+          "message": "must be integer"
+        },
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/left/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/left/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        },
+        {
+          "instancePath": "/measurement",
+          "schemaPath": "#/properties/measurement/allOf/0/if",
+          "keyword": "if",
+          "params": {
+            "failingKeyword": "then"
+          },
+          "message": "must match \"then\" schema"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-negative-measurement",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/left/anyOf/0/minimum",
+          "keyword": "minimum",
+          "params": {
+            "comparison": ">=",
+            "limit": 0
+          },
+          "message": "must be >= 0"
+        },
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/left/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/left/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        },
+        {
+          "instancePath": "/measurement",
+          "schemaPath": "#/properties/measurement/allOf/0/if",
+          "keyword": "if",
+          "params": {
+            "failingKeyword": "then"
+          },
+          "message": "must match \"then\" schema"
+        },
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/properties/left/anyOf/0/minimum",
+          "keyword": "minimum",
+          "params": {
+            "comparison": ">=",
+            "limit": 0
+          },
+          "message": "must be >= 0"
+        },
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/properties/left/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/measurement/left",
+          "schemaPath": "#/properties/measurement/properties/left/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-zero-axle-weight",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/measurement/axleWeight",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/axleWeight/anyOf/0/exclusiveMinimum",
+          "keyword": "exclusiveMinimum",
+          "params": {
+            "comparison": ">",
+            "limit": 0
+          },
+          "message": "must be > 0"
+        },
+        {
+          "instancePath": "/measurement/axleWeight",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/axleWeight/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/measurement/axleWeight",
+          "schemaPath": "#/properties/measurement/allOf/0/then/properties/axleWeight/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        },
+        {
+          "instancePath": "/measurement",
+          "schemaPath": "#/properties/measurement/allOf/0/if",
+          "keyword": "if",
+          "params": {
+            "failingKeyword": "then"
+          },
+          "message": "must match \"then\" schema"
+        },
+        {
+          "instancePath": "/measurement/axleWeight",
+          "schemaPath": "#/properties/measurement/properties/axleWeight/anyOf/0/exclusiveMinimum",
+          "keyword": "exclusiveMinimum",
+          "params": {
+            "comparison": ">",
+            "limit": 0
+          },
+          "message": "must be > 0"
+        },
+        {
+          "instancePath": "/measurement/axleWeight",
+          "schemaPath": "#/properties/measurement/properties/axleWeight/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/measurement/axleWeight",
+          "schemaPath": "#/properties/measurement/properties/axleWeight/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-unregistered-grading",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/requiredResponseItems/0/gradingRuleId",
+          "schemaPath": "#/properties/requiredResponseItems/items/properties/gradingRuleId/anyOf/0/enum",
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "decimalExact",
+              "absoluteTolerance",
+              "vehicleVerdictMatch"
+            ]
+          },
+          "message": "must be equal to one of the allowed values"
+        },
+        {
+          "instancePath": "/requiredResponseItems/0/gradingRuleId",
+          "schemaPath": "#/properties/requiredResponseItems/items/properties/gradingRuleId/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/requiredResponseItems/0/gradingRuleId",
+          "schemaPath": "#/properties/requiredResponseItems/items/properties/gradingRuleId/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        }
+      ]
+    },
+    {
+      "name": "reject-task-unregistered-precision",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+      "errors": [
+        {
+          "instancePath": "/requiredResponseItems/0/precisionPolicyRef",
+          "schemaPath": "#/properties/requiredResponseItems/items/properties/precisionPolicyRef/anyOf/0/enum",
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "integer",
+              "truncate1"
+            ]
+          },
+          "message": "must be equal to one of the allowed values"
+        },
+        {
+          "instancePath": "/requiredResponseItems/0/precisionPolicyRef",
+          "schemaPath": "#/properties/requiredResponseItems/items/properties/precisionPolicyRef/anyOf/1/type",
+          "keyword": "type",
+          "params": {
+            "type": "null"
+          },
+          "message": "must be null"
+        },
+        {
+          "instancePath": "/requiredResponseItems/0/precisionPolicyRef",
+          "schemaPath": "#/properties/requiredResponseItems/items/properties/precisionPolicyRef/anyOf",
+          "keyword": "anyOf",
+          "params": {},
+          "message": "must match a schema in anyOf"
+        }
+      ]
+    },
+    {
+      "name": "semantic-reject-unknown-prerequisite",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "unknownPrerequisite"
+      ]
+    },
+    {
+      "name": "semantic-reject-cyclic-prerequisites",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "cyclicPrerequisites"
+      ]
+    },
+    {
+      "name": "semantic-reject-duplicate-step-id",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "duplicateStepId",
+        "stepCompletionBinding",
+        "unknownPrerequisite",
+        "cyclicPrerequisites"
+      ]
+    },
+    {
+      "name": "semantic-reject-unknown-feedback-target",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "unknownFeedback"
+      ]
+    },
+    {
+      "name": "semantic-reject-unknown-answer-feedback",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "unknownAnswerFeedback"
+      ]
+    },
+    {
+      "name": "semantic-reject-completion-condition-binding",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "stepCompletionBinding"
+      ]
+    },
+    {
+      "name": "semantic-reject-duplicate-response-id",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "duplicateResponseId"
+      ]
+    },
+    {
+      "name": "semantic-reject-unknown-calculation-binding",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "unknownCalculationBinding",
+        "responseBindingMismatch"
+      ]
+    },
+    {
+      "name": "semantic-reject-grading-kind-mismatch",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "gradingKindMismatch",
+        "judgmentAuxiliaryFields",
+        "responseBindingMismatch"
+      ]
+    },
+    {
+      "name": "semantic-reject-exact-tolerance",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "exactToleranceNotNull"
+      ]
+    },
+    {
+      "name": "semantic-reject-truncate-written-policy",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "truncatePolicyMismatch"
+      ]
+    },
+    {
+      "name": "semantic-reject-engine-binding-tire",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "engineBinding:tire"
+      ]
+    },
+    {
+      "name": "semantic-reject-engine-feedback-equip",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "engineBinding:equip"
+      ]
+    },
+    {
+      "name": "semantic-reject-12-step-aggregate-preserved",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "stepCompletionBinding",
+        "canonicalStepCountMustBe12"
+      ]
+    },
+    {
+      "name": "detect-approved-feedback-text-drift",
+      "passed": true
+    },
+    {
+      "name": "reject-extra-record-vehicleEntryDirection",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": [
+        {
+          "instancePath": "",
+          "schemaPath": "#/additionalProperties",
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "vehicleEntryDirection"
+          },
+          "message": "must NOT have additional properties"
+        }
+      ]
+    },
+    {
+      "name": "reject-extra-record-sessionConfiguration",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": [
+        {
+          "instancePath": "",
+          "schemaPath": "#/additionalProperties",
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "sessionConfiguration"
+          },
+          "message": "must NOT have additional properties"
+        }
+      ]
+    },
+    {
+      "name": "off-event-known-id-structure",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "off-event-known-id-semantics",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "reject-off-event-id-over64",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": [
+        {
+          "instancePath": "/stepEvents/0/stepId",
+          "schemaPath": "#/properties/stepEvents/items/properties/stepId/maxLength",
+          "keyword": "maxLength",
+          "params": {
+            "limit": 64
+          },
+          "message": "must NOT have more than 64 characters"
+        }
+      ]
+    },
+    {
+      "name": "off-event-id64-structure-accept",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "unknown-off-event-is-schema-valid-string",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "reject-unknown-off-action-semantically",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "unknownOffSubAction",
+        "offSubActionOrder"
+      ]
+    },
+    {
+      "name": "off-subactions-synthetic-record",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "off-subactions-synthetic-record-semantics",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "off-subactions-15-events-12-aggregate",
+      "passed": true,
+      "completedEvents": 15,
+      "aggregateSteps": 12
+    },
+    {
+      "name": "off-subactions-synthetic-pending",
+      "passed": true
+    },
+    {
+      "name": "off-subactions-without-parent-is-partial-transcript",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "off-subactions-do-not-infer-parent-completion",
+      "passed": true
+    },
+    {
+      "name": "legacy-off-parent-only-remains-valid",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy-parent-does-not-infer-subactions",
+      "passed": true
+    },
+    {
+      "name": "reject-duplicate-off-subaction",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "duplicateOffSubAction",
+        "offSubActionOrder"
+      ]
+    },
+    {
+      "name": "reject-duplicate-event-id",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "duplicateEventId"
+      ]
+    },
+    {
+      "name": "reject-duplicate-event-sequence",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "duplicateEventSequence"
+      ]
+    },
+    {
+      "name": "reject-off-action-order",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "offSubActionOrder"
+      ]
+    },
+    {
+      "name": "reject-parent-before-exitVehicle",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "offParentMustFollowExitVehicle"
+      ]
+    },
+    {
+      "name": "session-snapshot-example",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "session-direction-north",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "session-direction-south",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "session-direction-null",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "reject-session-invalid-direction",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": [
+        {
+          "instancePath": "/sessionConfiguration/vehicleEntryDirection",
+          "schemaPath": "#/properties/sessionConfiguration/properties/vehicleEntryDirection/enum",
+          "keyword": "enum",
+          "params": {
+            "allowedValues": [
+              "north",
+              "south",
+              null
+            ]
+          },
+          "message": "must be equal to one of the allowed values"
+        }
+      ]
+    },
+    {
+      "name": "reject-session-missing-direction",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": [
+        {
+          "instancePath": "/sessionConfiguration",
+          "schemaPath": "#/properties/sessionConfiguration/required",
+          "keyword": "required",
+          "params": {
+            "missingProperty": "vehicleEntryDirection"
+          },
+          "message": "must have required property 'vehicleEntryDirection'"
+        }
+      ]
+    },
+    {
+      "name": "reject-session-missing-session-config",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": [
+        {
+          "instancePath": "",
+          "schemaPath": "#/required",
+          "keyword": "required",
+          "params": {
+            "missingProperty": "sessionConfiguration"
+          },
+          "message": "must have required property 'sessionConfiguration'"
+        }
+      ]
+    },
+    {
+      "name": "reject-session-extra-session-config-field",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": [
+        {
+          "instancePath": "/sessionConfiguration",
+          "schemaPath": "#/properties/sessionConfiguration/additionalProperties",
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "extra"
+          },
+          "message": "must NOT have additional properties"
+        }
+      ]
+    },
+    {
+      "name": "reject-session-extra-root-field",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": [
+        {
+          "instancePath": "",
+          "schemaPath": "#/additionalProperties",
+          "keyword": "additionalProperties",
+          "params": {
+            "additionalProperty": "extra"
+          },
+          "message": "must NOT have additional properties"
+        }
+      ]
+    },
+    {
+      "name": "reject-session-bad-snapshot-version",
+      "passed": true,
+      "expected": "reject",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": [
+        {
+          "instancePath": "/schemaVersion",
+          "schemaPath": "#/properties/schemaVersion/const",
+          "keyword": "const",
+          "params": {
+            "allowedValue": "1.0.0"
+          },
+          "message": "must be equal to constant"
+        }
+      ]
+    },
+    {
+      "name": "schema-default-does-not-mutate-data",
+      "passed": true
+    },
+    {
+      "name": "snapshot-formal-task-version-alignment",
+      "passed": true
+    },
+    {
+      "name": "session-case2-version-fixture",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "session-case2-independent-copy",
+      "passed": true
+    },
+    {
+      "name": "snapshot-new-identity-preserves-existing-record",
+      "passed": true
+    },
+    {
+      "name": "snapshot-existing-record-shared-session-context",
+      "passed": true
+    },
+    {
+      "name": "snapshot-approval-bounded-to-ruleset",
+      "passed": true
+    },
+    {
+      "name": "synthetic-record-with-snapshot-context",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "snapshot-synthetic-record-binding",
+      "passed": true
+    },
+    {
+      "name": "archived-formal-task-lv1",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "archived-formal-task-semantics-lv1",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "archived-formal-task-lv2",
+      "passed": true,
+      "expected": "accept",
+      "tier": "1.1.0",
+      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+      "errors": []
+    },
+    {
+      "name": "archived-formal-task-semantics-lv2",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "session-reference-registry-accepts-matching-record",
+      "passed": true
+    },
+    {
+      "name": "session-reference-rejects-unknown-id",
+      "passed": true
+    },
+    {
+      "name": "session-reference-rejects-versions-mismatch",
+      "passed": true
+    },
+    {
+      "name": "session-reference-rejects-approval-mismatch",
+      "passed": true
+    },
+    {
+      "name": "session-reference-rejects-mode-mismatch",
+      "passed": true
+    },
+    {
+      "name": "session-reference-rejects-session-mismatch",
+      "passed": true
+    },
+    {
+      "name": "session-reference-rejects-condition-mismatch",
+      "passed": true
+    }
+  ],
+  "passed": 192,
+  "failed": 0,
+  "strictLint": {
+    "classification": "additional lint diagnostic; not counted as JSON Schema validity failures",
+    "passed": 1,
+    "failed": 10,
+    "diagnostics": [
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:task:1.2.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:task:1.2.0#/allOf/0/then/properties/measurement\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:record:1.1.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:record:1.1.0#/allOf/0/then/properties/configurationApproval\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:layout:1.1.0",
+        "passed": false,
+        "error": "strict mode: missing type \"array\" for keyword \"minItems\" at \"urn:chassis-3d-lab:layout:1.1.0#/allOf/0/then/anyOf/0/properties/doors\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:delivery:1.0.0",
+        "passed": true
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:submission:1.1.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:submission:1.1.0urn:chassis-3d-lab:record:1.0.0/allOf/0/then/properties/configurationApproval\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:record:1.1.0#/allOf/0/then/properties/configurationApproval\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:task:1.1.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:task:1.1.0#/allOf/0/then/properties/measurement\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:task:1.0.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:task:1.0.0#/allOf/0/then/properties/measurement\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:record:1.0.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:record:1.0.0#/allOf/0/then/properties/configurationApproval\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:layout:1.0.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:layout:1.0.0#/allOf/0/then/properties/coordinateSystem\" (strictTypes)"
+      },
+      {
+        "name": "strict-lint",
+        "schemaId": "urn:chassis-3d-lab:submission:1.0.0",
+        "passed": false,
+        "error": "strict mode: missing type \"object\" for keyword \"properties\" at \"urn:chassis-3d-lab:submission:1.0.0urn:chassis-3d-lab:record:1.0.0/allOf/0/then/properties/configurationApproval\" (strictTypes)"
+      }
+    ]
+  },
+  "projectComparisons": [
+    {
+      "level": 1,
+      "canonical": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json",
+      "project": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/tasks/task.braking-force.case-lv1.json",
+      "differences": [
+        {
+          "pointer": "/schemaVersion",
+          "canonical": "1.2.0",
+          "project": "1.1.0"
+        },
+        {
+          "pointer": "/taskDefinitionVersion",
+          "canonical": "1.2.0-review-case-1-2026-10-26",
+          "project": "1.1.0-review-case-1-2026-10-21+u2u3u7u8-teacher0E-2026-10-26"
+        },
+        {
+          "pointer": "/vocabularyVersion",
+          "canonical": "1.2.0",
+          "project": "1.1.0"
+        }
+      ],
+      "projectionChangedPointers": [
+        "/schemaVersion",
+        "/vocabularyVersion",
+        "/taskDefinitionVersion"
+      ],
+      "projectionRemainingDifferences": []
+    },
+    {
+      "level": 2,
+      "canonical": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json",
+      "project": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/tasks/task.braking-force.case-lv2.json",
+      "differences": [
+        {
+          "pointer": "/schemaVersion",
+          "canonical": "1.2.0",
+          "project": "1.1.0"
+        },
+        {
+          "pointer": "/taskDefinitionVersion",
+          "canonical": "1.2.0-review-case-2-2026-10-26",
+          "project": "1.1.0-review-case-2-2026-10-21+u2u3u7u8-teacher0E-2026-10-26"
+        },
+        {
+          "pointer": "/vocabularyVersion",
+          "canonical": "1.2.0",
+          "project": "1.1.0"
+        }
+      ],
+      "projectionChangedPointers": [
+        "/schemaVersion",
+        "/vocabularyVersion",
+        "/taskDefinitionVersion"
+      ],
+      "projectionRemainingDifferences": []
+    }
+  ],
+  "sources": [
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/task.schema.json",
+      "sha256": "454e2dfb13f6a42fde87e3dbbcbfe9667155c675feecee1847c9422578a987bd"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/record.schema.json",
+      "sha256": "e1a94eb3e52dc99d96e0437f32c70d28e40fa92350dfd08add1a8286809317c1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/layout.schema.json",
+      "sha256": "9e8c6fc73823f5a18a223185a7b2f44430794b4d9d72894c2521fc2250a37640"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/delivery.schema.json",
+      "sha256": "cd15df866a52ba2a4bdfbaf1371dff76895d3a979e90efa538e46b4ab6789a43"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/submission.schema.json",
+      "sha256": "c3ee7267f212b4918a8d517c4b5d641c43481fc1b1d2ea209bb9afc2651ecce2"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.1.0/task.schema.json",
+      "sha256": "9986d10611bf74c6c2437fdda73e21a7ae84a5d673ed3d3d81d7d4e769ac2ee6"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.1.0/record.schema.json",
+      "sha256": "e1a94eb3e52dc99d96e0437f32c70d28e40fa92350dfd08add1a8286809317c1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.1.0/layout.schema.json",
+      "sha256": "9e8c6fc73823f5a18a223185a7b2f44430794b4d9d72894c2521fc2250a37640"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.1.0/delivery.schema.json",
+      "sha256": "cd15df866a52ba2a4bdfbaf1371dff76895d3a979e90efa538e46b4ab6789a43"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.1.0/submission.schema.json",
+      "sha256": "c3ee7267f212b4918a8d517c4b5d641c43481fc1b1d2ea209bb9afc2651ecce2"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.0.0/task.schema.json",
+      "sha256": "ddee840f12430fd1d0507235ec11c38c764c34deda92af7ec38bb424a1838d12"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.0.0/record.schema.json",
+      "sha256": "edf8880284265097b29af43a2d49460e9922dc8424164c9a0da0ef9c93b8f9f0"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.0.0/layout.schema.json",
+      "sha256": "3471789a75f0cf02524f4a6a7ee8ffc400fccbd71a3e83817643eebd2b53c2d3"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.0.0/delivery.schema.json",
+      "sha256": "cd15df866a52ba2a4bdfbaf1371dff76895d3a979e90efa538e46b4ab6789a43"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.0.0/submission.schema.json",
+      "sha256": "272c542efd0cdb26d433c21a5c0477bd19362a08af86573e2e89c691adcae54a"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/session.snapshot.schema.json",
+      "sha256": "1b66d50e227ceb06390bf3331fa1a43f053b4d3abea81cd4068489150b648db0"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/task-vocabulary.v1.2.0.json",
+      "sha256": "bdf64e2ff308b7a149937d6ba55837b2a343e816011028d69c874a28ff32f3d6"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/legacy/1.1.0/task-vocabulary.v1.1.0.json",
+      "sha256": "fb3e9530938b6b3e6689b1bb877567e581c109980b8daadf23d0496c6098dc0a"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/delivery.pending.json",
+      "sha256": "ae48ba070713c31ad6bff0c0c2fa21e012cd7988c8126cb0c99a29c7bc63ebe1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/layout.partial-survey.v1.1.json",
+      "sha256": "e38a6c9038318573a7e9863f1730d5b733b550d0cbd94d9912736dda64052ba1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/layout.unapproved.json",
+      "sha256": "6f65c3fdd34dc510bcee423222ddeed2add7c2824583622edb0f59cab00b3e2c"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.0.0/delivery.pending.json",
+      "sha256": "ae48ba070713c31ad6bff0c0c2fa21e012cd7988c8126cb0c99a29c7bc63ebe1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.0.0/layout.unapproved.json",
+      "sha256": "d4422665946dedaa10622c0d0adfc8b5b8ec056b21e41983ef792af839517821"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.0.0/record.demo-aborted.json",
+      "sha256": "90209b0bc997f32f19e3f3b3909dac01c25274bb8a3be452ac70d150c53a2449"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.0.0/submission.demo-request.json",
+      "sha256": "0057b24471c8e0fa7dc8c8bafa2eb20d0e65412232310cce8e515f5465acb2bf"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.0.0/task.unapproved.json",
+      "sha256": "99a231395718218eeb2db432caa931df47432209927ecd129f638720d15c22f7"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.1.0/delivery.pending.json",
+      "sha256": "ae48ba070713c31ad6bff0c0c2fa21e012cd7988c8126cb0c99a29c7bc63ebe1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.1.0/layout.partial-survey.v1.1.json",
+      "sha256": "e38a6c9038318573a7e9863f1730d5b733b550d0cbd94d9912736dda64052ba1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.1.0/layout.unapproved.json",
+      "sha256": "6f65c3fdd34dc510bcee423222ddeed2add7c2824583622edb0f59cab00b3e2c"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.1.0/record.demo-aborted.json",
+      "sha256": "076c5eb58a129bef3dcad9efd3130c501db48bd957ab4efc4bf571f87cd9ac3e"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.1.0/submission.demo-request.json",
+      "sha256": "e71d6092a6b60db136ed4c05c65609916773a773622bac2bb5054671f05e2d0a"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/legacy/1.1.0/task.unapproved.json",
+      "sha256": "4c99d857f74a1926689b3d5a85abc8213ede2aaa847b069b2b865a987bb79bec"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/record.demo-aborted.json",
+      "sha256": "076c5eb58a129bef3dcad9efd3130c501db48bd957ab4efc4bf571f87cd9ac3e"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/session.demo-snapshot.json",
+      "sha256": "d06d6d6ae77c1fbd4f981fa60284c13632f781214d431fc320e79f5ea70fa8de"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/submission.demo-request.json",
+      "sha256": "e71d6092a6b60db136ed4c05c65609916773a773622bac2bb5054671f05e2d0a"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/task.unapproved.json",
+      "sha256": "100d150576a2c93cbf013b16a52c8c553d01c816b8b9ce770cbcadc9525c0f47"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json",
+      "sha256": "93f90060d946e582a5505cfe9879462d15618c87eb164ea5180502f29ce43686"
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/tasks/task.braking-force.case-lv1.json",
+      "sha256": "4c590bad5f40a939e1541e7a16ceff05c7b449923c17f63eeea9417f6aa80331",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json",
+      "sha256": "21522777ad98e9d58cd2745b62f3c7e501c53f136603384aac22d71d88d35285"
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/tasks/task.braking-force.case-lv2.json",
+      "sha256": "a7ec705cd6e7674669b53a441d6cdf9c669385c95dd95f0c350421f8be3ca750",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/schema-index.json",
+      "sha256": "3838466c314156545ce9237b05fe521050b1ef802e84e8752cf1f4eef83dce54"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/record.demo-aborted.json",
+      "sha256": "076c5eb58a129bef3dcad9efd3130c501db48bd957ab4efc4bf571f87cd9ac3e"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/session.demo-snapshot.json",
+      "sha256": "d06d6d6ae77c1fbd4f981fa60284c13632f781214d431fc320e79f5ea70fa8de"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/legacy/1.1.0/task.braking-force.case-lv1.json",
+      "sha256": "b84b29b43be886cd4712b0aebf7e810945a3db71b0b9f8704495eb802a2f8b6d"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/legacy/1.1.0/task.braking-force.case-lv2.json",
+      "sha256": "b62bf53c4be8d1e022c2011caa558cca148a189cc2b75ecbdf6e1eb3fe5527ab"
+    }
+  ]
+}

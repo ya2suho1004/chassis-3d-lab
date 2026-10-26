@@ -31,12 +31,12 @@
 | [layout-draft-v2-brake-local.html](docs/layout-draft-v2-brake-local.html) | 제동력 구역 국소 미터 도면(부분 실측 2026-10-21, 확인 필요 표시) |
 | [layout.surveyed.partial.json](docs/layout.surveyed.partial.json) | 부분 실측 기록(layout.schema 형식 통과, 승인 아님) |
 | [teacher-check-0A-brake.html](docs/teacher-check-0A-brake.html) | 0A 교사 확인지(제동력 조작 순서·단위·기준·절사·축) — 2026-10-21 제출 완료 |
-| [task.braking-force.case-lv1.json](docs/task.braking-force.case-lv1.json) / [case-lv2](docs/task.braking-force.case-lv2.json) | 교사 승인 과제 데이터(1.1.0 제안본 기준) |
+| [task.braking-force.case-lv1.json](docs/task.braking-force.case-lv1.json) / [case-lv2](docs/task.braking-force.case-lv2.json) | 교사 개별 승인 반영 과제1.2.0(U1 보류로 전체 pending) |
 | [12_0D_준비검토.md](docs/12_0D_준비검토.md) | 0D 실행 준비 검토표(구현 시작 가능 범위) |
 | [CLAUDE.md](CLAUDE.md) | 구현 에이전트가 지켜야 할 범위·금지·검증·커밋 원칙 |
 | [IMPLEMENTATION_PROMPT_FOR_CLAUDE_CODE.md](IMPLEMENTATION_PROMPT_FOR_CLAUDE_CODE.md) | 구현을 시작할 때 사용할 단계별 인수 프롬프트 |
 
-추가로 [출처·결정 기록](docs/09_SOURCE_AUDIT_AND_DECISIONS.md), [자료 해시 목록](SOURCE_MANIFEST.json), [설계 검증 결과](DESIGN_VALIDATION.md)를 제공합니다. `contracts/`에는 검토용 JSON Schema 5개, `examples/`에는 미승인 설정·배치와 합성 기록 예시 5개가 있습니다. 실제 학생 기록·비밀·원문 PDF·원본 소스 전체는 포함하지 않습니다.
+추가로 [출처·결정 기록](docs/09_SOURCE_AUDIT_AND_DECISIONS.md), [자료 해시 목록](SOURCE_MANIFEST.json), [설계 검증 결과](DESIGN_VALIDATION.md)를 제공합니다. 현행 `contracts/`에는 JSON Schema 6개(task/record/layout/delivery/submission/session-snapshot), `examples/`에는 미승인 설정·부분 배치·합성 기록·세션 예시 7개가 있습니다. 과거 proposal/legacy는 별도로 보존합니다. 실제 학생 기록·비밀·원문 PDF·원본 소스 전체는 포함하지 않습니다.
 
 ## 예시를 사용하는 주의점
 
@@ -62,3 +62,7 @@
 - [Claude 회신](../collaboration/CODEX_RETURN_2026-10-21_CONTRACTS.txt)
 
 기존1.0.0 계약·예시는legacy/1.0.0에보존했다. 상위pending인과제를운영승인완료로읽지않는다.
+
+## 2026-10-26 U 항목 개정·독립 검토
+
+현행 task·vocabulary1.2.0, session-snapshot1.0.0을 추가했다. [17 개정 결정](docs/17_U_ITEMS_CONTRACT_REVISION_2026-10-26.md), [검증 결과](validation/results.uitems.json), [회신](../collaboration/CODEX_RETURN_2026-10-26_U-ITEMS.txt)을 읽는다. 기존1.1.0은 contracts/examples/docs의 legacy/1.1.0에 보존했다. record/layout/submission1.1.0·delivery1.0.0은 유지한다. 프로젝트 코드 검토는 읽기 전용이며 앱 실행·배포·실제 제출 검증은 수행하지 않았다.

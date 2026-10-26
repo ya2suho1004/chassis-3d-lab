@@ -1,0 +1,144 @@
+{
+  "checkedAt": "2026-10-26T09:42:51.275477+00:00",
+  "projectHead": "1457bac82bdcd669338b98d19f6a858e6386a8b8",
+  "projectStatus": "",
+  "projectFilesChecked": 136,
+  "projectChangedFiles": [],
+  "protectedFilesChecked": 75,
+  "protectedChangedFiles": [],
+  "legacyFilesChecked": 19,
+  "legacyFiles": [
+    {
+      "path": "design-current/contracts/legacy/1.1.0/task-vocabulary.v1.1.0.json",
+      "sourceBefore": "design-current/contracts/task-vocabulary.v1.1.0.json",
+      "sha256": "fb3e9530938b6b3e6689b1bb877567e581c109980b8daadf23d0496c6098dc0a",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/submission.schema.json",
+      "sourceBefore": "design-current/contracts/submission.schema.json",
+      "sha256": "c3ee7267f212b4918a8d517c4b5d641c43481fc1b1d2ea209bb9afc2651ecce2",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/record.schema.json",
+      "sourceBefore": "design-current/contracts/record.schema.json",
+      "sha256": "e1a94eb3e52dc99d96e0437f32c70d28e40fa92350dfd08add1a8286809317c1",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/layout.schema.json",
+      "sourceBefore": "design-current/contracts/layout.schema.json",
+      "sha256": "9e8c6fc73823f5a18a223185a7b2f44430794b4d9d72894c2521fc2250a37640",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/task.schema.json",
+      "sourceBefore": "design-current/contracts/task.schema.json",
+      "sha256": "9986d10611bf74c6c2437fdda73e21a7ae84a5d673ed3d3d81d7d4e769ac2ee6",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/schema-index.json",
+      "sourceBefore": "design-current/contracts/schema-index.json",
+      "sha256": "2d5893a4c1e20591963538ea984536b1f296236e427c4c6a21688e6638f1a4af",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/delivery.schema.json",
+      "sourceBefore": "design-current/contracts/delivery.schema.json",
+      "sha256": "cd15df866a52ba2a4bdfbaf1371dff76895d3a979e90efa538e46b4ab6789a43",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/record.demo-aborted.json",
+      "sourceBefore": "design-current/examples/record.demo-aborted.json",
+      "sha256": "076c5eb58a129bef3dcad9efd3130c501db48bd957ab4efc4bf571f87cd9ac3e",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/submission.demo-request.json",
+      "sourceBefore": "design-current/examples/submission.demo-request.json",
+      "sha256": "e71d6092a6b60db136ed4c05c65609916773a773622bac2bb5054671f05e2d0a",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/layout.unapproved.json",
+      "sourceBefore": "design-current/examples/layout.unapproved.json",
+      "sha256": "6f65c3fdd34dc510bcee423222ddeed2add7c2824583622edb0f59cab00b3e2c",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/layout.partial-survey.v1.1.json",
+      "sourceBefore": "design-current/examples/layout.partial-survey.v1.1.json",
+      "sha256": "e38a6c9038318573a7e9863f1730d5b733b550d0cbd94d9912736dda64052ba1",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/delivery.pending.json",
+      "sourceBefore": "design-current/examples/delivery.pending.json",
+      "sha256": "ae48ba070713c31ad6bff0c0c2fa21e012cd7988c8126cb0c99a29c7bc63ebe1",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/task.unapproved.json",
+      "sourceBefore": "design-current/examples/task.unapproved.json",
+      "sha256": "4c99d857f74a1926689b3d5a85abc8213ede2aaa847b069b2b865a987bb79bec",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/docs/legacy/1.1.0/task.braking-force.case-lv1.json",
+      "sourceBefore": "design-current/docs/task.braking-force.case-lv1.json",
+      "sha256": "b84b29b43be886cd4712b0aebf7e810945a3db71b0b9f8704495eb802a2f8b6d",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/docs/legacy/1.1.0/task.braking-force.case-lv2.json",
+      "sourceBefore": "design-current/docs/task.braking-force.case-lv2.json",
+      "sha256": "b62bf53c4be8d1e022c2011caa558cca148a189cc2b75ecbdf6e1eb3fe5527ab",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/results.red.json",
+      "sourceBefore": "design-current/validation/results.red.json",
+      "sha256": "ff3973f4867124a6dd7114f107e0d1b1ae5ca8602dbf4b1f7ed4590b17299147",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/results.json",
+      "sourceBefore": "design-current/validation/results.json",
+      "sha256": "68ab1644d5a49777cad3374750fbe0fcbed672168ab0b39ea23b9f6777478dbc",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/results.audit-red.json",
+      "sourceBefore": "design-current/validation/results.audit-red.json",
+      "sha256": "21ebfb9d095458d92995d88dca379cc6230bef432fb45c807c684e1366620db7",
+      "matchesBefore": true
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/validate_contracts.py",
+      "sourceBefore": "design-current/validation/validate_contracts.py",
+      "sha256": "a42e1dc43eb562059faafb3010f89ad998e344fb433c2404ad21ed68cccc4ee1",
+      "matchesBefore": true
+    }
+  ],
+  "wireSchemasUnchanged": true,
+  "caseInvariants": [
+    {
+      "case": 1,
+      "measurementPreserved": true,
+      "rulesetPreserved": true,
+      "readPreserved": true,
+      "taskPending": true
+    },
+    {
+      "case": 2,
+      "measurementPreserved": true,
+      "rulesetPreserved": true,
+      "readPreserved": true,
+      "taskPending": true
+    }
+  ],
+  "passed": true
+}

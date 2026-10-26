@@ -1,0 +1,327 @@
+{
+  "checkedAt": "2026-10-21",
+  "checks": [
+    {
+      "name": "legacy_task.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_layout.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_record.demo-aborted",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_delivery.pending",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "legacy_submission.demo-request",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "record_preview_valid",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('usagePhase' was unexpected)"
+      ]
+    },
+    {
+      "name": "record_review_valid",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('usagePhase' was unexpected)"
+      ]
+    },
+    {
+      "name": "record_missing_phase",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected"
+      ]
+    },
+    {
+      "name": "record_phase_not_difficulty",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('usagePhase' was unexpected)"
+      ]
+    },
+    {
+      "name": "demo_research_true",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('usagePhase' was unexpected)"
+      ]
+    },
+    {
+      "name": "unapproved_research_run",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('usagePhase' was unexpected)"
+      ]
+    },
+    {
+      "name": "delivery_mixed_into_payload",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('uploadStatus', 'usagePhase' were unexpected)"
+      ]
+    },
+    {
+      "name": "missing_event_id",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "None is not of type 'string'"
+      ]
+    },
+    {
+      "name": "missing_feedbackShown_fields",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "'feedbackKind' is a required property"
+      ]
+    },
+    {
+      "name": "missing_displayModeChanged_fields",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "'fromDisplayMode' is a required property"
+      ]
+    },
+    {
+      "name": "event_limit",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "[{'eventId': '00000000-0000-4000-8000-000000000002', 'sequence': 1, 'elapsedMs': 0, 'type': 'taskStarted'}, {'eventId': '00000000-0000-4000-8000-000000000002', 'sequence': 1, 'elap"
+      ]
+    },
+    {
+      "name": "npc_not_passed",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('usagePhase' was unexpected)"
+      ]
+    },
+    {
+      "name": "ack_requires_receipt_hash_time",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "None is not of type 'string'",
+        "None is not of type 'string'"
+      ]
+    },
+    {
+      "name": "submission_current_record",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "{'protocolVersion': '1', 'payload': {'schemaVersion': '1.1.0', 'recordId': '00000000-0000-4000-8000-000000000001', 'anonymousStudentCode': 'D-00', 'classConditionCode': 'DEMO', 'se"
+      ]
+    },
+    {
+      "name": "submission_legacy_record",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "client_secret_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "{'protocolVersion': '1', 'payload': {'schemaVersion': '1.1.0', 'recordId': '00000000-0000-4000-8000-000000000001', 'anonymousStudentCode': 'D-00', 'classConditionCode': 'DEMO', 'se"
+      ]
+    },
+    {
+      "name": "layout_pending_openings_empty",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('openings', 'siteMeasurements' were unexpected)"
+      ]
+    },
+    {
+      "name": "confirmed_opening_without_fake_door",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('openings', 'siteMeasurements' were unexpected)"
+      ]
+    },
+    {
+      "name": "confirmed_no_access_rejected",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('openings', 'siteMeasurements' were unexpected)"
+      ]
+    },
+    {
+      "name": "confirmed_unknown_opening_point",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('openings', 'siteMeasurements' were unexpected)"
+      ]
+    },
+    {
+      "name": "confirmed_unmeasured_room",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "Additional properties are not allowed ('openings', 'siteMeasurements' were unexpected)"
+      ]
+    },
+    {
+      "name": "task_pending_kg",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kg' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "integer_input_case_rejects_fraction",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kg' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "unknown_unit",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kgf-auto' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "unregistered_condition",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kg' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "missing_required_responses",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kg' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "pending_rules_cannot_approve",
+      "passed": true,
+      "expected": "reject",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kg' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "current_example_task.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_layout.unapproved",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_record.demo-aborted",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_delivery.pending",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "current_example_submission.demo-request",
+      "passed": true,
+      "expected": "accept",
+      "errors": []
+    },
+    {
+      "name": "task.braking-force.case-lv1.json",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kg' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "task.braking-force.case-lv2.json",
+      "passed": false,
+      "expected": "accept",
+      "errors": [
+        "'1.0.0' was expected",
+        "'kg' is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "name": "rounded_policy_requires_digits_and_method",
+      "passed": true
+    }
+  ],
+  "passed": 32,
+  "failed": 8,
+  "applicationExecuted": false
+}

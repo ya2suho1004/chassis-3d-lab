@@ -10,7 +10,8 @@
 | `Jcs.gs` | RFC 8785 정규화 + SHA-256(브라우저 `src/delivery/jcs.ts`와 같은 결과) |
 | `JsonStrict.gs` | 중복 키·다중 문서·잘못된 유니코드를 거절하는 JSON 파서 |
 | `Validate.gs` | record 1.1.0 미니 스키마 검증기(ajv와 판정 일치 시험 완료) |
-| `Schemas.gs` | `docs/design/contracts/record.schema.json`에서 자동 생성(`npm run build:gs-schema`). 직접 수정 금지 |
+| `Schemas.gs` | record 1.0.0(legacy)·1.1.0 스키마. `docs/design/contracts/`에서 자동 생성(`npm run build:gs-schema`). 직접 수정 금지 |
+| `DemoSnapshots.gs` | 허용 세션 스냅샷 37개(앱 36 + 합성 fixture 1): ID별 세션·조건·과제·모드·시점·목적·표시·승인·versions·코드 패턴. `npm run build:gs-snapshots`로 자동 생성. 직접 수정 금지 |
 | `appsscript.json` | 매니페스트: V8, 실행 주체 = 배포자, 접근 = 모든 사용자(익명), 범위 spreadsheets |
 
 ## 교사가 할 배포 절차 (학교 계정 정책 확인 뒤)
@@ -20,11 +21,9 @@
 3. **스크립트 속성**(프로젝트 설정 → 스크립트 속성)에 입력:
    - `SHEET_ID` = 1의 Sheet ID (필수)
    - `TAB_NAME` = `canonical`
-   - `ALLOWED_SESSION_CODES` = `DEMO-ONLY`
-   - `ALLOWED_SNAPSHOT_IDS` = `00000000-0000-4000-8000-000000000001` (앱의 demo 스냅샷) — 합성 fixture 시험을 함께 하려면 `,00000000-0000-4000-8000-000000000004` 추가
-   - `ALLOWED_CLASS_CONDITIONS` = `DEMO`
-   - `ACCEPT_UNTIL` = 시험 종료 시각(ISO, 예 `2026-11-30T15:00:00Z`)
-   - `MAX_NEW_ROWS` = 시험 계획의 신규행 상한(예 `100`)
+   - `ACCEPT_UNTIL` = 시험 종료 시각(ISO, 예 `2026-11-30T15:00:00Z`) — **필수**. 없거나 날짜가 아니면 신규 접수를 닫는다(기존 접수번호 회수는 됨)
+   - `MAX_NEW_ROWS` = 시험 계획의 신규행 상한(양의 정수, 예 `100`) — **필수**. 누적 상한이라 시간이 지나도 회복하지 않으며 넘으면 `RATE_LIMITED`(교사가 설정을 바꿔야 함)
+   - 허용 세션·스냅샷은 속성이 아니라 `DemoSnapshots.gs`에 고정돼 있다. 앱 과제·버전이 바뀌면 `npm run build:gs-snapshots`로 다시 만들어 함께 배포한다(record의 versions·승인·모드가 스냅샷과 다르면 `SESSION_NOT_ALLOWED`)
    - `LOCK_WAIT_MS` = `10000`
 4. **배포 → 새 배포 → 웹 앱**: 설명 `0C 시험`, 실행 주체 **나(배포자)**, 액세스 권한 **모든 사용자(익명 포함)**. 권한 승인 창에서 Sheet 접근 허용. 생성된 **웹 앱 URL(`…/exec`)** 복사. (`/dev` URL은 비로그인 시험 대상이 아님)
    - "모든 사용자(익명)" 옵션이 보이지 않으면 학교 Workspace 정책이 막은 것 → 개인 계정으로 우회하지 않고 중계 설계로 전환 검토(설계 15 §9).
@@ -34,5 +33,6 @@
 ## 코드를 바꿀 때
 
 - 계약(`record.schema.json`)이 바뀌면 `npm run build:gs-schema`로 `Schemas.gs`를 다시 만들고 `SUPPORTED_RECORD_VERSIONS`를 확인한다.
-- 어떤 변경이든 `npm test`의 `appsScriptPure`·`appsScriptDoPost`가 통과해야 한다. 브라우저 해시와 서버 해시가 같은지는 `Jcs.gs` 대조 시험이 지킨다.
+- 과제·세션 설정이 바뀌면 `npm run build:gs-snapshots`로 `DemoSnapshots.gs`와 앱의 `src/data/session/demo-snapshots.json`을 같이 다시 만든다(스냅샷 ID는 내용에서 결정되므로 내용이 바뀌면 ID도 바뀐다).
+- 어떤 변경이든 `npm test`의 `appsScriptPure`·`appsScriptDoPost`·`appsScriptHardening`·`sessionSnapshot`이 통과해야 한다. 브라우저 해시와 서버 해시가 같은지는 `Jcs.gs` 대조 시험이 지킨다.
 - 응답에 raw body·스택·Sheet ID·이메일을 넣지 않는다. 로그(`Logger`)도 쓰지 않는다.

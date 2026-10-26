@@ -1,10 +1,11 @@
 // 직접 제출 수신점(시험 배포용) — 설계 docs/design/docs/15 §3~§5·§7
 // 경로: 브라우저 text/plain POST → doPost → 비공개 시험 Sheet 정본 탭(recordId | receiptId | acceptedAt | payloadHash | payloadJson)
 // 하지 않는 것: 사용자 입력으로 Sheet/탭 변경, 값 교정·잘림 수락, 같은 ID 덮어쓰기·새 ID 발급, GET 조회, raw body/스택/Sheet ID/이메일 응답·로그.
-// 설정(스크립트 속성): SHEET_ID(필수) · TAB_NAME(기본 canonical) · ALLOWED_SESSION_CODES(쉼표) · ALLOWED_SNAPSHOT_IDS(쉼표)
-//                     · ALLOWED_CLASS_CONDITIONS(기본 DEMO) · ACCEPT_UNTIL(ISO, 신규 접수 종료) · MAX_NEW_ROWS(시험당 신규행 상한) · LOCK_WAIT_MS(기본 10000)
+// 설정(스크립트 속성): SHEET_ID(필수) · TAB_NAME(기본 canonical) · ACCEPT_UNTIL(ISO, 신규 접수 종료, 필수) · MAX_NEW_ROWS(시험당 신규행 상한, 양의 정수, 필수) · LOCK_WAIT_MS(기본 10000)
+// 허용 세션 문맥은 DemoSnapshots.gs(ALLOWED_SNAPSHOTS, 자동 생성)에 고정: 스냅샷 ID별 세션·조건·과제·모드·시점·목적·표시·승인·versions·코드 패턴(Codex 검토 B2).
+// 설정이 비거나 잘못되면 신규 접수를 닫는다(fail-closed, B4). 기존 정본 행은 저장 payload까지 다시 검증한다(B5). record 1.0.0·1.1.0을 버전별 스키마로 검증한다(B8).
 var PROTOCOL_VERSION = '1';
-var SUPPORTED_RECORD_VERSIONS = ['1.1.0'];
+var SUPPORTED_RECORD_VERSIONS = ['1.0.0', '1.1.0'];
 var REQUEST_MAX_BYTES = 48 * 1024;
 var CANONICAL_MAX_BYTES = 32 * 1024;
 var MAX_STEP_EVENTS = 200;
@@ -30,9 +31,10 @@ function doPost(e) {
     var v = validateAgainst(RECORD_SCHEMAS[payload.schemaVersion], payload);
     if (!v.ok) return fail_('INVALID_PAYLOAD', false, rid);
     if (payload.stepEvents.length > MAX_STEP_EVENTS) return fail_('PAYLOAD_TOO_LARGE', false, rid);
+    if (validateRecordSemantics_(payload).length > 0) return fail_('INVALID_PAYLOAD', false, rid);
 
     var cfg = loadConfig_();
-    if (!sessionAllowed_(payload, cfg)) return fail_('SESSION_NOT_ALLOWED', false, rid);
+    if (!sessionAllowed_(payload)) return fail_('SESSION_NOT_ALLOWED', false, rid);
 
     var canonical;
     try { canonical = jcsCanonicalize(payload); } catch (err) { return fail_('INVALID_PAYLOAD', false, rid); }
@@ -62,16 +64,22 @@ function acceptInLock_(cfg, rid, canonical, hash) {
     var row = found[0].values;
     var storedReceipt = String(row[1]), storedAt = String(row[2]), storedHash = String(row[3]), storedJson = String(row[4]);
     if (!storedReceipt || !storedAt || !HEX64_RE.test(storedHash) || !storedJson) return fail_('CANONICAL_STORE_INVALID', false, rid);
+    if (storedReceipt.length > 128 || !DATE_TIME_RE.test(storedAt)) return fail_('CANONICAL_STORE_INVALID', false, rid);
     var storedObj;
     try { storedObj = parseJsonStrict(storedJson); } catch (err) { return fail_('CANONICAL_STORE_INVALID', false, rid); }
+    if (!storedObj || typeof storedObj !== 'object' || Array.isArray(storedObj)) return fail_('CANONICAL_STORE_INVALID', false, rid);
     if (jcsCanonicalize(storedObj) !== storedJson || jcsSha256Hex(storedJson) !== storedHash) return fail_('CANONICAL_STORE_INVALID', false, rid);
+    if (storedObj.recordId !== rid || SUPPORTED_RECORD_VERSIONS.indexOf(storedObj.schemaVersion) < 0) return fail_('CANONICAL_STORE_INVALID', false, rid);
+    if (!validateAgainst(RECORD_SCHEMAS[storedObj.schemaVersion], storedObj).ok || validateRecordSemantics_(storedObj).length > 0) return fail_('CANONICAL_STORE_INVALID', false, rid);
     if (storedJson === canonical && storedHash === hash) return ok_(rid, storedReceipt, storedAt, storedHash, true);
     return fail_('RECORD_ID_CONFLICT', false, rid);
   }
-  // 신규 접수
-  if (cfg.ACCEPT_UNTIL && Date.now() > cfg.ACCEPT_UNTIL) return fail_('SESSION_NOT_ALLOWED', false, rid);
+  // 신규 접수 — 잠금 안에서 설정을 다시 읽고, 설정이 없거나 잘못되면 닫는다(fail-closed)
+  cfg = loadConfig_();
+  if (!cfg.intakeValid) return fail_('SESSION_NOT_ALLOWED', false, rid);
+  if (Date.now() > cfg.ACCEPT_UNTIL) return fail_('SESSION_NOT_ALLOWED', false, rid);
   var dataRows = sheet.getLastRow() - 1;
-  if (dataRows >= cfg.MAX_NEW_ROWS) return fail_('RATE_LIMITED', true, rid);
+  if (dataRows >= cfg.MAX_NEW_ROWS) return fail_('RATE_LIMITED', true, rid); // 시험당 누적 상한: 시간이 지나도 회복하지 않음(교사 설정 변경 필요, 15 §7)
   var receipt = Utilities.getUuid();
   var acceptedAt = new Date().toISOString();
   var r = sheet.getLastRow() + 1;
@@ -91,28 +99,37 @@ function mimeAllowed_(type) {
 
 function loadConfig_() {
   var p = PropertiesService.getScriptProperties();
-  var list = function (k, def) { var s = p.getProperty(k); if (s === null || s === undefined || s === '') return def; return s.split(',').map(function (x) { return x.trim(); }).filter(function (x) { return x.length > 0; }); };
-  var until = p.getProperty('ACCEPT_UNTIL');
+  var until = Date.parse(String(p.getProperty('ACCEPT_UNTIL') || ''));
+  var maxRows = Number(p.getProperty('MAX_NEW_ROWS'));
+  var intakeValid = isFinite(until) && isFinite(maxRows) && Math.floor(maxRows) === maxRows && maxRows > 0 && maxRows <= 100000;
   return {
     SHEET_ID: p.getProperty('SHEET_ID'),
     TAB_NAME: p.getProperty('TAB_NAME') || 'canonical',
-    ALLOWED_SESSION_CODES: list('ALLOWED_SESSION_CODES', []),
-    ALLOWED_SNAPSHOT_IDS: list('ALLOWED_SNAPSHOT_IDS', []),
-    ALLOWED_CLASS_CONDITIONS: list('ALLOWED_CLASS_CONDITIONS', ['DEMO']),
-    ACCEPT_UNTIL: until ? Date.parse(until) : null,
-    MAX_NEW_ROWS: Number(p.getProperty('MAX_NEW_ROWS') || 200),
+    ACCEPT_UNTIL: until,
+    MAX_NEW_ROWS: maxRows,
+    intakeValid: intakeValid,
     LOCK_WAIT_MS: Number(p.getProperty('LOCK_WAIT_MS') || 10000)
   };
 }
 
-/** 시험 배포 허용 조건: 허용 세션·스냅샷·조건 코드, 시연 목적, 연구 적격·연구 승인 주장 없음 */
-function sessionAllowed_(payload, cfg) {
-  if (cfg.ALLOWED_SESSION_CODES.indexOf(payload.sessionCode) < 0) return false;
-  if (cfg.ALLOWED_SNAPSHOT_IDS.indexOf(payload.sessionSnapshotId) < 0) return false;
-  if (cfg.ALLOWED_CLASS_CONDITIONS.indexOf(payload.classConditionCode) < 0) return false;
-  if (payload.runPurpose !== 'demo') return false;
-  if (payload.researchEligible !== false) return false;
-  if (!payload.configurationApproval || payload.configurationApproval.researchUseApproved !== false) return false;
+var VERSION_KEYS = ['taskDefinitionVersion', 'rulesetVersion', 'measurementSetVersion', 'layoutVersion', 'judgeEngineVersion', 'sessionConfigVersion', 'researchProtocolVersion', 'feedbackPolicyVersion'];
+var APPROVAL_KEYS = ['taskApproved', 'rulesetApproved', 'layoutConfirmed', 'researchUseApproved'];
+
+/** 허용 스냅샷과 record 문맥 대조(B2): 클라이언트 주장(모드·버전·승인)을 그대로 믿지 않는다. 1.0.0 record는 usagePhase가 없으므로 그 항목만 건너뛴다. */
+function sessionAllowed_(payload) {
+  if (typeof ALLOWED_SNAPSHOTS !== 'object' || !ALLOWED_SNAPSHOTS) return false;
+  var entry = Object.prototype.hasOwnProperty.call(ALLOWED_SNAPSHOTS, payload.sessionSnapshotId) ? ALLOWED_SNAPSHOTS[payload.sessionSnapshotId] : null;
+  if (!entry || !entry.snapshot) return false;
+  var snap = entry.snapshot;
+  if (payload.sessionCode !== snap.sessionCode || payload.classConditionCode !== snap.classConditionCode || payload.taskId !== snap.taskId) return false;
+  if (payload.difficultyMode !== snap.difficultyMode || payload.runPurpose !== snap.runPurpose || payload.displayMode !== snap.displayMode) return false;
+  if (payload.schemaVersion !== '1.0.0' && payload.usagePhase !== snap.usagePhase) return false;
+  if (payload.runPurpose !== 'demo' || payload.researchEligible !== false) return false;
+  if (!payload.configurationApproval || !snap.configurationApproval) return false;
+  for (var a = 0; a < APPROVAL_KEYS.length; a++) if (payload.configurationApproval[APPROVAL_KEYS[a]] !== snap.configurationApproval[APPROVAL_KEYS[a]]) return false;
+  if (!payload.versions || !snap.versions) return false;
+  for (var k = 0; k < VERSION_KEYS.length; k++) if (payload.versions[VERSION_KEYS[k]] !== snap.versions[VERSION_KEYS[k]]) return false;
+  if (typeof entry.anonymousCodePattern !== 'string' || !new RegExp(entry.anonymousCodePattern).test(String(payload.anonymousStudentCode))) return false;
   return true;
 }
 

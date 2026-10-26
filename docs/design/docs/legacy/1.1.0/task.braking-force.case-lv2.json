@@ -1,0 +1,385 @@
+{
+  "schemaVersion": "1.1.0",
+  "taskId": "braking-force",
+  "taskDefinitionVersion": "1.1.0-review-case-2-2026-10-21",
+  "title": "제동력 측정 및 판독 — 사례 2",
+  "approvalStatus": "pending",
+  "measurement": {
+    "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+    "sourceType": "teacherApprovedCase",
+    "unit": "kg",
+    "caseId": "case-rear-deviation-250-190-600",
+    "left": 250,
+    "right": 190,
+    "axleWeight": 600,
+    "axlePosition": "rear",
+    "inputsIntegerOnly": true
+  },
+  "ruleset": {
+    "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+    "approvalStatus": "approved",
+    "deviationMaxPercent": 8,
+    "sumMinFrontPercent": 50,
+    "sumMinRearPercent": 20,
+    "decisionPrecision": {
+      "mode": "rounded",
+      "digits": 1,
+      "rounding": "truncate"
+    },
+    "sourceDocument": "자동차정비기능사 답안지 작성 책(골든벨); 섀시 디지털교과서 html 제작 지침; NCS LM1506030327 p.99~100 (교사 확인 0A, 2026-10-21). 경계값 포함(≤8, ≥20/≥50 양호)",
+    "sourcePage": "쪽 미기재(교사 확인지에 쪽 없음)",
+    "approvedAt": null,
+    "judgmentValueSource": "written",
+    "approvedOn": "2026-10-21"
+  },
+  "requiredResponseItems": [
+    {
+      "itemId": "left",
+      "kind": "measurement",
+      "unit": "kg",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "integer"
+    },
+    {
+      "itemId": "right",
+      "kind": "measurement",
+      "unit": "kg",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "integer"
+    },
+    {
+      "itemId": "axleWeight",
+      "kind": "measurement",
+      "unit": "kg",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "integer"
+    },
+    {
+      "itemId": "deviation",
+      "kind": "calculation",
+      "unit": "%",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "truncate1"
+    },
+    {
+      "itemId": "sum",
+      "kind": "calculation",
+      "unit": "%",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "truncate1"
+    },
+    {
+      "itemId": "vehicleCondition",
+      "kind": "judgment",
+      "unit": null,
+      "gradingRuleId": "vehicleVerdictMatch",
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    }
+  ],
+  "steps": [
+    {
+      "stepId": "ppe",
+      "instruction": "보호구 착용(안전화·보안경)을 확인한다.",
+      "equipmentId": null,
+      "prerequisites": [],
+      "requiredSafetyConditions": [],
+      "actionType": "confirm",
+      "completionCondition": "ppeConfirmed",
+      "onBlockedFeedbackKey": "blocked_ppe",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "97",
+        "pdfPage": 109,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "tire",
+      "instruction": "타이어 마모·공기압을 육안으로 점검한다.",
+      "equipmentId": "brake-tester-01",
+      "prerequisites": [
+        "ppe"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "inspect",
+      "completionCondition": "inspected",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "98",
+        "pdfPage": 110,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "equip",
+      "instruction": "설비를 점검한다: 롤러 이물질, 오일 댐퍼, 컴프레서 압력, 모든 스위치 OFF 확인 후 전원 ON.",
+      "equipmentId": "brake-control-panel-01",
+      "prerequisites": [
+        "tire"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "inspect",
+      "completionCondition": "inspected",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "98",
+        "pdfPage": 110,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "enter",
+      "instruction": "차량을 롤러 중앙으로 진입시킨다(후륜을 롤러 위에). 조향 정위치.",
+      "equipmentId": "brake-tester-01",
+      "prerequisites": [
+        "equip"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "operate",
+      "completionCondition": "vehicleCentered",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "98",
+        "pdfPage": 110,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "axle",
+      "instruction": "조작부 AXLE Load로 축중을 확인하고 기록한다.",
+      "equipmentId": "brake-control-panel-01",
+      "prerequisites": [
+        "enter"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "read",
+      "completionCondition": "axleWeightRead",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "98",
+        "pdfPage": 110,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "mode",
+      "instruction": "조작부 BRAKE 모드를 선택하고 지침 0을 확인한다.",
+      "equipmentId": "brake-control-panel-01",
+      "prerequisites": [
+        "axle"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "operate",
+      "completionCondition": "brakeModeSelected",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "98",
+        "pdfPage": 110,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "lower",
+      "instruction": "주변을 확인한 뒤 LIFT UpDn으로 리프트를 하강시킨다.",
+      "equipmentId": "brake-control-panel-01",
+      "prerequisites": [
+        "mode"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe",
+        "s-lift"
+      ],
+      "actionType": "operate",
+      "completionCondition": "liftLowered",
+      "onBlockedFeedbackKey": "blocked_safety_lift",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "99",
+        "pdfPage": 111,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "motor",
+      "instruction": "MOTOR ON, 롤러 회전을 확인한다.",
+      "equipmentId": "brake-control-panel-01",
+      "prerequisites": [
+        "lower"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe",
+        "s-motor"
+      ],
+      "actionType": "operate",
+      "completionCondition": "motorOn",
+      "onBlockedFeedbackKey": "blocked_safety_motor",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "99",
+        "pdfPage": 111,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "press",
+      "instruction": "브레이크 페달을 서서히 끝까지 밟는다(가속 페달 조작 금지).",
+      "equipmentId": "brake-tester-01",
+      "prerequisites": [
+        "motor"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe",
+        "s-accel"
+      ],
+      "actionType": "operate",
+      "completionCondition": "pedalPressed",
+      "onBlockedFeedbackKey": "blocked_safety_accel",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "99",
+        "pdfPage": 111,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "read",
+      "instruction": "최대 제동력에서 좌·우 값을 판독하고 기록한다.",
+      "equipmentId": "brake-control-panel-01",
+      "prerequisites": [
+        "press"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "read",
+      "completionCondition": "readingsSubmitted",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "99",
+        "pdfPage": 111,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "off",
+      "instruction": "MOTOR OFF → 리프트 상승 → 차량 이탈.",
+      "equipmentId": "brake-control-panel-01",
+      "prerequisites": [
+        "read"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe",
+        "s-exit"
+      ],
+      "actionType": "operate",
+      "completionCondition": "vehicleExited",
+      "onBlockedFeedbackKey": "blocked_safety_exit",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "99",
+        "pdfPage": 111,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "calc",
+      "instruction": "편차·합을 산출하고 기준과 비교해 양호/불량을 판정하고 조치를 기재한다.",
+      "equipmentId": null,
+      "prerequisites": [
+        "off"
+      ],
+      "requiredSafetyConditions": [],
+      "actionType": "submit",
+      "completionCondition": "answersSubmitted",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
+        "printedPage": "99-100",
+        "pdfPage": 111,
+        "confirmation": "approved"
+      }
+    }
+  ],
+  "feedback": {
+    "blocked_ppe": {
+      "what": "보호구를 아직 착용하지 않았습니다.",
+      "why": "롤러·리프트 주변 작업은 발·눈 부상 위험이 있습니다.",
+      "how": "안전화와 보안경을 착용한 뒤 다시 진행하세요."
+    },
+    "blocked_order": {
+      "what": "앞 단계가 끝나지 않아 이 조작을 할 수 없습니다.",
+      "why": "검사 절차는 순서대로 해야 장비와 차량이 안전합니다.",
+      "how": "체크리스트에서 아직 끝나지 않은 단계를 먼저 완료하세요."
+    },
+    "blocked_safety_lift": {
+      "what": "리프트 주변 확인 없이 하강할 수 없습니다.",
+      "why": "리프트가 내려갈 때 주변 사람이 다칠 수 있습니다.",
+      "how": "주변 확인 버튼을 누른 뒤 LIFT UpDn을 조작하세요."
+    },
+    "blocked_safety_motor": {
+      "what": "차량이 롤러 중앙에 있지 않아 MOTOR를 켤 수 없습니다.",
+      "why": "롤러가 돌 때 차량이 치우쳐 있으면 튕겨 나갈 수 있습니다.",
+      "how": "차량 진입 단계를 다시 확인하세요."
+    },
+    "blocked_safety_accel": {
+      "what": "측정 중에는 가속 페달을 조작할 수 없습니다.",
+      "why": "롤러 위에서 가속하면 차량이 이탈합니다.",
+      "how": "브레이크 페달만 서서히 끝까지 밟으세요."
+    },
+    "blocked_safety_exit": {
+      "what": "롤러가 돌고 있어 차량을 뺄 수 없습니다.",
+      "why": "회전 중 이탈은 차량·장비 손상과 부상 위험이 있습니다.",
+      "how": "MOTOR OFF 후 리프트를 올리고 나서 차량을 빼세요."
+    },
+    "wrong_reading": {
+      "what": "입력한 값이 계기 표시와 다릅니다.",
+      "why": "판독이 틀리면 편차·합 계산과 판정이 모두 어긋납니다.",
+      "how": "계기 화면의 좌·우 값을 다시 읽어 입력하세요. 단위는 kg입니다."
+    },
+    "wrong_calc": {
+      "what": "편차 또는 합 계산이 기준값과 다릅니다.",
+      "why": "편차 = (큰 값 − 작은 값) ÷ 축중 × 100, 합 = (좌 + 우) ÷ 축중 × 100 입니다.",
+      "how": "분모가 축중(뒤축 600)인지 확인하고 소수 첫째 자리까지 적되 둘째 자리는 버리세요."
+    },
+    "wrong_verdict": {
+      "what": "양호/불량 판정이 기준과 다릅니다.",
+      "why": "편차 8% 이내, 뒤축 합 20% 이상이면 양호입니다(경계값 포함).",
+      "how": "계산한 편차와 합을 기준과 하나씩 비교하세요."
+    }
+  },
+  "vocabularyVersion": "1.1.0",
+  "teacherReviewReference": "collaboration/teacher-check-0A.json",
+  "feedbackPolicy": {
+    "version": "1.1.0-design",
+    "status": "proposed",
+    "unguidedAnswerFeedback": "afterAllFirstResponses",
+    "answerFeedbackKeys": [
+      "wrong_reading",
+      "wrong_calc",
+      "wrong_verdict"
+    ],
+    "safetyFeedback": "immediate"
+  }
+}

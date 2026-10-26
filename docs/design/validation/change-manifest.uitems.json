@@ -1,0 +1,256 @@
+{
+  "generatedAt": "2026-10-26T09:42:51.275477+00:00",
+  "scope": "design-current changes and two requested collaboration files; self excluded",
+  "changes": [
+    {
+      "path": "design-current/README.md",
+      "change": "modified",
+      "sha256": "69368529f57d40e6ea4454e26dc8b19381d0a813bdd38bdd8924b57c56d7b99b",
+      "sha256Before": "3d448553d759943e720654bf85dd29a410dee05f35b97fd902500a0062ec9fd1"
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/delivery.schema.json",
+      "change": "added",
+      "sha256": "cd15df866a52ba2a4bdfbaf1371dff76895d3a979e90efa538e46b4ab6789a43",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/layout.schema.json",
+      "change": "added",
+      "sha256": "9e8c6fc73823f5a18a223185a7b2f44430794b4d9d72894c2521fc2250a37640",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/record.schema.json",
+      "change": "added",
+      "sha256": "e1a94eb3e52dc99d96e0437f32c70d28e40fa92350dfd08add1a8286809317c1",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/schema-index.json",
+      "change": "added",
+      "sha256": "2d5893a4c1e20591963538ea984536b1f296236e427c4c6a21688e6638f1a4af",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/submission.schema.json",
+      "change": "added",
+      "sha256": "c3ee7267f212b4918a8d517c4b5d641c43481fc1b1d2ea209bb9afc2651ecce2",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/task-vocabulary.v1.1.0.json",
+      "change": "added",
+      "sha256": "fb3e9530938b6b3e6689b1bb877567e581c109980b8daadf23d0496c6098dc0a",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/legacy/1.1.0/task.schema.json",
+      "change": "added",
+      "sha256": "9986d10611bf74c6c2437fdda73e21a7ae84a5d673ed3d3d81d7d4e769ac2ee6",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/schema-index.json",
+      "change": "modified",
+      "sha256": "3838466c314156545ce9237b05fe521050b1ef802e84e8752cf1f4eef83dce54",
+      "sha256Before": "2d5893a4c1e20591963538ea984536b1f296236e427c4c6a21688e6638f1a4af"
+    },
+    {
+      "path": "design-current/contracts/session.snapshot.schema.json",
+      "change": "added",
+      "sha256": "1b66d50e227ceb06390bf3331fa1a43f053b4d3abea81cd4068489150b648db0",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/task-vocabulary.v1.2.0.json",
+      "change": "added",
+      "sha256": "bdf64e2ff308b7a149937d6ba55837b2a343e816011028d69c874a28ff32f3d6",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/contracts/task.schema.json",
+      "change": "modified",
+      "sha256": "454e2dfb13f6a42fde87e3dbbcbfe9667155c675feecee1847c9422578a987bd",
+      "sha256Before": "9986d10611bf74c6c2437fdda73e21a7ae84a5d673ed3d3d81d7d4e769ac2ee6"
+    },
+    {
+      "path": "design-current/docs/04_TASK_AND_LOG_SCHEMA.md",
+      "change": "modified",
+      "sha256": "69d5b2af04c9b9e0888fbef922f0183286de22e6a7a06781f336ab445c1dc24b",
+      "sha256Before": "2f49106554929d2b4f074717747ee52a10d53f997dc29da1039106773a9f2c89"
+    },
+    {
+      "path": "design-current/docs/10_CHANGELOG_2026-10-20.md",
+      "change": "modified",
+      "sha256": "bbba3cf5f7a162db5846d45fdd4e193efa98c1038bb5585cb784184a3ea1b080",
+      "sha256Before": "aad5429f45bdb8a144250b3e16c433a6c9d6fa04c71cde7009fbceb40988ef18"
+    },
+    {
+      "path": "design-current/docs/12_0D_준비검토.md",
+      "change": "modified",
+      "sha256": "704134997b207558081ae63171fc400d6e2c0d0ea8c002221539e7e80e84b5d8",
+      "sha256Before": "71c3cda913a49207a091ce553693056ed7b64cf201d3d7439aa03e5c9fac94ab"
+    },
+    {
+      "path": "design-current/docs/13_TASK_DATA_REVIEW_AND_VOCABULARY.md",
+      "change": "modified",
+      "sha256": "e6fed798a9420615ccdbc7d3dd2ab867f029059b365806e17e66ca7e7e6a0671",
+      "sha256Before": "749fc38d9b5da7ad78ce7ebb0ea389f34bcba6e3edab352a31029313f0bac8ee"
+    },
+    {
+      "path": "design-current/docs/14_PARTIAL_SURVEY_REVIEW.md",
+      "change": "modified",
+      "sha256": "9ef5860bc3020972577ff0ec5f3be3c2297ee3fd5a0a61fbaf41cd34b9f99def",
+      "sha256Before": "eca075b76df157aeb8910ed4248e6247c6d8a4b189635c89db9141cf5a27240f"
+    },
+    {
+      "path": "design-current/docs/16_CONTRACT_1_1_DECISIONS_AND_COMPATIBILITY.md",
+      "change": "modified",
+      "sha256": "ef605c506d2c551f87f3b7549c94f6a5f32e4259ec2b36881a0aebfc22146856",
+      "sha256Before": "2896c97e9d066c598dce229d42100564f27cd1c2914ab5e0c25d36a4654a8b46"
+    },
+    {
+      "path": "design-current/docs/17_U_ITEMS_CONTRACT_REVISION_2026-10-26.md",
+      "change": "added",
+      "sha256": "cd0d9c9135fa30de9cd8755a2a8ad045bbd380d88603546cdffadcf3f8493d3f",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/docs/legacy/1.1.0/task.braking-force.case-lv1.json",
+      "change": "added",
+      "sha256": "b84b29b43be886cd4712b0aebf7e810945a3db71b0b9f8704495eb802a2f8b6d",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/docs/legacy/1.1.0/task.braking-force.case-lv2.json",
+      "change": "added",
+      "sha256": "b62bf53c4be8d1e022c2011caa558cca148a189cc2b75ecbdf6e1eb3fe5527ab",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/docs/task.braking-force.case-lv1.json",
+      "change": "modified",
+      "sha256": "93f90060d946e582a5505cfe9879462d15618c87eb164ea5180502f29ce43686",
+      "sha256Before": "b84b29b43be886cd4712b0aebf7e810945a3db71b0b9f8704495eb802a2f8b6d"
+    },
+    {
+      "path": "design-current/docs/task.braking-force.case-lv2.json",
+      "change": "modified",
+      "sha256": "21522777ad98e9d58cd2745b62f3c7e501c53f136603384aac22d71d88d35285",
+      "sha256Before": "b62bf53c4be8d1e022c2011caa558cca148a189cc2b75ecbdf6e1eb3fe5527ab"
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/delivery.pending.json",
+      "change": "added",
+      "sha256": "ae48ba070713c31ad6bff0c0c2fa21e012cd7988c8126cb0c99a29c7bc63ebe1",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/layout.partial-survey.v1.1.json",
+      "change": "added",
+      "sha256": "e38a6c9038318573a7e9863f1730d5b733b550d0cbd94d9912736dda64052ba1",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/layout.unapproved.json",
+      "change": "added",
+      "sha256": "6f65c3fdd34dc510bcee423222ddeed2add7c2824583622edb0f59cab00b3e2c",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/record.demo-aborted.json",
+      "change": "added",
+      "sha256": "076c5eb58a129bef3dcad9efd3130c501db48bd957ab4efc4bf571f87cd9ac3e",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/submission.demo-request.json",
+      "change": "added",
+      "sha256": "e71d6092a6b60db136ed4c05c65609916773a773622bac2bb5054671f05e2d0a",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/examples/legacy/1.1.0/task.unapproved.json",
+      "change": "added",
+      "sha256": "4c99d857f74a1926689b3d5a85abc8213ede2aaa847b069b2b865a987bb79bec",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/examples/session.demo-snapshot.json",
+      "change": "added",
+      "sha256": "d06d6d6ae77c1fbd4f981fa60284c13632f781214d431fc320e79f5ea70fa8de",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/examples/task.unapproved.json",
+      "change": "modified",
+      "sha256": "100d150576a2c93cbf013b16a52c8c553d01c816b8b9ce770cbcadc9525c0f47",
+      "sha256Before": "4c99d857f74a1926689b3d5a85abc8213ede2aaa847b069b2b865a987bb79bec"
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/results.audit-red.json",
+      "change": "added",
+      "sha256": "21ebfb9d095458d92995d88dca379cc6230bef432fb45c807c684e1366620db7",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/results.json",
+      "change": "added",
+      "sha256": "68ab1644d5a49777cad3374750fbe0fcbed672168ab0b39ea23b9f6777478dbc",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/results.red.json",
+      "change": "added",
+      "sha256": "ff3973f4867124a6dd7114f107e0d1b1ae5ca8602dbf4b1f7ed4590b17299147",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/validation/legacy/1.1.0/validate_contracts.py",
+      "change": "added",
+      "sha256": "a42e1dc43eb562059faafb3010f89ad998e344fb433c2404ad21ed68cccc4ee1",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/validation/preservation.uitems.json",
+      "change": "added",
+      "sha256": "7011807812e27acd22689012acd233e41f0d08fb03d6e8603735f114e6bf24b3",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/validation/results.json",
+      "change": "modified",
+      "sha256": "b40de27744393b5566579a0b0966e6b1fd5c3de53aad8e0e6b901e8354bbc3c5",
+      "sha256Before": "68ab1644d5a49777cad3374750fbe0fcbed672168ab0b39ea23b9f6777478dbc"
+    },
+    {
+      "path": "design-current/validation/results.uitems.json",
+      "change": "added",
+      "sha256": "5fed130bea8b3418bb5bb1d45c50d49fc4246356421b14636fce7447779bc297",
+      "sha256Before": null
+    },
+    {
+      "path": "design-current/validation/validate_contracts.py",
+      "change": "modified",
+      "sha256": "bd0330495be633eb5935301cb64df7c49661456ffa4929f207cbe24f54c8c4b8",
+      "sha256Before": "a42e1dc43eb562059faafb3010f89ad998e344fb433c2404ad21ed68cccc4ee1"
+    },
+    {
+      "path": "design-current/validation/validate_uitems.mjs",
+      "change": "added",
+      "sha256": "68c6c245ef9b47ce01cc35601115b31d918d1c5c0e22359431820eb809e28548",
+      "sha256Before": null
+    },
+    {
+      "path": "collaboration/CODEX_RETURN_2026-10-26_U-ITEMS.txt",
+      "change": "added",
+      "sha256": "7549f95b78aa0faa507f1c805fc6a553bb5a7f5bc07d447dbc45222aa646d630"
+    },
+    {
+      "path": "collaboration/NEXT_STEP.txt",
+      "change": "modified",
+      "sha256": "6139fb4094591b986a5c87980bb10a6f4cba2ab942802de70b25c49d2feb2b57"
+    }
+  ]
+}

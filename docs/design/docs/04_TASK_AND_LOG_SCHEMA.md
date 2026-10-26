@@ -1,5 +1,7 @@
 # 04 과제·판정·연구기록 데이터 계약
 
+> **2026-10-26 현행:** 과제·사전1.2.0 및 세션 스냅샷1.0.0은 [17 개정 결정](17_U_ITEMS_CONTRACT_REVISION_2026-10-26.md)을 따른다. 기록1.1.0·전송·접수 계약은 그대로이며, 방향은 `sessionConfiguration.vehicleEntryDirection`에 고정하고 record의 `sessionSnapshotId`로 참조한다.
+
 작성일: 2026-10-16 · 설계 계약 v0.1 · `schemaVersion=1.0.0`은 검토용 첫 계약이며 구현 전 확정한다.
 
 ## 1. 교사가 알아야 할 원칙
@@ -240,6 +242,6 @@ P-1 usagePhase,P-2 kg,P-3 기재값 판정,P-4 openings를1.1.0에 채택했다.
 | 기재값 비교 | ruleset.judgmentValueSource=written,기존 decisionPrecision은 rounded/1/truncate |
 | 개방 연결 | layout.openings의 시작·끝 좌표/연결 구역. 승인 시 doors 또는 openings가 하나 이상 |
 | 부분 실측 | layout.siteMeasurements 원장. 미확정 벽을equipment/가짜boundary로 만들지 않음 |
-| 등록 연산 | vocabularyVersion=1.1.0과 [정의 사전](../contracts/task-vocabulary.v1.1.0.json). 코드 실행 검증은 미실시 |
+| 등록 연산 | vocabularyVersion=1.2.0과 [정의 사전](../contracts/task-vocabulary.v1.2.0.json). 코드 실행 검증은 미실시 |
 
-교사 수치·단계 확인과 정식 과제 운영승인을 구별한다. 두 사례는 [13 검토](13_TASK_DATA_REVIEW_AND_VOCABULARY.md)의 기술 항목이 남아 top pending을 유지하고,ruleset 교사 확인은 날짜로 보존한다. 무안내 답 노출은 제안 feedbackPolicy로 제한하고 안전 경고는 즉시 표시한다. 세부 계약 실행은 아직 구현하지 않았다.
+교사 수치·단계 확인과 정식 과제 운영승인을 구별한다. 두 사례는 [13 검토](13_TASK_DATA_REVIEW_AND_VOCABULARY.md)의 기술 항목이 남아 top pending을 유지하고,ruleset 교사 확인은 날짜로 보존한다. 무안내 답 노출은 0E에서 승인된 feedbackPolicy(version=1.1.0-design-approved-2026-10-26)로 제한하고 안전 경고는 즉시 표시한다. 이번 계약 검증은 세부 구현의 실행 검증과 별개다.

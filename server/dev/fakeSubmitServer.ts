@@ -12,7 +12,7 @@ export function createFakeSubmitServer(root: string) {
   const rows: unknown[][] = [['recordId', 'receiptId', 'acceptedAt', 'payloadHash', 'payloadJson']]
   let nextMode: Mode = 'normal'
   let seq = 0
-  const props: Record<string, string> = { SHEET_ID: 'FAKE', TAB_NAME: 'canonical', ALLOWED_SESSION_CODES: 'DEMO-ONLY', ALLOWED_SNAPSHOT_IDS: '00000000-0000-4000-8000-000000000001,00000000-0000-4000-8000-000000000004', ALLOWED_CLASS_CONDITIONS: 'DEMO', MAX_NEW_ROWS: '500', LOCK_WAIT_MS: '100' }
+  const props: Record<string, string> = { SHEET_ID: 'FAKE', TAB_NAME: 'canonical', ACCEPT_UNTIL: '2027-12-31T00:00:00Z', MAX_NEW_ROWS: '500', LOCK_WAIT_MS: '100' } // 허용 스냅샷은 DemoSnapshots.gs
   const sheet = {
     getLastRow: () => rows.length,
     getRange(r: number, c: number, nr = 1, nc = 1) {
@@ -37,7 +37,7 @@ export function createFakeSubmitServer(root: string) {
     },
     Logger: { log: () => {} },
   }
-  const src = ['Jcs.gs', 'JsonStrict.gs', 'Validate.gs', 'Schemas.gs', 'Code.gs'].map((f) => readFileSync(resolve(root, 'server/apps-script', f), 'utf8')).join('\n')
+  const src = ['Jcs.gs', 'JsonStrict.gs', 'Validate.gs', 'Schemas.gs', 'DemoSnapshots.gs', 'Code.gs'].map((f) => readFileSync(resolve(root, 'server/apps-script', f), 'utf8')).join('\n')
   const names = Object.keys(globals)
   const doPost = new Function(...names, src + '\nreturn doPost;')(...names.map((n) => globals[n])) as (e: unknown) => { text: string }
 

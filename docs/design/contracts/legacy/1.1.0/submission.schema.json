@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chassis-3d-lab:submission:1.1.0",
+  "title": "제출 request / 정상 ack / 오류: oneOf 구분",
+  "$defs": {
+    "request": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "const": "1"
+        },
+        "payload": {
+          "oneOf": [
+            {
+              "$ref": "urn:chassis-3d-lab:record:1.0.0"
+            },
+            {
+              "$ref": "urn:chassis-3d-lab:record:1.1.0"
+            }
+          ]
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "success": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "const": "1"
+        },
+        "ok": {
+          "const": true
+        },
+        "recordId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "receiptId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "acceptedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payloadHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "duplicate": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "ok",
+        "recordId",
+        "receiptId",
+        "acceptedAt",
+        "payloadHash",
+        "duplicate"
+      ],
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "properties": {
+        "protocolVersion": {
+          "const": "1"
+        },
+        "ok": {
+          "const": false
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "recordId": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "ok",
+        "code",
+        "retryable"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/request"
+    },
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/failure"
+    }
+  ]
+}

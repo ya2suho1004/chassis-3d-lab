@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+  "title": "불변 세션 스냅샷: 수행 시작 시 참조 고정",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "sessionSnapshotId": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/sessionSnapshotId"
+    },
+    "sessionCode": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/sessionCode"
+    },
+    "classConditionCode": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/classConditionCode"
+    },
+    "taskId": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/taskId"
+    },
+    "difficultyMode": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/difficultyMode"
+    },
+    "usagePhase": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/usagePhase"
+    },
+    "runPurpose": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/runPurpose"
+    },
+    "displayMode": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/displayMode"
+    },
+    "configurationApproval": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/configurationApproval"
+    },
+    "versions": {
+      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/versions"
+    },
+    "sessionConfiguration": {
+      "type": "object",
+      "properties": {
+        "vehicleEntryDirection": {
+          "enum": [
+            "north",
+            "south",
+            null
+          ],
+          "default": null,
+          "description": "차량이 들어오는 출발 측. 미선택=null, 기본 방위를 추정하지 않음."
+        }
+      },
+      "required": [
+        "vehicleEntryDirection"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "sessionSnapshotId",
+    "sessionCode",
+    "classConditionCode",
+    "taskId",
+    "difficultyMode",
+    "usagePhase",
+    "runPurpose",
+    "displayMode",
+    "configurationApproval",
+    "versions",
+    "sessionConfiguration"
+  ],
+  "additionalProperties": false,
+  "$comment": "default는 생성기 지침이다. 검증기는 누락값 추가/형변환을 하지 않는다. 불변성·record 참조 일치·버전/승인 진위는 별도 의미검증.",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "runPurpose": {
+            "const": "research"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "configurationApproval": {
+            "type": "object",
+            "properties": {
+              "taskApproved": {
+                "const": true
+              },
+              "rulesetApproved": {
+                "const": true
+              },
+              "layoutConfirmed": {
+                "const": true
+              },
+              "researchUseApproved": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

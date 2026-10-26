@@ -74,7 +74,7 @@
         "lengthMeters": null,
         "heightMeters": null
       },
-      "surveyReference": "2차(S2-f): 리프트 옆 기둥 동쪽 면이 원점에서 서쪽 3.00(장비 서쪽 끝 1.50 + 통로 1.50). 남북 위치·단면 미측정. 간격 4.00(기준 미확인)"
+      "surveyReference": "P2-1/P2-3 참조. 위치·단면 미측정. (2차 S2-f ‘리프트 옆 기둥’ 동쪽 면 x=−3.00은 어느 기둥인지 미확인이라 특정 columnId에 귀속하지 않음, C-9)"
     }
   ],
   "safetyAisles": [],
@@ -95,7 +95,7 @@
       },
       "interactiveForMvp": true,
       "accessPoints": [],
-      "surveyReference": "P1-4 실측 동서3.00×남북1.20. 2차(S2-ab) 서쪽 끝 1.50·동쪽 끝 1.50 → 중심=원점 대칭 확정. 차량 진입 북·남 모두 가능. 사진 27·28"
+      "surveyReference": "P1-4 실측 동서3.00×남북1.20. 2차(S2-ab) 서쪽 끝 1.50·동쪽 끝 1.50 → 동서 대칭 확정(남북 배치는 미확인, z 범위는 가정). 차량 진입 북·남 모두 가능. 사진 27·28"
     },
     {
       "equipmentId": "brake-control-panel-01",
@@ -131,7 +131,7 @@
       },
       "interactiveForMvp": false,
       "accessPoints": [],
-      "surveyReference": "2차(S2-d) 동 1.10(1차 직선거리와 같음). 남북은 교사 답 0이 조작부와 겹쳐 미확정(C-6, 사진 28은 차 앞쪽 약 0.8). 사진 26·27"
+      "surveyReference": "2차(S2-d) 동 1.10(직접 답). 남북 답 0은 조작부 앞면과 같은 선이라 재확인(C-6) — 책상 크기 미측정이라 겹침을 수치로 단정하지 않음. 학생은 남쪽에 앉음(0B 문항 ‘앉는 쪽’). 사진 26·27"
     },
     {
       "equipmentId": "toe-gauge-zone-01",
