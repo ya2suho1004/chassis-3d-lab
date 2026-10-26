@@ -140,13 +140,13 @@ for(const file of walk(path.join(root,'examples')).filter(f=>f.endsWith('.json')
   sources.push({path:file,sha256:hash(file)});validate(`example:${rel}`,kind,data,true,tier);
   if(['task','layout','record'].includes(kind))semantic(`example-semantics:${rel}`,kind,data,true,old?oldVocab:vocab,!old);
 }
-const cases=[];const projectComparisons=[];
+const cases=[];const projectComparisons=[];const formalTaskSources=[];
 const teacher=read(path.join(root,'../collaboration/teacher-check-0A.json'));
 for(const level of [1,2]) {
   const relative=`docs/task.braking-force.case-lv${level}.json`,doc=mustRead(relative),pfile=path.join(project,`src/data/tasks/task.braking-force.case-lv${level}.json`);
   report(`project-source-present-lv${level}`,fs.existsSync(pfile));
   if(!doc||!fs.existsSync(pfile))continue;
-  const source=read(pfile);sources.push({path:pfile,sha256:hash(pfile),readOnly:true});cases.push(doc);
+  const source=read(pfile);sources.push({path:pfile,sha256:hash(pfile),readOnly:true});cases.push(doc);formalTaskSources.push({task:doc,path:path.join(root,relative)});
   validate(`formal-task-lv${level}`,'task',doc);semantic(`formal-task-semantics-lv${level}`,'task',doc);
   report(`formal-task-metadata-lv${level}`,doc.schemaVersion==='1.2.0'&&doc.vocabularyVersion==='1.2.0'&&doc.taskDefinitionVersion===`1.2.0-review-case-${level}-2026-10-26`);
   report(`formal-task-approval-preserved-lv${level}`,doc.approvalStatus==='pending');
@@ -285,9 +285,16 @@ function projectInput(relative, json=true) {
     return json?JSON.parse(source):source;
   } catch(e) {report(`project-file:${relative}`,false,{errors:[e.message]});return null;}
 }
+// Independent rule-v1 serialization: lexical keys at every depth, including numeric keys.
+// Do not import snapshotLib or execute the generator to derive the expected ID.
+function snapshotCanonical(value) {
+  if(value===null||typeof value!=='object')return JSON.stringify(value);
+  if(Array.isArray(value))return '['+value.map(snapshotCanonical).join(',')+']';
+  return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+snapshotCanonical(value[key])).join(',')+'}';
+}
 function contentSnapshotId(snapshot) {
   const {sessionSnapshotId,...body}=snapshot;
-  const digest=crypto.createHash('sha256').update(JSON.stringify(canonical(body)),'utf8').digest('hex');
+  const digest=crypto.createHash('sha256').update(snapshotCanonical(body),'utf8').digest('hex');
   return `${digest.slice(0,8)}-${digest.slice(8,12)}-4${digest.slice(13,16)}-8${digest.slice(17,20)}-${digest.slice(20,32)}`;
 }
 const snapshotCombination=s=>JSON.stringify([s?.versions?.taskDefinitionVersion,s?.difficultyMode,s?.usagePhase,s?.sessionConfiguration?.vehicleEntryDirection]);
@@ -299,6 +306,7 @@ const appInput=projectInput('src/data/session/demo-snapshots.json');
 const ledgerInput=projectInput('src/data/session/snapshot-ledger.json');
 const serverSource=projectInput('server/apps-script/DemoSnapshots.gs',false);
 const generatorSource=projectInput('scripts/build-demo-snapshots.mjs',false);
+const snapshotLibSource=projectInput('scripts/snapshotLib.mjs',false);
 const submissionFixture=projectInput('docs/design/examples/submission.demo-request.json');
 const formalSubmissionFixture=mustRead('examples/submission.demo-request.json');
 report('project-submission-fixture-exact-equality',Boolean(submissionFixture)&&same(submissionFixture,formalSubmissionFixture));
@@ -306,7 +314,10 @@ const appSnapshots=Array.isArray(appInput)?appInput:[], ledgerEntries=Array.isAr
 report('app-snapshot-list-is-array',Array.isArray(appInput));
 report('ledger-entries-is-array',Array.isArray(ledgerInput?.entries));
 report('ledger-rule-version',ledgerInput?.ruleVersion==='1');
-report('generator-rule-version-source',typeof generatorSource==='string'&&/export\s+const\s+SNAPSHOT_RULE_VERSION\s*=\s*['"]1['"]/.test(generatorSource));
+report('generator-rule-version-source',typeof snapshotLibSource==='string'&&/export\s+const\s+SNAPSHOT_RULE_VERSION\s*=\s*['"]1['"]/.test(snapshotLibSource),{ruleSource:'scripts/snapshotLib.mjs',moduleExecuted:false});
+report('generator-imports-rule-library',typeof generatorSource==='string'&&/import\s*\{[^}]*SNAPSHOT_RULE_VERSION[^}]*\}\s*from\s*['"]\.\/snapshotLib\.mjs['"]/.test(generatorSource));
+report('snapshot-rule1-canonical-vector',snapshotCanonical({'2':'b','10':'a',nested:{z:null,a:'ê'}})==='{"10":"a","2":"b","nested":{"a":"ê","z":null}}');
+report('snapshot-rule1-id-vector',contentSnapshotId({x:1})==='5041bf1f-713d-4204-8843-53e82f6a4a53');
 let serverRegistry={};
 if(serverSource!==null) {
   try {
@@ -340,11 +351,28 @@ const activeEntries=ledgerEntries.filter(e=>e?.status==='active'),retiredEntries
 const byId=list=>Object.fromEntries(list.map(s=>[s?.sessionSnapshotId,s]));
 report('ledger-active-equals-app',same(byId(activeEntries.map(e=>e.snapshot)),byId(appSnapshots))&&activeEntries.length===appSnapshots.length);
 report('ledger-retired-excluded-from-app',retiredEntries.every(e=>!appIds.includes(e.snapshot?.sessionSnapshotId)));
+// Historical validation uses a preserved formal task with the exact task/version pair.
+// Neither recorded past graphs nor their step scopes are replaced with current task data.
+for(const file of walk(path.join(root,'docs/legacy')).filter(f=>/^task\..*\.json$/.test(path.basename(f)))) {
+  const task=mustRead(path.relative(root,file));
+  if(task)formalTaskSources.push({task,path:file});
+}
+function versionedTaskScope(snapshot) {
+  const matches=formalTaskSources.filter(source=>source.task.taskId===snapshot?.taskId&&source.task.taskDefinitionVersion===snapshot?.versions?.taskDefinitionVersion);
+  if(!matches.length)return {classification:'unverifiable',reason:'preserved formal task version not found',sources:[]};
+  const scopes=matches.map(source=>({source,allowedStepIds:[...(source.task.steps||[]).map(st=>st.stepId),...offStepIds],stepPrerequisites:Object.fromEntries((source.task.steps||[]).map(st=>[st.stepId,st.prerequisites]))}));
+  if(new Set(scopes.map(scope=>snapshotCanonical({allowedStepIds:scope.allowedStepIds,stepPrerequisites:scope.stepPrerequisites}))).size!==1)return {classification:'unverifiable',reason:'conflicting preserved formal task scopes for this version',sources:matches.map(source=>source.path)};
+  const source=matches[0],tier=source.task.schemaVersion==='1.2.0'?'current':source.task.schemaVersion;
+  const errors=[...schemaErrors('task',source.task,tier),...semantics('task',source.task,tier==='current'?vocab:oldVocab,tier==='current')];
+  if(errors.length||source.task.steps?.length!==12)return {classification:'unverifiable',reason:'preserved task does not validate as a 12-parent task',sources:matches.map(source=>source.path),errors};
+  return {...scopes[0],classification:'verified',sources:matches.map(source=>source.path)};
+}
+const prerequisiteSummary={verifiedEntries:0,mismatchedEntries:0,unverifiableEntries:0,unverifiable:[]};
 for(const [i,entry]of ledgerEntries.entries()) {
   const s=entry?.snapshot,id=s?.sessionSnapshotId;
   validate(`ledger-snapshot-schema:${i+1}`,'session-snapshot',s);
   report(`ledger-content-derived-id:${i+1}`,Boolean(s)&&id===contentSnapshotId(s));
-  report(`ledger-entry-shape:${i+1}`,Boolean(entry)&&same(Object.keys(entry).sort(),['snapshot','allowedStepIds','status','firstGeneratedOn','retiredOn'].sort()));
+  report(`ledger-entry-shape:${i+1}`,Boolean(entry)&&same(Object.keys(entry).sort(),['snapshot','allowedStepIds','stepPrerequisites','status','firstGeneratedOn','retiredOn'].sort()));
   report(`ledger-entry-status:${i+1}`,['active','retired'].includes(entry?.status));
   report(`ledger-entry-dates:${i+1}`,validDate(entry?.firstGeneratedOn)&&(entry?.status==='active'?entry.retiredOn===null:entry?.status==='retired'&&validDate(entry.retiredOn)&&entry.retiredOn>=entry.firstGeneratedOn));
   const scope=entry?.allowedStepIds;
@@ -354,25 +382,33 @@ for(const [i,entry]of ledgerEntries.entries()) {
     const expectedScope=task?[...task.steps.map(st=>st.stepId),...offStepIds]:null;
     report(`ledger-active-step-scope:${i+1}`,Boolean(task)&&task.steps.length===12&&same(scope,expectedScope));
   }
-  const serverEntry=serverRegistry[id];
+  const versionScope=versionedTaskScope(s),scopeVerified=versionScope.classification==='verified';
+  report(`ledger-task-version-verifiable:${i+1}`,scopeVerified,{classification:versionScope.classification,taskId:s?.taskId,taskDefinitionVersion:s?.versions?.taskDefinitionVersion,formalTaskSources:versionScope.sources,...(scopeVerified?{}:{reason:versionScope.reason,errors:versionScope.errors||[]})});
+  if(!scopeVerified){prerequisiteSummary.unverifiableEntries++;prerequisiteSummary.unverifiable.push({sessionSnapshotId:id,taskId:s?.taskId,taskDefinitionVersion:s?.versions?.taskDefinitionVersion,reason:versionScope.reason});}
+  const ledgerGraphMatches=scopeVerified&&same(entry?.stepPrerequisites,versionScope.stepPrerequisites);
+  report(`ledger-versioned-step-scope:${i+1}`,scopeVerified&&same(scope,versionScope.allowedStepIds),{expectedSource:versionScope.sources});
+  report(`ledger-step-prerequisites:${i+1}`,ledgerGraphMatches,{expectedSource:versionScope.sources});
+  const serverEntry=serverRegistry[id],serverGraphMatches=scopeVerified&&same(serverEntry?.stepPrerequisites,versionScope.stepPrerequisites);
+  report(`server-step-prerequisites:${i+1}`,serverGraphMatches&&same(serverEntry?.stepPrerequisites,entry?.stepPrerequisites),{expectedSource:versionScope.sources});
+  if(scopeVerified){if(ledgerGraphMatches&&serverGraphMatches&&same(scope,versionScope.allowedStepIds))prerequisiteSummary.verifiedEntries++;else prerequisiteSummary.mismatchedEntries++;}
   report(`server-ledger-body:${i+1}`,same(s,serverEntry?.snapshot));
   // Retired entries retain their recorded historical scope; never recompute it from current tasks.
-  report(`server-ledger-policy:${i+1}`,Boolean(serverEntry)&&serverEntry.status===entry?.status&&serverEntry.anonymousCodePattern===demoPattern&&same(serverEntry.allowedStepIds,scope));
+  report(`server-ledger-policy:${i+1}`,Boolean(serverEntry)&&serverEntry.status===entry?.status&&serverEntry.anonymousCodePattern===demoPattern&&same(serverEntry.allowedStepIds,scope)&&same(serverEntry.stepPrerequisites,entry?.stepPrerequisites));
 }
 const expectedServerIds=[...ledgerIds,fixtureId];
 report('server-registry-complete',same(serverIds.sort(),expectedServerIds.sort()),{actual:serverIds.length,expected:ledgerEntries.length+1});
 for(const [id,entry]of Object.entries(serverRegistry)) {
   validate(`server-snapshot-schema:${id}`,'session-snapshot',entry?.snapshot);
   report(`server-key-matches-snapshot-id:${id}`,entry?.snapshot?.sessionSnapshotId===id);
-  report(`server-entry-shape:${id}`,Boolean(entry)&&same(Object.keys(entry).sort(),['snapshot','status','anonymousCodePattern','allowedStepIds'].sort()));
+  report(`server-entry-shape:${id}`,Boolean(entry)&&same(Object.keys(entry).sort(),['snapshot','status','anonymousCodePattern','allowedStepIds','stepPrerequisites'].sort()));
 }
 const fixturePayload=submissionFixture?.payload,fixtureEntry=serverRegistry[fixtureId];
 const fixtureContextKeys=['sessionSnapshotId','sessionCode','classConditionCode','taskId','difficultyMode','usagePhase','runPurpose','displayMode','configurationApproval','versions'];
 report('server-fixture-id',fixturePayload?.sessionSnapshotId===fixtureId);
 const expectedFixture=fixturePayload?{schemaVersion:'1.0.0',...Object.fromEntries(fixtureContextKeys.map(k=>[k,fixturePayload[k]])),sessionConfiguration:{vehicleEntryDirection:null}}:null;
 report('server-fixture-body',Boolean(expectedFixture)&&same(fixtureEntry?.snapshot,expectedFixture));
-report('server-fixture-policy',fixtureEntry?.status==='active'&&fixtureEntry?.anonymousCodePattern==='^D-00$'&&fixtureEntry?.allowedStepIds===null);
-const snapshotSummary={ruleVersion:ledgerInput?.ruleVersion??null,appSnapshots:appSnapshots.length,appUniqueIds:new Set(appIds).size,expectedCombinations:expectedByCombination.size,actualCombinations:new Set(appSnapshots.map(snapshotCombination)).size,ledgerEntries:ledgerEntries.length,activeEntries:activeEntries.length,retiredEntries:retiredEntries.length,serverEntries:serverIds.length,fixtureEntries:fixtureEntry?1:0,generatedCodePattern:demoPattern,fixtureCodePattern:'^D-00$',generatorExecuted:false,serverFunctionsExecuted:false,retiredScopePolicy:'preserve recorded historical scope; server equality required'};
+report('server-fixture-policy',fixtureEntry?.status==='active'&&fixtureEntry?.anonymousCodePattern==='^D-00$'&&fixtureEntry?.allowedStepIds===null&&fixtureEntry?.stepPrerequisites===null);
+const snapshotSummary={ruleVersion:ledgerInput?.ruleVersion??null,appSnapshots:appSnapshots.length,appUniqueIds:new Set(appIds).size,expectedCombinations:expectedByCombination.size,actualCombinations:new Set(appSnapshots.map(snapshotCombination)).size,ledgerEntries:ledgerEntries.length,activeEntries:activeEntries.length,retiredEntries:retiredEntries.length,serverEntries:serverIds.length,fixtureEntries:fixtureEntry?1:0,generatedCodePattern:demoPattern,fixtureCodePattern:'^D-00$',generatorExecuted:false,serverFunctionsExecuted:false,retiredScopePolicy:'compare recorded historical scope/graph with exact preserved formal task version; no current-task fallback',prerequisites:prerequisiteSummary,snapshotLibExecuted:false};
 
 const result={checkedAt:new Date().toISOString(),root,project,applicationExecuted:false,projectModified:false,dependenciesUsed:['node:fs','node:path','node:crypto','node:module',path.join(project,'node_modules/ajv/dist/2020.js'),path.join(project,'node_modules/ajv-formats')],validatorOptions:ajvOptions,checks,passed:checks.filter(c=>c.passed).length,failed:checks.filter(c=>!c.passed).length,strictLint:{classification:'additional lint diagnostic; not counted as JSON Schema validity failures',passed:diagnostics.filter(d=>d.passed).length,failed:diagnostics.filter(d=>!d.passed).length,diagnostics},projectComparisons,snapshotSummary,sources};
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(result,null,2)+'\n');

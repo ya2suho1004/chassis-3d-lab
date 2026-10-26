@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-26T14:02:47.275Z",
+  "checkedAt": "2026-10-26T15:55:19.929Z",
   "root": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current",
   "project": "/Users/jamingchu/claude code/chassis-3d-lab",
   "applicationExecuted": false,
@@ -1580,6 +1580,20 @@
     },
     {
       "name": "generator-rule-version-source",
+      "passed": true,
+      "ruleSource": "scripts/snapshotLib.mjs",
+      "moduleExecuted": false
+    },
+    {
+      "name": "generator-imports-rule-library",
+      "passed": true
+    },
+    {
+      "name": "snapshot-rule1-canonical-vector",
+      "passed": true
+    },
+    {
+      "name": "snapshot-rule1-id-vector",
       "passed": true
     },
     {
@@ -2227,6 +2241,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:1",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:1",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:1",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:1",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:1",
       "passed": true
     },
@@ -2265,6 +2310,37 @@
     {
       "name": "ledger-active-step-scope:2",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:2",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:2",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:2",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:2",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:2",
@@ -2307,6 +2383,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:3",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:3",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:3",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:3",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:3",
       "passed": true
     },
@@ -2345,6 +2452,37 @@
     {
       "name": "ledger-active-step-scope:4",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:4",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:4",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:4",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:4",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:4",
@@ -2387,6 +2525,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:5",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:5",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:5",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:5",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:5",
       "passed": true
     },
@@ -2425,6 +2594,37 @@
     {
       "name": "ledger-active-step-scope:6",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:6",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:6",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:6",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:6",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:6",
@@ -2467,6 +2667,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:7",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:7",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:7",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:7",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:7",
       "passed": true
     },
@@ -2505,6 +2736,37 @@
     {
       "name": "ledger-active-step-scope:8",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:8",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:8",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:8",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:8",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:8",
@@ -2547,6 +2809,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:9",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:9",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:9",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:9",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:9",
       "passed": true
     },
@@ -2585,6 +2878,37 @@
     {
       "name": "ledger-active-step-scope:10",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:10",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:10",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:10",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:10",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:10",
@@ -2627,6 +2951,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:11",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:11",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:11",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:11",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:11",
       "passed": true
     },
@@ -2665,6 +3020,37 @@
     {
       "name": "ledger-active-step-scope:12",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:12",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:12",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:12",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:12",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:12",
@@ -2707,6 +3093,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:13",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:13",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:13",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:13",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:13",
       "passed": true
     },
@@ -2745,6 +3162,37 @@
     {
       "name": "ledger-active-step-scope:14",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:14",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:14",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:14",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:14",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:14",
@@ -2787,6 +3235,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:15",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:15",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:15",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:15",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:15",
       "passed": true
     },
@@ -2825,6 +3304,37 @@
     {
       "name": "ledger-active-step-scope:16",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:16",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:16",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:16",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:16",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:16",
@@ -2867,6 +3377,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:17",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:17",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:17",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:17",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:17",
       "passed": true
     },
@@ -2905,6 +3446,37 @@
     {
       "name": "ledger-active-step-scope:18",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:18",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:18",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:18",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:18",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json"
+      ]
     },
     {
       "name": "server-ledger-body:18",
@@ -2947,6 +3519,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:19",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:19",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:19",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:19",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:19",
       "passed": true
     },
@@ -2985,6 +3588,37 @@
     {
       "name": "ledger-active-step-scope:20",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:20",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:20",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:20",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:20",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:20",
@@ -3027,6 +3661,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:21",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:21",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:21",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:21",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:21",
       "passed": true
     },
@@ -3065,6 +3730,37 @@
     {
       "name": "ledger-active-step-scope:22",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:22",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:22",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:22",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:22",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:22",
@@ -3107,6 +3803,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:23",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:23",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:23",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:23",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:23",
       "passed": true
     },
@@ -3145,6 +3872,37 @@
     {
       "name": "ledger-active-step-scope:24",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:24",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:24",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:24",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:24",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:24",
@@ -3187,6 +3945,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:25",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:25",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:25",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:25",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:25",
       "passed": true
     },
@@ -3225,6 +4014,37 @@
     {
       "name": "ledger-active-step-scope:26",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:26",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:26",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:26",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:26",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:26",
@@ -3267,6 +4087,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:27",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:27",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:27",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:27",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:27",
       "passed": true
     },
@@ -3305,6 +4156,37 @@
     {
       "name": "ledger-active-step-scope:28",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:28",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:28",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:28",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:28",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:28",
@@ -3347,6 +4229,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:29",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:29",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:29",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:29",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:29",
       "passed": true
     },
@@ -3385,6 +4298,37 @@
     {
       "name": "ledger-active-step-scope:30",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:30",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:30",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:30",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:30",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:30",
@@ -3427,6 +4371,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:31",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:31",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:31",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:31",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:31",
       "passed": true
     },
@@ -3465,6 +4440,37 @@
     {
       "name": "ledger-active-step-scope:32",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:32",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:32",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:32",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:32",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:32",
@@ -3507,6 +4513,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:33",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:33",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:33",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:33",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:33",
       "passed": true
     },
@@ -3545,6 +4582,37 @@
     {
       "name": "ledger-active-step-scope:34",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:34",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:34",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:34",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:34",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:34",
@@ -3587,6 +4655,37 @@
       "passed": true
     },
     {
+      "name": "ledger-task-version-verifiable:35",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:35",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:35",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:35",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
       "name": "server-ledger-body:35",
       "passed": true
     },
@@ -3625,6 +4724,37 @@
     {
       "name": "ledger-active-step-scope:36",
       "passed": true
+    },
+    {
+      "name": "ledger-task-version-verifiable:36",
+      "passed": true,
+      "classification": "verified",
+      "taskId": "braking-force",
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "formalTaskSources": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-versioned-step-scope:36",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "ledger-step-prerequisites:36",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
+    },
+    {
+      "name": "server-step-prerequisites:36",
+      "passed": true,
+      "expectedSource": [
+        "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json"
+      ]
     },
     {
       "name": "server-ledger-body:36",
@@ -4245,7 +5375,7 @@
       "passed": true
     }
   ],
-  "passed": 744,
+  "passed": 891,
   "failed": 0,
   "strictLint": {
     "classification": "additional lint diagnostic; not counted as JSON Schema validity failures",
@@ -4350,7 +5480,14 @@
     "fixtureCodePattern": "^D-00$",
     "generatorExecuted": false,
     "serverFunctionsExecuted": false,
-    "retiredScopePolicy": "preserve recorded historical scope; server equality required"
+    "retiredScopePolicy": "compare recorded historical scope/graph with exact preserved formal task version; no current-task fallback",
+    "prerequisites": {
+      "verifiedEntries": 36,
+      "mismatchedEntries": 0,
+      "unverifiableEntries": 0,
+      "unverifiable": []
+    },
+    "snapshotLibExecuted": false
   },
   "sources": [
     {
@@ -4431,7 +5568,7 @@
     },
     {
       "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/layout.partial-survey.v1.1.json",
-      "sha256": "069dbeb8ad7d36d22ecdce090fc9903bdd90db448fda5c017d1be0e3619bcf47"
+      "sha256": "caea42528c4f951ac74ce3a4773fb9a02aafa760322f2dc5b9558b345b822794"
     },
     {
       "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/layout.unapproved.json",
@@ -4542,17 +5679,22 @@
     },
     {
       "path": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/session/snapshot-ledger.json",
-      "sha256": "1987f74df48041f7519365a87b950e7122e1e01e783ebebc381e2d547ebe68d4",
+      "sha256": "40947b34660d150f885abf744f1d78760454561f706199de564aaf980e0d4cba",
       "readOnly": true
     },
     {
       "path": "/Users/jamingchu/claude code/chassis-3d-lab/server/apps-script/DemoSnapshots.gs",
-      "sha256": "d211c7c71a535a619b67369b7e00b05abb79fe7230f7c66f8d31503358223270",
+      "sha256": "8593220043059d10be1491c93f99689f379d2741d3599b229ab5321a5da77d5e",
       "readOnly": true
     },
     {
       "path": "/Users/jamingchu/claude code/chassis-3d-lab/scripts/build-demo-snapshots.mjs",
-      "sha256": "f614989062bf36c4ae3d682b9dacedf54620ea17b3df05028978eaa6d4a6d91c",
+      "sha256": "70d2d9435c72445bc7c46a1924729d848a4bd384d9401e2e82b55ffa4a83fa75",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/scripts/snapshotLib.mjs",
+      "sha256": "6f7721951e06b66ccf9ab0f03f73211966b25d409329a5222e80e66a3da25e2a",
       "readOnly": true
     },
     {
@@ -4563,117 +5705,94 @@
     {
       "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/submission.demo-request.json",
       "sha256": "e71d6092a6b60db136ed4c05c65609916773a773622bac2bb5054671f05e2d0a"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/legacy/1.1.0/task.braking-force.case-lv1.json",
+      "sha256": "b84b29b43be886cd4712b0aebf7e810945a3db71b0b9f8704495eb802a2f8b6d"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/legacy/1.1.0/task.braking-force.case-lv2.json",
+      "sha256": "b62bf53c4be8d1e022c2011caa558cca148a189cc2b75ecbdf6e1eb3fe5527ab"
     }
   ],
-  "receiverReviewC": {
-    "checkedAt": "2026-10-26T14:03:49.920453+00:00",
-    "projectHead": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
-    "scope": "read-only project; local JSON contracts and pure synthetic/in-memory service tests; no deployment or network calls",
-    "validatorSha256": "2c56ae96c8791ae88680f971d9927c0ff05e9708ab5270363af4a081d720fddd",
+  "receiverReviewD": {
+    "checkedAt": "2026-10-26T16:03:21.725920+00:00",
+    "requestedCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
+    "scope": "local contracts and synthetic in-memory domain/receiver/library only; generator writes intercepted; no network or deployment",
+    "validatorSha256": "0ea06e2440dfd3ea34ef9304cbccee9be4c31ae345e2c467552c8a351158b387",
     "validatorBehavior": {
+      "checkedAt": "2026-10-26T15:55:19.442Z",
       "checks": [
         {
           "name": "baseline-current-inputs-pass",
           "passed": true,
-          "actualFailures": []
+          "failedChecks": []
         },
         {
-          "name": "coverage:app-snapshot-count",
+          "name": "snapshotLib-source-hash",
           "passed": true
         },
         {
-          "name": "coverage:ledger-rule-version",
+          "name": "prerequisite-summary",
           "passed": true
         },
         {
-          "name": "coverage:server-registry-complete",
-          "passed": true
-        },
-        {
-          "name": "coverage:project-task-exact-equality-lv",
-          "passed": true
-        },
-        {
-          "name": "snapshot-summary-present",
-          "passed": true
-        },
-        {
-          "name": "new-source-hashes-present",
-          "passed": true
-        },
-        {
-          "name": "reject:ledger-invalid-status",
+          "name": "reject:ledger-graph-drift",
           "passed": true,
           "failedChecks": [
-            "ledger-active-equals-app",
-            "ledger-entry-status:1",
-            "ledger-entry-dates:1",
+            "ledger-step-prerequisites:1",
+            "server-step-prerequisites:1"
+          ]
+        },
+        {
+          "name": "reject:ledger-graph-missing",
+          "passed": true,
+          "failedChecks": [
+            "ledger-entry-shape:1",
+            "ledger-step-prerequisites:1",
+            "server-step-prerequisites:1",
             "server-ledger-policy:1"
           ]
         },
         {
-          "name": "reject:ledger-duplicate-id",
+          "name": "reject:server-graph-drift",
           "passed": true,
           "failedChecks": [
-            "ledger-unique-ids",
-            "ledger-active-equals-app",
-            "server-registry-complete"
+            "server-step-prerequisites:1",
+            "server-ledger-policy:1"
           ]
         },
         {
-          "name": "reject:app-content-drift",
+          "name": "reject:server-graph-missing",
           "passed": true,
           "failedChecks": [
-            "app-content-derived-id:1",
-            "app-current-body:1",
-            "ledger-active-equals-app"
-          ]
-        },
-        {
-          "name": "reject:app-duplicate-id",
-          "passed": true,
-          "failedChecks": [
-            "app-snapshot-unique-ids",
-            "app-snapshot-full-combinations",
-            "ledger-active-equals-app"
-          ]
-        },
-        {
-          "name": "reject:app-invalid-schema",
-          "passed": true,
-          "failedChecks": [
-            "app-snapshot-schema:1",
-            "app-content-derived-id:1",
-            "app-current-body:1",
-            "ledger-active-equals-app"
-          ]
-        },
-        {
-          "name": "reject:app-null-snapshot",
-          "passed": true,
-          "failedChecks": [
-            "app-snapshot-full-combinations",
-            "app-snapshot-schema:1",
-            "app-content-derived-id:1",
-            "app-current-body:1",
-            "ledger-active-equals-app"
-          ]
-        },
-        {
-          "name": "reject:server-entry-missing",
-          "passed": true,
-          "failedChecks": [
-            "server-ledger-body:1",
+            "server-step-prerequisites:1",
             "server-ledger-policy:1",
-            "server-registry-complete"
+            "server-entry-shape:0032a58c-7e66-48b4-8c10-16b0900999c1"
           ]
         },
         {
-          "name": "reject:server-schema-drift",
+          "name": "reject:allowed-scope-drift",
           "passed": true,
           "failedChecks": [
-            "server-ledger-body:1",
-            "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1"
+            "ledger-active-step-scope:1",
+            "ledger-versioned-step-scope:1"
+          ]
+        },
+        {
+          "name": "reject:id-drift",
+          "passed": true,
+          "failedChecks": [
+            "app-content-derived-id:1",
+            "app-current-body:1",
+            "ledger-content-derived-id:1"
+          ]
+        },
+        {
+          "name": "reject:fixture-graph-not-null",
+          "passed": true,
+          "failedChecks": [
+            "server-fixture-policy"
           ]
         },
         {
@@ -4685,164 +5804,529 @@
           ]
         },
         {
-          "name": "reject:ledger-active-retired-date",
-          "passed": true,
-          "failedChecks": [
-            "ledger-entry-dates:1"
-          ]
-        },
-        {
-          "name": "reject:ledger-rule-version",
-          "passed": true,
-          "failedChecks": [
-            "ledger-rule-version"
-          ]
-        },
-        {
-          "name": "reject:ledger-content-drift",
-          "passed": true,
-          "failedChecks": [
-            "ledger-active-equals-app",
-            "ledger-content-derived-id:1",
-            "server-ledger-body:1"
-          ]
-        },
-        {
-          "name": "reject:ledger-null-snapshot",
-          "passed": true,
-          "failedChecks": [
-            "ledger-active-equals-app",
-            "ledger-snapshot-schema:1",
-            "ledger-content-derived-id:1",
-            "ledger-active-step-scope:1",
-            "server-ledger-body:1",
-            "server-ledger-policy:1",
-            "server-registry-complete"
-          ]
-        },
-        {
-          "name": "reject:ledger-current-scope-drift",
-          "passed": true,
-          "failedChecks": [
-            "ledger-active-step-scope:1",
-            "server-ledger-policy:1"
-          ]
-        },
-        {
-          "name": "reject:server-code-policy-drift",
-          "passed": true,
-          "failedChecks": [
-            "server-ledger-policy:1"
-          ]
-        },
-        {
-          "name": "reject:fixture-scope-drift",
-          "passed": true,
-          "failedChecks": [
-            "server-fixture-policy"
-          ]
-        },
-        {
-          "name": "reject:retired-still-in-app",
-          "passed": true,
-          "failedChecks": [
-            "ledger-active-equals-app",
-            "ledger-retired-excluded-from-app",
-            "server-ledger-policy:1"
-          ]
-        },
-        {
-          "name": "valid-retired-history-is-preserved",
+          "name": "retired-compares-preserved-historical-graph",
           "passed": true,
           "failedChecks": []
+        },
+        {
+          "name": "retired-current-graph-cannot-replace-history",
+          "passed": true,
+          "failedChecks": [
+            "ledger-step-prerequisites:37",
+            "server-step-prerequisites:37"
+          ]
+        },
+        {
+          "name": "retired-without-formal-version-is-unverifiable",
+          "passed": true,
+          "failedChecks": [
+            "ledger-task-version-verifiable:37",
+            "ledger-versioned-step-scope:37",
+            "ledger-step-prerequisites:37",
+            "server-step-prerequisites:37"
+          ]
         }
       ],
-      "passed": 25,
+      "passed": 14,
       "failed": 0,
       "baseline": {
-        "passed": 744,
+        "passed": 891,
         "failed": 0
-      }
+      },
+      "generatorExecuted": false,
+      "snapshotLibImported": false,
+      "applicationExecuted": false
     },
-    "existingTestSuite": {
-      "files": 21,
-      "passed": 204,
+    "independentValidatorQA": {
+      "checks": [
+        {
+          "name": "normal-current-inputs",
+          "passed": true,
+          "exit": 0,
+          "validatorPassed": 891,
+          "validatorFailed": 0,
+          "failedChecks": [],
+          "prerequisites": {
+            "verifiedEntries": 36,
+            "mismatchedEntries": 0,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        },
+        {
+          "name": "real-legacy-1.1-retired-verified",
+          "passed": true,
+          "exit": 0,
+          "validatorPassed": 906,
+          "validatorFailed": 0,
+          "failedChecks": [],
+          "prerequisites": {
+            "verifiedEntries": 37,
+            "mismatchedEntries": 0,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        },
+        {
+          "name": "same-version-cannot-substitute-other-task",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 900,
+          "validatorFailed": 6,
+          "failedChecks": [
+            "ledger-snapshot-schema:37",
+            "ledger-task-version-verifiable:37",
+            "ledger-versioned-step-scope:37",
+            "ledger-step-prerequisites:37",
+            "server-step-prerequisites:37",
+            "server-snapshot-schema:07d20033-c384-48a9-8380-b9805f06ebf9"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 36,
+            "mismatchedEntries": 0,
+            "unverifiableEntries": 1,
+            "unverifiable": [
+              {
+                "sessionSnapshotId": "07d20033-c384-48a9-8380-b9805f06ebf9",
+                "taskId": "other-task",
+                "taskDefinitionVersion": "1.1.0-review-case-1-2026-10-21",
+                "reason": "preserved formal task version not found"
+              }
+            ]
+          }
+        },
+        {
+          "name": "schema-invalid-other-task-formal-not-accepted",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 900,
+          "validatorFailed": 6,
+          "failedChecks": [
+            "ledger-snapshot-schema:37",
+            "ledger-task-version-verifiable:37",
+            "ledger-versioned-step-scope:37",
+            "ledger-step-prerequisites:37",
+            "server-step-prerequisites:37",
+            "server-snapshot-schema:07d20033-c384-48a9-8380-b9805f06ebf9"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 36,
+            "mismatchedEntries": 0,
+            "unverifiableEntries": 1,
+            "unverifiable": [
+              {
+                "sessionSnapshotId": "07d20033-c384-48a9-8380-b9805f06ebf9",
+                "taskId": "other-task",
+                "taskDefinitionVersion": "1.1.0-review-case-1-2026-10-21",
+                "reason": "preserved task does not validate as a 12-parent task"
+              }
+            ]
+          }
+        },
+        {
+          "name": "conflicting-preserved-graphs-unverifiable",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 902,
+          "validatorFailed": 4,
+          "failedChecks": [
+            "ledger-task-version-verifiable:37",
+            "ledger-versioned-step-scope:37",
+            "ledger-step-prerequisites:37",
+            "server-step-prerequisites:37"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 36,
+            "mismatchedEntries": 0,
+            "unverifiableEntries": 1,
+            "unverifiable": [
+              {
+                "sessionSnapshotId": "83d3f170-554d-41e3-8707-368d429713cc",
+                "taskId": "braking-force",
+                "taskDefinitionVersion": "1.1.0-review-case-1-2026-10-21",
+                "reason": "conflicting preserved formal task scopes for this version"
+              }
+            ]
+          }
+        },
+        {
+          "name": "graph-extra-own-proto",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 889,
+          "validatorFailed": 2,
+          "failedChecks": [
+            "ledger-step-prerequisites:1",
+            "server-step-prerequisites:1"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 35,
+            "mismatchedEntries": 1,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        },
+        {
+          "name": "graph-null",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 889,
+          "validatorFailed": 2,
+          "failedChecks": [
+            "ledger-step-prerequisites:1",
+            "server-step-prerequisites:1"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 35,
+            "mismatchedEntries": 1,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        },
+        {
+          "name": "graph-scalar",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 889,
+          "validatorFailed": 2,
+          "failedChecks": [
+            "ledger-step-prerequisites:1",
+            "server-step-prerequisites:1"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 35,
+            "mismatchedEntries": 1,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        },
+        {
+          "name": "fixture-null-scope",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 890,
+          "validatorFailed": 1,
+          "failedChecks": [
+            "server-fixture-policy"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 36,
+            "mismatchedEntries": 0,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        },
+        {
+          "name": "library-and-generator-not-executed",
+          "passed": true,
+          "exit": 0,
+          "validatorPassed": 891,
+          "validatorFailed": 0,
+          "failedChecks": [],
+          "prerequisites": {
+            "verifiedEntries": 36,
+            "mismatchedEntries": 0,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        },
+        {
+          "name": "server-functions-not-executed",
+          "passed": true,
+          "exit": 1,
+          "validatorPassed": 668,
+          "validatorFailed": 112,
+          "failedChecks": [
+            "server-declaration-only",
+            "server-step-prerequisites:1",
+            "server-ledger-body:1",
+            "server-ledger-policy:1",
+            "server-step-prerequisites:2",
+            "server-ledger-body:2",
+            "server-ledger-policy:2",
+            "server-step-prerequisites:3",
+            "server-ledger-body:3",
+            "server-ledger-policy:3",
+            "server-step-prerequisites:4",
+            "server-ledger-body:4",
+            "server-ledger-policy:4",
+            "server-step-prerequisites:5",
+            "server-ledger-body:5",
+            "server-ledger-policy:5",
+            "server-step-prerequisites:6",
+            "server-ledger-body:6",
+            "server-ledger-policy:6",
+            "server-step-prerequisites:7",
+            "server-ledger-body:7",
+            "server-ledger-policy:7",
+            "server-step-prerequisites:8",
+            "server-ledger-body:8",
+            "server-ledger-policy:8",
+            "server-step-prerequisites:9",
+            "server-ledger-body:9",
+            "server-ledger-policy:9",
+            "server-step-prerequisites:10",
+            "server-ledger-body:10",
+            "server-ledger-policy:10",
+            "server-step-prerequisites:11",
+            "server-ledger-body:11",
+            "server-ledger-policy:11",
+            "server-step-prerequisites:12",
+            "server-ledger-body:12",
+            "server-ledger-policy:12",
+            "server-step-prerequisites:13",
+            "server-ledger-body:13",
+            "server-ledger-policy:13",
+            "server-step-prerequisites:14",
+            "server-ledger-body:14",
+            "server-ledger-policy:14",
+            "server-step-prerequisites:15",
+            "server-ledger-body:15",
+            "server-ledger-policy:15",
+            "server-step-prerequisites:16",
+            "server-ledger-body:16",
+            "server-ledger-policy:16",
+            "server-step-prerequisites:17",
+            "server-ledger-body:17",
+            "server-ledger-policy:17",
+            "server-step-prerequisites:18",
+            "server-ledger-body:18",
+            "server-ledger-policy:18",
+            "server-step-prerequisites:19",
+            "server-ledger-body:19",
+            "server-ledger-policy:19",
+            "server-step-prerequisites:20",
+            "server-ledger-body:20",
+            "server-ledger-policy:20",
+            "server-step-prerequisites:21",
+            "server-ledger-body:21",
+            "server-ledger-policy:21",
+            "server-step-prerequisites:22",
+            "server-ledger-body:22",
+            "server-ledger-policy:22",
+            "server-step-prerequisites:23",
+            "server-ledger-body:23",
+            "server-ledger-policy:23",
+            "server-step-prerequisites:24",
+            "server-ledger-body:24",
+            "server-ledger-policy:24",
+            "server-step-prerequisites:25",
+            "server-ledger-body:25",
+            "server-ledger-policy:25",
+            "server-step-prerequisites:26",
+            "server-ledger-body:26",
+            "server-ledger-policy:26",
+            "server-step-prerequisites:27",
+            "server-ledger-body:27",
+            "server-ledger-policy:27",
+            "server-step-prerequisites:28",
+            "server-ledger-body:28",
+            "server-ledger-policy:28",
+            "server-step-prerequisites:29",
+            "server-ledger-body:29",
+            "server-ledger-policy:29",
+            "server-step-prerequisites:30",
+            "server-ledger-body:30",
+            "server-ledger-policy:30",
+            "server-step-prerequisites:31",
+            "server-ledger-body:31",
+            "server-ledger-policy:31",
+            "server-step-prerequisites:32",
+            "server-ledger-body:32",
+            "server-ledger-policy:32",
+            "server-step-prerequisites:33",
+            "server-ledger-body:33",
+            "server-ledger-policy:33",
+            "server-step-prerequisites:34",
+            "server-ledger-body:34",
+            "server-ledger-policy:34",
+            "server-step-prerequisites:35",
+            "server-ledger-body:35",
+            "server-ledger-policy:35",
+            "server-step-prerequisites:36",
+            "server-ledger-body:36",
+            "server-ledger-policy:36",
+            "server-registry-complete",
+            "server-fixture-body",
+            "server-fixture-policy"
+          ],
+          "prerequisites": {
+            "verifiedEntries": 0,
+            "mismatchedEntries": 36,
+            "unverifiableEntries": 0,
+            "unverifiable": []
+          }
+        }
+      ],
+      "passed": 11,
+      "failed": 0,
+      "actualProjectUnchanged": true,
+      "canonicalVectors": [
+        {
+          "name": "snapshot-rule1-canonical-vector",
+          "passed": true
+        },
+        {
+          "name": "snapshot-rule1-id-vector",
+          "passed": true
+        }
+      ]
+    },
+    "frozenTestSuite": {
+      "sourceCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
+      "projectCopy": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/project-20e75de",
+      "files": 24,
+      "passed": 215,
       "failed": 0
     },
     "registryDiagnostics": {
-      "targetHead": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
-      "assertions": 23,
+      "targetCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
+      "executionHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
+      "assertions": 35,
       "observations": [
         {
-          "name": "registered normal prefix accepted",
+          "name": "aborted partial ppe->tire remains accepted",
           "observed": true
         },
         {
-          "name": "unknown off suffix rejected",
+          "name": "calc only rejected",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "off without subactions rejected",
+          "name": "off without read rejected at parent completion",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "off suffix order reversed rejected",
+          "name": "parent duplicate rejected",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "subaction after parent rejected",
+          "name": "normal parent graph through off accepted",
+          "observed": true
+        },
+        {
+          "name": "aborted partial off motor action before read currently accepted",
+          "observed": true
+        },
+        {
+          "name": "all off subactions before parent prefix and delayed off completion currently accepted",
+          "observed": true
+        },
+        {
+          "name": "off exit followed by unrelated hint before parent accepted",
+          "observed": true
+        },
+        {
+          "name": "completed claim with only ppe/tire history is schema-valid",
+          "observed": true
+        },
+        {
+          "name": "completed claim with incomplete parent history currently accepted",
+          "observed": true
+        },
+        {
+          "name": "legacy null-policy off-only accepted",
+          "observed": true
+        },
+        {
+          "name": "legacy stored content has no synthesized events",
+          "observed": 2
+        },
+        {
+          "name": "old null-policy duplicate parent accepted by old receiver",
+          "observed": true
+        },
+        {
+          "name": "new parent duplicate rule rejects identical old fixture receipt recovery",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "missing parent prerequisite calc only currently accepted",
-          "observed": true
-        },
-        {
-          "name": "off subsequence without read prerequisite currently accepted",
-          "observed": true
-        },
-        {
-          "name": "duplicate parent off currently accepted",
-          "observed": true
-        },
-        {
-          "name": "legacy fixture off-only accepted without adding subevents",
-          "observed": true
-        },
-        {
-          "name": "stored legacy event count unchanged",
-          "observed": 3
-        },
-        {
-          "name": "retired duplicate same first receipt",
+          "name": "retired unchanged valid original returns first receipt",
           "observed": [
             true,
             "11111111-2222-4333-8444-000000000001",
-            "2026-10-26T13:52:24.519Z"
+            "2026-10-26T15:55:14.277Z"
           ]
         },
         {
-          "name": "retired previously unaccepted record rejected",
+          "name": "retired first acceptance rejected",
           "observed": "SESSION_NOT_ALLOWED"
         },
         {
-          "name": "retired same ID changed valid payload classified conflict",
+          "name": "retired changed valid same ID is conflict",
           "observed": "RECORD_ID_CONFLICT"
         },
         {
-          "name": "retired context mismatch rejected before canonical lookup",
-          "observed": "SESSION_NOT_ALLOWED"
+          "name": "old graphless policy accepted record used for migration diagnostic",
+          "observed": true
         },
         {
-          "name": "changed allowedStepIds prevents identical retired receipt recovery",
+          "name": "same snapshot new graph blocks old accepted original before receipt lookup",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "baseline generator succeeds in memory",
+          "name": "ledger duplicate IDs now rejected",
+          "observed": "LEDGER_DUPLICATE_ID"
+        },
+        {
+          "name": "current duplicate IDs now rejected by pure library",
+          "observed": "CURRENT_DUPLICATE_ID"
+        },
+        {
+          "name": "reserved ID in current now rejected",
+          "observed": "RESERVED_ID"
+        },
+        {
+          "name": "same ID changed snapshot now rejected",
+          "observed": "LEDGER_CONTENT_MISMATCH"
+        },
+        {
+          "name": "defined old scope allowed IDs change now rejected",
+          "observed": "LEDGER_SCOPE_MISMATCH"
+        },
+        {
+          "name": "defined old scope graph change now rejected",
+          "observed": "LEDGER_SCOPE_MISMATCH"
+        },
+        {
+          "name": "missing previous graph permits existing allowedStepIds replacement",
           "observed": null
         },
         {
-          "name": "baseline captured output equals current bytes",
+          "name": "existing allowlist actually replaced under unchanged snapshot ID",
+          "observed": [
+            "differentStep"
+          ]
+        },
+        {
+          "name": "missing previous allowlist permits existing graph replacement",
+          "observed": null
+        },
+        {
+          "name": "graph backfill retains snapshot ID without explicit migration marker",
+          "observed": [
+            "0032a58c-7e66-48b4-8c10-16b0900999c1",
+            12,
+            "1"
+          ]
+        },
+        {
+          "name": "retiring old graphless policy preserves graph absence",
+          "observed": [
+            "retired",
+            false
+          ]
+        },
+        {
+          "name": "reserved ID already in ledger but absent from current is not rejected",
+          "observed": null
+        },
+        {
+          "name": "generator memory-only baseline succeeds",
+          "observed": null
+        },
+        {
+          "name": "baseline output bytes match target commit",
           "observed": [
             true,
             true,
@@ -4850,893 +6334,723 @@
           ]
         },
         {
-          "name": "version revision retains old and current snapshots",
+          "name": "full generator silently overwrites reserved historical ledger entry with fixture",
           "observed": [
             null,
-            72,
-            36,
-            36
+            37,
+            37,
+            "0.1.0-draft"
           ]
         },
         {
-          "name": "retired snapshot and allowed steps unchanged",
-          "observed": true
-        },
-        {
-          "name": "single same-ID different snapshot is rejected",
-          "observed": true
-        },
-        {
-          "name": "duplicate ledger ID with conflicting earlier snapshot silently collapses",
+          "name": "generator Map collapses identical current duplicates before library guard",
           "observed": [
             null,
-            36
-          ]
-        },
-        {
-          "name": "same snapshot ID metadata overwritten without failure",
-          "observed": [
-            null,
-            false,
-            15
-          ]
-        },
-        {
-          "name": "manual retirement of current combination regenerated active",
-          "observed": [
-            null,
-            "active",
-            null
+            18
           ]
         }
       ],
-      "limits": "Local Node VM only. Generator writeFileSync captured in memory. Diagnostic expected accepts are not product conformance PASS."
+      "limits": "Local VM and pure functions only. Generator writes captured in memory. Diagnostic observations include known accepted invalid histories; not product conformance PASS."
     },
-    "timeCounterDateDiagnostics": {
-      "head": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
-      "execution": "local Node VM + in-memory TypeScript transpilation; fake Google services; no network",
+    "dateAndTimeDiagnostics": {
+      "requestedHead": "20e75de8041960d0de1912319220e79a1a72cfd0",
+      "runtimeHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
+      "runtimeHeadNote": "Source reads pinned to local git archive of requested20e75de; runtimeHead records the independently changing original checkout",
+      "ajvFormatsVersion": "3.0.1",
+      "execution": "local .gs VM; in-memory TS transpilation; fake Google services; domain-only local clock",
       "summary": {
-        "cases": 29,
-        "assertionPass": 29,
-        "assertionFail": 0
+        "dateCases": 23,
+        "timeCases": 6,
+        "assertions": "PASS"
       },
-      "cases": [
+      "dateMatrix": [
         {
-          "name": "baseline",
-          "category": "closed",
-          "assertions": "PASS",
+          "name": "normal",
+          "value": "2000-01-01T00:00:00Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
           "response": {
             "protocolVersion": "1",
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.690Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "acceptedAt": "2026-10-26T15:55:13.158Z",
+            "payloadHash": "5b94f3649660959120106b607486635ba6be6b945dd6fadbc4376f0a12d247bf",
             "duplicate": false
           }
         },
         {
-          "name": "quality_continuous_short_wall",
-          "category": "contract_guard",
-          "assertions": "PASS",
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "semantics": [
-            "time: durationSeconds exceeds wall clock"
-          ]
-        },
-        {
-          "name": "quality_continuous_backward",
-          "category": "contract_guard",
-          "assertions": "PASS",
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "semantics": [
-            "time: completedAt before startedAt",
-            "time: durationSeconds exceeds wall clock"
-          ]
-        },
-        {
-          "name": "quality_resumed_short_wall",
-          "category": "contract_guard",
-          "assertions": "PASS",
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "semantics": [
-            "time: durationSeconds exceeds wall clock"
-          ]
-        },
-        {
-          "name": "quality_resumed_backward",
-          "category": "contract_guard",
-          "assertions": "PASS",
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "semantics": [
-            "time: completedAt before startedAt",
-            "time: durationSeconds exceeds wall clock"
-          ]
-        },
-        {
-          "name": "quality_uncertain_short_wall",
-          "category": "closed",
-          "assertions": "PASS",
+          "name": "fraction1",
+          "value": "2000-01-01T00:00:00.1Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
           "response": {
             "protocolVersion": "1",
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.695Z",
-            "payloadHash": "5d1b1329a66a3ae035aa6dcbbd4efb61236a9cba4ba1675fb6b88a9bbe550dd8",
-            "duplicate": false
-          },
-          "semantics": []
-        },
-        {
-          "name": "quality_uncertain_backward",
-          "category": "closed",
-          "assertions": "PASS",
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.696Z",
-            "payloadHash": "2f6a40beeff7fde970b8bcd31ac75cf1685e8e2b55ab1c5d9d6c862d2186180a",
-            "duplicate": false
-          },
-          "semantics": []
-        },
-        {
-          "name": "legacy_uncertain_same_original_receipt",
-          "category": "closed",
-          "assertions": "PASS",
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "prior-receipt",
-            "acceptedAt": "2026-10-25T00:00:00.123Z",
-            "payloadHash": "79adb799ec786307ccfb9497fabfac3acd1d5f730046ab170da795d7742c9f0c",
-            "duplicate": true
-          }
-        },
-        {
-          "name": "normal_resumed_gap",
-          "category": "closed",
-          "assertions": "PASS",
-          "quality": "resumed",
-          "duration": 35,
-          "wallSeconds": 335,
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "82000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.701Z",
-            "payloadHash": "9ab660ff739334bcbb38cfe5e35589107fa90fb675da4262736312e17a9fcf2b",
+            "acceptedAt": "2026-10-26T15:55:13.161Z",
+            "payloadHash": "6daa104693ae83e70a1706ded25b2f6c99f71d387e07f6a2137e9485c6ab6482",
             "duplicate": false
           }
         },
         {
-          "name": "restore_after_wall_clock_rollback",
-          "category": "remainingP2_producer_quality",
-          "assertions": "PASS",
-          "quality": "resumed",
-          "duration": 30,
-          "wallSeconds": -50,
-          "eventElapsed": [
-            0,
-            30000,
-            30000
+          "name": "fraction3",
+          "value": "2000-01-01T00:00:00.123Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.162Z",
+            "payloadHash": "9ad5b9880c419c5d326bcb88e821b14765e252b83067ec037b5ac5f8466d8ddd",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "fraction4",
+          "value": "2000-01-01T00:00:00.1234Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.164Z",
+            "payloadHash": "7c2d1808135690290ac59a9d53347569798553b71156a3a7f065abe5593c0c0b",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "fraction9",
+          "value": "2000-01-01T00:00:00.123456789Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.165Z",
+            "payloadHash": "f0d07e137d913fa8d2109f32b966271671a29f8ce93fccb2111ecd6a1028ec50",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "lowercase",
+          "value": "2000-01-01t00:00:00z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.167Z",
+            "payloadHash": "2a25e3dc2119d415dbe182f6fdebc1c5aa8dc132309f89699a485eeb15caad62",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "space",
+          "value": "2000-01-01 00:00:00Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.168Z",
+            "payloadHash": "3860f3f8c7c1e2203c82750ad4d70e7e2d796f17fdc525ff8759a64b420f1d4e",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "tab",
+          "value": "2000-01-01\t00:00:00Z",
+          "helper": false,
+          "mini": false,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "newline",
+          "value": "2000-01-01\n00:00:00Z",
+          "helper": false,
+          "mini": false,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "offset_zero",
+          "value": "2000-01-01T00:00:00+00:00",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.172Z",
+            "payloadHash": "4a3f58bd9bd4c93d607d0fb981dba8440891fb55030ece8a9c79f1fbb2232716",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "offset9",
+          "value": "2000-01-01T09:00:00+09:00",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.173Z",
+            "payloadHash": "1c715252ecdd77d40d08b58b1f047bbb552783ec65c44ea3992676ffd749d21f",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "offset_compact",
+          "value": "2000-01-01T09:00:00+0900",
+          "helper": false,
+          "mini": false,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "offset_hour_only",
+          "value": "2000-01-01T09:00:00+09",
+          "helper": false,
+          "mini": false,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": false,
+          "semanticErrors": [
+            "time: unparsable"
           ],
-          "semantics": [
-            "time: completedAt before startedAt",
-            "time: durationSeconds exceeds wall clock"
-          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
             "code": "INVALID_PAYLOAD",
             "retryable": false,
-            "recordId": "82000000-0000-4000-8000-000000000001"
-          },
-          "correctionOnlyQualityAccepted": true
-        },
-        {
-          "name": "hint_at_199_events",
-          "category": "closed_atomic_count_event",
-          "assertions": "PASS",
-          "before": {
-            "events": 199,
-            "hints": 198,
-            "npc": 0
-          },
-          "after": {
-            "events": 200,
-            "hints": 199,
-            "npc": 0
-          },
-          "outcome": "confirmed",
-          "recorded": null,
-          "canonicalBytes": 35679,
-          "semanticErrors": [],
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "PAYLOAD_TOO_LARGE",
-            "retryable": false,
-            "recordId": "82000000-0000-4000-8000-000000000001"
+            "recordId": "00000000-0000-4000-8000-000000000001"
           }
         },
         {
-          "name": "hint_at_200_events",
-          "category": "closed_atomic_count_event",
-          "assertions": "PASS",
-          "before": {
-            "events": 200,
-            "hints": 199,
-            "npc": 0
-          },
-          "after": {
-            "events": 200,
-            "hints": 199,
-            "npc": 0
-          },
-          "outcome": "eventLimit",
-          "recorded": null,
-          "canonicalBytes": 35679,
-          "semanticErrors": [],
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "PAYLOAD_TOO_LARGE",
-            "retryable": false,
-            "recordId": "82000000-0000-4000-8000-000000000001"
-          }
-        },
-        {
-          "name": "npc_at_199_events",
-          "category": "closed_atomic_count_event",
-          "assertions": "PASS",
-          "before": {
-            "events": 199,
-            "hints": 198,
-            "npc": 0
-          },
-          "after": {
-            "events": 200,
-            "hints": 198,
-            "npc": 1
-          },
-          "outcome": null,
-          "recorded": true,
-          "canonicalBytes": 35645,
-          "semanticErrors": [],
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "PAYLOAD_TOO_LARGE",
-            "retryable": false,
-            "recordId": "82000000-0000-4000-8000-000000000001"
-          }
-        },
-        {
-          "name": "npc_at_200_events",
-          "category": "closed_atomic_count_event",
-          "assertions": "PASS",
-          "before": {
-            "events": 200,
-            "hints": 199,
-            "npc": 0
-          },
-          "after": {
-            "events": 200,
-            "hints": 199,
-            "npc": 0
-          },
-          "outcome": null,
-          "recorded": false,
-          "canonicalBytes": 35679,
-          "semanticErrors": [],
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "PAYLOAD_TOO_LARGE",
-            "retryable": false,
-            "recordId": "82000000-0000-4000-8000-000000000001"
-          }
-        },
-        {
-          "name": "date_seconds",
-          "category": "closed_valid_subset",
-          "assertions": "PASS",
-          "value": "2099-02-28T00:00:00Z",
-          "utcFunction": true,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.793Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": false
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2099-02-28T00:00:00Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": true
-          },
-          "storedSuccessSchema": true
-        },
-        {
-          "name": "date_fraction1",
-          "category": "closed_valid_subset",
-          "assertions": "PASS",
-          "value": "2099-02-28T00:00:00.1Z",
-          "utcFunction": true,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.797Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": false
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2099-02-28T00:00:00.1Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": true
-          },
-          "storedSuccessSchema": true
-        },
-        {
-          "name": "date_fraction2",
-          "category": "closed_valid_subset",
-          "assertions": "PASS",
-          "value": "2099-02-28T00:00:00.12Z",
-          "utcFunction": true,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.800Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": false
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2099-02-28T00:00:00.12Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": true
-          },
-          "storedSuccessSchema": true
-        },
-        {
-          "name": "date_fraction3",
-          "category": "closed_valid_subset",
-          "assertions": "PASS",
-          "value": "2099-02-28T00:00:00.123Z",
-          "utcFunction": true,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.804Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": false
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2099-02-28T00:00:00.123Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": true
-          },
-          "storedSuccessSchema": true
-        },
-        {
-          "name": "date_fraction4",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2099-02-28T00:00:00.1234Z",
-          "utcFunction": false,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
-        },
-        {
-          "name": "date_fraction6",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2099-02-28T00:00:00.123000Z",
-          "utcFunction": false,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
-        },
-        {
-          "name": "date_offset_zero",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2099-02-28T00:00:00+00:00",
-          "utcFunction": false,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
-        },
-        {
-          "name": "date_offset9",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2099-02-28T09:00:00+09:00",
-          "utcFunction": false,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
-        },
-        {
-          "name": "date_lowercase",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2099-02-28t00:00:00z",
-          "utcFunction": false,
-          "formalDateTime": true,
-          "intakeResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
-        },
-        {
-          "name": "date_leap_valid",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
+          "name": "leap_utc",
           "value": "2016-12-31T23:59:60Z",
-          "utcFunction": false,
-          "formalDateTime": true,
-          "intakeResponse": {
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": false,
+          "semanticErrors": [
+            "time: unparsable"
+          ],
+          "response": {
             "protocolVersion": "1",
             "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
+            "code": "INVALID_PAYLOAD",
             "retryable": false,
             "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
+          }
         },
         {
-          "name": "date_invalid_day",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2099-02-31T00:00:00Z",
-          "utcFunction": false,
-          "formalDateTime": false,
-          "intakeResponse": {
+          "name": "leap_fraction",
+          "value": "2016-12-31T23:59:60.5Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": false,
+          "semanticErrors": [
+            "time: unparsable"
+          ],
+          "response": {
             "protocolVersion": "1",
             "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
+            "code": "INVALID_PAYLOAD",
             "retryable": false,
             "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
+          }
         },
         {
-          "name": "date_invalid_hour",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2099-02-28T24:00:00Z",
-          "utcFunction": false,
-          "formalDateTime": false,
-          "intakeResponse": {
+          "name": "leap_offset",
+          "value": "2017-01-01T08:59:60+09:00",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": false,
+          "semanticErrors": [
+            "time: unparsable"
+          ],
+          "response": {
             "protocolVersion": "1",
             "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
+            "code": "INVALID_PAYLOAD",
             "retryable": false,
             "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
+          }
         },
         {
-          "name": "date_year_only",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "9999",
-          "utcFunction": false,
-          "formalDateTime": false,
-          "intakeResponse": {
+          "name": "fake_leap",
+          "value": "2016-12-31T12:34:60Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": false,
+          "formalRecord": false,
+          "dateParseFinite": false,
+          "semanticErrors": [
+            "time: unparsable"
+          ],
+          "response": {
             "protocolVersion": "1",
             "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
+            "code": "INVALID_PAYLOAD",
             "retryable": false,
             "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
+          }
         },
         {
-          "name": "date_valid_leap_day",
-          "category": "closed_valid_subset",
-          "assertions": "PASS",
-          "value": "2096-02-29T00:00:00Z",
-          "utcFunction": true,
-          "formalDateTime": true,
-          "intakeResponse": {
+          "name": "leap_day",
+          "value": "2000-02-29T00:00:00Z",
+          "helper": true,
+          "mini": true,
+          "formalDate": true,
+          "formalRecord": true,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
             "protocolVersion": "1",
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T13:52:41.840Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "acceptedAt": "2026-10-26T15:55:13.184Z",
+            "payloadHash": "54024f7959aa5bd307f04ce4ac7e183f25b38595cea2c2205ff74839b6bb19c3",
             "duplicate": false
-          },
-          "storedResponse": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2096-02-29T00:00:00Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": true
-          },
-          "storedSuccessSchema": true
+          }
         },
         {
-          "name": "date_invalid_century",
-          "category": "date_policy_observation",
-          "assertions": "PASS",
-          "value": "2100-02-29T00:00:00Z",
-          "utcFunction": false,
-          "formalDateTime": false,
-          "intakeResponse": {
+          "name": "bad_day",
+          "value": "2000-02-31T00:00:00Z",
+          "helper": false,
+          "mini": false,
+          "formalDate": false,
+          "formalRecord": false,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
             "protocolVersion": "1",
             "ok": false,
-            "code": "SESSION_NOT_ALLOWED",
+            "code": "INVALID_PAYLOAD",
             "retryable": false,
             "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedResponse": {
+          }
+        },
+        {
+          "name": "bad_leap_day",
+          "value": "1900-02-29T00:00:00Z",
+          "helper": false,
+          "mini": false,
+          "formalDate": false,
+          "formalRecord": false,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
             "protocolVersion": "1",
             "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
+            "code": "INVALID_PAYLOAD",
             "retryable": false,
             "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "storedSuccessSchema": null
+          }
+        },
+        {
+          "name": "bad_hour",
+          "value": "2000-01-01T24:00:00Z",
+          "helper": false,
+          "mini": false,
+          "formalDate": false,
+          "formalRecord": false,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "bad_offset",
+          "value": "2000-01-01T00:00:00+24:00",
+          "helper": false,
+          "mini": false,
+          "formalDate": false,
+          "formalRecord": false,
+          "dateParseFinite": false,
+          "semanticErrors": [
+            "time: unparsable"
+          ],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "no_timezone",
+          "value": "2000-01-01T00:00:00",
+          "helper": false,
+          "mini": false,
+          "formalDate": false,
+          "formalRecord": false,
+          "dateParseFinite": true,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
         }
       ],
-      "uiStaticReview": {
-        "npcLimit": "TaskScreen.tsx:170 returns before setInspection/finish when recorded=false",
-        "hintLimit": "TaskScreen.tsx:161-164 always calls show() after requestHint(), without checking eventLimit outcome; domain count/event remains atomic"
-      }
-    },
-    "recordDateDiagnostic": {
-      "head": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
-      "classification": "P2 remaining record date-time calendar validation; independent of fixed ACCEPT_UNTIL/acceptedAt",
-      "input": {
-        "startedAt": "2000-02-31T00:00:00Z",
-        "completedAt": "2000-02-31T00:00:10Z",
-        "durationSeconds": 10,
-        "timeQuality": "continuous"
-      },
-      "nodeNormalized": {
-        "startedAt": "2000-03-02T00:00:00.000Z",
-        "completedAt": "2000-03-02T00:00:10.000Z"
-      },
-      "mini": {
-        "ok": true,
-        "errors": []
-      },
-      "semantics": [],
-      "response": {
-        "protocolVersion": "1",
-        "ok": true,
-        "recordId": "00000000-0000-4000-8000-000000000001",
-        "receiptId": "11111111-2222-4333-8444-000000000001",
-        "acceptedAt": "2026-10-26T13:54:35.074Z",
-        "payloadHash": "6aca83f13a694fe90a6c80deca88afb0582760171219e7c5efbb9e579491c879",
-        "duplicate": false
-      },
-      "formalRecord": {
-        "ok": false,
-        "errors": [
-          {
-            "instancePath": "/startedAt",
-            "schemaPath": "#/properties/startedAt/format",
-            "keyword": "format",
-            "params": {
-              "format": "date-time"
-            },
-            "message": "must match format \"date-time\""
-          },
-          {
-            "instancePath": "/completedAt",
-            "schemaPath": "#/properties/completedAt/format",
-            "keyword": "format",
-            "params": {
-              "format": "date-time"
-            },
-            "message": "must match format \"date-time\""
+      "timeCases": [
+        {
+          "name": "new_stamp_restore_10000",
+          "runQuality": "uncertain",
+          "recordQuality": "uncertain",
+          "activeSeconds": 30,
+          "wallSeconds": 10,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "84000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.249Z",
+            "payloadHash": "312cc71f455d43c4f6e33f9916deb134cd39f2cff872f4ec97a4294c77cb51f3",
+            "duplicate": false
           }
-        ]
-      },
-      "rows": 1,
-      "assertions": "PASS",
-      "execution": "local VM and in-memory fake Google services only"
-    },
-    "qa": {
-      "boundaries": {
-        "generatorNotExecuted": true,
-        "serverExpressionRejected": true,
-        "actualProjectUnchanged": true,
-        "generator": {
-          "passed": 744,
-          "failed": 0
         },
-        "serverDeclaration": {
-          "name": "server-declaration-only",
-          "passed": false,
-          "errors": [
-            "Unexpected token '(', ...\"expected\":(function(\"... is not valid JSON"
+        {
+          "name": "new_stamp_restore_90000",
+          "runQuality": "resumed",
+          "recordQuality": "resumed",
+          "activeSeconds": 30,
+          "wallSeconds": 90,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "84000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.254Z",
+            "payloadHash": "ff090f9bd33e2a21f64f4184e2b52871f558a6dc29a0c3f78e597b4e5f9fb669",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "old_missing_stamp_restore_10000",
+          "runQuality": "resumed",
+          "recordQuality": "resumed",
+          "activeSeconds": 30,
+          "wallSeconds": 10,
+          "semantics": [
+            "time: durationSeconds exceeds wall clock"
           ],
-          "functionCallsExecuted": false
-        }
-      },
-      "prototypeKeyFix": {
-        "oldRedPreserved": true,
-        "sameInputOwnProtoPresent": true,
-        "validatorExit": 1,
-        "validatorPassed": 742,
-        "validatorFailed": 2,
-        "serverSnapshotCheck": {
-          "name": "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1",
-          "passed": false,
-          "expected": "accept",
-          "tier": "current",
-          "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
-          "errors": [
-            {
-              "instancePath": "",
-              "schemaPath": "#/additionalProperties",
-              "keyword": "additionalProperties",
-              "params": {
-                "additionalProperty": "__proto__"
-              },
-              "message": "must NOT have additional properties"
-            }
-          ]
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "84000000-0000-4000-8000-000000000001"
+          }
         },
-        "rejectsOwnProto": true,
-        "failedChecks": [
-          "server-ledger-body:1",
-          "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1"
-        ]
-      },
-      "classification": "owned validator defect fixed; project findings listed separately"
+        {
+          "name": "old_missing_stamp_restore_90000",
+          "runQuality": "resumed",
+          "recordQuality": "resumed",
+          "activeSeconds": 30,
+          "wallSeconds": 90,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "84000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.262Z",
+            "payloadHash": "b63e3a50ee04bc839cb8ee345e03e2f0432b231f0969c4c9d3c86165473ff989",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "uncertain_preserved_repeated_serialize_restore",
+          "qualities": [
+            "uncertain",
+            "uncertain",
+            "uncertain",
+            "uncertain"
+          ],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "84000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.268Z",
+            "payloadHash": "01e21de3f8f8927a23a67d34fe18386f54d6a8274d6bc86b25602cdb14e429bf",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "completed_before_started_forces_uncertain",
+          "recordQuality": "uncertain",
+          "startedAt": "2000-01-01T00:01:00.000Z",
+          "completedAt": "2000-01-01T00:00:10.000Z",
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "84000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T15:55:13.271Z",
+            "payloadHash": "a5de4b82cb622987d44937f229169a08bf45153f7f5881a363de5f0c254545e4",
+            "duplicate": false
+          }
+        }
+      ]
     },
+    "diagnosticClassification": "Expected observations include reproduced remaining defects; not product-conformance pass totals",
     "remainingP1": [],
-    "remainingP2": [
+    "remainingP2Groups": [
       {
         "id": "C-P2-1",
-        "priority": "P2",
-        "summary": "restore producer labels unreliable rollback as resumed"
+        "summary": "legacy draft without serializedAtWallMs can stay resumed after partial clock rollback"
       },
       {
         "id": "C-P2-2",
-        "priority": "P2",
-        "summary": "parent prerequisite event-history validation missing"
+        "summary": "exitVehicle to immediate parent off event relationship not enforced"
       },
       {
         "id": "C-P2-3",
-        "priority": "P2",
-        "summary": "record startedAt/completedAt calendar format differs from formal schema"
+        "summary": "general date-time contract accepts leap-second strings rejected by ingress Date.parse"
       },
       {
         "id": "C-P2-4",
-        "priority": "P2",
-        "summary": "generator Map silently discards earlier duplicate ledger IDs"
+        "summary": "reserved fixture ID in historical ledger bypasses reservation guard"
       },
       {
         "id": "C-P2-5",
-        "priority": "P2",
-        "summary": "same-ID allowedStepIds policy metadata can be overwritten"
+        "summary": "missing-field AND bypass and unversioned policy backfill can change original receipt recovery"
       }
     ],
-    "deployed": false,
     "liveCallsExecuted": false,
-    "originalResultArchivedAt": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/results-before.json"
+    "deployed": false
   },
-  "reviewArtifactsC": [
+  "provenanceD": {
+    "requestedCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
+    "initialHead": "20e75de8041960d0de1912319220e79a1a72cfd0",
+    "observedIntermediateHead": "f4bb88b2472caf979ced5208bec16ca5ffb6084d",
+    "finalObservedHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
+    "externalProjectDiffFromRequested": [
+      "docs/design/docs/10_CHANGELOG_2026-10-20.md",
+      "docs/design/docs/12_0D_준비검토.md",
+      "docs/design/docs/layout-draft-v2-brake-local.html",
+      "docs/design/docs/layout.surveyed.partial.json",
+      "docs/design/docs/teacher-check-0B-followup-C8.html",
+      "docs/design/examples/layout.partial-survey.v1.1.json",
+      "src/data/layout/layout.dev-provisional.json",
+      "tests/scene.test.ts"
+    ],
+    "reviewedPathsByteEqualToRequested": [
+      "scripts/snapshotLib.mjs",
+      "scripts/snapshotLib.d.mts",
+      "scripts/build-demo-snapshots.mjs",
+      "src/data/session/snapshot-ledger.json",
+      "src/data/session/demo-snapshots.json",
+      "server/apps-script/DemoSnapshots.gs",
+      "server/apps-script/Code.gs",
+      "server/apps-script/Validate.gs",
+      "src/domain/taskEngine.ts",
+      "src/domain/record.ts",
+      "src/app/session.ts",
+      "tests/timeQuality.test.ts",
+      "tests/snapshotLib.test.ts",
+      "tests/appsScriptHardening3.test.ts"
+    ],
+    "testAndTimeSource": "git archive requested commit in workspace scratch",
+    "registrySource": "git show requested commit; old policy reproduction uses090de21",
+    "validatorSource": "read-only current project inputs; snapshot/task/receiver/rule files equal requested commit",
+    "externalC8Answer": "collaboration/LAYOUT_SURVEY2_followup_C8.json; partial direction/open-structure answer; dimensions/photos remain pending",
+    "baselineOfficialResultArchivedAt": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/results-before.json"
+  },
+  "reviewArtifactsD": [
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/validator/behavior.mjs",
-      "sha256": "95f0e3c91a2630b99a6b5eca4a485007be6412addd56cbaaba933a1732a83fd1"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/validator/behavior.mjs",
+      "sha256": "6bcf52b66ec3d716d02f55a13dd628ca4ca9492054a7ed891134727acc02b959"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/validator/red-evidence.json",
-      "sha256": "2de206bfd0e526cbf62662f2203cb944e05d1cb42204b2ccff40b9d2a275f460"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/validator/red-evidence.json",
+      "sha256": "70a515be20be6411e42352a554ca72740d8ffea3e9ea67b6ee93e9e93a1e48ae"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/validator/proto-red-evidence.json",
-      "sha256": "0e586695dacb5c278b3597e59c6c6054a612f2d8776d1a67e2707a4bc67d8488"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/validator/verification-summary.json",
+      "sha256": "543348af5b2eb2c61450172bfd06dac04ddca7d74518f1b8465d449648226e1a"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/registry/repro.cjs",
-      "sha256": "6342ae3e555c28c12fc96e88f1ade4b207d04bc3d10a2b17e550edc1c0d3b518"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/qa/independent-results.json",
+      "sha256": "2e72abae874442a909a85d9cb464c7f3f5ea641a44ab57c46c85f287b3909ffa"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/semantics/repro-c.cjs",
-      "sha256": "f85b9dcb680fce8aede6d2d1e1d35f00bd8cdc66413e9bede450d71d907c607a"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/registry/repro.cjs",
+      "sha256": "b6aa97d4260222e08c6721e7bedd4b711a2a08c6460a01d74382b1c38ec29a5d"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/semantics/record-dates.cjs",
-      "sha256": "2962ebb7c9faa0b8bccb38072d9e359e871d2f41cbfcfd31666befb4c1508987"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/semantics/repro-d.cjs",
+      "sha256": "6309458a5149d9f4b64d295856bd7a9e3d03e28b25bdb10e5ccdc627bb74a5ee"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/qa/boundary-results.json",
-      "sha256": "0e89bc761a1f0dfcb92670661b31f1378a783a90157ed48415b63be242992eed"
-    },
-    {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/qa/proto-fixed-results.json",
-      "sha256": "0817cc4b76ec0443b76e003355c52ce6034bad364158c499957d4c5a01a83524"
-    },
-    {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/vitest.config.mjs",
-      "sha256": "bf36ca72369f2cd7d147715f773c0c7210dda88a146088662920c59e03496409"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/vitest.config.mjs",
+      "sha256": "23410d13754dacaec491d7c2bdcd61be9e56f39478e2d4dc45877da070c2f925"
     }
   ],
-  "preservationC": {
-    "checkedAt": "2026-10-26T14:03:50.148801+00:00",
-    "projectHead": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
-    "projectStatus": "",
+  "preservationD": {
+    "checkedAt": "2026-10-26T16:03:21.983559+00:00",
     "excludedDirectories": [
       ".git",
       "node_modules"
     ],
-    "projectFilesChecked": 173,
-    "projectChangedFiles": [],
+    "agentWrittenProjectFiles": [],
+    "projectInitialHead": "20e75de8041960d0de1912319220e79a1a72cfd0",
+    "projectFinalHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
+    "projectStatus": "",
+    "projectFilesBefore": 179,
+    "projectFilesAfter": 180,
+    "baselineToFinalProjectChanges": [
+      "docs/design/docs/10_CHANGELOG_2026-10-20.md",
+      "docs/design/docs/12_0D_준비검토.md",
+      "docs/design/docs/layout-draft-v2-brake-local.html",
+      "docs/design/docs/layout.surveyed.partial.json",
+      "docs/design/docs/teacher-check-0B-followup-C8.html",
+      "docs/design/examples/layout.partial-survey.v1.1.json",
+      "src/data/layout/layout.dev-provisional.json",
+      "tests/scene.test.ts"
+    ],
+    "projectChangesMatchExternalCommittedTree": true,
     "protectedFilesChecked": 75,
     "protectedChangedFiles": [],
-    "handoffFilesBefore": 215,
-    "handoffFilesAfter": 217,
-    "handoffChangedFiles": [
-      "collaboration/CODEX_RETURN_2026-10-26_C.txt",
+    "agentOwnedHandoffChanges": [
+      "collaboration/CODEX_RETURN_2026-10-27_D.txt",
       "collaboration/NEXT_STEP.txt",
       "design-current/docs/10_CHANGELOG_2026-10-20.md",
-      "design-current/docs/15_DIRECT_SUBMISSION_TEST_DESIGN.md",
-      "design-current/docs/17_U_ITEMS_CONTRACT_REVISION_2026-10-26.md",
       "design-current/docs/18_0C_DEPLOYMENT_CHECKLIST.md",
+      "design-current/docs/19_STATUS_2026-10-27.md",
       "design-current/validation/results.uitems.json",
       "design-current/validation/validate_uitems.mjs"
     ],
-    "onlyAuthorizedChanges": true,
+    "observedExternalHandoffChanges": [
+      "collaboration/LAYOUT_SURVEY2_2026-10-26.notes.txt",
+      "collaboration/LAYOUT_SURVEY2_followup_C8.json",
+      "collaboration/NEXT_STEP.txt",
+      "design-current/docs/10_CHANGELOG_2026-10-20.md",
+      "design-current/docs/12_0D_준비검토.md",
+      "design-current/docs/layout-draft-v2-brake-local.html",
+      "design-current/docs/layout.surveyed.partial.json",
+      "design-current/docs/teacher-check-0B-followup-C8.html",
+      "design-current/examples/layout.partial-survey.v1.1.json"
+    ],
+    "totalHandoffChanges": [
+      "collaboration/CODEX_RETURN_2026-10-27_D.txt",
+      "collaboration/LAYOUT_SURVEY2_2026-10-26.notes.txt",
+      "collaboration/LAYOUT_SURVEY2_followup_C8.json",
+      "collaboration/NEXT_STEP.txt",
+      "design-current/docs/10_CHANGELOG_2026-10-20.md",
+      "design-current/docs/12_0D_준비검토.md",
+      "design-current/docs/18_0C_DEPLOYMENT_CHECKLIST.md",
+      "design-current/docs/19_STATUS_2026-10-27.md",
+      "design-current/docs/layout-draft-v2-brake-local.html",
+      "design-current/docs/layout.surveyed.partial.json",
+      "design-current/docs/teacher-check-0B-followup-C8.html",
+      "design-current/examples/layout.partial-survey.v1.1.json",
+      "design-current/validation/results.uitems.json",
+      "design-current/validation/validate_uitems.mjs"
+    ],
+    "handoffFilesBefore": 219,
+    "handoffFilesAfter": 223,
+    "externalSectionsAndNextStepPreserved": true,
+    "onlyClassifiedChanges": true,
     "passed": true
   }
 }

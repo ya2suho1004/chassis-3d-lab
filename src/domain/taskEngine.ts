@@ -363,8 +363,10 @@ export function rehydrateRun(snap: RunSnapshot, deps: EngineDeps = defaultDeps()
   const { lastElapsedMs, snapshotVersion: _v, serializedAtWallMs, ...rest } = snap
   const now = deps.now()
   // 저장 시각보다 이른 벽시계로 복원되면 시계를 신뢰할 수 없다 → uncertain (04 §7, Codex C-P2-1)
-  const clockWentBack = typeof serializedAtWallMs === 'number' && now < serializedAtWallMs
-  const timeQuality: TaskRun['timeQuality'] = rest.timeQuality === 'uncertain' || clockWentBack ? 'uncertain' : 'resumed'
+  // 저장 시각 근거가 없는 옛 초안은 시계를 신뢰할 수 없으므로 보수적으로 uncertain (Codex D C-P2-1)
+  const noWallClock = typeof serializedAtWallMs !== 'number'
+  const clockWentBack = !noWallClock && now < serializedAtWallMs
+  const timeQuality: TaskRun['timeQuality'] = rest.timeQuality === 'uncertain' || clockWentBack || noWallClock ? 'uncertain' : 'resumed'
   const base: TaskRun = { ...rest, offProgress: rest.offProgress ?? [], startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality }
   depsByRun.set(base, deps)
   return appendEvent(base, { type: 'resumed', reasonCode: 'restored' }).run

@@ -1,13 +1,14 @@
 # 18. 0C 학교 시험 배포 준비·D01 기록지
 
-2026-10-26 · **현재 실배포/실제 호출 NOT_RUN.** 이 문서는 준비 점검표이며 배포 승인이 아니다. 별도로 허용된 학교 시험 때 교사가 작성한다.
-기준: [15 §8·§9](15_DIRECT_SUBMISSION_TEST_DESIGN.md), 프로젝트 `server/apps-script/README.md`. 미해결 코드 항목은 [회신 C §2](../../collaboration/CODEX_RETURN_2026-10-26_C.txt)에 있다. 실자료·사진·계정 이메일·토큰을 기록하지 않는다.
+2026-10-27 갱신 · **현재 실배포/실제 호출 NOT_RUN.** 이 문서는 준비 점검표이며 배포 승인이 아니다. 별도로 허용된 학교 시험 때 교사가 작성한다.
+기준: [15 §8·§9](15_DIRECT_SUBMISSION_TEST_DESIGN.md), 프로젝트 `server/apps-script/README.md`. 최신 종결 판정·미해결 항목은 [회신 D §2](../../collaboration/CODEX_RETURN_2026-10-27_D.txt)에 있다. 실자료·사진·계정 이메일·토큰을 기록하지 않는다.
 
 ## 배포 전 확인
 
 - [ ] 학교 정책: Apps Script·배포자 실행·비로그인 익명 웹 앱 허용. 막히면 개인 계정 우회 없이 중계 검토. 학교 PC/태블릿·새 비로그인 프로필·학교망에서 `github.io`/`script.google.com`/`script.googleusercontent.com` 접근 조건 확인.
 - [ ] 시험용 비공개 Sheet: 운영/연구 자료와 분리, 배포자 쓰기 가능, 학생 공유 없음. 탭 `canonical`, 1행 순서 `recordId | receiptId | acceptedAt | payloadHash | payloadJson`. 보관·종료 담당 정함.
 - [ ] 같은 커밋의 **7개 파일**: `Code.gs`, `Jcs.gs`, `JsonStrict.gs`, `Validate.gs`, `Schemas.gs`, `DemoSnapshots.gs`, `appsscript.json`. 빠진 파일 없음. 원장 과거 ID 보존, 앱=active, 서버=원장 전체+fixture 확인.
+- [ ] 원장·서버의 `stepPrerequisites`가 해당 `taskDefinitionVersion` 정식 과제와 같고 `allowedStepIds`는 parent12+off하위3이다. ID는 `snapshotLib` 규칙v1로 독립 재계산해 일치. fixture의 두 범위 필드는 null, 과거 누락필드 이관은 기존 범위/원본/receipt 보존 근거를 별도 확인.
 - [ ] 서버 속성은 아래에 계획값을 먼저 기록. snapshot 허용 목록은 속성이 아닌 `DemoSnapshots.gs`임을 확인.
 
 | 설정 | 교사 계획값·확인 |
@@ -17,7 +18,7 @@
 | `MAX_NEW_ROWS` | ______행 (1~100000 정수). 누적 상한이며 시간만으로 회복하지 않음 |
 | `LOCK_WAIT_MS` | ______ms (README 시험 설정 10000). 동시 시험량은 D05에서 별도 결정 |
 
-- [ ] 앱/Script 배포 커밋 ______ / 원장 ruleVersion ______ / 원장 active·retired ______·______ / 앱·서버 항목 수 ______·______ / 목록 해시 기록 위치 ______. 이 검토에서 확인한 기준은 `090de21`; 수정 후에는 실제 배포 커밋으로 다시 대조.
+- [ ] 앱/Script 배포 커밋 ______ / 원장 ruleVersion ______ / 원장 active·retired ______·______ / 앱·서버 항목 수 ______·______ / 목록 해시 기록 위치 ______. 이번 코드 검토 기준은 `20e75de`; 그 이후의 수정까지 포함한 **같은 실제 커밋**인지 대조한다(단순히 이후 커밋이라는 이유만으로 통과하지 않음).
 - [ ] 시험 앱의 `VITE_SUBMIT_ENDPOINT`는 해당 시험 배포의 고정 `/exec`. `/dev`·가짜 수신점·일회성 리다이렉트 URL 아님. 수동 빌드의 `.env.production` 또는 Pages workflow의 `vars.VITE_SUBMIT_ENDPOINT` 중 실제 주입 경로와 번들 적용값 확인.
 - [ ] 합성 D-01 등 D-xx만 사용(fixture는 D-00), `DEMO/DEMO-ONLY/demo`, 연구사용 미승인. `layoutConfirmed=false`·`researchEligible=false`·과제 pending(U1) 유지. 계정/권한 변경은 이 표로 실행 승인되지 않음.
 

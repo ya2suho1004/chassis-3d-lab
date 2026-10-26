@@ -84,7 +84,7 @@ function validateRequestEnvelope(req) {
 /** 스키마가 표현하지 못하는 record 의미 조건(04 §5·§7·§8, Codex 검토 B3). 실패 목록을 돌려준다. 값을 고치지 않는다. */
 function validateRecordSemantics_(p) {
   var errors = [];
-  var started = Date.parse(p.startedAt), completed = Date.parse(p.completedAt);
+  var started = parseDateTimeMs_(p.startedAt), completed = parseDateTimeMs_(p.completedAt);
   var quality = p.timing && p.timing.timeQuality;
   if (!(isFinite(started) && isFinite(completed))) errors.push('time: unparsable');
   else if (quality !== 'uncertain') { // uncertain(벽시계 변경 감지)은 벽시계 비교를 하지 않는다(04 §7, Codex B3-a)
@@ -136,32 +136,67 @@ function validateRecordSemantics_(p) {
 function validateStepEvents_(p, allowedStepIds, stepPrerequisites) {
   var errors = [];
   var events = Array.isArray(p.stepEvents) ? p.stepEvents : [];
-  var seenSub = []; var offDone = false; var completedParents = Object.create(null);
+  var seenSub = []; var offDone = false; var completedParents = Object.create(null); var exitIndex = -1;
+  var registry = !!allowedStepIds; // 과거 fixture(null)는 등록·중복·직후 연결 검사를 소급하지 않는다
   for (var i = 0; i < events.length; i++) {
     var e = events[i];
     if (e.type !== 'stepCompleted') continue;
-    if (allowedStepIds && allowedStepIds.indexOf(e.stepId) < 0) errors.push('steps: unregistered stepId ' + e.stepId);
-    if (typeof e.stepId === 'string' && e.stepId.indexOf('off:') !== 0) {
-      // parent 단계: 중복 금지, 선행 그래프(해당 과제 버전) 충족(Codex C-P2-2). 중단 기록의 부분 이력은 허용.
-      if (completedParents[e.stepId] === true) errors.push('steps: duplicate parent ' + e.stepId);
+    if (registry && allowedStepIds.indexOf(e.stepId) < 0) errors.push('steps: unregistered stepId ' + e.stepId);
+    if (typeof e.stepId === 'string' && e.stepId.indexOf('off:') === 0) {
+      var action = e.stepId.slice(4);
+      var order = ['motorOff', 'liftUp', 'exitVehicle'];
+      if (offDone) errors.push('steps: sub-action after parent off');
+      if (order.indexOf(action) !== seenSub.length) errors.push('steps: off sub-action out of order ' + action);
+      // parent off의 선행 조건은 첫 하위 행동 시작에 상속된다(producer와 동일, Codex D C-P2-2)
+      if (seenSub.length === 0 && stepPrerequisites && Object.prototype.hasOwnProperty.call(stepPrerequisites, 'off')) {
+        var preOff = stepPrerequisites['off'];
+        for (var r = 0; r < preOff.length; r++) if (completedParents[preOff[r]] !== true) errors.push('steps: prerequisite ' + preOff[r] + ' not completed before off sub-actions');
+      }
+      seenSub.push(action);
+      if (action === 'exitVehicle') exitIndex = i;
+    } else if (e.stepId === 'off') {
+      if (registry && seenSub.length !== 3) errors.push('steps: off completed without its sub-actions');
+      if (registry && exitIndex !== i - 1) errors.push('steps: parent off must immediately follow off:exitVehicle');
+      if (registry && completedParents['off'] === true) errors.push('steps: duplicate parent off');
+      completedParents['off'] = true; offDone = true;
+    } else {
+      // parent 단계: 중복 금지(등록 검사 대상일 때), 선행 그래프 충족(Codex C-P2-2). 중단 기록의 부분 이력은 허용.
+      if (registry && completedParents[e.stepId] === true) errors.push('steps: duplicate parent ' + e.stepId);
       if (stepPrerequisites && Object.prototype.hasOwnProperty.call(stepPrerequisites, e.stepId)) {
         var pre = stepPrerequisites[e.stepId];
         for (var q = 0; q < pre.length; q++) if (completedParents[pre[q]] !== true) errors.push('steps: prerequisite ' + pre[q] + ' not completed before ' + e.stepId);
       }
       completedParents[e.stepId] = true;
     }
-    if (typeof e.stepId === 'string' && e.stepId.indexOf('off:') === 0) {
-      var action = e.stepId.slice(4);
-      var order = ['motorOff', 'liftUp', 'exitVehicle'];
-      if (offDone) errors.push('steps: sub-action after parent off');
-      if (order.indexOf(action) !== seenSub.length) errors.push('steps: off sub-action out of order ' + action);
-      seenSub.push(action);
-    } else if (e.stepId === 'off') {
-      if (allowedStepIds && seenSub.length !== 3) errors.push('steps: off completed without its sub-actions');
-      offDone = true;
-    }
+  }
+  if (registry && exitIndex >= 0 && !offDone) {
+    // exitVehicle 뒤에 parent off가 없으면(중단 꼬리) 허용하되, 그 다음 사건이 다른 것이면 '직후' 규칙 위반
+    var nextEv = events[exitIndex + 1];
+    if (nextEv && !(nextEv.type === 'stepCompleted' && nextEv.stepId === 'off')) errors.push('steps: event after off:exitVehicle is not parent off');
   }
   return errors;
+}
+
+/** RFC 3339 date-time을 원문 변경 없이 ms로 환산(윤초 :60은 UTC 23:59에서만, ajv-formats와 같은 범위). 유효하지 않으면 NaN. Codex D C-P2-3 */
+function parseDateTimeMs_(s) {
+  if (typeof s !== 'string') return NaN;
+  var m = /^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2}):(\d{2})(\.\d+)?([Zz]|([+-])(\d{2}):(\d{2}))$/.exec(s);
+  if (!m) return NaN;
+  var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]), h = Number(m[4]), mi = Number(m[5]), sec = Number(m[6]);
+  var frac = m[7] ? Number(m[7]) : 0;
+  if (mo < 1 || mo > 12 || d < 1 || h > 23 || mi > 59 || sec > 60) return NaN;
+  var leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  var dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+  if (d > dim) return NaN;
+  var offMin = 0;
+  if (m[9]) { var oh = Number(m[10]), om = Number(m[11]); if (oh > 23 || om > 59) return NaN; offMin = (oh * 60 + om) * (m[9] === '-' ? -1 : 1); }
+  if (sec === 60) { var utcMin = ((h * 60 + mi - offMin) % 1440 + 1440) % 1440; if (utcMin !== 1439) return NaN; }
+  return Date.UTC(y, mo - 1, d, h, mi, 0) + sec * 1000 + Math.round(frac * 1000) - offMin * 60000;
+}
+
+/** 일반 record date-time(RFC 3339)의 실제 달력 유효성: 오프셋·소문자 t/z·소수 자릿수 허용, 2000-02-31 같은 값 거절. 정규화해 수락하지 않는다. */
+function isValidDateTimeGeneral_(s) {
+  return !isNaN(parseDateTimeMs_(s));
 }
 
 /** 존재하는 달력 날짜의 UTC 시각(…Z)인지: 형식 + 왕복 비교(2026-02-31 같은 값 거절). Codex B4·B5 */
