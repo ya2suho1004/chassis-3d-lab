@@ -167,7 +167,7 @@
       },
       "interactiveForMvp": false,
       "accessPoints": [],
-      "surveyReference": "P1-10 남북10.00×동서4.10 — 2차 확인 ‘맞음’(C-2 해소). 위치: 남동 모서리에서 동쪽으로(동쪽 벽 바깥). 시작점·입구 폭·사진 미제공(C-8)"
+      "surveyReference": "P1-10 남북10.00×동서4.10 — 2차 확인 ‘맞음’(C-2 해소). C-8 대안(2026-10-26): 연결 변은 남쪽, 구역 사이 칸막이 벽 없음(개방 구조). 시작점·입구 폭·사진 미제공 → 위치는 남쪽 변 동쪽 끝 아래로 가정"
     },
     {
       "equipmentId": "lift-zone-01/a",
@@ -595,6 +595,22 @@
       },
       "rawReference": "collaboration/LAYOUT_SURVEY2_followup.json#brakeZone.deskCenter",
       "notes": "Desk center at x=+1.10, z=-0.80 (0.80 north of the roller axis line). Desk size still unmeasured. Resolves C-6. Exported 2026-10-26; measurer/tool not recorded."
+    },
+    {
+      "measurementId": "S4-abs-side",
+      "targetId": "abs-vehicle-zone-01",
+      "quantityKind": "specification",
+      "values": {
+        "photosProvided": 0
+      },
+      "unit": "count",
+      "sourceType": "reportedSpecification",
+      "verificationStatus": "referenceUnclear",
+      "referenceFrom": "main zone (chassis practice area)",
+      "referenceTo": "ABS vehicle zone — connection side chosen by teacher without measurement",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_SURVEY2_followup_C8.json#absZone",
+      "notes": "Teacher answer (no site measurement): the ABS zone connects on the SOUTH side of the main zone. Teacher note: the whole auto-repair workshop is one open-plan space without partition walls between zones. Supersedes the 2026-10-26 reading of eastOfSouthEdge as \"outside the east wall\". Start point, entrance width and photos still not provided; location remains assumed (south of the south edge, at its east end, 4.10×10.00)."
     }
   ]
 }

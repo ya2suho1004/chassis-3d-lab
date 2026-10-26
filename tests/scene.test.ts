@@ -124,7 +124,7 @@ describe('2차 실측(2026-10-26) 반영', () => {
     const p = layout.pillars.find((x) => x.id === 'pillar-4')!
     expect(tester.x - 1.5 - (p.x + p.size / 2)).toBeCloseTo(1.5, 5)
   })
-  test('리프트 바닥판은 2.20×4.00이고 ABS 구역은 4.10×10.00으로 동쪽 벽 바깥에 있다', () => {
+  test('리프트 바닥판은 2.20×4.00이고 ABS 구역은 4.10×10.00으로 남쪽 변 동쪽 끝 아래에 이어진다(C-8: 연결 변 남쪽)', () => {
     for (const id of ['lift-zone-01/a', 'lift-zone-01/b', 'lift-zone-01/c']) {
       const l = layout.equipment.find((e) => e.id === id)!
       expect([l.w, l.d]).toEqual([2.2, 4.0])
@@ -132,6 +132,7 @@ describe('2차 실측(2026-10-26) 반영', () => {
     const ab = layout.absProtrusion!
     expect(ab.xMax - ab.xMin).toBeCloseTo(4.1, 5)
     expect(ab.zMax - ab.zMin).toBeCloseTo(10.0, 5)
-    expect(ab.xMin).toBeCloseTo(layout.mainZone.xMax, 5)
+    expect(ab.zMin).toBeCloseTo(layout.mainZone.zMax, 5)
+    expect(ab.xMax).toBeCloseTo(layout.mainZone.xMax, 5)
   })
 })
