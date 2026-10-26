@@ -581,14 +581,18 @@
       "quantityKind": "distance",
       "values": {
         "eastWest": 1.1,
-        "northSouth": -0.8
+        "northDistance": 0.8
       },
       "unit": "m",
       "sourceType": "reportedMeasured",
       "verificationStatus": "accepted",
       "referenceFrom": "P1-1 roller reference",
       "referenceTo": "desk top center, floor projection (followup C-6, both axes asked together)",
-      "derivedConstraint": null,
+      "derivedConstraint": {
+        "axis": "z",
+        "value": -0.8,
+        "assumption": "Desk top center lies 0.80 m north of the roller axis line (z=-0.80) and 1.10 m east (x=+1.10). Desk size unmeasured."
+      },
       "rawReference": "collaboration/LAYOUT_SURVEY2_followup.json#brakeZone.deskCenter",
       "notes": "Desk center at x=+1.10, z=-0.80 (0.80 north of the roller axis line). Desk size still unmeasured. Resolves C-6. Exported 2026-10-26; measurer/tool not recorded."
     }
