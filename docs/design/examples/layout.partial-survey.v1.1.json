@@ -121,7 +121,7 @@
       "position": {
         "x": 1.1,
         "y": 0,
-        "z": null,
+        "z": -0.8,
         "rotationYDegrees": null
       },
       "size": {
@@ -131,7 +131,7 @@
       },
       "interactiveForMvp": false,
       "accessPoints": [],
-      "surveyReference": "2차(S2-d) 동 1.10(직접 답). 남북 답 0은 조작부 앞면과 같은 선이라 재확인(C-6) — 책상 크기 미측정이라 겹침을 수치로 단정하지 않음. 학생은 남쪽에 앉음(0B 문항 ‘앉는 쪽’). 사진 26·27"
+      "surveyReference": "C-6 후속(S3-desk, 2026-10-26): 상판 중앙 동 1.10·북 0.80 실측. 크기 미측정. 학생은 남쪽에 앉음(0B). 사진 26·27"
     },
     {
       "equipmentId": "toe-gauge-zone-01",
@@ -503,7 +503,7 @@
       "referenceFrom": "P1-1 roller reference",
       "referenceTo": "desk top center, floor projection; teacher answer facing=S means the student SITS on the south side (0B wording 앉는 쪽), not line of sight",
       "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#brakeZone.deskCenter",
-      "notes": "Direct answer eastWest=1.10 (same as first-survey straight distance). northSouth=0 would place the desk center 0.20 m west of the panel front on the same line; desk size is unmeasured so overlap cannot be asserted numerically. Photos 27/28 suggest the desk is beside the rear door, toward the car front, but that offset is not a measurement. C-6: re-ask east-west and north-south together from the same origin without presuming which is wrong.",
+      "notes": "Direct answer eastWest=1.10 (same as first-survey straight distance). northSouth=0 would place the desk center 0.20 m west of the panel front on the same line; desk size is unmeasured so overlap cannot be asserted numerically. Photos 27/28 suggest the desk is beside the rear door, toward the car front, but that offset is not a measurement. C-6: re-ask east-west and north-south together from the same origin without presuming which is wrong. SUPERSEDED 2026-10-26 by S3-desk (teacher re-measured east-west and north-south together).",
       "derivedConstraint": null
     },
     {
@@ -574,6 +574,23 @@
       "rawReference": "collaboration/LAYOUT_SURVEY2_결과.json#lifts.depthNS",
       "notes": "Plates 2.20×4.00. Gaps and positions not measured.",
       "derivedConstraint": null
+    },
+    {
+      "measurementId": "S3-desk",
+      "targetId": "brake-record-desk-01",
+      "quantityKind": "distance",
+      "values": {
+        "eastWest": 1.1,
+        "northSouth": -0.8
+      },
+      "unit": "m",
+      "sourceType": "reportedMeasured",
+      "verificationStatus": "accepted",
+      "referenceFrom": "P1-1 roller reference",
+      "referenceTo": "desk top center, floor projection (followup C-6, both axes asked together)",
+      "derivedConstraint": null,
+      "rawReference": "collaboration/LAYOUT_SURVEY2_followup.json#brakeZone.deskCenter",
+      "notes": "Desk center at x=+1.10, z=-0.80 (0.80 north of the roller axis line). Desk size still unmeasured. Resolves C-6. Exported 2026-10-26; measurer/tool not recorded."
     }
   ]
 }

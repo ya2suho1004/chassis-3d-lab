@@ -54,7 +54,7 @@
       <tr><td>P1-10</td><td>ABS 측정 차량 구역(돌출부) 남북 × 동서</td><td>10.00 × 4.10</td><td><span class="k q">확인</span></td><td>2차 확인 ‘맞음’(C-2 해소). 위치는 ‘남동 모서리에서 동쪽으로’(동쪽 벽 바깥) → 시작점·입구 폭·사진 미확정(C-8)</td></tr>
       <tr><td>S2-f</td><td>장비 서쪽 끝 → 리프트 옆 기둥 동쪽 면</td><td>1.50</td><td><span class="k m">실측</span></td><td>2차. 기둥 동쪽 면 x=−3.00. 남북 위치·단면 미측정(C-9)</td></tr>
       <tr><td>S2-lift</td><td>리프트 바닥판 남북(세로)</td><td>4.00</td><td><span class="k m">실측</span></td><td>2차. 가로 2.20과 함께 크기 확정. 위치·사이 간격 미측정</td></tr>
-      <tr><td>S2-d</td><td>책상 상판 중앙 남북 거리</td><td>?</td><td><span class="k q">확인</span></td><td>2차 답 ‘0’은 조작부 앞면과 같은 선(C-6). 책상 크기 미측정이라 겹침 단정 불가. 사진 28의 ‘차 앞쪽 약 0.8’은 실측 아님</td></tr>
+      <tr><td>S3-desk</td><td>책상 상판 중앙 동서/남북</td><td>+1.10 / −0.80</td><td><span class="k m">실측</span></td><td><b>C-6 후속(2026-10-26) 실측: 동 1.10 · 북 0.80</b>. 책상 크기는 미측정</td></tr>
       <tr><td>P2-1</td><td>기둥 총수</td><td>4</td><td><span class="k m">실측</span></td><td>이 도면에는 그리지 않음(위치 미측정)</td></tr>
       <tr><td>P2-3</td><td>기둥 간격(1→2→3→4 동일)</td><td>4.00</td><td><span class="k m">실측</span></td><td>중심 간/면 간 미확인(C-4)</td></tr>
       <tr><td>P2-5</td><td>리프트 바닥판 가로(3대 동일)</td><td>2.20</td><td><span class="k m">실측</span></td><td>세로·위치·간격 미측정</td></tr>
@@ -102,13 +102,16 @@ svg.appendChild(el('text',{x:0.85,y:-1.3,'font-size':F*0.8,fill:'#b42318'},'차 
 svg.appendChild(el('circle',{cx:0,cy:0,r:1.3,fill:'none',stroke:'#1b5e20','stroke-width':0.05,'stroke-dasharray':'0.2 0.15'}));
 svg.appendChild(el('text',{x:-2.6,y:1.45,'font-size':F*0.8,fill:'#1b5e20'},'조작부 거리 1.30 (1차) → 2차: 동쪽, 남북 0 (확정)'));
 svg.appendChild(el('circle',{cx:0,cy:0,r:1.1,fill:'none',stroke:'#6b4e00','stroke-width':0.05,'stroke-dasharray':'0.12 0.12'}));
-svg.appendChild(el('text',{x:-2.6,y:1.85,'font-size':F*0.8,fill:'#6b4e00'},'책상 거리 1.10 → 2차: 동 1.10(직접 답). 남북 ‘0’은 조작부 앞면과 같은 선 → 동서·남북 함께 재확인(C-6)'));
+svg.appendChild(el('text',{x:-2.6,y:1.85,'font-size':F*0.8,fill:'#6b4e00'},'책상 상판 중앙 (+1.10, −0.80) — C-6 후속 실측(2026-10-26). 크기는 미측정(점선 상자는 가정)'));
 // 조작부 가정 상자(크기 실측 0.70×0.50, 위치 가정)
 svg.appendChild(el('rect',{x:1.3,y:-0.35,width:0.5,height:0.7,fill:'#fff8c4',stroke:'#8a6d00','stroke-width':0.08}));
 svg.appendChild(el('text',{x:1.3,y:-0.5,'font-size':F*0.7,fill:'#8a6d00'},'조작부 앞면 x=+1.30, 서향 (2차 실측) · 본체 0.50 깊이 → 벽까지 0.20'));
 // 서쪽 기둥 동쪽 면 x=-3.00 (2차 S2-f, z 가정)
 svg.appendChild(el('line',{x1:-3.0,y1:-1.5,x2:-3.0,y2:1.5,stroke:'#555','stroke-width':0.12}));
 svg.appendChild(el('text',{x:-5.4,y:1.9,'font-size':F*0.8,fill:'#555'},'리프트 옆 기둥 동쪽 면 x=−3.00 (2차 실측 1.50, 남북 위치 가정)'));
+// 책상 중심 (1.10, -0.80) 실측(C-6 후속), 크기 0.60×0.50 가정
+svg.appendChild(el('rect',{x:0.8,y:-1.05,width:0.6,height:0.5,fill:'#f3e9d8',stroke:'#6b4e00','stroke-width':0.05,'stroke-dasharray':'0.12 0.1'}));
+svg.appendChild(el('circle',{cx:1.1,cy:-0.8,r:0.06,fill:'#6b4e00'}));
 // 토 측정 구역 z=-3.50
 svg.appendChild(el('line',{x1:-5.5,y1:-3.5,x2:1.9,y2:-3.5,stroke:'#1a3f9c','stroke-width':0.05,'stroke-dasharray':'0.3 0.2'}));
 svg.appendChild(el('text',{x:-5.4,y:-3.65,'font-size':F*0.8,fill:'#1a3f9c'},'토 측정 구역: 원점에서 북쪽 3.50 (실측, 기준 점·x 미확인)'));

@@ -121,7 +121,7 @@
       "position": {
         "x": 1.1,
         "y": 0,
-        "z": null,
+        "z": -0.8,
         "rotationYDegrees": null
       },
       "size": {
@@ -131,7 +131,7 @@
       },
       "interactiveForMvp": false,
       "accessPoints": [],
-      "surveyReference": "2차(S2-d) 동 1.10(직접 답). 남북 답 0은 조작부 앞면과 같은 선이라 재확인(C-6) — 책상 크기 미측정이라 겹침을 수치로 단정하지 않음. 학생은 남쪽에 앉음(0B 문항 ‘앉는 쪽’). 사진 26·27"
+      "surveyReference": "C-6 후속(S3-desk, 2026-10-26): 상판 중앙 동 1.10·북 0.80 실측. 크기 미측정. 학생은 남쪽에 앉음(0B). 사진 26·27"
     },
     {
       "equipmentId": "toe-gauge-zone-01",
