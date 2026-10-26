@@ -30,18 +30,25 @@ const demoSession: SessionContext = {
   versions: { layoutVersion: 'surveyed-partial-2026-10-21', judgeEngineVersion: '0.1.0', sessionConfigVersion: 'unapproved', researchProtocolVersion: 'unapproved', feedbackPolicyVersion: 'unapproved' },
   clientAppVersion: '0.1.0-dev',
   startedAtIso: '2026-10-21T13:00:00Z',
+  vehicleEntryDirection: null,
 }
 
 function fullRun() {
   let s = createTaskRun(task, { difficultyMode: 'unguided' }, deps)
-  for (const id of ['ppe', 'tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+  s = attempt(s, { type: 'step', stepId: 'ppe' }, aid()).run
+  s = attempt(s, { type: 'confirmSafety', conditionId: 's-engine' }, aid()).run
+  for (const id of ['tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
   s = submitResponse(s, 'axleWeight', '600', aid()).run
   for (const id of ['axle', 'mode']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
   s = attempt(s, { type: 'confirmSafety', conditionId: 's-lift' }, aid()).run
   for (const id of ['lower', 'motor', 'press']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
   s = submitResponse(s, 'left', '250', aid()).run
   s = submitResponse(s, 'right', '190', aid()).run
-  for (const id of ['read', 'off']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+  s = attempt(s, { type: 'step', stepId: 'read' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'motorOff' }, aid()).run
+  s = attempt(s, { type: 'confirmSafety', conditionId: 's-lift' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'liftUp' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'exitVehicle' }, aid()).run
   s = submitResponse(s, 'deviation', '10.0', aid()).run
   s = submitResponse(s, 'sum', '73.3', aid()).run
   s = submitResponse(s, 'vehicleCondition', 'pass', aid()).run // 최초 오답

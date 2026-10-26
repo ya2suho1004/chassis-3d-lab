@@ -22,6 +22,7 @@ function start(task = task1, mode: 'guided' | 'unguided' = 'guided') {
 function runHappyPath(task = task1) {
   let s = start(task)
   s = attempt(s, { type: 'step', stepId: 'ppe' }, aid()).run
+  s = attempt(s, { type: 'confirmSafety', conditionId: 's-engine' }, aid()).run
   s = attempt(s, { type: 'step', stepId: 'tire' }, aid()).run
   s = attempt(s, { type: 'step', stepId: 'equip' }, aid()).run
   s = attempt(s, { type: 'step', stepId: 'enter' }, aid()).run
@@ -35,7 +36,10 @@ function runHappyPath(task = task1) {
   s = submitResponse(s, 'left', String(task.measurement.left), aid()).run
   s = submitResponse(s, 'right', String(task.measurement.right), aid()).run
   s = attempt(s, { type: 'step', stepId: 'read' }, aid()).run
-  s = attempt(s, { type: 'step', stepId: 'off' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'motorOff' }, aid()).run
+  s = attempt(s, { type: 'confirmSafety', conditionId: 's-lift' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'liftUp' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'exitVehicle' }, aid()).run
   return s
 }
 
@@ -80,7 +84,9 @@ describe('과제 엔진 — 순서와 안전 인터록', () => {
 
   test('리프트 하강은 주변 확인(s-lift) 없이는 차단된다', () => {
     let s = start()
-    for (const id of ['ppe', 'tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+    s = attempt(s, { type: 'step', stepId: 'ppe' }, aid()).run
+    s = attempt(s, { type: 'confirmSafety', conditionId: 's-engine' }, aid()).run
+    for (const id of ['tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
     s = submitResponse(s, 'axleWeight', '600', aid()).run
     s = attempt(s, { type: 'step', stepId: 'axle' }, aid()).run
     s = attempt(s, { type: 'step', stepId: 'mode' }, aid()).run
@@ -94,7 +100,9 @@ describe('과제 엔진 — 순서와 안전 인터록', () => {
 
   test('축중을 입력하기 전에는 축중 확인 단계가 끝나지 않는다', () => {
     let s = start()
-    for (const id of ['ppe', 'tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+    s = attempt(s, { type: 'step', stepId: 'ppe' }, aid()).run
+    s = attempt(s, { type: 'confirmSafety', conditionId: 's-engine' }, aid()).run
+    for (const id of ['tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
     const r = attempt(s, { type: 'step', stepId: 'axle' }, aid())
     expect(r.outcome).toBe('incomplete')
     expect(r.reasonCode).toBe('NEEDS_RESPONSE_axleWeight')
@@ -103,7 +111,9 @@ describe('과제 엔진 — 순서와 안전 인터록', () => {
 
   test('측정 중 가속 페달 조작은 안전 위반으로 차단된다', () => {
     let s = start()
-    for (const id of ['ppe', 'tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+    s = attempt(s, { type: 'step', stepId: 'ppe' }, aid()).run
+    s = attempt(s, { type: 'confirmSafety', conditionId: 's-engine' }, aid()).run
+    for (const id of ['tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
     s = submitResponse(s, 'axleWeight', '600', aid()).run
     for (const id of ['axle', 'mode']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
     s = attempt(s, { type: 'confirmSafety', conditionId: 's-lift' }, aid()).run
@@ -116,7 +126,9 @@ describe('과제 엔진 — 순서와 안전 인터록', () => {
 
   test('롤러 회전 중 차량 이탈 시도는 안전 위반이고, MOTOR OFF 단계 뒤에는 허용된다', () => {
     let s = start()
-    for (const id of ['ppe', 'tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+    s = attempt(s, { type: 'step', stepId: 'ppe' }, aid()).run
+    s = attempt(s, { type: 'confirmSafety', conditionId: 's-engine' }, aid()).run
+    for (const id of ['tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
     s = submitResponse(s, 'axleWeight', '600', aid()).run
     for (const id of ['axle', 'mode']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
     s = attempt(s, { type: 'confirmSafety', conditionId: 's-lift' }, aid()).run

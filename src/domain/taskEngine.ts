@@ -46,6 +46,8 @@ export interface TaskRun {
   /** 충족된 선행 안전 조건(보호구 착용·주변 확인·차량 중앙 정렬) */
   satisfiedSafety: string[]
   motorOn: boolean
+  /** off 단계 하위 행동 진행(U2). 완료 순서대로 쌓인다 */
+  offProgress: OffSubStep[]
   responses: ResponseSheet
   events: StepEvent[]
   eventLimitReached: boolean
@@ -72,6 +74,7 @@ export interface TaskRun {
 export type Attempt =
   | { type: 'step'; stepId: string }
   | { type: 'confirmSafety'; conditionId: string }
+  | { type: 'subStep'; stepId: 'off'; action: OffSubStep }
   | { type: 'hazard'; hazardId: string }
 
 export type Outcome = 'completed' | 'blocked' | 'incomplete' | 'alreadyCompleted' | 'confirmed' | 'ignored' | 'eventLimit' | 'invalid' | 'graded' | 'paused'
@@ -86,7 +89,7 @@ export interface AttemptResult {
 export const EVENT_LIMIT = 200
 
 /** 선행 조건형 안전 조건: 단계 진행 전에 참이어야 한다. */
-const PRECONDITIONS = new Set(['s-ppe', 's-lift', 's-motor'])
+const PRECONDITIONS = new Set(['s-ppe', 's-lift', 's-motor', 's-engine'])
 /** 금지형 안전 조건: 위험 행동(hazard)으로 위반된다. 단계 진행 자체는 막지 않는다. */
 const HAZARDS: Record<string, { conditionId: string; whenMotorOn: boolean }> = {
   accelerate: { conditionId: 's-accel', whenMotorOn: true },
@@ -99,8 +102,11 @@ const SAFETY_FEEDBACK: Record<string, string> = {
   's-motor': 'blocked_safety_motor',
   's-accel': 'blocked_safety_accel',
   's-exit': 'blocked_safety_exit',
-  's-engine': 'blocked_order',
+  's-engine': 'blocked_safety_engine',
 }
+/** off 단계의 하위 행동(설계 13 §4·12 U2): 정지 → 주변 재확인 → 상승 → 이탈. 안전한 정지 행동(motorOff)은 막지 않는다. */
+export const OFF_SUBSTEPS = ['motorOff', 'liftUp', 'exitVehicle'] as const
+export type OffSubStep = (typeof OFF_SUBSTEPS)[number]
 /** 완료 조건이 응답 제출을 요구하는 단계 */
 const RESPONSE_REQUIREMENTS: Record<string, string[]> = {
   axleWeightRead: ['axleWeight'],
@@ -158,6 +164,7 @@ export function createTaskRun(task: ApprovedTask, opts: { difficultyMode: Diffic
     allStepsCompleted: false,
     satisfiedSafety: [],
     motorOn: false,
+    offProgress: [],
     responses: createResponseSheet(task),
     events: [],
     eventLimitReached: false,
@@ -199,6 +206,11 @@ function attemptStep(run: TaskRun, step: TaskStep, actionId: string): AttemptRes
   const missing = step.prerequisites.find((p) => !run.completedSteps.includes(p))
   if (missing) return blocked(run, actionId, 'error', 'order', `ORDER_${missing}`, 'blocked_order', step.stepId)
 
+  // 3) off 단계는 단일 수행으로 완료하지 않는다 — 하위 행동(subStep)으로만 진행(U2)
+  if (step.stepId === 'off') {
+    const next = OFF_SUBSTEPS.find((x) => !run.offProgress.includes(x))
+    return { run, outcome: 'incomplete', reasonCode: `NEEDS_SUBSTEP_${next ?? 'exitVehicle'}`, feedbackKey: null }
+  }
   // 3) 응답이 필요한 완료 조건
   const needed = RESPONSE_REQUIREMENTS[step.completionCondition] ?? []
   for (const itemId of needed) {
@@ -222,6 +234,39 @@ function attemptStep(run: TaskRun, step: TaskStep, actionId: string): AttemptRes
   return { run: ev.run, outcome: 'completed', reasonCode: null, feedbackKey: null }
 }
 
+/** off 하위 행동. 검사 시점(13 §4): 상승·이탈 전 정지 확인(s-exit), 상승 직전 주변 재확인(s-lift, 하강 때 확인 재사용 안 함). */
+function attemptOffSubStep(run: TaskRun, action: OffSubStep, actionId: string): AttemptResult {
+  const step = run.task.steps.find((s) => s.stepId === 'off')
+  if (!step) return { run, outcome: 'invalid', reasonCode: 'UNKNOWN_STEP', feedbackKey: null }
+  if (run.completedSteps.includes('off') || run.offProgress.includes(action)) return { run, outcome: 'alreadyCompleted', reasonCode: null, feedbackKey: null }
+  if (!run.satisfiedSafety.includes('s-ppe')) return blocked(run, actionId, 'safety', 's-ppe', 'SAFETY_s-ppe', 'blocked_ppe', 'off')
+  const missing = step.prerequisites.find((p) => !run.completedSteps.includes(p))
+  if (missing) return blocked(run, actionId, 'error', 'order', `ORDER_${missing}`, 'blocked_order', 'off')
+  let satisfiedSafety = run.satisfiedSafety
+  let motorOn = run.motorOn
+  if (action === 'motorOff') {
+    motorOn = false
+    satisfiedSafety = satisfiedSafety.filter((c) => c !== 's-lift') // 하강 때의 주변 확인은 상승에 재사용하지 않는다
+  } else if (action === 'liftUp') {
+    if (run.motorOn || !run.offProgress.includes('motorOff')) return blocked(run, actionId, 'safety', 's-exit', 'SAFETY_s-exit', 'blocked_safety_exit', 'off')
+    if (!satisfiedSafety.includes('s-lift')) return blocked(run, actionId, 'safety', 's-lift', 'SAFETY_s-lift', 'blocked_safety_lift', 'off')
+  } else {
+    if (run.motorOn || !run.offProgress.includes('motorOff') || !run.offProgress.includes('liftUp')) return blocked(run, actionId, 'safety', 's-exit', 'SAFETY_s-exit', 'blocked_safety_exit', 'off')
+  }
+  const offProgress = [...run.offProgress, action]
+  let updated = carry(run, { ...run, offProgress, satisfiedSafety, motorOn })
+  const sub = appendEvent(updated, { type: 'stepCompleted', stepId: `off:${action}`, actionId })
+  if (!sub.ok) return { run: sub.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
+  updated = sub.run
+  if (action !== 'exitVehicle') return { run: updated, outcome: 'completed', reasonCode: null, feedbackKey: null }
+  const completedSteps = [...updated.completedSteps, 'off']
+  const nextStepId = nextStepOf(updated.task, completedSteps)
+  const done = carry(updated, { ...updated, completedSteps, nextStepId, allStepsCompleted: nextStepId === null })
+  const ev = appendEvent(done, { type: 'stepCompleted', stepId: 'off', actionId })
+  if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
+  return { run: ev.run, outcome: 'completed', reasonCode: null, feedbackKey: null }
+}
+
 export function attempt(run: TaskRun, a: Attempt, actionId: string): AttemptResult {
   if (run.paused) return { run, outcome: 'paused', reasonCode: 'PAUSED', feedbackKey: null }
   if (run.eventLimitReached) return { run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
@@ -230,6 +275,7 @@ export function attempt(run: TaskRun, a: Attempt, actionId: string): AttemptResu
     if (!step) return { run, outcome: 'invalid', reasonCode: 'UNKNOWN_STEP', feedbackKey: null }
     return attemptStep(run, step, actionId)
   }
+  if (a.type === 'subStep') return attemptOffSubStep(run, a.action, actionId)
   if (a.type === 'confirmSafety') {
     if (!PRECONDITIONS.has(a.conditionId)) return { run, outcome: 'invalid', reasonCode: 'UNKNOWN_CONDITION', feedbackKey: null }
     if (run.satisfiedSafety.includes(a.conditionId)) return { run, outcome: 'confirmed', reasonCode: null, feedbackKey: null }
@@ -316,7 +362,7 @@ export function serializeRun(run: TaskRun): RunSnapshot {
 export function rehydrateRun(snap: RunSnapshot, deps: EngineDeps = defaultDeps()): TaskRun {
   const { lastElapsedMs, snapshotVersion: _v, ...rest } = snap
   const now = deps.now()
-  const base: TaskRun = { ...rest, startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality: rest.timeQuality === 'uncertain' ? 'uncertain' : 'resumed' }
+  const base: TaskRun = { ...rest, offProgress: rest.offProgress ?? [], startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality: rest.timeQuality === 'uncertain' ? 'uncertain' : 'resumed' }
   depsByRun.set(base, deps)
   return appendEvent(base, { type: 'resumed', reasonCode: 'restored' }).run
 }

@@ -18,6 +18,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
   const [taskIdx, setTaskIdx] = useState(0)
   const [mode, setMode] = useState<DifficultyMode>('guided')
   const [phase, setPhase] = useState<UsagePhase>('preview')
+  const [entryDir, setEntryDir] = useState<'north' | 'south' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [counts, setCounts] = useState<{ records: number; outbox: number } | null>(null)
@@ -38,7 +39,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
     setError(null)
     setBusy(true)
     const task = tasks[taskIdx]!
-    const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase }), task, mode)
+    const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase, vehicleEntryDirection: entryDir }), task, mode)
     setBusy(false)
     if (err) setError(err)
   }
@@ -104,6 +105,13 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
         <h2>도움 방식 (어떻게 돕는가)</h2>
         <label className="radio"><input type="radio" name="mode" checked={mode === 'guided'} onChange={() => setMode('guided')} /> 안내 있음 (견습) — 다음 할 일을 알려 줌</label>
         <label className="radio"><input type="radio" name="mode" checked={mode === 'unguided'} onChange={() => setMode('unguided')} /> 안내 없음 (정비사) — 순서를 스스로 찾음, 안전 경고는 유지</label>
+      </section>
+      <section className="card">
+        <h2>차량 진입 방향 (교사 설정 · 세션 값)</h2>
+        <label className="radio"><input type="radio" name="entry" checked={entryDir === null} onChange={() => setEntryDir(null)} /> 미설정 — 3D는 북쪽 자리를 가정으로 표시하고 진입 연출을 하지 않음</label>
+        <label className="radio"><input type="radio" name="entry" checked={entryDir === 'north'} onChange={() => setEntryDir('north')} /> 북쪽에서 진입 (차체가 롤러 북쪽)</label>
+        <label className="radio"><input type="radio" name="entry" checked={entryDir === 'south'} onChange={() => setEntryDir('south')} /> 남쪽에서 진입 (차체가 롤러 남쪽)</label>
+        <span className="small">실제 실습실은 북·남 모두 가능(교사 확인 2026-10-21). 기록 계약 1.1.0에는 이 필드가 없어 연구 기록에 저장되지 않습니다(Codex 계약 개정 제안).</span>
       </section>
       <button className="primary" onClick={start} disabled={busy}>{busy ? '초안 저장 중…' : '과제 수령하러 가기'}</button>
       <footer className="small teacher">

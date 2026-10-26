@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
 import type { SessionContext } from '../domain/record'
-import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, type TaskRun } from '../domain/taskEngine'
+import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, OFF_SUBSTEPS, type OffSubStep, type TaskRun } from '../domain/taskEngine'
 import { buildRecordPayload } from '../domain/record'
 import type { Repository } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
@@ -117,7 +117,18 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
     setRun(res.run)
   }
 
-  const confirmLift = () => { setRun(attempt(run, { type: 'confirmSafety', conditionId: 's-lift' }, newId()).run); setShown({ kind: 'guidance', title: '주변 확인 완료', text: null, plain: '리프트 주변에 사람이 없음을 확인했습니다. 이제 하강할 수 있습니다.' }) }
+  const confirmLift = () => { setRun(attempt(run, { type: 'confirmSafety', conditionId: 's-lift' }, newId()).run); setShown({ kind: 'guidance', title: '주변 확인 완료', text: null, plain: done('read') ? '리프트 주변에 사람·장애물이 없음을 확인했습니다. 이제 상승할 수 있습니다.' : '리프트 주변에 사람이 없음을 확인했습니다. 이제 하강할 수 있습니다.' }) }
+  const confirmEngine = () => { setRun(attempt(run, { type: 'confirmSafety', conditionId: 's-engine' }, newId()).run); setShown({ kind: 'guidance', title: '시동 OFF 확인', text: null, plain: '시동이 꺼진 상태를 확인했습니다. 점검을 진행하세요.' }) }
+  // off 단계 하위 행동(U2): 정지 → 주변 재확인 → 상승 → 이탈. 근접 게이팅은 off 단계 장비(조작부) 기준.
+  const OFF_LABEL: Record<OffSubStep, string> = { motorOff: 'MOTOR OFF', liftUp: '리프트 상승', exitVehicle: '차량 빼기' }
+  const doOffSub = (action: OffSubStep) => {
+    const far = needsMove('off')
+    if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: `${far} 접근점에 서야 이 단계를 할 수 있습니다.` })
+    const res = attempt(run, { type: 'subStep', stepId: 'off', action }, newId())
+    if (res.outcome === 'completed') { setRun(res.run); setShown({ kind: 'guidance', title: OFF_LABEL[action], text: null, plain: action === 'motorOff' ? '롤러 정지. 상승 전에 주변을 다시 확인하세요.' : action === 'liftUp' ? '리프트가 올라갔습니다. 이제 차량을 뺄 수 있습니다.' : '차량을 뺐습니다. 산출·판정을 기록하세요.' }); return }
+    if (res.outcome === 'blocked') return show(res.run, { kind: 'safety', title: `안전 위반 — ${OFF_LABEL[action]}`, text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey)
+    setRun(res.run)
+  }
 
   const hazard = (hazardId: string, label: string) => {
     const res = attempt(run, { type: 'hazard', hazardId }, newId())
@@ -193,8 +204,18 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
                   <span className="text">{s.instruction}{s.requiredSafetyConditions.some((c) => c !== 's-ppe') && <em className="safe"> 안전</em>}</span>
                   {!isDone && (
                     <span className="btns">
+                      {(s.stepId === 'tire' || s.stepId === 'equip') && !run.satisfiedSafety.includes('s-engine') && <button onClick={confirmEngine}>시동 OFF 확인</button>}
                       {s.stepId === 'lower' && !run.satisfiedSafety.includes('s-lift') && <button onClick={confirmLift}>주변 확인</button>}
-                      <button onClick={() => doStep(s.stepId)} className={needsMove(s.stepId) ? 'far' : ''}>{needsMove(s.stepId) ? '이동 필요' : '수행'}</button>
+                      {s.stepId === 'off' ? (
+                        OFF_SUBSTEPS.map((a) => (
+                          <span key={a}>
+                            {a === 'liftUp' && run.offProgress.includes('motorOff') && !run.satisfiedSafety.includes('s-lift') && <button onClick={confirmLift}>주변 확인</button>}
+                            <button onClick={() => doOffSub(a)} disabled={run.offProgress.includes(a)} className={run.offProgress.includes(a) ? 'done' : ''}>{OFF_LABEL[a]}{run.offProgress.includes(a) ? ' ✓' : ''}</button>
+                          </span>
+                        ))
+                      ) : (
+                        <button onClick={() => doStep(s.stepId)} className={needsMove(s.stepId) ? 'far' : ''}>{needsMove(s.stepId) ? '이동 필요' : '수행'}</button>
+                      )}
                     </span>
                   )}
                   {isDone && <span className="ok">완료</span>}

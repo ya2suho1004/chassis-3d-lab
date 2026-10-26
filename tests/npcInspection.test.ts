@@ -13,14 +13,20 @@ const deps = { now: () => Date.now(), newId: () => `00000000-0000-4000-8000-${St
 
 function completeProcedure(task: ApprovedTask) {
   let s = createTaskRun(task, { difficultyMode: 'unguided' }, deps)
-  for (const id of ['ppe', 'tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+  s = attempt(s, { type: 'step', stepId: 'ppe' }, aid()).run
+  s = attempt(s, { type: 'confirmSafety', conditionId: 's-engine' }, aid()).run
+  for (const id of ['tire', 'equip', 'enter']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
   s = submitResponse(s, 'axleWeight', String(task.measurement.axleWeight), aid()).run
   for (const id of ['axle', 'mode']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
   s = attempt(s, { type: 'confirmSafety', conditionId: 's-lift' }, aid()).run
   for (const id of ['lower', 'motor', 'press']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
   s = submitResponse(s, 'left', String(task.measurement.left), aid()).run
   s = submitResponse(s, 'right', String(task.measurement.right), aid()).run
-  for (const id of ['read', 'off']) s = attempt(s, { type: 'step', stepId: id }, aid()).run
+  s = attempt(s, { type: 'step', stepId: 'read' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'motorOff' }, aid()).run
+  s = attempt(s, { type: 'confirmSafety', conditionId: 's-lift' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'liftUp' }, aid()).run
+  s = attempt(s, { type: 'subStep', stepId: 'off', action: 'exitVehicle' }, aid()).run
   return s
 }
 

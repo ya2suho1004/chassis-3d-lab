@@ -21,7 +21,7 @@ export function listTasks(): ApprovedTask[] {
   return [lv1 as ApprovedTask, lv2 as ApprovedTask]
 }
 
-export function createDemoSession(opts: { studentCode: string; sessionCode: string; attemptRole: SessionContext['attemptRole']; usagePhase: SessionContext['usagePhase'] }): SessionContext {
+export function createDemoSession(opts: { studentCode: string; sessionCode: string; attemptRole: SessionContext['attemptRole']; usagePhase: SessionContext['usagePhase']; vehicleEntryDirection?: 'north' | 'south' | null }): SessionContext {
   return {
     recordId: crypto.randomUUID(),
     anonymousStudentCode: opts.studentCode,
@@ -44,6 +44,7 @@ export function createDemoSession(opts: { studentCode: string; sessionCode: stri
     },
     clientAppVersion: APP_VERSION,
     startedAtIso: new Date().toISOString(),
+    vehicleEntryDirection: opts.vehicleEntryDirection ?? null,
   }
 }
 

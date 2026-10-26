@@ -10,7 +10,7 @@
 
 ```bash
 npm install
-npm test          # vitest, 150 tests
+npm test          # vitest, 159 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
@@ -61,13 +61,13 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 |---|---|---|
 | `judge.ts` | 차량 판정 `calculateVehicleVerdict` | 기준값 없으면 8/20/50을 넣지 않고 판정 불가. 음수·0 축중·비유한수·미지정 축은 입력 오류. 절사(1자리) 정책으로 비교, 경계값 포함 |
 | `grading.ts` | 응답 채점 `createResponseSheet / submitAnswer / summarizeResponses` | 최초 답은 덮어쓰지 않음. 미입력은 null. 정수 입력 정책. `judgmentCorrect`는 최초 판정 기준. 분모 6 고정 |
-| `taskEngine.ts` | 단계 전이·안전 인터록 `createTaskRun / attempt / submitResponse / requestHint` | 선행 안전 조건 → 선행 단계 → 응답 요구 순으로 검사. 안전 위반과 학습 오류 분리, 같은 actionId 1회 집계. 힌트는 요청만. 이벤트 200개 한도 |
+| `taskEngine.ts` | 단계 전이·안전 인터록 `createTaskRun / attempt / submitResponse / requestHint` | 선행 안전 조건 → 선행 단계 → 응답 요구 순으로 검사. 안전 위반과 학습 오류 분리, 같은 actionId 1회 집계. 힌트는 요청만. 이벤트 200개 한도. `off`는 하위 행동 `subStep`(MOTOR OFF → 주변 재확인 → 상승 → 이탈)으로만 완료, 점검 단계는 `s-engine`(시동 OFF 확인) 선행 |
 | `npcInspection.ts` | 최종 수행 검사 `inspectPerformance` | 차량 판정·최초 정오와 별개. 불량 차량을 정확히 판정하거나 보완 정답이면 통과. 이전 오류 보존 |
 | `record.ts` | 기록 payload `buildRecordPayload` | `record.schema.json` 1.1.0 형식(usagePhase 필수). 전송 상태 미포함. `researchEligible`은 승인 4종·research·completed·passed일 때만 |
 | `types.ts` | 과제 데이터 형식 | `docs/design/contracts/task.schema.json` 1.1.0 대응. 과제 전체는 pending(동작 매핑 미완료), 규칙은 교사 승인 |
 | `feedbackPolicy.ts` | 피드백 노출 정책 | 무안내: 필수 응답 6개 최초 답 저장 뒤 정답 피드백. 안전 피드백은 즉시 |
 
-과제 데이터: `src/data/tasks/task.braking-force.case-lv1.json`, `case-lv2.json` — 교사 확인 0A(2026-10-21) 값을 담은 1.1.0 정식 파일. 학생 화면 제목은 ‘사례 1/2’(정답 비노출). 미해결 기술 항목은 `docs/design/docs/12_0D_준비검토.md` §2-2.
+과제 데이터: `src/data/tasks/task.braking-force.case-lv1.json`, `case-lv2.json` — 교사 확인 0A(2026-10-21) 값을 담은 1.1.0 파일에 U3 제안(tire·equip의 `s-engine`, `blocked_safety_engine`)을 더한 사본(`taskDefinitionVersion` 접미 `+u2u3-proposal-2026-10-26`, 전체 pending). 학생 화면 제목은 ‘사례 1/2’(정답 비노출). 미해결 항목과 교사 확인지 0E는 `docs/design/docs/12_0D_준비검토.md` §2-2.
 
 ## 아직 없는 것
 

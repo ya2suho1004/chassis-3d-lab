@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.1.0",
   "taskId": "braking-force",
-  "taskDefinitionVersion": "1.1.0-review-case-2-2026-10-21",
+  "taskDefinitionVersion": "1.1.0-review-case-2-2026-10-21+u2u3-proposal-2026-10-26",
   "title": "제동력 측정 및 판독 — 사례 2",
   "approvalStatus": "pending",
   "measurement": {
@@ -107,11 +107,12 @@
         "ppe"
       ],
       "requiredSafetyConditions": [
-        "s-ppe"
+        "s-ppe",
+        "s-engine"
       ],
       "actionType": "inspect",
       "completionCondition": "inspected",
-      "onBlockedFeedbackKey": "blocked_order",
+      "onBlockedFeedbackKey": "blocked_safety_engine",
       "source": {
         "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
         "printedPage": "98",
@@ -127,11 +128,12 @@
         "tire"
       ],
       "requiredSafetyConditions": [
-        "s-ppe"
+        "s-ppe",
+        "s-engine"
       ],
       "actionType": "inspect",
       "completionCondition": "inspected",
-      "onBlockedFeedbackKey": "blocked_order",
+      "onBlockedFeedbackKey": "blocked_safety_engine",
       "source": {
         "document": "NCS LM1506030327_23v4 제동장치 정비 + 14번 사진 조작부 버튼 + 교사 확인지 0A(2026-10-21)",
         "printedPage": "98",
@@ -367,6 +369,11 @@
       "what": "양호/불량 판정이 기준과 다릅니다.",
       "why": "편차 8% 이내, 뒤축 합 20% 이상이면 양호입니다(경계값 포함).",
       "how": "계산한 편차와 합을 기준과 하나씩 비교하세요."
+    },
+    "blocked_safety_engine": {
+      "what": "점검 전 시동 OFF 확인이 필요합니다.",
+      "why": "점검 중 엔진이 돌면 벨트·팬 등 회전부에 손이 닿을 수 있고 차량이 움직일 수 있어, 측정 외 점검은 시동을 끈 상태에서 합니다(교사 확인 0A s-engine).",
+      "how": "시동이 꺼져 있는지 확인한 뒤 ‘시동 OFF 확인’을 누르고 점검을 진행하세요."
     }
   },
   "vocabularyVersion": "1.1.0",

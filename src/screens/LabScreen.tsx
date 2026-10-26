@@ -7,12 +7,17 @@ import type { ApprovedTask } from '../domain/types'
 import type { Repository } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
 import { LabScene } from '../scene/LabScene'
-import { loadSceneLayout, nearEquipment, type Pt } from '../scene/layoutModel'
+import { loadSceneLayout, nearEquipment, vehiclePlacement, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen } from './TaskScreen'
 
 const NEAR_RADIUS = 1.3
 const NPC_RADIUS = 2.0
-const layout = loadSceneLayout(rawLayout)
+const baseLayout = loadSceneLayout(rawLayout)
+/** 세션의 차량 진입 방향에 맞춰 시험 차량 자리만 바꾼 배치(U6). 미설정이면 북쪽 가정 + 라벨 표시. */
+function layoutFor(dir: 'north' | 'south' | null): SceneLayout {
+  const v = vehiclePlacement(baseLayout, dir)
+  return { ...baseLayout, equipment: baseLayout.equipment.map((e) => (e.id === 'brake-vehicle-01' ? { ...e, x: v.x, z: v.z, rotation: v.rotation, label: v.assumed ? `${e.label} · 진입 방향 미설정(북쪽 가정)` : e.label } : e)) }
+}
 const BASIS_LABEL: Record<string, string> = { measured: '실측', 'measured-partial': '부분 실측', sketch: '스케치 비례', assumption: '가정', teacher: '교사 답' }
 
 export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange, onFinish }: {
@@ -24,6 +29,7 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
   onRunChange: (run: TaskRun) => void
   onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
 }) {
+  const layout = useMemo(() => layoutFor(session.vehicleEntryDirection), [session.vehicleEntryDirection])
   const [pos, setPos] = useState<Pt>(layout.studentStart)
   const [moving, setMoving] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -35,7 +41,7 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
   const goTo = (p: Pt) => { moveRequestRef.current = p }
 
   const onMove = useCallback((p: Pt, m: boolean) => { setPos(p); setMoving(m) }, [])
-  const nearIds = useMemo(() => layout.equipment.filter((e) => nearEquipment(pos, e, NEAR_RADIUS)).map((e) => e.id), [pos])
+  const nearIds = useMemo(() => layout.equipment.filter((e) => nearEquipment(pos, e, NEAR_RADIUS)).map((e) => e.id), [pos, layout])
   const nearNpc = Math.hypot(pos.x - layout.npc.x, pos.z - layout.npc.z) <= NPC_RADIUS
   const selected = layout.equipment.find((e) => e.id === selectedId) ?? null
   const requiredNow = run?.nextStepId ? (task.steps.find((s) => s.stepId === run.nextStepId)?.equipmentId ?? null) : null

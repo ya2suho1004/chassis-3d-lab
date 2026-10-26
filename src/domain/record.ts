@@ -24,6 +24,8 @@ export interface SessionContext {
   versions: { layoutVersion: string; judgeEngineVersion: string; sessionConfigVersion: string; researchProtocolVersion: string; feedbackPolicyVersion: string }
   clientAppVersion: string
   startedAtIso: string
+  /** 차량 진입 방향(U6, 설계 13 §9): 교사 세션 설정. 기본 null. 1.1.0 record 계약에 없으므로 payload에 넣지 않는다(Codex 계약 개정 제안) */
+  vehicleEntryDirection: 'north' | 'south' | null
 }
 
 export interface FinalizeOptions {

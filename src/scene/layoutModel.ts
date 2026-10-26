@@ -108,3 +108,14 @@ export function nearEquipment(pos: Pt, e: SceneEquipment, radius: number): boole
   const dz = Math.max(f.zMin - pos.z, 0, pos.z - f.zMax)
   return Math.hypot(dx, dz) <= radius
 }
+
+/** 차량 진입 방향(세션 설정)에 따른 시험 차량 자리. 후륜 축 = 롤러 중심. 미설정(null)은 북쪽을 가정으로 두고 assumed=true(U6: 방향에 의존하는 연출을 자동 시작하지 않음). */
+export function vehiclePlacement(layout: SceneLayout, dir: 'north' | 'south' | null): { x: number; z: number; rotation: number; assumed: boolean } {
+  const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
+  const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
+  if (!tester || !vehicle) return { x: vehicle?.x ?? 0, z: vehicle?.z ?? 0, rotation: 0, assumed: true }
+  const half = vehicle.d / 2
+  const rearAxleOffset = half - 0.6 // 뒤축이 차체 뒤끝에서 약 0.6 m 앞(제원 추정)
+  const z = dir === 'south' ? tester.z + rearAxleOffset : tester.z - rearAxleOffset
+  return { x: tester.x, z, rotation: dir === 'south' ? 180 : 0, assumed: dir === null }
+}
