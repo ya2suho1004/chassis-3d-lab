@@ -85,8 +85,9 @@ function validateRequestEnvelope(req) {
 function validateRecordSemantics_(p) {
   var errors = [];
   var started = Date.parse(p.startedAt), completed = Date.parse(p.completedAt);
+  var quality = p.timing && p.timing.timeQuality;
   if (!(isFinite(started) && isFinite(completed))) errors.push('time: unparsable');
-  else {
+  else if (quality !== 'uncertain') { // uncertain(벽시계 변경 감지)은 벽시계 비교를 하지 않는다(04 §7, Codex B3-a)
     if (completed < started) errors.push('time: completedAt before startedAt');
     if (typeof p.durationSeconds === 'number' && p.durationSeconds > (completed - started) / 1000 + 1) errors.push('time: durationSeconds exceeds wall clock');
   }
@@ -117,6 +118,47 @@ function validateRecordSemantics_(p) {
   checkItems(p.calculationAnswers, 'firstInput', 'finalInput', 'calculationAnswers');
   checkItems(p.judgmentAnswers, 'firstAnswer', 'finalAnswer', 'judgmentAnswers');
   if (Array.isArray(p.experiencedDisplayModes) && p.experiencedDisplayModes.length > 0 && p.experiencedDisplayModes[0] !== p.displayMode) errors.push('experiencedDisplayModes[0] != displayMode');
+  // judgmentCorrect = 판정 항목 최초 정오의 allOrNull (04 §5, Codex B3-c)
+  if (Array.isArray(p.judgmentAnswers)) {
+    var expected = null;
+    if (p.judgmentAnswers.length > 0) {
+      var anyNull = false, allTrue = true;
+      for (var q = 0; q < p.judgmentAnswers.length; q++) { var fc = p.judgmentAnswers[q].firstCorrect; if (fc === null || fc === undefined) anyNull = true; else if (fc !== true) allTrue = false; }
+      expected = anyNull ? null : allTrue;
+    }
+    if (p.judgmentCorrect !== expected) errors.push('judgmentCorrect != allOrNull(judgmentAnswers.firstCorrect)');
+  }
   if (p.researchEligible !== false) errors.push('researchEligible must be false for test intake');
   return errors;
+}
+
+/** stepCompleted 사건의 등록 단계·하위 행동 순서 검사(docs/17 §2, Codex B3-c). allowedStepIds가 null이면(과거 fixture) 등록 검사를 생략한다. */
+function validateStepEvents_(p, allowedStepIds) {
+  var errors = [];
+  var events = Array.isArray(p.stepEvents) ? p.stepEvents : [];
+  var seenSub = []; var offDone = false;
+  for (var i = 0; i < events.length; i++) {
+    var e = events[i];
+    if (e.type !== 'stepCompleted') continue;
+    if (allowedStepIds && allowedStepIds.indexOf(e.stepId) < 0) errors.push('steps: unregistered stepId ' + e.stepId);
+    if (typeof e.stepId === 'string' && e.stepId.indexOf('off:') === 0) {
+      var action = e.stepId.slice(4);
+      var order = ['motorOff', 'liftUp', 'exitVehicle'];
+      if (offDone) errors.push('steps: sub-action after parent off');
+      if (order.indexOf(action) !== seenSub.length) errors.push('steps: off sub-action out of order ' + action);
+      seenSub.push(action);
+    } else if (e.stepId === 'off') {
+      if (allowedStepIds && seenSub.length !== 3) errors.push('steps: off completed without its sub-actions');
+      offDone = true;
+    }
+  }
+  return errors;
+}
+
+/** 존재하는 달력 날짜의 UTC 시각(…Z)인지: 형식 + 왕복 비교(2026-02-31 같은 값 거절). Codex B4·B5 */
+function isValidUtcDateTime_(s) {
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/.test(s)) return false;
+  var ms = Date.parse(s);
+  if (!isFinite(ms)) return false;
+  return new Date(ms).toISOString().slice(0, 19) === s.slice(0, 19);
 }

@@ -17,11 +17,11 @@
 ## 교사가 할 배포 절차 (학교 계정 정책 확인 뒤)
 
 1. **시험용 Google Sheet** 새로 만들기(비공개, 운영·연구 자료와 분리). 탭 이름을 `canonical`로 바꾸고 1행에 머리글 5개를 순서대로 입력: `recordId`, `receiptId`, `acceptedAt`, `payloadHash`, `payloadJson`. 주소창의 `/d/…/` 사이 문자열이 Sheet ID.
-2. **Apps Script 프로젝트** 새로 만들기(확장 프로그램 → Apps Script, 또는 script.google.com). 프로젝트 설정에서 "appsscript.json 매니페스트 파일 표시"를 켜고, 이 폴더의 파일 6개 내용을 같은 이름으로 붙여넣기.
+2. **Apps Script 프로젝트** 새로 만들기(확장 프로그램 → Apps Script, 또는 script.google.com). 프로젝트 설정에서 "appsscript.json 매니페스트 파일 표시"를 켜고, 이 폴더의 파일 **7개**(`Code.gs`, `Jcs.gs`, `JsonStrict.gs`, `Validate.gs`, `Schemas.gs`, `DemoSnapshots.gs`, `appsscript.json`)를 같은 이름으로 붙여넣기. `DemoSnapshots.gs`가 빠지면 모든 제출이 `SESSION_NOT_ALLOWED`가 된다.
 3. **스크립트 속성**(프로젝트 설정 → 스크립트 속성)에 입력:
    - `SHEET_ID` = 1의 Sheet ID (필수)
    - `TAB_NAME` = `canonical`
-   - `ACCEPT_UNTIL` = 시험 종료 시각(ISO, 예 `2026-11-30T15:00:00Z`) — **필수**. 없거나 날짜가 아니면 신규 접수를 닫는다(기존 접수번호 회수는 됨)
+   - `ACCEPT_UNTIL` = 시험 종료 시각 — **필수, UTC `…Z` 형식의 실제 달력 날짜**(예 `2026-11-30T15:00:00Z`; `+09:00`·`2026-02-31`은 무효). 없거나 무효면 신규 접수를 닫는다(기존 접수번호 회수는 됨)
    - `MAX_NEW_ROWS` = 시험 계획의 신규행 상한(양의 정수, 예 `100`) — **필수**. 누적 상한이라 시간이 지나도 회복하지 않으며 넘으면 `RATE_LIMITED`(교사가 설정을 바꿔야 함)
    - 허용 세션·스냅샷은 속성이 아니라 `DemoSnapshots.gs`에 고정돼 있다. 앱 과제·버전이 바뀌면 `npm run build:gs-snapshots`로 다시 만들어 함께 배포한다(record의 versions·승인·모드가 스냅샷과 다르면 `SESSION_NOT_ALLOWED`)
    - `LOCK_WAIT_MS` = `10000`
@@ -33,6 +33,8 @@
 ## 코드를 바꿀 때
 
 - 계약(`record.schema.json`)이 바뀌면 `npm run build:gs-schema`로 `Schemas.gs`를 다시 만들고 `SUPPORTED_RECORD_VERSIONS`를 확인한다.
-- 과제·세션 설정이 바뀌면 `npm run build:gs-snapshots`로 `DemoSnapshots.gs`와 앱의 `src/data/session/demo-snapshots.json`을 같이 다시 만든다(스냅샷 ID는 내용에서 결정되므로 내용이 바뀌면 ID도 바뀐다).
+- 과제·세션 설정이 바뀌면 `npm run build:gs-snapshots`로 `DemoSnapshots.gs`와 앱의 `src/data/session/demo-snapshots.json`을 같이 다시 만든다. 원장 `src/data/session/snapshot-ledger.json`은 append-only라 옛 스냅샷은 `retired`로 남고(기존 접수번호 회수용), 새 세션은 `active`만 쓴다. ID는 **버전 참조**에서 나오므로 과제·피드백 본문을 바꿀 때는 docs/design/docs/17 §1대로 그 버전을 올려야 한다(생성기가 `feedbackPolicy.version` 불일치는 막는다).
+- 배포 전에 앱 번들과 `DemoSnapshots.gs`가 같은 커밋에서 나왔는지(원장 항목 수·해시) 확인한다. 시차나 누락은 `SESSION_NOT_ALLOWED`로 나타난다.
+- 시험 배포의 코드 범위는 합성 `D-xx`뿐(설계 15 §2). 시험 때는 앱 시작 화면에 D-01 같은 코드를 넣는다. 운영 배포는 별도 목록·패턴으로.
 - 어떤 변경이든 `npm test`의 `appsScriptPure`·`appsScriptDoPost`·`appsScriptHardening`·`sessionSnapshot`이 통과해야 한다. 브라우저 해시와 서버 해시가 같은지는 `Jcs.gs` 대조 시험이 지킨다.
 - 응답에 raw body·스택·Sheet ID·이메일을 넣지 않는다. 로그(`Logger`)도 쓰지 않는다.

@@ -84,7 +84,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
           익명 코드 (예: A-01)
           <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="A-01" inputMode="text" aria-label="익명 코드" />
         </label>
-        <span className="small">이름·학번·연락처는 입력하지 않습니다. 코드 형식 검사는 본인 확인이 아닙니다.</span>
+        <span className="small">이름·학번·연락처는 입력하지 않습니다. 코드 형식 검사는 본인 확인이 아닙니다. 전송 시험 중에는 합성 코드 D-01 같은 D-xx만 수신점이 받습니다.</span>
         {error && <p className="error" role="alert">{error}</p>}
       </section>
       <section className="card">

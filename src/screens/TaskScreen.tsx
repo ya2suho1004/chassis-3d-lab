@@ -167,6 +167,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
   const inspect = () => {
     const r = inspectPerformance(run)
     setRun(r.run)
+    if (!r.recorded) return setShown({ kind: 'guidance', title: '기록 한도', text: null, plain: '이벤트 기록 한도(200개)에 닿아 NPC 검사를 기록할 수 없습니다. ‘중단하고 끝내기’로 저장하고 교사에게 알리세요.' })
     setInspection({ result: r.result, issues: r.issues })
     if (r.result === 'passed') void finish(r.run, 'completed')
   }

@@ -60,9 +60,9 @@ describe('B2 스냅샷에 묶인 문맥(코드·모드·시점·버전·승인)�
       expect(svc.rows).toHaveLength(1)
     })
   }
-  test('앱이 만든 실제 세션(생성된 스냅샷)으로 만든 기록은 접수된다', () => {
+  test('앱이 만든 실제 세션(생성된 스냅샷, 합성 코드 D-01)으로 만든 기록은 접수된다', () => {
     const task = lv1 as ApprovedTask
-    const session = createDemoSession({ studentCode: 'A-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: 'south', task, difficultyMode: 'guided' })
+    const session = createDemoSession({ studentCode: 'D-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: 'south', task, difficultyMode: 'guided' })
     let run = createTaskRun(task, { difficultyMode: 'guided', displayMode: 'threeD' })
     run = attempt(run, { type: 'step', stepId: 'ppe' }, aid()).run
     const payload = buildRecordPayload(run, session, { completedAtIso: new Date(run.startedAtMs + 5000).toISOString(), completionStatus: 'aborted' })

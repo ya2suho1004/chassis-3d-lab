@@ -34,7 +34,9 @@ function doPost(e) {
     if (validateRecordSemantics_(payload).length > 0) return fail_('INVALID_PAYLOAD', false, rid);
 
     var cfg = loadConfig_();
-    if (!sessionAllowed_(payload)) return fail_('SESSION_NOT_ALLOWED', false, rid);
+    var entry = sessionAllowed_(payload);
+    if (!entry) return fail_('SESSION_NOT_ALLOWED', false, rid);
+    if (validateStepEvents_(payload, entry.allowedStepIds || null).length > 0) return fail_('INVALID_PAYLOAD', false, rid);
 
     var canonical;
     try { canonical = jcsCanonicalize(payload); } catch (err) { return fail_('INVALID_PAYLOAD', false, rid); }
@@ -44,7 +46,7 @@ function doPost(e) {
     var lock = LockService.getScriptLock();
     if (!lock.tryLock(cfg.LOCK_WAIT_MS)) return fail_('LOCK_BUSY', true, rid);
     try {
-      return acceptInLock_(cfg, rid, canonical, hash);
+      return acceptInLock_(cfg, rid, canonical, hash, entry);
     } catch (err) {
       return fail_('UPSTREAM_UNAVAILABLE', true, rid);
     } finally {
@@ -56,7 +58,7 @@ function doPost(e) {
 }
 
 /** 잠금 안: 정본 검색 → 중복/충돌/이상 판정 → 신규면 접수 창·상한 확인 뒤 1행 쓰기·flush·재읽기 검증 */
-function acceptInLock_(cfg, rid, canonical, hash) {
+function acceptInLock_(cfg, rid, canonical, hash, entry) {
   var sheet = openCanonicalSheet_(cfg);
   var found = findRowsById_(sheet, rid);
   if (found.length > 1) return fail_('CANONICAL_STORE_INVALID', false, rid);
@@ -64,7 +66,7 @@ function acceptInLock_(cfg, rid, canonical, hash) {
     var row = found[0].values;
     var storedReceipt = String(row[1]), storedAt = String(row[2]), storedHash = String(row[3]), storedJson = String(row[4]);
     if (!storedReceipt || !storedAt || !HEX64_RE.test(storedHash) || !storedJson) return fail_('CANONICAL_STORE_INVALID', false, rid);
-    if (storedReceipt.length > 128 || !DATE_TIME_RE.test(storedAt)) return fail_('CANONICAL_STORE_INVALID', false, rid);
+    if (storedReceipt.length > 128 || !isValidUtcDateTime_(storedAt)) return fail_('CANONICAL_STORE_INVALID', false, rid);
     var storedObj;
     try { storedObj = parseJsonStrict(storedJson); } catch (err) { return fail_('CANONICAL_STORE_INVALID', false, rid); }
     if (!storedObj || typeof storedObj !== 'object' || Array.isArray(storedObj)) return fail_('CANONICAL_STORE_INVALID', false, rid);
@@ -77,6 +79,7 @@ function acceptInLock_(cfg, rid, canonical, hash) {
   // 신규 접수 — 잠금 안에서 설정을 다시 읽고, 설정이 없거나 잘못되면 닫는다(fail-closed)
   cfg = loadConfig_();
   if (!cfg.intakeValid) return fail_('SESSION_NOT_ALLOWED', false, rid);
+  if (!entry || entry.status !== 'active') return fail_('SESSION_NOT_ALLOWED', false, rid); // retired 스냅샷은 기존 receipt 회수만
   if (Date.now() > cfg.ACCEPT_UNTIL) return fail_('SESSION_NOT_ALLOWED', false, rid);
   var dataRows = sheet.getLastRow() - 1;
   if (dataRows >= cfg.MAX_NEW_ROWS) return fail_('RATE_LIMITED', true, rid); // 시험당 누적 상한: 시간이 지나도 회복하지 않음(교사 설정 변경 필요, 15 §7)
@@ -99,7 +102,8 @@ function mimeAllowed_(type) {
 
 function loadConfig_() {
   var p = PropertiesService.getScriptProperties();
-  var until = Date.parse(String(p.getProperty('ACCEPT_UNTIL') || ''));
+  var untilRaw = String(p.getProperty('ACCEPT_UNTIL') || '');
+  var until = isValidUtcDateTime_(untilRaw) ? Date.parse(untilRaw) : NaN; // 실제 달력 날짜의 UTC(…Z)만(Codex B4)
   var maxRows = Number(p.getProperty('MAX_NEW_ROWS'));
   var intakeValid = isFinite(until) && isFinite(maxRows) && Math.floor(maxRows) === maxRows && maxRows > 0 && maxRows <= 100000;
   return {
@@ -115,22 +119,23 @@ function loadConfig_() {
 var VERSION_KEYS = ['taskDefinitionVersion', 'rulesetVersion', 'measurementSetVersion', 'layoutVersion', 'judgeEngineVersion', 'sessionConfigVersion', 'researchProtocolVersion', 'feedbackPolicyVersion'];
 var APPROVAL_KEYS = ['taskApproved', 'rulesetApproved', 'layoutConfirmed', 'researchUseApproved'];
 
-/** 허용 스냅샷과 record 문맥 대조(B2): 클라이언트 주장(모드·버전·승인)을 그대로 믿지 않는다. 1.0.0 record는 usagePhase가 없으므로 그 항목만 건너뛴다. */
+/** 허용 스냅샷과 record 문맥 대조(B2): 클라이언트 주장(모드·버전·승인)을 그대로 믿지 않는다. 1.0.0 record는 usagePhase가 없으므로 그 항목만 건너뛴다.
+ *  맞으면 허용 목록 항목(status·allowedStepIds 포함)을, 아니면 null을 돌려준다. retired 항목도 돌려주되 신규 접수는 잠금 안에서 막는다. */
 function sessionAllowed_(payload) {
-  if (typeof ALLOWED_SNAPSHOTS !== 'object' || !ALLOWED_SNAPSHOTS) return false;
+  if (typeof ALLOWED_SNAPSHOTS !== 'object' || !ALLOWED_SNAPSHOTS) return null;
   var entry = Object.prototype.hasOwnProperty.call(ALLOWED_SNAPSHOTS, payload.sessionSnapshotId) ? ALLOWED_SNAPSHOTS[payload.sessionSnapshotId] : null;
-  if (!entry || !entry.snapshot) return false;
+  if (!entry || !entry.snapshot) return null;
   var snap = entry.snapshot;
-  if (payload.sessionCode !== snap.sessionCode || payload.classConditionCode !== snap.classConditionCode || payload.taskId !== snap.taskId) return false;
-  if (payload.difficultyMode !== snap.difficultyMode || payload.runPurpose !== snap.runPurpose || payload.displayMode !== snap.displayMode) return false;
-  if (payload.schemaVersion !== '1.0.0' && payload.usagePhase !== snap.usagePhase) return false;
-  if (payload.runPurpose !== 'demo' || payload.researchEligible !== false) return false;
-  if (!payload.configurationApproval || !snap.configurationApproval) return false;
-  for (var a = 0; a < APPROVAL_KEYS.length; a++) if (payload.configurationApproval[APPROVAL_KEYS[a]] !== snap.configurationApproval[APPROVAL_KEYS[a]]) return false;
-  if (!payload.versions || !snap.versions) return false;
-  for (var k = 0; k < VERSION_KEYS.length; k++) if (payload.versions[VERSION_KEYS[k]] !== snap.versions[VERSION_KEYS[k]]) return false;
-  if (typeof entry.anonymousCodePattern !== 'string' || !new RegExp(entry.anonymousCodePattern).test(String(payload.anonymousStudentCode))) return false;
-  return true;
+  if (payload.sessionCode !== snap.sessionCode || payload.classConditionCode !== snap.classConditionCode || payload.taskId !== snap.taskId) return null;
+  if (payload.difficultyMode !== snap.difficultyMode || payload.runPurpose !== snap.runPurpose || payload.displayMode !== snap.displayMode) return null;
+  if (payload.schemaVersion !== '1.0.0' && payload.usagePhase !== snap.usagePhase) return null;
+  if (payload.runPurpose !== 'demo' || payload.researchEligible !== false) return null;
+  if (!payload.configurationApproval || !snap.configurationApproval) return null;
+  for (var a = 0; a < APPROVAL_KEYS.length; a++) if (payload.configurationApproval[APPROVAL_KEYS[a]] !== snap.configurationApproval[APPROVAL_KEYS[a]]) return null;
+  if (!payload.versions || !snap.versions) return null;
+  for (var k = 0; k < VERSION_KEYS.length; k++) if (payload.versions[VERSION_KEYS[k]] !== snap.versions[VERSION_KEYS[k]]) return null;
+  if (typeof entry.anonymousCodePattern !== 'string' || !new RegExp(entry.anonymousCodePattern).test(String(payload.anonymousStudentCode))) return null;
+  return entry;
 }
 
 function openCanonicalSheet_(cfg) {
