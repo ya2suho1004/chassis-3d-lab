@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-26T09:59:09.192Z",
+  "checkedAt": "2026-10-26T14:02:47.275Z",
   "root": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current",
   "project": "/Users/jamingchu/claude code/chassis-3d-lab",
   "applicationExecuted": false,
@@ -388,52 +388,7 @@
       "passed": true
     },
     {
-      "name": "project-original-lv1-legacy1.1",
-      "passed": false,
-      "expected": "accept",
-      "tier": "1.1.0",
-      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
-      "errors": [
-        {
-          "instancePath": "/schemaVersion",
-          "schemaPath": "#/properties/schemaVersion/const",
-          "keyword": "const",
-          "params": {
-            "allowedValue": "1.1.0"
-          },
-          "message": "must be equal to constant"
-        },
-        {
-          "instancePath": "/vocabularyVersion",
-          "schemaPath": "#/properties/vocabularyVersion/const",
-          "keyword": "const",
-          "params": {
-            "allowedValue": "1.1.0"
-          },
-          "message": "must be equal to constant"
-        }
-      ]
-    },
-    {
-      "name": "project-original-semantics-lv1-legacy1.1",
-      "passed": true,
-      "expected": "accept",
-      "errors": []
-    },
-    {
-      "name": "project-original-lv1-current1.2-expected-version-failure",
-      "passed": false,
-      "expected": "reject",
-      "tier": "current",
-      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
-      "errors": []
-    },
-    {
-      "name": "project-version-failure-pointers-lv1",
-      "passed": false
-    },
-    {
-      "name": "project-metadata-only-projection-lv1-current1.2",
+      "name": "project-task-lv1-current1.2",
       "passed": true,
       "expected": "accept",
       "tier": "current",
@@ -441,14 +396,15 @@
       "errors": []
     },
     {
-      "name": "project-metadata-only-projection-semantics-lv1",
+      "name": "project-task-semantics-lv1-current1.2",
       "passed": true,
       "expected": "accept",
       "errors": []
     },
     {
-      "name": "project-diff-metadata-only-lv1",
-      "passed": true
+      "name": "project-task-exact-equality-lv1",
+      "passed": true,
+      "differences": []
     },
     {
       "name": "independent-case-arithmetic-lv1",
@@ -509,52 +465,7 @@
       "passed": true
     },
     {
-      "name": "project-original-lv2-legacy1.1",
-      "passed": false,
-      "expected": "accept",
-      "tier": "1.1.0",
-      "schemaId": "urn:chassis-3d-lab:task:1.1.0",
-      "errors": [
-        {
-          "instancePath": "/schemaVersion",
-          "schemaPath": "#/properties/schemaVersion/const",
-          "keyword": "const",
-          "params": {
-            "allowedValue": "1.1.0"
-          },
-          "message": "must be equal to constant"
-        },
-        {
-          "instancePath": "/vocabularyVersion",
-          "schemaPath": "#/properties/vocabularyVersion/const",
-          "keyword": "const",
-          "params": {
-            "allowedValue": "1.1.0"
-          },
-          "message": "must be equal to constant"
-        }
-      ]
-    },
-    {
-      "name": "project-original-semantics-lv2-legacy1.1",
-      "passed": true,
-      "expected": "accept",
-      "errors": []
-    },
-    {
-      "name": "project-original-lv2-current1.2-expected-version-failure",
-      "passed": false,
-      "expected": "reject",
-      "tier": "current",
-      "schemaId": "urn:chassis-3d-lab:task:1.2.0",
-      "errors": []
-    },
-    {
-      "name": "project-version-failure-pointers-lv2",
-      "passed": false
-    },
-    {
-      "name": "project-metadata-only-projection-lv2-current1.2",
+      "name": "project-task-lv2-current1.2",
       "passed": true,
       "expected": "accept",
       "tier": "current",
@@ -562,14 +473,15 @@
       "errors": []
     },
     {
-      "name": "project-metadata-only-projection-semantics-lv2",
+      "name": "project-task-semantics-lv2-current1.2",
       "passed": true,
       "expected": "accept",
       "errors": []
     },
     {
-      "name": "project-diff-metadata-only-lv2",
-      "passed": true
+      "name": "project-task-exact-equality-lv2",
+      "passed": true,
+      "differences": []
     },
     {
       "name": "independent-case-arithmetic-lv2",
@@ -1649,10 +1561,2692 @@
     {
       "name": "session-reference-rejects-condition-mismatch",
       "passed": true
+    },
+    {
+      "name": "project-submission-fixture-exact-equality",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-list-is-array",
+      "passed": true
+    },
+    {
+      "name": "ledger-entries-is-array",
+      "passed": true
+    },
+    {
+      "name": "ledger-rule-version",
+      "passed": true
+    },
+    {
+      "name": "generator-rule-version-source",
+      "passed": true
+    },
+    {
+      "name": "server-declaration-only",
+      "passed": true,
+      "parsedWith": "JSON.parse; own keys preserved",
+      "functionCallsExecuted": false
+    },
+    {
+      "name": "app-snapshot-count-36",
+      "passed": true,
+      "actual": 36,
+      "expected": 36
+    },
+    {
+      "name": "app-snapshot-unique-ids",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-full-combinations",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:1",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:1",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:1",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:2",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:2",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:2",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:3",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:3",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:3",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:4",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:4",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:4",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:5",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:5",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:5",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:6",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:6",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:6",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:7",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:7",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:7",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:8",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:8",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:8",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:9",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:9",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:9",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:10",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:10",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:10",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:11",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:11",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:11",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:12",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:12",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:12",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:13",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:13",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:13",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:14",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:14",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:14",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:15",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:15",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:15",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:16",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:16",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:16",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:17",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:17",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:17",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:18",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:18",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:18",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:19",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:19",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:19",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:20",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:20",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:20",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:21",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:21",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:21",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:22",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:22",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:22",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:23",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:23",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:23",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:24",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:24",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:24",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:25",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:25",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:25",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:26",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:26",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:26",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:27",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:27",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:27",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:28",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:28",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:28",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:29",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:29",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:29",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:30",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:30",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:30",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:31",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:31",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:31",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:32",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:32",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:32",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:33",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:33",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:33",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:34",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:34",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:34",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:35",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:35",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:35",
+      "passed": true
+    },
+    {
+      "name": "app-snapshot-schema:36",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "app-content-derived-id:36",
+      "passed": true
+    },
+    {
+      "name": "app-current-body:36",
+      "passed": true
+    },
+    {
+      "name": "ledger-unique-ids",
+      "passed": true
+    },
+    {
+      "name": "ledger-reserved-fixture-id-excluded",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-equals-app",
+      "passed": true
+    },
+    {
+      "name": "ledger-retired-excluded-from-app",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:1",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:1",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:1",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:1",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:1",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:1",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:1",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:1",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:1",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:2",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:2",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:2",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:2",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:2",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:2",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:2",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:2",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:2",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:3",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:3",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:3",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:3",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:3",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:3",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:3",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:3",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:3",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:4",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:4",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:4",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:4",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:4",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:4",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:4",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:4",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:4",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:5",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:5",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:5",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:5",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:5",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:5",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:5",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:5",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:5",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:6",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:6",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:6",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:6",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:6",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:6",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:6",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:6",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:6",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:7",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:7",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:7",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:7",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:7",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:7",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:7",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:7",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:7",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:8",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:8",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:8",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:8",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:8",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:8",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:8",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:8",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:8",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:9",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:9",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:9",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:9",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:9",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:9",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:9",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:9",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:9",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:10",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:10",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:10",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:10",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:10",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:10",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:10",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:10",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:10",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:11",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:11",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:11",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:11",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:11",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:11",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:11",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:11",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:11",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:12",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:12",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:12",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:12",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:12",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:12",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:12",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:12",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:12",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:13",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:13",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:13",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:13",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:13",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:13",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:13",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:13",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:13",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:14",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:14",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:14",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:14",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:14",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:14",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:14",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:14",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:14",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:15",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:15",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:15",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:15",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:15",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:15",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:15",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:15",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:15",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:16",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:16",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:16",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:16",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:16",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:16",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:16",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:16",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:16",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:17",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:17",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:17",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:17",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:17",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:17",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:17",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:17",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:17",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:18",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:18",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:18",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:18",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:18",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:18",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:18",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:18",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:18",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:19",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:19",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:19",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:19",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:19",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:19",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:19",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:19",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:19",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:20",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:20",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:20",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:20",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:20",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:20",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:20",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:20",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:20",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:21",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:21",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:21",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:21",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:21",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:21",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:21",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:21",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:21",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:22",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:22",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:22",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:22",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:22",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:22",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:22",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:22",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:22",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:23",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:23",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:23",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:23",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:23",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:23",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:23",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:23",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:23",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:24",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:24",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:24",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:24",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:24",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:24",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:24",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:24",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:24",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:25",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:25",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:25",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:25",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:25",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:25",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:25",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:25",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:25",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:26",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:26",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:26",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:26",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:26",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:26",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:26",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:26",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:26",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:27",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:27",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:27",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:27",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:27",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:27",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:27",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:27",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:27",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:28",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:28",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:28",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:28",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:28",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:28",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:28",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:28",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:28",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:29",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:29",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:29",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:29",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:29",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:29",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:29",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:29",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:29",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:30",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:30",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:30",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:30",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:30",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:30",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:30",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:30",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:30",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:31",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:31",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:31",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:31",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:31",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:31",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:31",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:31",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:31",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:32",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:32",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:32",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:32",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:32",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:32",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:32",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:32",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:32",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:33",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:33",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:33",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:33",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:33",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:33",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:33",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:33",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:33",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:34",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:34",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:34",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:34",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:34",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:34",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:34",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:34",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:34",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:35",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:35",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:35",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:35",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:35",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:35",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:35",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:35",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:35",
+      "passed": true
+    },
+    {
+      "name": "ledger-snapshot-schema:36",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "ledger-content-derived-id:36",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-shape:36",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-status:36",
+      "passed": true
+    },
+    {
+      "name": "ledger-entry-dates:36",
+      "passed": true
+    },
+    {
+      "name": "ledger-recorded-step-scope:36",
+      "passed": true
+    },
+    {
+      "name": "ledger-active-step-scope:36",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-body:36",
+      "passed": true
+    },
+    {
+      "name": "server-ledger-policy:36",
+      "passed": true
+    },
+    {
+      "name": "server-registry-complete",
+      "passed": true,
+      "actual": 37,
+      "expected": 37
+    },
+    {
+      "name": "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:0032a58c-7e66-48b4-8c10-16b0900999c1",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:0032a58c-7e66-48b4-8c10-16b0900999c1",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:72812b57-8a47-4a6a-8500-662e55e6f010",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:72812b57-8a47-4a6a-8500-662e55e6f010",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:72812b57-8a47-4a6a-8500-662e55e6f010",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:5e5948e2-20d9-4a66-8281-c069e477bf04",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:5e5948e2-20d9-4a66-8281-c069e477bf04",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:5e5948e2-20d9-4a66-8281-c069e477bf04",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:7187fb6c-836b-4ef3-8390-8b7403fbfa0e",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:7187fb6c-836b-4ef3-8390-8b7403fbfa0e",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:7187fb6c-836b-4ef3-8390-8b7403fbfa0e",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:f1fc007e-8fcd-45ce-8d1a-1e6a254959ec",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:f1fc007e-8fcd-45ce-8d1a-1e6a254959ec",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:f1fc007e-8fcd-45ce-8d1a-1e6a254959ec",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:f7b00ea2-5f16-4181-8fe6-3977c13ff484",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:f7b00ea2-5f16-4181-8fe6-3977c13ff484",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:f7b00ea2-5f16-4181-8fe6-3977c13ff484",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:cb531cfd-522f-47de-8e29-b2e849ff24d8",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:cb531cfd-522f-47de-8e29-b2e849ff24d8",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:cb531cfd-522f-47de-8e29-b2e849ff24d8",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:c514a7d2-477d-488e-80bd-e467c649de23",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:c514a7d2-477d-488e-80bd-e467c649de23",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:c514a7d2-477d-488e-80bd-e467c649de23",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:5abd1ae7-1f29-46de-8e1e-ec1c1bff8a43",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:5abd1ae7-1f29-46de-8e1e-ec1c1bff8a43",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:5abd1ae7-1f29-46de-8e1e-ec1c1bff8a43",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:1e3d2084-e9c1-444c-8188-bd28305a1c42",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:1e3d2084-e9c1-444c-8188-bd28305a1c42",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:1e3d2084-e9c1-444c-8188-bd28305a1c42",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:2d62a519-6008-4495-846a-df33599f89b6",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:2d62a519-6008-4495-846a-df33599f89b6",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:2d62a519-6008-4495-846a-df33599f89b6",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:c6b41fee-63d9-42d1-85be-c08d38705014",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:c6b41fee-63d9-42d1-85be-c08d38705014",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:c6b41fee-63d9-42d1-85be-c08d38705014",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:b7b742c7-ef84-483f-8824-a34edae476b5",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:b7b742c7-ef84-483f-8824-a34edae476b5",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:b7b742c7-ef84-483f-8824-a34edae476b5",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:af4675ec-47a0-4d07-890e-df22a8c396dd",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:af4675ec-47a0-4d07-890e-df22a8c396dd",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:af4675ec-47a0-4d07-890e-df22a8c396dd",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:906dac18-7896-49f0-8f45-a033fcea3055",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:906dac18-7896-49f0-8f45-a033fcea3055",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:906dac18-7896-49f0-8f45-a033fcea3055",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:ea6f0e2f-bc89-435a-8f8f-8f8dd1c684ba",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:ea6f0e2f-bc89-435a-8f8f-8f8dd1c684ba",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:ea6f0e2f-bc89-435a-8f8f-8f8dd1c684ba",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:eb9b5689-ed49-4418-8545-1f422763a4a7",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:eb9b5689-ed49-4418-8545-1f422763a4a7",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:eb9b5689-ed49-4418-8545-1f422763a4a7",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:7d3e419a-0ac7-4e8b-8170-8432e2c51eeb",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:7d3e419a-0ac7-4e8b-8170-8432e2c51eeb",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:7d3e419a-0ac7-4e8b-8170-8432e2c51eeb",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:0b562396-097d-43a0-886d-447833524b4c",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:0b562396-097d-43a0-886d-447833524b4c",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:0b562396-097d-43a0-886d-447833524b4c",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:247e85f9-339c-4d63-8ddf-3f5ee479fd7f",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:247e85f9-339c-4d63-8ddf-3f5ee479fd7f",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:247e85f9-339c-4d63-8ddf-3f5ee479fd7f",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:4fc6a136-c5c8-4dd3-85d3-bc0297b5bcbf",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:4fc6a136-c5c8-4dd3-85d3-bc0297b5bcbf",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:4fc6a136-c5c8-4dd3-85d3-bc0297b5bcbf",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:92eb011b-c01e-49a2-8136-e5e4e3231b15",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:92eb011b-c01e-49a2-8136-e5e4e3231b15",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:92eb011b-c01e-49a2-8136-e5e4e3231b15",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:f3c2f743-2473-4e62-8ea1-dd3871aeefab",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:f3c2f743-2473-4e62-8ea1-dd3871aeefab",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:f3c2f743-2473-4e62-8ea1-dd3871aeefab",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:15848dc9-7c90-47f4-8cb7-6b9969ffc776",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:15848dc9-7c90-47f4-8cb7-6b9969ffc776",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:15848dc9-7c90-47f4-8cb7-6b9969ffc776",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:0912e3a9-f854-485e-8391-4a7d92e12cc8",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:0912e3a9-f854-485e-8391-4a7d92e12cc8",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:0912e3a9-f854-485e-8391-4a7d92e12cc8",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:e326f490-af9e-4680-8a6f-557abdff0255",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:e326f490-af9e-4680-8a6f-557abdff0255",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:e326f490-af9e-4680-8a6f-557abdff0255",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:69994661-4d80-421f-85a8-12e36a099e33",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:69994661-4d80-421f-85a8-12e36a099e33",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:69994661-4d80-421f-85a8-12e36a099e33",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:4dcd9f68-a95a-461c-81cb-576e0ac4796d",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:4dcd9f68-a95a-461c-81cb-576e0ac4796d",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:4dcd9f68-a95a-461c-81cb-576e0ac4796d",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:5a68ef85-9d7f-40c7-8fd8-7c17fc545ce6",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:5a68ef85-9d7f-40c7-8fd8-7c17fc545ce6",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:5a68ef85-9d7f-40c7-8fd8-7c17fc545ce6",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:08b1fdd6-c930-4143-8ac2-d3861f159ced",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:08b1fdd6-c930-4143-8ac2-d3861f159ced",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:08b1fdd6-c930-4143-8ac2-d3861f159ced",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:94401422-3094-4e37-83d8-79de6066a030",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:94401422-3094-4e37-83d8-79de6066a030",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:94401422-3094-4e37-83d8-79de6066a030",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:ad3b67f8-cb37-4c7b-8644-ab852591b19b",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:ad3b67f8-cb37-4c7b-8644-ab852591b19b",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:ad3b67f8-cb37-4c7b-8644-ab852591b19b",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:9295618b-1c31-410c-8ac3-b9f89d785ccb",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:9295618b-1c31-410c-8ac3-b9f89d785ccb",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:9295618b-1c31-410c-8ac3-b9f89d785ccb",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:e093caa6-ecc8-4f71-841f-0f1fc75942bc",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:e093caa6-ecc8-4f71-841f-0f1fc75942bc",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:e093caa6-ecc8-4f71-841f-0f1fc75942bc",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:9ca8ca92-81fd-453b-8a6c-a63574a687df",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:9ca8ca92-81fd-453b-8a6c-a63574a687df",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:9ca8ca92-81fd-453b-8a6c-a63574a687df",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:66dacdf0-39ed-4d45-8e49-9c4e74de2fa7",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:66dacdf0-39ed-4d45-8e49-9c4e74de2fa7",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:66dacdf0-39ed-4d45-8e49-9c4e74de2fa7",
+      "passed": true
+    },
+    {
+      "name": "server-snapshot-schema:00000000-0000-4000-8000-000000000004",
+      "passed": true,
+      "expected": "accept",
+      "tier": "current",
+      "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+      "errors": []
+    },
+    {
+      "name": "server-key-matches-snapshot-id:00000000-0000-4000-8000-000000000004",
+      "passed": true
+    },
+    {
+      "name": "server-entry-shape:00000000-0000-4000-8000-000000000004",
+      "passed": true
+    },
+    {
+      "name": "server-fixture-id",
+      "passed": true
+    },
+    {
+      "name": "server-fixture-body",
+      "passed": true
+    },
+    {
+      "name": "server-fixture-policy",
+      "passed": true
     }
   ],
-  "passed": 186,
-  "failed": 6,
+  "passed": 744,
+  "failed": 0,
   "strictLint": {
     "classification": "additional lint diagnostic; not counted as JSON Schema validity failures",
     "passed": 1,
@@ -1731,26 +4325,33 @@
       "canonical": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv1.json",
       "project": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/tasks/task.braking-force.case-lv1.json",
       "differences": [],
-      "projectionChangedPointers": [
-        "/schemaVersion",
-        "/vocabularyVersion",
-        "/taskDefinitionVersion"
-      ],
-      "projectionRemainingDifferences": []
+      "expected": "exact current 1.2.0 JSON equality"
     },
     {
       "level": 2,
       "canonical": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/task.braking-force.case-lv2.json",
       "project": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/tasks/task.braking-force.case-lv2.json",
       "differences": [],
-      "projectionChangedPointers": [
-        "/schemaVersion",
-        "/vocabularyVersion",
-        "/taskDefinitionVersion"
-      ],
-      "projectionRemainingDifferences": []
+      "expected": "exact current 1.2.0 JSON equality"
     }
   ],
+  "snapshotSummary": {
+    "ruleVersion": "1",
+    "appSnapshots": 36,
+    "appUniqueIds": 36,
+    "expectedCombinations": 36,
+    "actualCombinations": 36,
+    "ledgerEntries": 36,
+    "activeEntries": 36,
+    "retiredEntries": 0,
+    "serverEntries": 37,
+    "fixtureEntries": 1,
+    "generatedCodePattern": "^D-[0-9]{2}$",
+    "fixtureCodePattern": "^D-00$",
+    "generatorExecuted": false,
+    "serverFunctionsExecuted": false,
+    "retiredScopePolicy": "preserve recorded historical scope; server equality required"
+  },
   "sources": [
     {
       "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/contracts/task.schema.json",
@@ -1830,7 +4431,7 @@
     },
     {
       "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/layout.partial-survey.v1.1.json",
-      "sha256": "882e18182f7509a8197872eabd95385b32838eabfc77b677b28b7d12a3be1b01"
+      "sha256": "069dbeb8ad7d36d22ecdce090fc9903bdd90db448fda5c017d1be0e3619bcf47"
     },
     {
       "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/layout.unapproved.json",
@@ -1933,1360 +4534,522 @@
     {
       "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/docs/legacy/1.1.0/task.braking-force.case-lv2.json",
       "sha256": "b62bf53c4be8d1e022c2011caa558cca148a189cc2b75ecbdf6e1eb3fe5527ab"
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/session/demo-snapshots.json",
+      "sha256": "3c9edf9e4eec5694d3886bd6394f52a668f5638dcf27f2fbfea60500ae642e00",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/session/snapshot-ledger.json",
+      "sha256": "1987f74df48041f7519365a87b950e7122e1e01e783ebebc381e2d547ebe68d4",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/server/apps-script/DemoSnapshots.gs",
+      "sha256": "d211c7c71a535a619b67369b7e00b05abb79fe7230f7c66f8d31503358223270",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/scripts/build-demo-snapshots.mjs",
+      "sha256": "f614989062bf36c4ae3d682b9dacedf54620ea17b3df05028978eaa6d4a6d91c",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/claude code/chassis-3d-lab/docs/design/examples/submission.demo-request.json",
+      "sha256": "e71d6092a6b60db136ed4c05c65609916773a773622bac2bb5054671f05e2d0a",
+      "readOnly": true
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/examples/submission.demo-request.json",
+      "sha256": "e71d6092a6b60db136ed4c05c65609916773a773622bac2bb5054671f05e2d0a"
     }
   ],
-  "crossValidationB": {
-    "checkedAt": "2026-10-26T10:09:53.964Z",
-    "scope": "local-contract-and-synthetic-only; project read-only; generator writes intercepted in memory",
-    "checks": [
-      {
-        "name": "project-contract-copy:record.schema.json",
-        "passed": true
-      },
-      {
-        "name": "project-contract-copy:task.schema.json",
-        "passed": true
-      },
-      {
-        "name": "project-contract-copy:session.snapshot.schema.json",
-        "passed": true
-      },
-      {
-        "name": "current-task-lv1",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "current-task-lv1-formal-equality",
-        "passed": true
-      },
-      {
-        "name": "current-task-lv1-pending",
-        "passed": true
-      },
-      {
-        "name": "current-task-lv2",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "current-task-lv2-formal-equality",
-        "passed": true
-      },
-      {
-        "name": "current-task-lv2-pending",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-count-36",
-        "passed": true
-      },
-      {
-        "name": "app-id-uniqueness-36",
-        "passed": true
-      },
-      {
-        "name": "server-entry-count-37",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:1",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:1",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:1",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:1",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:1",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:2",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:2",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:2",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:2",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:2",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:3",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:3",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:3",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:3",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:3",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:4",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:4",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:4",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:4",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:4",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:5",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:5",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:5",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:5",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:5",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:6",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:6",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:6",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:6",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:6",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:7",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:7",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:7",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:7",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:7",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:8",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:8",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:8",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:8",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:8",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:9",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:9",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:9",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:9",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:9",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:10",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:10",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:10",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:10",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:10",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:11",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:11",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:11",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:11",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:11",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:12",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:12",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:12",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:12",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:12",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:13",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:13",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:13",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:13",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:13",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:14",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:14",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:14",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:14",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:14",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:15",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:15",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:15",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:15",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:15",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:16",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:16",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:16",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:16",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:16",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:17",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:17",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:17",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:17",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:17",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:18",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:18",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:18",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:18",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:18",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:19",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:19",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:19",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:19",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:19",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:20",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:20",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:20",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:20",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:20",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:21",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:21",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:21",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:21",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:21",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:22",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:22",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:22",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:22",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:22",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:23",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:23",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:23",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:23",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:23",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:24",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:24",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:24",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:24",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:24",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:25",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:25",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:25",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:25",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:25",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:26",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:26",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:26",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:26",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:26",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:27",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:27",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:27",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:27",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:27",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:28",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:28",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:28",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:28",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:28",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:29",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:29",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:29",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:29",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:29",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:30",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:30",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:30",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:30",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:30",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:31",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:31",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:31",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:31",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:31",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:32",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:32",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:32",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:32",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:32",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:33",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:33",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:33",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:33",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:33",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:34",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:34",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:34",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:34",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:34",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:35",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:35",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:35",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:35",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:35",
-        "passed": true
-      },
-      {
-        "name": "app-snapshot-schema:36",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-app-content-equality:36",
-        "passed": true
-      },
-      {
-        "name": "server-app-code-pattern:36",
-        "passed": true
-      },
-      {
-        "name": "app-content-derived-id:36",
-        "passed": true
-      },
-      {
-        "name": "approval-and-purpose:36",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:0032a58c-7e66-48b4-8c10-16b0900999c1",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:72812b57-8a47-4a6a-8500-662e55e6f010",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:72812b57-8a47-4a6a-8500-662e55e6f010",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:5e5948e2-20d9-4a66-8281-c069e477bf04",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:5e5948e2-20d9-4a66-8281-c069e477bf04",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:7187fb6c-836b-4ef3-8390-8b7403fbfa0e",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:7187fb6c-836b-4ef3-8390-8b7403fbfa0e",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:f1fc007e-8fcd-45ce-8d1a-1e6a254959ec",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:f1fc007e-8fcd-45ce-8d1a-1e6a254959ec",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:f7b00ea2-5f16-4181-8fe6-3977c13ff484",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:f7b00ea2-5f16-4181-8fe6-3977c13ff484",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:cb531cfd-522f-47de-8e29-b2e849ff24d8",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:cb531cfd-522f-47de-8e29-b2e849ff24d8",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:c514a7d2-477d-488e-80bd-e467c649de23",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:c514a7d2-477d-488e-80bd-e467c649de23",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:5abd1ae7-1f29-46de-8e1e-ec1c1bff8a43",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:5abd1ae7-1f29-46de-8e1e-ec1c1bff8a43",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:1e3d2084-e9c1-444c-8188-bd28305a1c42",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:1e3d2084-e9c1-444c-8188-bd28305a1c42",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:2d62a519-6008-4495-846a-df33599f89b6",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:2d62a519-6008-4495-846a-df33599f89b6",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:c6b41fee-63d9-42d1-85be-c08d38705014",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:c6b41fee-63d9-42d1-85be-c08d38705014",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:b7b742c7-ef84-483f-8824-a34edae476b5",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:b7b742c7-ef84-483f-8824-a34edae476b5",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:af4675ec-47a0-4d07-890e-df22a8c396dd",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:af4675ec-47a0-4d07-890e-df22a8c396dd",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:906dac18-7896-49f0-8f45-a033fcea3055",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:906dac18-7896-49f0-8f45-a033fcea3055",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:ea6f0e2f-bc89-435a-8f8f-8f8dd1c684ba",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:ea6f0e2f-bc89-435a-8f8f-8f8dd1c684ba",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:eb9b5689-ed49-4418-8545-1f422763a4a7",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:eb9b5689-ed49-4418-8545-1f422763a4a7",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:7d3e419a-0ac7-4e8b-8170-8432e2c51eeb",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:7d3e419a-0ac7-4e8b-8170-8432e2c51eeb",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:0b562396-097d-43a0-886d-447833524b4c",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:0b562396-097d-43a0-886d-447833524b4c",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:247e85f9-339c-4d63-8ddf-3f5ee479fd7f",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:247e85f9-339c-4d63-8ddf-3f5ee479fd7f",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:4fc6a136-c5c8-4dd3-85d3-bc0297b5bcbf",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:4fc6a136-c5c8-4dd3-85d3-bc0297b5bcbf",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:92eb011b-c01e-49a2-8136-e5e4e3231b15",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:92eb011b-c01e-49a2-8136-e5e4e3231b15",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:f3c2f743-2473-4e62-8ea1-dd3871aeefab",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:f3c2f743-2473-4e62-8ea1-dd3871aeefab",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:15848dc9-7c90-47f4-8cb7-6b9969ffc776",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:15848dc9-7c90-47f4-8cb7-6b9969ffc776",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:0912e3a9-f854-485e-8391-4a7d92e12cc8",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:0912e3a9-f854-485e-8391-4a7d92e12cc8",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:e326f490-af9e-4680-8a6f-557abdff0255",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:e326f490-af9e-4680-8a6f-557abdff0255",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:69994661-4d80-421f-85a8-12e36a099e33",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:69994661-4d80-421f-85a8-12e36a099e33",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:4dcd9f68-a95a-461c-81cb-576e0ac4796d",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:4dcd9f68-a95a-461c-81cb-576e0ac4796d",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:5a68ef85-9d7f-40c7-8fd8-7c17fc545ce6",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:5a68ef85-9d7f-40c7-8fd8-7c17fc545ce6",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:08b1fdd6-c930-4143-8ac2-d3861f159ced",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:08b1fdd6-c930-4143-8ac2-d3861f159ced",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:94401422-3094-4e37-83d8-79de6066a030",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:94401422-3094-4e37-83d8-79de6066a030",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:ad3b67f8-cb37-4c7b-8644-ab852591b19b",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:ad3b67f8-cb37-4c7b-8644-ab852591b19b",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:9295618b-1c31-410c-8ac3-b9f89d785ccb",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:9295618b-1c31-410c-8ac3-b9f89d785ccb",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:e093caa6-ecc8-4f71-841f-0f1fc75942bc",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:e093caa6-ecc8-4f71-841f-0f1fc75942bc",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:9ca8ca92-81fd-453b-8a6c-a63574a687df",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:9ca8ca92-81fd-453b-8a6c-a63574a687df",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:66dacdf0-39ed-4d45-8e49-9c4e74de2fa7",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:66dacdf0-39ed-4d45-8e49-9c4e74de2fa7",
-        "passed": true
-      },
-      {
-        "name": "server-snapshot-schema:00000000-0000-4000-8000-000000000004",
-        "passed": true,
-        "errors": null
-      },
-      {
-        "name": "server-key-matches-snapshot-id:00000000-0000-4000-8000-000000000004",
-        "passed": true
-      },
-      {
-        "name": "fixture-id-0004",
-        "passed": true
-      },
-      {
-        "name": "fixture-context-equality",
-        "passed": true
-      },
-      {
-        "name": "fixture-direction-null",
-        "passed": true
-      },
-      {
-        "name": "fixture-code-pattern",
-        "passed": true
-      },
-      {
-        "name": "registry-extra-fixture-only",
-        "passed": true
-      },
-      {
-        "name": "cartesian-combinations-36",
-        "passed": true
-      },
-      {
-        "name": "generator-repeat-byte-stability",
-        "passed": true
-      },
-      {
-        "name": "generator-current-byte-equality:src/data/session/demo-snapshots.json",
-        "passed": true
-      },
-      {
-        "name": "generator-current-byte-equality:server/apps-script/DemoSnapshots.gs",
-        "passed": true
-      },
-      {
-        "name": "baseline-failures-only-obsolete-pre-replacement-expectations",
-        "passed": true
-      }
-    ],
-    "passed": 276,
-    "failed": 0,
-    "counts": {
-      "currentTasks": 2,
-      "appSnapshots": 36,
-      "serverEntries": 37,
-      "fixtureEntries": 1
-    },
-    "generatorObservations": {
-      "feedbackTextChangeWithoutVersionBumpKeepsIds": true,
-      "taskFeedbackPolicyVersionBumpAloneKeepsIds": true,
-      "taskDefinitionVersionBumpChangesAllIds": true,
-      "allDirectionsShareSessionConfigVersion": true,
-      "formerAppIdsRetainedAfterTaskVersionBump": 0
-    },
-    "baselineInterpretation": {
-      "passed": 186,
-      "failed": 6,
-      "classification": "6 stale validator expectations for pre-replacement 1.1.0 project tasks; current tasks are independently verified as 1.2.0 above",
-      "obsoleteCheckNames": [
-        "project-original-lv1-legacy1.1",
-        "project-original-lv1-current1.2-expected-version-failure",
-        "project-version-failure-pointers-lv1",
-        "project-original-lv2-legacy1.1",
-        "project-original-lv2-current1.2-expected-version-failure",
-        "project-version-failure-pointers-lv2"
-      ],
-      "validatorSourceModified": false
-    }
-  },
-  "receiverReviewB": {
-    "checkedAt": "2026-10-26T10:09:08.947944+00:00",
-    "scope": "read-only local VM and pure synthetic domain modules; no network/Google calls",
-    "identity": {
-      "passedAssertions": 33,
-      "failedAssertions": 0,
-      "results": [
+  "receiverReviewC": {
+    "checkedAt": "2026-10-26T14:03:49.920453+00:00",
+    "projectHead": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
+    "scope": "read-only project; local JSON contracts and pure synthetic/in-memory service tests; no deployment or network calls",
+    "validatorSha256": "2c56ae96c8791ae88680f971d9927c0ff05e9708ab5270363af4a081d720fddd",
+    "validatorBehavior": {
+      "checks": [
         {
-          "test": "envelope extra __proto__",
-          "code": "INVALID_PAYLOAD"
+          "name": "baseline-current-inputs-pass",
+          "passed": true,
+          "actualFailures": []
         },
         {
-          "test": "payload extra __proto__",
-          "code": "INVALID_PAYLOAD"
+          "name": "coverage:app-snapshot-count",
+          "passed": true
         },
         {
-          "test": "envelope extra constructor",
-          "code": "INVALID_PAYLOAD"
+          "name": "coverage:ledger-rule-version",
+          "passed": true
         },
         {
-          "test": "payload extra constructor",
-          "code": "INVALID_PAYLOAD"
+          "name": "coverage:server-registry-complete",
+          "passed": true
         },
         {
-          "test": "envelope extra toString",
-          "code": "INVALID_PAYLOAD"
+          "name": "coverage:project-task-exact-equality-lv",
+          "passed": true
         },
         {
-          "test": "payload extra toString",
-          "code": "INVALID_PAYLOAD"
+          "name": "snapshot-summary-present",
+          "passed": true
         },
         {
-          "test": "counter key constructor",
-          "ok": true
+          "name": "new-source-hashes-present",
+          "passed": true
         },
         {
-          "test": "counter key toString",
-          "ok": true
+          "name": "reject:ledger-invalid-status",
+          "passed": true,
+          "failedChecks": [
+            "ledger-active-equals-app",
+            "ledger-entry-status:1",
+            "ledger-entry-dates:1",
+            "server-ledger-policy:1"
+          ]
         },
         {
-          "test": "missing attemptRole",
-          "code": "INVALID_PAYLOAD"
+          "name": "reject:ledger-duplicate-id",
+          "passed": true,
+          "failedChecks": [
+            "ledger-unique-ids",
+            "ledger-active-equals-app",
+            "server-registry-complete"
+          ]
         },
         {
-          "test": "missing retryOfRecordId",
-          "code": "INVALID_PAYLOAD"
+          "name": "reject:app-content-drift",
+          "passed": true,
+          "failedChecks": [
+            "app-content-derived-id:1",
+            "app-current-body:1",
+            "ledger-active-equals-app"
+          ]
         },
         {
-          "test": "missing clientAppVersion",
-          "code": "INVALID_PAYLOAD"
+          "name": "reject:app-duplicate-id",
+          "passed": true,
+          "failedChecks": [
+            "app-snapshot-unique-ids",
+            "app-snapshot-full-combinations",
+            "ledger-active-equals-app"
+          ]
         },
         {
-          "test": "valid changed attemptRole",
-          "ok": true
+          "name": "reject:app-invalid-schema",
+          "passed": true,
+          "failedChecks": [
+            "app-snapshot-schema:1",
+            "app-content-derived-id:1",
+            "app-current-body:1",
+            "ledger-active-equals-app"
+          ]
         },
         {
-          "test": "valid changed retryOfRecordId",
-          "ok": true
+          "name": "reject:app-null-snapshot",
+          "passed": true,
+          "failedChecks": [
+            "app-snapshot-full-combinations",
+            "app-snapshot-schema:1",
+            "app-content-derived-id:1",
+            "app-current-body:1",
+            "ledger-active-equals-app"
+          ]
         },
         {
-          "test": "valid changed clientAppVersion",
-          "ok": true
+          "name": "reject:server-entry-missing",
+          "passed": true,
+          "failedChecks": [
+            "server-ledger-body:1",
+            "server-ledger-policy:1",
+            "server-registry-complete"
+          ]
         },
         {
-          "test": "legacy 1.0.0 first + duplicate",
-          "first": true,
-          "duplicate": true,
-          "usagePhaseAdded": false
+          "name": "reject:server-schema-drift",
+          "passed": true,
+          "failedChecks": [
+            "server-ledger-body:1",
+            "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1"
+          ]
         },
         {
-          "test": "1.0.0 with usagePhase",
-          "code": "INVALID_PAYLOAD"
+          "name": "reject:server-proto-extra",
+          "passed": true,
+          "failedChecks": [
+            "server-ledger-body:1",
+            "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1"
+          ]
         },
         {
-          "test": "1.1.0 without usagePhase",
-          "code": "INVALID_PAYLOAD"
+          "name": "reject:ledger-active-retired-date",
+          "passed": true,
+          "failedChecks": [
+            "ledger-entry-dates:1"
+          ]
+        },
+        {
+          "name": "reject:ledger-rule-version",
+          "passed": true,
+          "failedChecks": [
+            "ledger-rule-version"
+          ]
+        },
+        {
+          "name": "reject:ledger-content-drift",
+          "passed": true,
+          "failedChecks": [
+            "ledger-active-equals-app",
+            "ledger-content-derived-id:1",
+            "server-ledger-body:1"
+          ]
+        },
+        {
+          "name": "reject:ledger-null-snapshot",
+          "passed": true,
+          "failedChecks": [
+            "ledger-active-equals-app",
+            "ledger-snapshot-schema:1",
+            "ledger-content-derived-id:1",
+            "ledger-active-step-scope:1",
+            "server-ledger-body:1",
+            "server-ledger-policy:1",
+            "server-registry-complete"
+          ]
+        },
+        {
+          "name": "reject:ledger-current-scope-drift",
+          "passed": true,
+          "failedChecks": [
+            "ledger-active-step-scope:1",
+            "server-ledger-policy:1"
+          ]
+        },
+        {
+          "name": "reject:server-code-policy-drift",
+          "passed": true,
+          "failedChecks": [
+            "server-ledger-policy:1"
+          ]
+        },
+        {
+          "name": "reject:fixture-scope-drift",
+          "passed": true,
+          "failedChecks": [
+            "server-fixture-policy"
+          ]
+        },
+        {
+          "name": "reject:retired-still-in-app",
+          "passed": true,
+          "failedChecks": [
+            "ledger-active-equals-app",
+            "ledger-retired-excluded-from-app",
+            "server-ledger-policy:1"
+          ]
+        },
+        {
+          "name": "valid-retired-history-is-preserved",
+          "passed": true,
+          "failedChecks": []
         }
-      ]
-    },
-    "existingTestSubset": {
-      "passed": 67,
+      ],
+      "passed": 25,
       "failed": 0,
-      "files": [
-        "appsScriptPure.test.ts",
-        "appsScriptDoPost.test.ts",
-        "appsScriptHardening.test.ts",
-        "sessionSnapshot.test.ts"
-      ]
+      "baseline": {
+        "passed": 744,
+        "failed": 0
+      }
     },
-    "semanticsDiagnostics": {
-      "cases": 15,
-      "executionErrors": 0,
-      "classification": "observations including reproduced remaining P2 defects; not product-pass counts",
-      "results": [
+    "existingTestSuite": {
+      "files": 21,
+      "passed": 204,
+      "failed": 0
+    },
+    "registryDiagnostics": {
+      "targetHead": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
+      "assertions": 23,
+      "observations": [
+        {
+          "name": "registered normal prefix accepted",
+          "observed": true
+        },
+        {
+          "name": "unknown off suffix rejected",
+          "observed": "INVALID_PAYLOAD"
+        },
+        {
+          "name": "off without subactions rejected",
+          "observed": "INVALID_PAYLOAD"
+        },
+        {
+          "name": "off suffix order reversed rejected",
+          "observed": "INVALID_PAYLOAD"
+        },
+        {
+          "name": "subaction after parent rejected",
+          "observed": "INVALID_PAYLOAD"
+        },
+        {
+          "name": "missing parent prerequisite calc only currently accepted",
+          "observed": true
+        },
+        {
+          "name": "off subsequence without read prerequisite currently accepted",
+          "observed": true
+        },
+        {
+          "name": "duplicate parent off currently accepted",
+          "observed": true
+        },
+        {
+          "name": "legacy fixture off-only accepted without adding subevents",
+          "observed": true
+        },
+        {
+          "name": "stored legacy event count unchanged",
+          "observed": 3
+        },
+        {
+          "name": "retired duplicate same first receipt",
+          "observed": [
+            true,
+            "11111111-2222-4333-8444-000000000001",
+            "2026-10-26T13:52:24.519Z"
+          ]
+        },
+        {
+          "name": "retired previously unaccepted record rejected",
+          "observed": "SESSION_NOT_ALLOWED"
+        },
+        {
+          "name": "retired same ID changed valid payload classified conflict",
+          "observed": "RECORD_ID_CONFLICT"
+        },
+        {
+          "name": "retired context mismatch rejected before canonical lookup",
+          "observed": "SESSION_NOT_ALLOWED"
+        },
+        {
+          "name": "changed allowedStepIds prevents identical retired receipt recovery",
+          "observed": "INVALID_PAYLOAD"
+        },
+        {
+          "name": "baseline generator succeeds in memory",
+          "observed": null
+        },
+        {
+          "name": "baseline captured output equals current bytes",
+          "observed": [
+            true,
+            true,
+            true
+          ]
+        },
+        {
+          "name": "version revision retains old and current snapshots",
+          "observed": [
+            null,
+            72,
+            36,
+            36
+          ]
+        },
+        {
+          "name": "retired snapshot and allowed steps unchanged",
+          "observed": true
+        },
+        {
+          "name": "single same-ID different snapshot is rejected",
+          "observed": true
+        },
+        {
+          "name": "duplicate ledger ID with conflicting earlier snapshot silently collapses",
+          "observed": [
+            null,
+            36
+          ]
+        },
+        {
+          "name": "same snapshot ID metadata overwritten without failure",
+          "observed": [
+            null,
+            false,
+            15
+          ]
+        },
+        {
+          "name": "manual retirement of current combination regenerated active",
+          "observed": [
+            null,
+            "active",
+            null
+          ]
+        }
+      ],
+      "limits": "Local Node VM only. Generator writeFileSync captured in memory. Diagnostic expected accepts are not product conformance PASS."
+    },
+    "timeCounterDateDiagnostics": {
+      "head": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
+      "execution": "local Node VM + in-memory TypeScript transpilation; fake Google services; no network",
+      "summary": {
+        "cases": 29,
+        "assertionPass": 29,
+        "assertionFail": 0
+      },
+      "cases": [
         {
           "name": "baseline",
+          "category": "closed",
+          "assertions": "PASS",
           "response": {
             "protocolVersion": "1",
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T10:08:12.423Z",
+            "acceptedAt": "2026-10-26T13:52:41.690Z",
             "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
             "duplicate": false
           }
         },
         {
-          "name": "hint_count_equality_enforced",
-          "semantics": [
-            "hintCount != hintRequested events"
-          ],
+          "name": "quality_continuous_short_wall",
+          "category": "contract_guard",
+          "assertions": "PASS",
           "response": {
             "protocolVersion": "1",
             "ok": false,
             "code": "INVALID_PAYLOAD",
             "retryable": false,
             "recordId": "00000000-0000-4000-8000-000000000001"
-          }
-        },
-        {
-          "name": "npc_count_equality_enforced",
-          "semantics": [
-            "npcInspectionCount != npcInspected events"
-          ],
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          }
-        },
-        {
-          "name": "uncertain_wall_clock_backward",
-          "schema": {
-            "ok": true,
-            "errors": []
           },
+          "semantics": [
+            "time: durationSeconds exceeds wall clock"
+          ]
+        },
+        {
+          "name": "quality_continuous_backward",
+          "category": "contract_guard",
+          "assertions": "PASS",
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "semantics": [
+            "time: completedAt before startedAt",
+            "time: durationSeconds exceeds wall clock"
+          ]
+        },
+        {
+          "name": "quality_resumed_short_wall",
+          "category": "contract_guard",
+          "assertions": "PASS",
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "semantics": [
+            "time: durationSeconds exceeds wall clock"
+          ]
+        },
+        {
+          "name": "quality_resumed_backward",
+          "category": "contract_guard",
+          "assertions": "PASS",
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "semantics": [
+            "time: completedAt before startedAt",
+            "time: durationSeconds exceeds wall clock"
+          ]
+        },
+        {
+          "name": "quality_uncertain_short_wall",
+          "category": "closed",
+          "assertions": "PASS",
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T13:52:41.695Z",
+            "payloadHash": "5d1b1329a66a3ae035aa6dcbbd4efb61236a9cba4ba1675fb6b88a9bbe550dd8",
+            "duplicate": false
+          },
+          "semantics": []
+        },
+        {
+          "name": "quality_uncertain_backward",
+          "category": "closed",
+          "assertions": "PASS",
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T13:52:41.696Z",
+            "payloadHash": "2f6a40beeff7fde970b8bcd31ac75cf1685e8e2b55ab1c5d9d6c862d2186180a",
+            "duplicate": false
+          },
+          "semantics": []
+        },
+        {
+          "name": "legacy_uncertain_same_original_receipt",
+          "category": "closed",
+          "assertions": "PASS",
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "prior-receipt",
+            "acceptedAt": "2026-10-25T00:00:00.123Z",
+            "payloadHash": "79adb799ec786307ccfb9497fabfac3acd1d5f730046ab170da795d7742c9f0c",
+            "duplicate": true
+          }
+        },
+        {
+          "name": "normal_resumed_gap",
+          "category": "closed",
+          "assertions": "PASS",
+          "quality": "resumed",
+          "duration": 35,
+          "wallSeconds": 335,
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "82000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T13:52:41.701Z",
+            "payloadHash": "9ab660ff739334bcbb38cfe5e35589107fa90fb675da4262736312e17a9fcf2b",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "restore_after_wall_clock_rollback",
+          "category": "remainingP2_producer_quality",
+          "assertions": "PASS",
+          "quality": "resumed",
+          "duration": 30,
+          "wallSeconds": -50,
+          "eventElapsed": [
+            0,
+            30000,
+            30000
+          ],
           "semantics": [
             "time: completedAt before startedAt",
             "time: durationSeconds exceeds wall clock"
@@ -3296,263 +5059,684 @@
             "ok": false,
             "code": "INVALID_PAYLOAD",
             "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          }
+            "recordId": "82000000-0000-4000-8000-000000000001"
+          },
+          "correctionOnlyQualityAccepted": true
         },
         {
-          "name": "uncertain_wall_clock_shorter_than_active_time",
-          "schema": {
-            "ok": true,
-            "errors": []
+          "name": "hint_at_199_events",
+          "category": "closed_atomic_count_event",
+          "assertions": "PASS",
+          "before": {
+            "events": 199,
+            "hints": 198,
+            "npc": 0
           },
-          "semantics": [
-            "time: durationSeconds exceeds wall clock"
-          ],
+          "after": {
+            "events": 200,
+            "hints": 199,
+            "npc": 0
+          },
+          "outcome": "confirmed",
+          "recorded": null,
+          "canonicalBytes": 35679,
+          "semanticErrors": [],
           "response": {
             "protocolVersion": "1",
             "ok": false,
-            "code": "INVALID_PAYLOAD",
+            "code": "PAYLOAD_TOO_LARGE",
             "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
+            "recordId": "82000000-0000-4000-8000-000000000001"
           }
         },
         {
-          "name": "judgment_summary_contradiction",
-          "schema": {
-            "ok": true,
-            "errors": []
+          "name": "hint_at_200_events",
+          "category": "closed_atomic_count_event",
+          "assertions": "PASS",
+          "before": {
+            "events": 200,
+            "hints": 199,
+            "npc": 0
           },
-          "semantics": [],
+          "after": {
+            "events": 200,
+            "hints": 199,
+            "npc": 0
+          },
+          "outcome": "eventLimit",
+          "recorded": null,
+          "canonicalBytes": 35679,
+          "semanticErrors": [],
           "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "PAYLOAD_TOO_LARGE",
+            "retryable": false,
+            "recordId": "82000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "npc_at_199_events",
+          "category": "closed_atomic_count_event",
+          "assertions": "PASS",
+          "before": {
+            "events": 199,
+            "hints": 198,
+            "npc": 0
+          },
+          "after": {
+            "events": 200,
+            "hints": 198,
+            "npc": 1
+          },
+          "outcome": null,
+          "recorded": true,
+          "canonicalBytes": 35645,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "PAYLOAD_TOO_LARGE",
+            "retryable": false,
+            "recordId": "82000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "npc_at_200_events",
+          "category": "closed_atomic_count_event",
+          "assertions": "PASS",
+          "before": {
+            "events": 200,
+            "hints": 199,
+            "npc": 0
+          },
+          "after": {
+            "events": 200,
+            "hints": 199,
+            "npc": 0
+          },
+          "outcome": null,
+          "recorded": false,
+          "canonicalBytes": 35679,
+          "semanticErrors": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "PAYLOAD_TOO_LARGE",
+            "retryable": false,
+            "recordId": "82000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "date_seconds",
+          "category": "closed_valid_subset",
+          "assertions": "PASS",
+          "value": "2099-02-28T00:00:00Z",
+          "utcFunction": true,
+          "formalDateTime": true,
+          "intakeResponse": {
             "protocolVersion": "1",
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T10:08:12.431Z",
-            "payloadHash": "a80b879cd0d04b6992660982fac8143d6a537aac354648041a11259803b52fc3",
-            "duplicate": false
-          }
-        },
-        {
-          "name": "unknown_off_action_current_app_snapshot",
-          "taskVersion": "1.2.0-review-case-1-2026-10-26",
-          "schema": {
-            "ok": true,
-            "errors": []
-          },
-          "semantics": [],
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "70000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T10:08:12.480Z",
-            "payloadHash": "71b1e5f8c9cacb16938139552b83d05b1acec299ab87baef911586e921100eb4",
-            "duplicate": false
-          }
-        },
-        {
-          "name": "current_parent_only",
-          "taskVersion": "1.2.0-review-case-1-2026-10-26",
-          "schema": {
-            "ok": true,
-            "errors": []
-          },
-          "semantics": [],
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "70000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T10:08:12.482Z",
-            "payloadHash": "3e1e7571b993eab19678e1effb7ac16691058d582fb8312cabd37b17a94e718b",
-            "duplicate": false
-          }
-        },
-        {
-          "name": "current_parent_before_children",
-          "taskVersion": "1.2.0-review-case-1-2026-10-26",
-          "eventStepIds": [
-            null,
-            "off",
-            "off:motorOff",
-            "off:liftUp",
-            "off:exitVehicle"
-          ],
-          "schema": {
-            "ok": true,
-            "errors": []
-          },
-          "semantics": [],
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "70000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T10:08:12.484Z",
-            "payloadHash": "a7add534793a6ec7363023d915b5f58b5a3e934b1d89319b6884e92fec2b1d70",
-            "duplicate": false
-          }
-        },
-        {
-          "name": "bad_accept_until_permissive_parse",
-          "config": {
-            "SHEET_ID": "SHEET-TEST",
-            "TAB_NAME": "canonical",
-            "ACCEPT_UNTIL": 253370764800000,
-            "MAX_NEW_ROWS": 50,
-            "intakeValid": true,
-            "LOCK_WAIT_MS": 10000
-          },
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T10:08:12.485Z",
+            "acceptedAt": "2026-10-26T13:52:41.793Z",
             "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
             "duplicate": false
-          }
-        },
-        {
-          "name": "bad_accept_until_invalid_calendar",
-          "config": {
-            "SHEET_ID": "SHEET-TEST",
-            "TAB_NAME": "canonical",
-            "ACCEPT_UNTIL": 4076179200000,
-            "MAX_NEW_ROWS": 50,
-            "intakeValid": true,
-            "LOCK_WAIT_MS": 10000
           },
-          "response": {
+          "storedResponse": {
             "protocolVersion": "1",
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T10:08:12.487Z",
-            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
-            "duplicate": false
-          }
-        },
-        {
-          "name": "bad_accepted_at_calendar",
-          "response": {
-            "protocolVersion": "1",
-            "ok": true,
-            "recordId": "00000000-0000-4000-8000-000000000001",
-            "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-02-31T00:00:00Z",
+            "acceptedAt": "2099-02-28T00:00:00Z",
             "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
             "duplicate": true
           },
-          "successSchema": false,
-          "successSchemaErrors": [
+          "storedSuccessSchema": true
+        },
+        {
+          "name": "date_fraction1",
+          "category": "closed_valid_subset",
+          "assertions": "PASS",
+          "value": "2099-02-28T00:00:00.1Z",
+          "utcFunction": true,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T13:52:41.797Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": false
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2099-02-28T00:00:00.1Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": true
+          },
+          "storedSuccessSchema": true
+        },
+        {
+          "name": "date_fraction2",
+          "category": "closed_valid_subset",
+          "assertions": "PASS",
+          "value": "2099-02-28T00:00:00.12Z",
+          "utcFunction": true,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T13:52:41.800Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": false
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2099-02-28T00:00:00.12Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": true
+          },
+          "storedSuccessSchema": true
+        },
+        {
+          "name": "date_fraction3",
+          "category": "closed_valid_subset",
+          "assertions": "PASS",
+          "value": "2099-02-28T00:00:00.123Z",
+          "utcFunction": true,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T13:52:41.804Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": false
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2099-02-28T00:00:00.123Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": true
+          },
+          "storedSuccessSchema": true
+        },
+        {
+          "name": "date_fraction4",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2099-02-28T00:00:00.1234Z",
+          "utcFunction": false,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_fraction6",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2099-02-28T00:00:00.123000Z",
+          "utcFunction": false,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_offset_zero",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2099-02-28T00:00:00+00:00",
+          "utcFunction": false,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_offset9",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2099-02-28T09:00:00+09:00",
+          "utcFunction": false,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_lowercase",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2099-02-28t00:00:00z",
+          "utcFunction": false,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_leap_valid",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2016-12-31T23:59:60Z",
+          "utcFunction": false,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_invalid_day",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2099-02-31T00:00:00Z",
+          "utcFunction": false,
+          "formalDateTime": false,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_invalid_hour",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2099-02-28T24:00:00Z",
+          "utcFunction": false,
+          "formalDateTime": false,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_year_only",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "9999",
+          "utcFunction": false,
+          "formalDateTime": false,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        },
+        {
+          "name": "date_valid_leap_day",
+          "category": "closed_valid_subset",
+          "assertions": "PASS",
+          "value": "2096-02-29T00:00:00Z",
+          "utcFunction": true,
+          "formalDateTime": true,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-26T13:52:41.840Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": false
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2096-02-29T00:00:00Z",
+            "payloadHash": "feade2ecefa951bfb5e5f017ac1c10bb560e76edba0b235fce72ceaa9dc4bbca",
+            "duplicate": true
+          },
+          "storedSuccessSchema": true
+        },
+        {
+          "name": "date_invalid_century",
+          "category": "date_policy_observation",
+          "assertions": "PASS",
+          "value": "2100-02-29T00:00:00Z",
+          "utcFunction": false,
+          "formalDateTime": false,
+          "intakeResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "SESSION_NOT_ALLOWED",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedResponse": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "CANONICAL_STORE_INVALID",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          },
+          "storedSuccessSchema": null
+        }
+      ],
+      "uiStaticReview": {
+        "npcLimit": "TaskScreen.tsx:170 returns before setInspection/finish when recorded=false",
+        "hintLimit": "TaskScreen.tsx:161-164 always calls show() after requestHint(), without checking eventLimit outcome; domain count/event remains atomic"
+      }
+    },
+    "recordDateDiagnostic": {
+      "head": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
+      "classification": "P2 remaining record date-time calendar validation; independent of fixed ACCEPT_UNTIL/acceptedAt",
+      "input": {
+        "startedAt": "2000-02-31T00:00:00Z",
+        "completedAt": "2000-02-31T00:00:10Z",
+        "durationSeconds": 10,
+        "timeQuality": "continuous"
+      },
+      "nodeNormalized": {
+        "startedAt": "2000-03-02T00:00:00.000Z",
+        "completedAt": "2000-03-02T00:00:10.000Z"
+      },
+      "mini": {
+        "ok": true,
+        "errors": []
+      },
+      "semantics": [],
+      "response": {
+        "protocolVersion": "1",
+        "ok": true,
+        "recordId": "00000000-0000-4000-8000-000000000001",
+        "receiptId": "11111111-2222-4333-8444-000000000001",
+        "acceptedAt": "2026-10-26T13:54:35.074Z",
+        "payloadHash": "6aca83f13a694fe90a6c80deca88afb0582760171219e7c5efbb9e579491c879",
+        "duplicate": false
+      },
+      "formalRecord": {
+        "ok": false,
+        "errors": [
+          {
+            "instancePath": "/startedAt",
+            "schemaPath": "#/properties/startedAt/format",
+            "keyword": "format",
+            "params": {
+              "format": "date-time"
+            },
+            "message": "must match format \"date-time\""
+          },
+          {
+            "instancePath": "/completedAt",
+            "schemaPath": "#/properties/completedAt/format",
+            "keyword": "format",
+            "params": {
+              "format": "date-time"
+            },
+            "message": "must match format \"date-time\""
+          }
+        ]
+      },
+      "rows": 1,
+      "assertions": "PASS",
+      "execution": "local VM and in-memory fake Google services only"
+    },
+    "qa": {
+      "boundaries": {
+        "generatorNotExecuted": true,
+        "serverExpressionRejected": true,
+        "actualProjectUnchanged": true,
+        "generator": {
+          "passed": 744,
+          "failed": 0
+        },
+        "serverDeclaration": {
+          "name": "server-declaration-only",
+          "passed": false,
+          "errors": [
+            "Unexpected token '(', ...\"expected\":(function(\"... is not valid JSON"
+          ],
+          "functionCallsExecuted": false
+        }
+      },
+      "prototypeKeyFix": {
+        "oldRedPreserved": true,
+        "sameInputOwnProtoPresent": true,
+        "validatorExit": 1,
+        "validatorPassed": 742,
+        "validatorFailed": 2,
+        "serverSnapshotCheck": {
+          "name": "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1",
+          "passed": false,
+          "expected": "accept",
+          "tier": "current",
+          "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
+          "errors": [
             {
-              "instancePath": "/acceptedAt",
-              "schemaPath": "#/properties/acceptedAt/format",
-              "keyword": "format",
+              "instancePath": "",
+              "schemaPath": "#/additionalProperties",
+              "keyword": "additionalProperties",
               "params": {
-                "format": "date-time"
+                "additionalProperty": "__proto__"
               },
-              "message": "must match format \"date-time\""
+              "message": "must NOT have additional properties"
             }
           ]
         },
-        {
-          "name": "legacy_existing_row_uncertain",
-          "schema": {
-            "ok": true,
-            "errors": []
-          },
-          "normalResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          },
-          "inLockResponse": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          }
-        },
-        {
-          "name": "legacy_existing_row_valid_incoming",
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "CANONICAL_STORE_INVALID",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
-          }
-        },
-        {
-          "name": "app_event_limit_inspection",
-          "events": 200,
-          "npcEvents": 0,
-          "npcCount": 1,
-          "eventLimitReached": true,
-          "schema": {
-            "ok": true,
-            "errors": []
-          },
-          "semantics": [
-            "npcInspectionCount != npcInspected events"
-          ],
-          "response": {
-            "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "cc3bacf5-1a12-49c0-b43e-de91d3f75b93"
-          }
-        }
-      ]
+        "rejectsOwnProto": true,
+        "failedChecks": [
+          "server-ledger-body:1",
+          "server-snapshot-schema:0032a58c-7e66-48b4-8c10-16b0900999c1"
+        ]
+      },
+      "classification": "owned validator defect fixed; project findings listed separately"
     },
-    "scratchReproductionFiles": [
+    "remainingP1": [],
+    "remainingP2": [
       {
-        "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/cross-validate-b.mjs",
-        "sha256": "e62be0ca05c46509a7a0a4fc885e25b62e98216a3afb5972dc66ff8be603bf56"
+        "id": "C-P2-1",
+        "priority": "P2",
+        "summary": "restore producer labels unreliable rollback as resumed"
       },
       {
-        "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/receiver_identity/repro.cjs",
-        "sha256": "fe1c73df01cc435a31f809e6d48d8c0e55556823fae7da4712d1714ba1dd1735"
+        "id": "C-P2-2",
+        "priority": "P2",
+        "summary": "parent prerequisite event-history validation missing"
       },
       {
-        "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/receiver_semantics/repro.cjs",
-        "sha256": "b7585ac4b1b4fe3c8a43247941a17f674dcd3e95d33466747287e57236e76b2e"
+        "id": "C-P2-3",
+        "priority": "P2",
+        "summary": "record startedAt/completedAt calendar format differs from formal schema"
       },
       {
-        "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/vitest-review.config.mjs",
-        "sha256": "728fceb77bbedc847b3527b04746e8573c3e7664cac173fc656364a3d046041f"
+        "id": "C-P2-4",
+        "priority": "P2",
+        "summary": "generator Map silently discards earlier duplicate ledger IDs"
+      },
+      {
+        "id": "C-P2-5",
+        "priority": "P2",
+        "summary": "same-ID allowedStepIds policy metadata can be overwritten"
       }
-    ]
+    ],
+    "deployed": false,
+    "liveCallsExecuted": false,
+    "originalResultArchivedAt": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/results-before.json"
   },
-  "preservationB": {
-    "checkedAt": "2026-10-26T10:10:34.923588+00:00",
-    "projectHead": "8278abdc60c7ab866a42cbd2e87668d68fcae838",
+  "reviewArtifactsC": [
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/validator/behavior.mjs",
+      "sha256": "95f0e3c91a2630b99a6b5eca4a485007be6412addd56cbaaba933a1732a83fd1"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/validator/red-evidence.json",
+      "sha256": "2de206bfd0e526cbf62662f2203cb944e05d1cb42204b2ccff40b9d2a275f460"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/validator/proto-red-evidence.json",
+      "sha256": "0e586695dacb5c278b3597e59c6c6054a612f2d8776d1a67e2707a4bc67d8488"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/registry/repro.cjs",
+      "sha256": "6342ae3e555c28c12fc96e88f1ade4b207d04bc3d10a2b17e550edc1c0d3b518"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/semantics/repro-c.cjs",
+      "sha256": "f85b9dcb680fce8aede6d2d1e1d35f00bd8cdc66413e9bede450d71d907c607a"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/semantics/record-dates.cjs",
+      "sha256": "2962ebb7c9faa0b8bccb38072d9e359e871d2f41cbfcfd31666befb4c1508987"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/qa/boundary-results.json",
+      "sha256": "0e89bc761a1f0dfcb92670661b31f1378a783a90157ed48415b63be242992eed"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/qa/proto-fixed-results.json",
+      "sha256": "0817cc4b76ec0443b76e003355c52ce6034bad364158c499957d4c5a01a83524"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-c/vitest.config.mjs",
+      "sha256": "bf36ca72369f2cd7d147715f773c0c7210dda88a146088662920c59e03496409"
+    }
+  ],
+  "preservationC": {
+    "checkedAt": "2026-10-26T14:03:50.148801+00:00",
+    "projectHead": "090de2136bccbdcbb0d6b58227dff2905dd326b1",
     "projectStatus": "",
     "excludedDirectories": [
       ".git",
       "node_modules"
     ],
-    "projectFilesChecked": 169,
+    "projectFilesChecked": 173,
     "projectChangedFiles": [],
     "protectedFilesChecked": 75,
     "protectedChangedFiles": [],
-    "handoffFilesBefore": 210,
-    "handoffFilesAfter": 211,
+    "handoffFilesBefore": 215,
+    "handoffFilesAfter": 217,
     "handoffChangedFiles": [
-      "collaboration/CODEX_RETURN_2026-10-26_B.txt",
+      "collaboration/CODEX_RETURN_2026-10-26_C.txt",
       "collaboration/NEXT_STEP.txt",
       "design-current/docs/10_CHANGELOG_2026-10-20.md",
-      "design-current/validation/results.uitems.json"
+      "design-current/docs/15_DIRECT_SUBMISSION_TEST_DESIGN.md",
+      "design-current/docs/17_U_ITEMS_CONTRACT_REVISION_2026-10-26.md",
+      "design-current/docs/18_0C_DEPLOYMENT_CHECKLIST.md",
+      "design-current/validation/results.uitems.json",
+      "design-current/validation/validate_uitems.mjs"
     ],
-    "onlyAuthorizedHandoffChanges": true,
-    "validatorSourceUnchanged": true,
+    "onlyAuthorizedChanges": true,
     "passed": true
   }
 }

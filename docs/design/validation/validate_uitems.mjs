@@ -157,14 +157,10 @@ for(const level of [1,2]) {
   report(`0A-measurement-preservation-lv${level}`,Object.entries(expectedMeasurement).every(([k,v])=>same(doc.measurement[k],v))&&doc.measurement.inputsIntegerOnly===teacher.precision.inputsIntegerOnly);
   report(`0A-rules-preservation-lv${level}`,['deviationMaxPercent','sumMinRearPercent','sumMinFrontPercent'].every(k=>doc.ruleset[k]===teacher.ruleset[k].value)&&same(doc.ruleset.decisionPrecision,{mode:'rounded',digits:1,rounding:'truncate'})&&doc.ruleset.judgmentValueSource===teacher.precision.compareWith&&doc.ruleset.approvedAt===null&&doc.ruleset.approvedOn===teacher.checkedAt);
   report(`0A-12-steps-preservation-lv${level}`,same(doc.steps.map(s=>s.stepId),teacher.steps.map(s=>s.stepId))&&doc.steps.length===12);
-  validate(`project-original-lv${level}-legacy1.1`,'task',source,true,'1.1.0');
-  semantic(`project-original-semantics-lv${level}-legacy1.1`,'task',source,true,oldVocab,false);
-  const currentErrors=validate(`project-original-lv${level}-current1.2-expected-version-failure`,'task',source,false);
-  report(`project-version-failure-pointers-lv${level}`,['/schemaVersion','/vocabularyVersion'].every(pointer=>currentErrors.some(e=>e.instancePath===pointer&&e.keyword==='const')));
-  const projected=clone(source);for(const key of ['schemaVersion','vocabularyVersion','taskDefinitionVersion'])projected[key]=doc[key];
-  validate(`project-metadata-only-projection-lv${level}-current1.2`,'task',projected);semantic(`project-metadata-only-projection-semantics-lv${level}`,'task',projected);
-  const diff=differences(doc,source);projectComparisons.push({level,canonical:path.join(root,relative),project:pfile,differences:diff,projectionChangedPointers:['/schemaVersion','/vocabularyVersion','/taskDefinitionVersion'],projectionRemainingDifferences:differences(doc,projected)});
-  report(`project-diff-metadata-only-lv${level}`,diff.every(d=>['/schemaVersion','/vocabularyVersion','/taskDefinitionVersion'].includes(d.pointer)));
+  validate(`project-task-lv${level}-current1.2`,'task',source);
+  semantic(`project-task-semantics-lv${level}-current1.2`,'task',source);
+  const diff=differences(doc,source);projectComparisons.push({level,canonical:path.join(root,relative),project:pfile,differences:diff,expected:'exact current 1.2.0 JSON equality'});
+  report(`project-task-exact-equality-lv${level}`,diff.length===0,{differences:diff});
   const m=doc.measurement,dev=Math.floor(Math.abs(m.left-m.right)*1000/m.axleWeight)/10,sum=Math.floor((m.left+m.right)*1000/m.axleWeight)/10;
   report(`independent-case-arithmetic-lv${level}`,dev===(level===1?6.6:10)&&sum===73.3&&(dev<=doc.ruleset.deviationMaxPercent&&sum>=doc.ruleset.sumMinRearPercent)===(level===1),{deviation:dev,sum,vehicleVerdict:level===1?'pass':'fail'});
 }
@@ -280,7 +276,105 @@ if(snapshot&&record){
   ]){const mutated=clone(linked);fn(mutated);report(`session-reference-rejects-${name}-mismatch`,sessionBindingErrors(mutated,[snapshot]).includes(`snapshotMismatch:${expected}`));}
 }
 
-const result={checkedAt:new Date().toISOString(),root,project,applicationExecuted:false,projectModified:false,dependenciesUsed:['node:fs','node:path','node:crypto','node:module',path.join(project,'node_modules/ajv/dist/2020.js'),path.join(project,'node_modules/ajv-formats')],validatorOptions:ajvOptions,checks,passed:checks.filter(c=>c.passed).length,failed:checks.filter(c=>!c.passed).length,strictLint:{classification:'additional lint diagnostic; not counted as JSON Schema validity failures',passed:diagnostics.filter(d=>d.passed).length,failed:diagnostics.filter(d=>!d.passed).length,diagnostics},projectComparisons,sources};
+// Read generated artifacts only. The generator is hashed, never imported or executed.
+function projectInput(relative, json=true) {
+  const file=path.join(project,relative);
+  try {
+    const source=fs.readFileSync(file,'utf8');
+    sources.push({path:file,sha256:hash(file),readOnly:true});
+    return json?JSON.parse(source):source;
+  } catch(e) {report(`project-file:${relative}`,false,{errors:[e.message]});return null;}
+}
+function contentSnapshotId(snapshot) {
+  const {sessionSnapshotId,...body}=snapshot;
+  const digest=crypto.createHash('sha256').update(JSON.stringify(canonical(body)),'utf8').digest('hex');
+  return `${digest.slice(0,8)}-${digest.slice(8,12)}-4${digest.slice(13,16)}-8${digest.slice(17,20)}-${digest.slice(20,32)}`;
+}
+const snapshotCombination=s=>JSON.stringify([s?.versions?.taskDefinitionVersion,s?.difficultyMode,s?.usagePhase,s?.sessionConfiguration?.vehicleEntryDirection]);
+const validDate=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+'T00:00:00Z'))&&new Date(s+'T00:00:00Z').toISOString().slice(0,10)===s;
+const offStepIds=['off:motorOff','off:liftUp','off:exitVehicle'];
+const boundedApproval={taskApproved:false,rulesetApproved:true,layoutConfirmed:false,researchUseApproved:false};
+const demoPattern='^D-[0-9]{2}$',fixtureId='00000000-0000-4000-8000-000000000004';
+const appInput=projectInput('src/data/session/demo-snapshots.json');
+const ledgerInput=projectInput('src/data/session/snapshot-ledger.json');
+const serverSource=projectInput('server/apps-script/DemoSnapshots.gs',false);
+const generatorSource=projectInput('scripts/build-demo-snapshots.mjs',false);
+const submissionFixture=projectInput('docs/design/examples/submission.demo-request.json');
+const formalSubmissionFixture=mustRead('examples/submission.demo-request.json');
+report('project-submission-fixture-exact-equality',Boolean(submissionFixture)&&same(submissionFixture,formalSubmissionFixture));
+const appSnapshots=Array.isArray(appInput)?appInput:[], ledgerEntries=Array.isArray(ledgerInput?.entries)?ledgerInput.entries:[];
+report('app-snapshot-list-is-array',Array.isArray(appInput));
+report('ledger-entries-is-array',Array.isArray(ledgerInput?.entries));
+report('ledger-rule-version',ledgerInput?.ruleVersion==='1');
+report('generator-rule-version-source',typeof generatorSource==='string'&&/export\s+const\s+SNAPSHOT_RULE_VERSION\s*=\s*['"]1['"]/.test(generatorSource));
+let serverRegistry={};
+if(serverSource!==null) {
+  try {
+    // Accept the generated JSON object declaration, not arbitrary Apps Script.
+    // Parse data directly: evaluating a JSON object as a JavaScript literal can
+    // consume an own "__proto__" key and hide an additional-property violation.
+    const declaration=serverSource.replace(/^\s*\/\/[^\n]*(?:\n|$)/gm,'').trim().match(/^var\s+ALLOWED_SNAPSHOTS\s*=\s*(\{[\s\S]*\})\s*;\s*$/);
+    if(!declaration)throw new Error('expected only var ALLOWED_SNAPSHOTS = <JSON object>;');
+    serverRegistry=JSON.parse(declaration[1]);
+    report('server-declaration-only',true,{parsedWith:'JSON.parse; own keys preserved',functionCallsExecuted:false});
+  } catch(e) {report('server-declaration-only',false,{errors:[e.message],functionCallsExecuted:false});}
+}
+const expectedByCombination=new Map();
+for(const task of cases)for(const difficultyMode of ['guided','unguided'])for(const usagePhase of ['preview','review','other'])for(const vehicleEntryDirection of [null,'north','south']) {
+  const body={schemaVersion:'1.0.0',sessionCode:'DEMO-ONLY',classConditionCode:'DEMO',taskId:task.taskId,runPurpose:'demo',displayMode:'threeD',difficultyMode,usagePhase,configurationApproval:boundedApproval,versions:{taskDefinitionVersion:task.taskDefinitionVersion,rulesetVersion:task.ruleset.rulesetVersion,measurementSetVersion:task.measurement.measurementSetVersion,layoutVersion:'dev-provisional-2026-10-26',judgeEngineVersion:'0.1.0',sessionConfigVersion:'1.2.0-design-2026-10-26',researchProtocolVersion:'unapproved',feedbackPolicyVersion:task.feedbackPolicy.version},sessionConfiguration:{vehicleEntryDirection}};
+  const expected={...body,sessionSnapshotId:contentSnapshotId(body)};
+  expectedByCombination.set(snapshotCombination(expected),expected);
+}
+const appIds=appSnapshots.map(s=>s?.sessionSnapshotId), ledgerIds=ledgerEntries.map(e=>e?.snapshot?.sessionSnapshotId),serverIds=Object.keys(serverRegistry);
+report('app-snapshot-count-36',appSnapshots.length===36,{actual:appSnapshots.length,expected:36});
+report('app-snapshot-unique-ids',new Set(appIds).size===appIds.length);
+report('app-snapshot-full-combinations',expectedByCombination.size===36&&same([...new Set(appSnapshots.map(snapshotCombination))].sort(),[...expectedByCombination.keys()].sort()));
+for(const [i,s]of appSnapshots.entries()) {
+  validate(`app-snapshot-schema:${i+1}`,'session-snapshot',s);
+  report(`app-content-derived-id:${i+1}`,Boolean(s)&&s.sessionSnapshotId===contentSnapshotId(s));
+  report(`app-current-body:${i+1}`,same(s,expectedByCombination.get(snapshotCombination(s))));
+}
+report('ledger-unique-ids',new Set(ledgerIds).size===ledgerIds.length);
+report('ledger-reserved-fixture-id-excluded',!ledgerIds.includes(fixtureId));
+const activeEntries=ledgerEntries.filter(e=>e?.status==='active'),retiredEntries=ledgerEntries.filter(e=>e?.status==='retired');
+const byId=list=>Object.fromEntries(list.map(s=>[s?.sessionSnapshotId,s]));
+report('ledger-active-equals-app',same(byId(activeEntries.map(e=>e.snapshot)),byId(appSnapshots))&&activeEntries.length===appSnapshots.length);
+report('ledger-retired-excluded-from-app',retiredEntries.every(e=>!appIds.includes(e.snapshot?.sessionSnapshotId)));
+for(const [i,entry]of ledgerEntries.entries()) {
+  const s=entry?.snapshot,id=s?.sessionSnapshotId;
+  validate(`ledger-snapshot-schema:${i+1}`,'session-snapshot',s);
+  report(`ledger-content-derived-id:${i+1}`,Boolean(s)&&id===contentSnapshotId(s));
+  report(`ledger-entry-shape:${i+1}`,Boolean(entry)&&same(Object.keys(entry).sort(),['snapshot','allowedStepIds','status','firstGeneratedOn','retiredOn'].sort()));
+  report(`ledger-entry-status:${i+1}`,['active','retired'].includes(entry?.status));
+  report(`ledger-entry-dates:${i+1}`,validDate(entry?.firstGeneratedOn)&&(entry?.status==='active'?entry.retiredOn===null:entry?.status==='retired'&&validDate(entry.retiredOn)&&entry.retiredOn>=entry.firstGeneratedOn));
+  const scope=entry?.allowedStepIds;
+  report(`ledger-recorded-step-scope:${i+1}`,Array.isArray(scope)&&scope.length>0&&scope.every(k=>typeof k==='string'&&k.length>0&&k.length<=64)&&new Set(scope).size===scope.length);
+  if(entry?.status==='active') {
+    const task=cases.find(t=>t.taskDefinitionVersion===s?.versions?.taskDefinitionVersion);
+    const expectedScope=task?[...task.steps.map(st=>st.stepId),...offStepIds]:null;
+    report(`ledger-active-step-scope:${i+1}`,Boolean(task)&&task.steps.length===12&&same(scope,expectedScope));
+  }
+  const serverEntry=serverRegistry[id];
+  report(`server-ledger-body:${i+1}`,same(s,serverEntry?.snapshot));
+  // Retired entries retain their recorded historical scope; never recompute it from current tasks.
+  report(`server-ledger-policy:${i+1}`,Boolean(serverEntry)&&serverEntry.status===entry?.status&&serverEntry.anonymousCodePattern===demoPattern&&same(serverEntry.allowedStepIds,scope));
+}
+const expectedServerIds=[...ledgerIds,fixtureId];
+report('server-registry-complete',same(serverIds.sort(),expectedServerIds.sort()),{actual:serverIds.length,expected:ledgerEntries.length+1});
+for(const [id,entry]of Object.entries(serverRegistry)) {
+  validate(`server-snapshot-schema:${id}`,'session-snapshot',entry?.snapshot);
+  report(`server-key-matches-snapshot-id:${id}`,entry?.snapshot?.sessionSnapshotId===id);
+  report(`server-entry-shape:${id}`,Boolean(entry)&&same(Object.keys(entry).sort(),['snapshot','status','anonymousCodePattern','allowedStepIds'].sort()));
+}
+const fixturePayload=submissionFixture?.payload,fixtureEntry=serverRegistry[fixtureId];
+const fixtureContextKeys=['sessionSnapshotId','sessionCode','classConditionCode','taskId','difficultyMode','usagePhase','runPurpose','displayMode','configurationApproval','versions'];
+report('server-fixture-id',fixturePayload?.sessionSnapshotId===fixtureId);
+const expectedFixture=fixturePayload?{schemaVersion:'1.0.0',...Object.fromEntries(fixtureContextKeys.map(k=>[k,fixturePayload[k]])),sessionConfiguration:{vehicleEntryDirection:null}}:null;
+report('server-fixture-body',Boolean(expectedFixture)&&same(fixtureEntry?.snapshot,expectedFixture));
+report('server-fixture-policy',fixtureEntry?.status==='active'&&fixtureEntry?.anonymousCodePattern==='^D-00$'&&fixtureEntry?.allowedStepIds===null);
+const snapshotSummary={ruleVersion:ledgerInput?.ruleVersion??null,appSnapshots:appSnapshots.length,appUniqueIds:new Set(appIds).size,expectedCombinations:expectedByCombination.size,actualCombinations:new Set(appSnapshots.map(snapshotCombination)).size,ledgerEntries:ledgerEntries.length,activeEntries:activeEntries.length,retiredEntries:retiredEntries.length,serverEntries:serverIds.length,fixtureEntries:fixtureEntry?1:0,generatedCodePattern:demoPattern,fixtureCodePattern:'^D-00$',generatorExecuted:false,serverFunctionsExecuted:false,retiredScopePolicy:'preserve recorded historical scope; server equality required'};
+
+const result={checkedAt:new Date().toISOString(),root,project,applicationExecuted:false,projectModified:false,dependenciesUsed:['node:fs','node:path','node:crypto','node:module',path.join(project,'node_modules/ajv/dist/2020.js'),path.join(project,'node_modules/ajv-formats')],validatorOptions:ajvOptions,checks,passed:checks.filter(c=>c.passed).length,failed:checks.filter(c=>!c.passed).length,strictLint:{classification:'additional lint diagnostic; not counted as JSON Schema validity failures',passed:diagnostics.filter(d=>d.passed).length,failed:diagnostics.filter(d=>!d.passed).length,diagnostics},projectComparisons,snapshotSummary,sources};
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify({output,passed:result.passed,failed:result.failed,strictLintPassed:result.strictLint.passed,strictLintFailed:result.strictLint.failed,applicationExecuted:false,projectModified:false}));
 for(const c of checks.filter(c=>!c.passed))console.log('FAIL',c.name,JSON.stringify(c.errors||c.differences||{}));

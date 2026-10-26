@@ -129,7 +129,7 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
     startedAt: session.startedAtIso,
     completedAt: fin.completedAtIso,
     durationSeconds,
-    timing: { pauseCount: fin.pauseCount ?? run.pauseCount, resumeCount: fin.resumeCount ?? run.resumeCount, timeQuality: fin.timeQuality ?? run.timeQuality },
+    timing: { pauseCount: fin.pauseCount ?? run.pauseCount, resumeCount: fin.resumeCount ?? run.resumeCount, timeQuality: Date.parse(fin.completedAtIso) < Date.parse(session.startedAtIso) ? 'uncertain' : (fin.timeQuality ?? run.timeQuality) }, // 완료가 시작보다 이르면 벽시계 불신(원본 시각은 보존)
     versions: {
       taskDefinitionVersion: run.task.taskDefinitionVersion,
       rulesetVersion: run.task.ruleset.rulesetVersion,

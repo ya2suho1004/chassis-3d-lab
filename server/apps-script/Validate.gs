@@ -46,7 +46,7 @@ function validateNode_(s, v, path, errors) {
     if (s.maxLength !== undefined && len > s.maxLength) errors.push(path + ': maxLength');
     if (s.pattern !== undefined && !new RegExp(s.pattern, 'u').test(v)) errors.push(path + ': pattern');
     if (s.format === 'uuid' && !UUID_RE.test(v)) errors.push(path + ': format uuid');
-    if (s.format === 'date-time' && !(DATE_TIME_RE.test(v) && !isNaN(Date.parse(v)))) errors.push(path + ': format date-time');
+    if (s.format === 'date-time' && !isValidDateTimeGeneral_(v)) errors.push(path + ': format date-time');
   }
   if (Array.isArray(v)) {
     if (s.minItems !== undefined && v.length < s.minItems) errors.push(path + ': minItems');
@@ -133,14 +133,23 @@ function validateRecordSemantics_(p) {
 }
 
 /** stepCompleted 사건의 등록 단계·하위 행동 순서 검사(docs/17 §2, Codex B3-c). allowedStepIds가 null이면(과거 fixture) 등록 검사를 생략한다. */
-function validateStepEvents_(p, allowedStepIds) {
+function validateStepEvents_(p, allowedStepIds, stepPrerequisites) {
   var errors = [];
   var events = Array.isArray(p.stepEvents) ? p.stepEvents : [];
-  var seenSub = []; var offDone = false;
+  var seenSub = []; var offDone = false; var completedParents = Object.create(null);
   for (var i = 0; i < events.length; i++) {
     var e = events[i];
     if (e.type !== 'stepCompleted') continue;
     if (allowedStepIds && allowedStepIds.indexOf(e.stepId) < 0) errors.push('steps: unregistered stepId ' + e.stepId);
+    if (typeof e.stepId === 'string' && e.stepId.indexOf('off:') !== 0) {
+      // parent 단계: 중복 금지, 선행 그래프(해당 과제 버전) 충족(Codex C-P2-2). 중단 기록의 부분 이력은 허용.
+      if (completedParents[e.stepId] === true) errors.push('steps: duplicate parent ' + e.stepId);
+      if (stepPrerequisites && Object.prototype.hasOwnProperty.call(stepPrerequisites, e.stepId)) {
+        var pre = stepPrerequisites[e.stepId];
+        for (var q = 0; q < pre.length; q++) if (completedParents[pre[q]] !== true) errors.push('steps: prerequisite ' + pre[q] + ' not completed before ' + e.stepId);
+      }
+      completedParents[e.stepId] = true;
+    }
     if (typeof e.stepId === 'string' && e.stepId.indexOf('off:') === 0) {
       var action = e.stepId.slice(4);
       var order = ['motorOff', 'liftUp', 'exitVehicle'];
@@ -161,4 +170,18 @@ function isValidUtcDateTime_(s) {
   var ms = Date.parse(s);
   if (!isFinite(ms)) return false;
   return new Date(ms).toISOString().slice(0, 19) === s.slice(0, 19);
+}
+
+/** 일반 record date-time(RFC 3339)의 실제 달력 유효성: 오프셋·소문자 t/z·소수 자릿수 허용, 2000-02-31 같은 값 거절(Codex C-P2-3). 정규화해 수락하지 않는다. */
+function isValidDateTimeGeneral_(s) {
+  if (typeof s !== 'string') return false;
+  var m = /^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2}):(\d{2})(\.\d+)?([Zz]|[+-](\d{2}):(\d{2}))$/.exec(s);
+  if (!m) return false;
+  var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]), h = Number(m[4]), mi = Number(m[5]), sec = Number(m[6]);
+  if (mo < 1 || mo > 12 || d < 1 || h > 23 || mi > 59 || sec > 60) return false;
+  var leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  var dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+  if (d > dim) return false;
+  if (m[9] !== undefined && (Number(m[9]) > 23 || Number(m[10]) > 59)) return false;
+  return true;
 }

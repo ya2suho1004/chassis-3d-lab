@@ -350,19 +350,22 @@ export function resumeRun(run: TaskRun, reason: 'visible' | 'manual' | 'restored
 }
 
 /** 저장용 스냅샷: 모두 평범한 JSON 값이다(시계·ID 생성기는 들어 있지 않다). */
-export type RunSnapshot = Omit<TaskRun, 'startedAtMs' | 'pausedAtMs'> & { lastElapsedMs: number; snapshotVersion: 1 }
+export type RunSnapshot = Omit<TaskRun, 'startedAtMs' | 'pausedAtMs'> & { lastElapsedMs: number; snapshotVersion: 1; /** 저장 시점 벽시계(ms). 복원 때 시계가 뒤로 갔는지 판단(Codex C-P2-1) */ serializedAtWallMs?: number }
 
 export function serializeRun(run: TaskRun): RunSnapshot {
   const { startedAtMs: _s, pausedAtMs: _p, ...rest } = run
   const lastElapsedMs = run.events.length ? run.events[run.events.length - 1]!.elapsedMs : 0
-  return { ...rest, lastElapsedMs, snapshotVersion: 1 }
+  return { ...rest, lastElapsedMs, snapshotVersion: 1, serializedAtWallMs: depsOf(run).now() }
 }
 
 /** 새로고침·재시작 뒤 복원. 경과시간은 마지막 이벤트에서 이어 가고, 복원 이벤트와 resumeCount를 남긴다. */
 export function rehydrateRun(snap: RunSnapshot, deps: EngineDeps = defaultDeps()): TaskRun {
-  const { lastElapsedMs, snapshotVersion: _v, ...rest } = snap
+  const { lastElapsedMs, snapshotVersion: _v, serializedAtWallMs, ...rest } = snap
   const now = deps.now()
-  const base: TaskRun = { ...rest, offProgress: rest.offProgress ?? [], startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality: rest.timeQuality === 'uncertain' ? 'uncertain' : 'resumed' }
+  // 저장 시각보다 이른 벽시계로 복원되면 시계를 신뢰할 수 없다 → uncertain (04 §7, Codex C-P2-1)
+  const clockWentBack = typeof serializedAtWallMs === 'number' && now < serializedAtWallMs
+  const timeQuality: TaskRun['timeQuality'] = rest.timeQuality === 'uncertain' || clockWentBack ? 'uncertain' : 'resumed'
+  const base: TaskRun = { ...rest, offProgress: rest.offProgress ?? [], startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality }
   depsByRun.set(base, deps)
   return appendEvent(base, { type: 'resumed', reasonCode: 'restored' }).run
 }

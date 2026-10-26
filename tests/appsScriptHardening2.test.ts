@@ -50,15 +50,15 @@ describe('B3-c 판정 정오 등식과 off 하위 행동 순서', () => {
     base.judgmentCorrect = false; base.recordId = '00000000-0000-4000-8000-000000000013'
     expect(post(reqOf(base)).ok).toBe(true)
   })
-  test('등록되지 않은 stepId(off:warp)와 하위 행동 없는 off 완료는 거절, 정상 순서는 수락', () => {
+  test('등록되지 않은 stepId(off:warp)·하위 행동 없는 off 완료·선행(read) 없는 off 순서는 거절(정상 전체 이력 수락은 hardening3)', () => {
     const { post } = server()
     const ev = (p: any, stepId: string) => ({ eventId: `50000000-0000-4000-8000-${String(p.stepEvents.length + 1).padStart(12, '0')}`, sequence: p.stepEvents.length + 1, elapsedMs: (p.stepEvents.at(-1)?.elapsedMs ?? 0) + 1, type: 'stepCompleted', stepId })
     const warp = appPayload('D-02') as any; warp.stepEvents.push(ev(warp, 'off:warp'))
     expect(post(reqOf(warp))).toMatchObject({ ok: false, code: 'INVALID_PAYLOAD' })
     const early = appPayload('D-03') as any; early.stepEvents.push(ev(early, 'off')); early.stepEvents.push(ev(early, 'off:motorOff'))
     expect(post(reqOf(early))).toMatchObject({ ok: false, code: 'INVALID_PAYLOAD' })
-    const good = appPayload('D-04') as any; for (const id of ['off:motorOff', 'off:liftUp', 'off:exitVehicle', 'off']) good.stepEvents.push(ev(good, id))
-    expect(post(reqOf(good)).ok).toBe(true)
+    const noPrereq = appPayload('D-04') as any; for (const id of ['off:motorOff', 'off:liftUp', 'off:exitVehicle', 'off']) noPrereq.stepEvents.push(ev(noPrereq, id))
+    expect(post(reqOf(noPrereq))).toMatchObject({ ok: false, code: 'INVALID_PAYLOAD' }) // ppe 뒤 바로 off: read 등 선행 없음(C-P2-2)
   })
 })
 

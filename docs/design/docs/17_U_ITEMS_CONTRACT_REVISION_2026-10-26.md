@@ -41,7 +41,7 @@ record1.1.0의 stepId 문자열(maxLength64)로 표현 가능하다. 이름·선
 
 이 approved는 0E의 교사 피드백 승인 범위다. 연구 운영 승인·IRB·동의·연구 적격성을 승인하지 않는다. task.approvalStatus=pending, layoutConfirmed=false, researchEligible=false를 유지한다. U8 조치 기재는 비채점 설명으로 확정됐으므로 새 응답·자유 입력 저장·채점·기록 필드를 추가하지 않는다. calc의 기존 instruction도 계약 확장으로 해석하지 않는다.
 
-정식 두 과제와 현재 프로젝트 사본의 차이는 `/schemaVersion`, `/taskDefinitionVersion`, `/vocabularyVersion` 세 곳뿐이다. steps/feedback/feedbackPolicy/teacherReviewReference를 포함한 나머지 JSON 값은 같다. 기존 프로젝트 원본은 legacy task1.1.0으로 검증하고, 교체용 정식 파일은 current1.2.0으로 검증한다. 버전별 선택을 생략해 기존 사본을1.2.0에 넣으면 schemaVersion/vocabularyVersion 상수 불일치로 거절되는 것이 정상이다.
+개정 당시 프로젝트(1457bac) 사본과 정식 두 과제의 차이는 `/schemaVersion`, `/taskDefinitionVersion`, `/vocabularyVersion` 세 곳뿐이었다. steps/feedback/feedbackPolicy/teacherReviewReference를 포함한 나머지 JSON 값은 같았다. 보존된 과거 원본은 legacy task1.1.0으로 검증한다. 2026-10-26 후속 확인(090de21)에서는 프로젝트 사본이 정식 current1.2.0과 JSON 전체 동일(diff 0)이므로, 현행 검증기는 current1.2.0 통과와 전체 동일성을 기대한다. 과거 사본의 버전 실패 기대를 현재 사본에 재사용하지 않는다.
 
 ## 4. P-7: 방향을 보관하는 불변 세션 스냅샷
 
@@ -53,9 +53,18 @@ record1.1.0의 stepId 문자열(maxLength64)로 표현 가능하다. 이름·선
 
 record에 방향을 복제하지 않는다. 서버는 record.sessionSnapshotId로 보관한 스냅샷을 찾아 sessionCode/classConditionCode/taskId/difficultyMode/usagePhase/runPurpose/displayMode/configurationApproval/versions의 시작 문맥을 대조한다. snapshot의 불변성·ID 유일성·버전파일 존재·승인 진위는 Schema만으로 증명할 수 없으므로 보관/의미검증 책임이다. 지연 재전송도 최초 snapshot으로 검증하고 현재 설정으로 고쳐 수락하지 않는다.
 
+2026-10-26 원장 보강: 프로젝트의 `src/data/session/snapshot-ledger.json`은 `ruleVersion`과 `entries[{snapshot, allowedStepIds, status, firstGeneratedOn, retiredOn}]`를 보관한다. `snapshot` 내용과 그 버전에 적용한 단계 검증 범위는 ID별로 보존하고, 같은 ID의 다른 내용·중복 ID를 조용히 덮어쓰지 않는다. 생성 규칙 버전이 달라지면 명시적으로 이관한다. ID는 버전 참조에서 유도한 결정적 식별자이므로 과제/피드백 본문 변경 시 §1의 버전 개정과 해당 버전 파일 보관도 필요하다.
+
+- `active`: 새 수행 선택에 제공하는 목록. 앱 목록은 원장의 active 항목과 정확히 같아야 하며 신규 수신은 별도의 접수 창/행 상한도 충족해야 한다.
+- `retired`: 앱의 새 수행 선택에서 제외하되 원문·버전 참조·당시 검증 범위·생성일/퇴역일은 원장과 수신점에 남긴다. 이미 저장된 같은 ID/같은 원본의 최초 receipt 회수만 허용하고, 미접수 원본·새 ID는 신규 수락하지 않는다. 같은 ID/다른 원본은 기존 정본을 보존하며 충돌로 처리한다.
+- 접수 창 종료/retired는 새 접수 허용을 닫는 정책이며 기존 접수 사실을 지우거나 과거 수행의 snapshot을 현재 값으로 바꾸는 정책이 아니다. 미접수 outbox는 교사 확인 대상으로 원래 ID/원문을 보존한다. 현재 수행의 방향 선택을 바꾸거나 설정 개정을 할 때 새 ID·설정 버전을 발급하는 규칙도 유지한다.
+- 원장이 retired로 바뀌기 전에 시작·확정했더라도 서버 최초 접수가 안 된 수행은 자동 회수 대상이 아니다. 세트 교체 전 미접수 대기열/진행 중 수행을 확인하고, 별도 결정으로 원래 snapshot의 접수 유예·재개 또는 원본 비상 보존 절차를 정한다. 새 ID나 현재 snapshot으로 바꾸는 복구는 금지한다. 이 문서는 접수 재개 실행을 승인하지 않는다.
+- 수신점 목록은 스크립트 속성이 아닌 배포 코드 `DemoSnapshots.gs`다. 원장 전체와 별도 fixture를 포함하고 앱/Script는 같은 커밋의 산출물을 사용한다. 원장/앱/서버 항목 수·해시와 과거 ID 보존 여부를 배포 증거에 남긴다. 과거 fixture의 `allowedStepIds=null`은 그 스냅샷의 과거 검증 범위를 나타내며 새 active 스냅샷의 등록/순서 검사 면제에 재사용하지 않는다.
+- 현 생성기는 현재 생성 대상 조합을 active로 다시 계산한다. 현재 조합을 원장에서 수동 retired로 바꾸기만 하면 재생성 때 active로 돌아오므로 지속적인 수신 차단 설정으로 쓰지 않는다. 생성 대상 개정과 접수 종료/회수 정책을 함께 기록한다.
+
 새 `examples/session.demo-snapshot.json`의 UUID 끝 `0005`는 기존 record 예시의 끝 `0004`와 다른 합성 새 스냅샷이다. 예시에서 rulesetApproved=true는 0A 승인 기준, taskApproved=false는 U1 보류를 나타낸다. 기존 record/submission 예시는 기존 snapshotId/버전/false 플래그 그대로 보존했다. 이 합성 예시는 수업 공개·전송 결과가 아니다.
 
-프로젝트의 현재 `src/app/session.ts`는 방향이 달라도 고정 snapshotId를 쓰고 sessionConfigVersion=unapproved이며 taskApproved=true를 고정한다. 계약 파일 교체만으로 새 세션 보관·ID 발급·승인 대조가 구현되는 것은 아니다. 프로젝트 수정은 이번 범위에 없으므로 후속 수정 대상으로 회신에 명시한다.
+개정 당시 프로젝트(1457bac)의 `src/app/session.ts`는 방향이 달라도 고정 snapshotId를 쓰고 sessionConfigVersion=unapproved이며 taskApproved=true를 고정하여 후속 수정 대상으로 회신했다. 2026-10-26 후속 확인(090de21)에서는 선택 조합별 스냅샷과 taskApproved=false가 반영됐다. 계약 파일 교체만으로 원장 보존·판정 정책까지 검증됐다고 해석하지 않으며, 세부 재검토는 [회신 C](../../collaboration/CODEX_RETURN_2026-10-26_C.txt)에 남긴다.
 
 ## 5. P-9: read 고정 동작을 넣을 자리
 

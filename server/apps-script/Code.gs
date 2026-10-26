@@ -36,7 +36,7 @@ function doPost(e) {
     var cfg = loadConfig_();
     var entry = sessionAllowed_(payload);
     if (!entry) return fail_('SESSION_NOT_ALLOWED', false, rid);
-    if (validateStepEvents_(payload, entry.allowedStepIds || null).length > 0) return fail_('INVALID_PAYLOAD', false, rid);
+    if (validateStepEvents_(payload, entry.allowedStepIds || null, entry.stepPrerequisites || null).length > 0) return fail_('INVALID_PAYLOAD', false, rid);
 
     var canonical;
     try { canonical = jcsCanonicalize(payload); } catch (err) { return fail_('INVALID_PAYLOAD', false, rid); }

@@ -49,6 +49,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -101,6 +137,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -153,6 +225,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -205,6 +313,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -257,6 +401,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -309,6 +489,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -361,6 +577,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -413,6 +665,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -465,6 +753,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -517,6 +841,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -569,6 +929,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -621,6 +1017,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -673,6 +1105,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -725,6 +1193,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -777,6 +1281,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -829,6 +1369,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -881,6 +1457,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -933,6 +1545,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -985,6 +1633,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1037,6 +1721,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1089,6 +1809,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1141,6 +1897,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1193,6 +1985,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1245,6 +2073,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1297,6 +2161,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1349,6 +2249,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1401,6 +2337,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1453,6 +2425,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1505,6 +2513,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1557,6 +2601,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1609,6 +2689,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1661,6 +2777,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1713,6 +2865,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1765,6 +2953,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1817,6 +3041,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null
@@ -1869,6 +3129,42 @@
         "off:liftUp",
         "off:exitVehicle"
       ],
+      "stepPrerequisites": {
+        "ppe": [],
+        "tire": [
+          "ppe"
+        ],
+        "equip": [
+          "tire"
+        ],
+        "enter": [
+          "equip"
+        ],
+        "axle": [
+          "enter"
+        ],
+        "mode": [
+          "axle"
+        ],
+        "lower": [
+          "mode"
+        ],
+        "motor": [
+          "lower"
+        ],
+        "press": [
+          "motor"
+        ],
+        "read": [
+          "press"
+        ],
+        "off": [
+          "read"
+        ],
+        "calc": [
+          "off"
+        ]
+      },
       "status": "active",
       "firstGeneratedOn": "2026-10-26",
       "retiredOn": null

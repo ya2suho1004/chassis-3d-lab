@@ -160,6 +160,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
 
   const hint = () => {
     const res = requestHint(run, newId())
+    if (res.outcome === 'eventLimit') { setRun(res.run); return setShown({ kind: 'guidance', title: '기록 한도', text: null, plain: '이벤트 기록 한도(200개)에 닿아 힌트를 기록할 수 없습니다. ‘중단하고 끝내기’로 저장하고 교사에게 알리세요.' }) }
     const next = task.steps.find((s) => s.stepId === run.nextStepId)
     show(res.run, { kind: 'hint', title: '힌트', text: null, plain: next ? `다음 할 일: ${next.instruction}` : '남은 단계가 없습니다. NPC 검사를 받으세요.' }, 'hint_next_step')
   }
