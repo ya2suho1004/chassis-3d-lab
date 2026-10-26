@@ -43,7 +43,7 @@ describe('임시 배치 데이터', () => {
 
   test('장비 근접 판정은 접근점 기준 반경 안이면 true', () => {
     const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')!
-    expect(nearEquipment({ x: 14.6, z: 9.6 }, tester, 1.0)).toBe(true)
+    expect(nearEquipment({ x: tester.accessPoint!.x + 0.1, z: tester.accessPoint!.z - 0.1 }, tester, 1.0)).toBe(true)
     expect(nearEquipment({ x: 5, z: 5 }, tester, 1.0)).toBe(false)
   })
 })
@@ -108,5 +108,30 @@ describe('화면 모드 전환 기록', () => {
     const p = buildRecordPayload(r, session, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'aborted' })
     expect(p.displayMode).toBe('threeD')
     expect(p.experiencedDisplayModes).toEqual(['threeD', 'diagram'])
+  })
+})
+
+describe('2차 실측(2026-10-26) 반영', () => {
+  const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')!
+  test('조작부 앞면(버튼면)은 롤러 중심에서 동쪽 1.30, 같은 남북선 위이고 서쪽을 향한다', () => {
+    const panel = layout.equipment.find((e) => e.id === 'brake-control-panel-01')!
+    const f = footprintOf(panel)
+    expect(f.xMin - tester.x).toBeCloseTo(1.3, 5) // 앞면 = 본체 서쪽 면
+    expect(panel.z).toBeCloseTo(tester.z, 5)
+    expect(f.xMax).toBeLessThanOrEqual(layout.mainZone.xMax) // 벽 안
+  })
+  test('리프트 옆 기둥의 동쪽 면은 장비 서쪽 끝에서 1.50 서쪽에 있다', () => {
+    const p = layout.pillars.find((x) => x.id === 'pillar-4')!
+    expect(tester.x - 1.5 - (p.x + p.size / 2)).toBeCloseTo(1.5, 5)
+  })
+  test('리프트 바닥판은 2.20×4.00이고 ABS 구역은 4.10×10.00으로 동쪽 벽 바깥에 있다', () => {
+    for (const id of ['lift-zone-01/a', 'lift-zone-01/b', 'lift-zone-01/c']) {
+      const l = layout.equipment.find((e) => e.id === id)!
+      expect([l.w, l.d]).toEqual([2.2, 4.0])
+    }
+    const ab = layout.absProtrusion!
+    expect(ab.xMax - ab.xMin).toBeCloseTo(4.1, 5)
+    expect(ab.zMax - ab.zMin).toBeCloseTo(10.0, 5)
+    expect(ab.xMin).toBeCloseTo(layout.mainZone.xMax, 5)
   })
 })
