@@ -6,7 +6,7 @@ import type { SessionContext } from '../domain/record'
 import type { TaskRun } from '../domain/taskEngine'
 import type { ApprovedTask, FeedbackText } from '../domain/types'
 
-export const APP_VERSION = '0.2.1-demo'
+export const APP_VERSION = '0.3.0-demo'
 
 /** 기본 코드 규칙: 학급 글자 1개 + 하이픈 + 두 자리 번호 (예: A-01). 실제 규칙은 세션 설정에서 승인. */
 const CODE_RE = /^[A-Z]-\d{2}$/

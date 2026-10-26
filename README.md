@@ -10,10 +10,22 @@
 
 ```bash
 npm install
-npm test          # vitest, 89 tests
+npm test          # vitest, 150 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
+
+## 0C: 직접 제출 전송 (`src/delivery/`, `server/apps-script/`)
+
+| 파일 | 역할 | 지키는 원칙 |
+|---|---|---|
+| `src/delivery/jcs.ts` | RFC 8785 정규화·SHA-256 | 키 UTF-16 순 정렬, NFC/NFD·trim·숫자 재절사 없음, 비유한 수·짝 없는 서로게이트 거절. 서버 `Jcs.gs`와 결과 동일 |
+| `src/delivery/submit.ts` | 제출 1건 전송·ack 검증 | `text/plain` POST, cors·omit·follow, 인증 헤더·쿼리 없음. JSON 모양·protocol·recordId·독립 계산 hash·receipt·시각이 모두 맞아야 acknowledged. HTML·opaque·네트워크 오류는 confirmationPending |
+| `src/delivery/outbox.ts` | 대기열 처리(교사 조작) | 같은 ID·같은 원본만 재전송, rejected·conflict는 자동 재시도 없음, 보내기 전 uploading 저장 |
+| `server/apps-script/*.gs` | Apps Script 수신점 | 엄격 파싱(중복 키 거절) → 스키마 → 시험 세션 허용 → 잠금 안 정본 1행(5열)·중복/충돌·flush·재읽기 → ack. 설정은 스크립트 속성 |
+| `server/dev/fakeSubmitServer.ts` | 개발 서버 가짜 수신점 | 같은 .gs 코드를 Node에서 실행. `/__fake-submit/control?mode=html|badhash|drop|lockbusy`로 D04·D07 재현. 운영 번들 제외 |
+
+실배포(Google 웹 앱·GitHub Pages·학교 기기)는 아직 하지 않았다. 절차는 `server/apps-script/README.md`, 시험 상태는 `docs/03_0C_전송_시험_계획_2026-10-26.md`.
 
 ## 3단계: 3D 실습장 (`src/scene/`, `src/screens/LabScreen.tsx`)
 
@@ -59,4 +71,4 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 
 ## 아직 없는 것
 
-Apps Script 전송·접수번호·재전송(0C), 교사 설정 화면, 여러 탭 잠금, 실측 기반 실제 배치(임시 배치는 실제 학교 재현이 아님), 장비별 작업 애니메이션, 과제 동작 매핑(U1~U8).
+실제 Google 배포·GitHub Pages·학교 기기 시험(0C 실배포), 교사 설정 화면, 여러 탭 잠금, 실측 기반 실제 배치(임시 배치는 실제 학교 재현이 아님), 장비별 작업 애니메이션, 과제 동작 매핑(U1~U8).

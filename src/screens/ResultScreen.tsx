@@ -5,7 +5,8 @@ import { summarizeResponses } from '../domain/grading'
 import type { DeliveryEnvelope } from '../records/types'
 import { toSummaryCsv } from '../records/csv'
 
-const UPLOAD_LABEL: Record<string, string> = { pending: '대기(전송 기능 없음)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
+const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
+const ERROR_HINT: Record<string, string> = { NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
 
 export function ResultScreen({ session, run, completionStatus, envelope, saveError, onNextStudent }: {
   session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; onNextStudent: () => void
@@ -35,7 +36,7 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
       <div className="status3">
         <span>실습 결과: <b>{payload.ok ? payload.value.npcInspectionResult === 'passed' ? '통과' : payload.value.npcInspectionResult === 'needsCorrection' ? '보완' : '미완료' : '—'}</b></span>
         <span>이 기기 저장: <b className={env.localSaveStatus === 'saved' ? 'ok' : 'bad'}>{env.localSaveStatus === 'saved' ? '저장됨' : '실패'}</b></span>
-        <span>온라인 접수: <b>{UPLOAD_LABEL[env.uploadStatus] ?? env.uploadStatus}</b></span>
+        <span>온라인 접수: <b>{UPLOAD_LABEL[env.uploadStatus] ?? env.uploadStatus}</b>{env.receiptId ? <span className="small"> · 접수번호 {env.receiptId}</span> : null}{env.lastErrorCode && env.uploadStatus !== 'acknowledged' ? <span className="small"> · {ERROR_HINT[env.lastErrorCode] ?? env.lastErrorCode}</span> : null}</span>
       </div>
       {saveError && <p className="error" role="alert">이 기기에 확정 기록을 저장하지 못했습니다 ({saveError}). 아래 JSON·CSV를 내려받아 교사에게 전달하세요. 손실 방지를 보장하지는 않습니다.</p>}
       <section className="card grid2">

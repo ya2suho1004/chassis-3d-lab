@@ -1,0 +1,10 @@
+{
+  "timeZone": "Asia/Seoul",
+  "runtimeVersion": "V8",
+  "exceptionLogging": "NONE",
+  "webapp": {
+    "executeAs": "USER_DEPLOYING",
+    "access": "ANYONE_ANONYMOUS"
+  },
+  "oauthScopes": ["https://www.googleapis.com/auth/spreadsheets"]
+}

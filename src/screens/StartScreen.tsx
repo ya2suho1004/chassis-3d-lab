@@ -6,6 +6,8 @@ import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
 import type { Repository } from '../records/repository'
 import { toSummaryCsv } from '../records/csv'
+import { processOutbox, type OutboxItemResult } from '../delivery/outbox'
+import { getSubmitEndpoint, SUBMIT_IS_FAKE } from '../delivery/config'
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
 
@@ -19,14 +21,16 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [counts, setCounts] = useState<{ records: number; outbox: number } | null>(null)
+  const [sending, setSending] = useState(false)
+  const [sendLog, setSendLog] = useState<OutboxItemResult[] | null>(null)
+  const endpoint = getSubmitEndpoint()
 
-  useEffect(() => {
-    ;(async () => {
-      const all = await repo.listRecords()
-      const outbox = await repo.listOutbox()
-      setCounts({ records: all.length, outbox: outbox.length })
-    })()
-  }, [repo])
+  const refreshCounts = async () => {
+    const all = await repo.listRecords()
+    const outbox = await repo.listOutbox()
+    setCounts({ records: all.length, outbox: outbox.length })
+  }
+  useEffect(() => { void refreshCounts() }, [repo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const start = async () => {
     const v = validateStudentCode(code)
@@ -50,10 +54,26 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
     a.click()
   }
 
+  // 교사 조작으로만 전송한다(설계 05 §6). 대기열의 같은 ID·같은 원본을 보내고, 서버 ack를 검증한 뒤에만 '접수 확인됨'으로 저장한다.
+  const teacherSend = async (force: boolean) => {
+    if (!endpoint) return
+    const pin = window.prompt('교사용 전송: PIN을 입력하세요 (시연용 0000)')
+    if (pin !== TEACHER_PIN) return
+    setSending(true)
+    try {
+      const results = await processOutbox(repo, { fetch: (u, i) => fetch(u, i), endpointUrl: endpoint, now: () => new Date() }, { force })
+      setSendLog(results)
+    } finally {
+      setSending(false)
+      await refreshCounts()
+    }
+  }
+  const OUTCOME_LABEL: Record<OutboxItemResult['outcome'], string> = { acknowledged: '서버 접수 확인됨', rejected: '거절(제출자료 확인 필요)', conflict: '기록 충돌', pending: '대기(잠시 뒤 재시도)', confirmationPending: '접수 확인 필요(같은 ID로 재전송)', skipped: '건너뜀', saveFailed: '이 기기 저장 실패' }
+
   return (
     <main className="screen start">
       <h1>섀시 가상 실습장 — 제동력 측정 과제</h1>
-      <p className="banner">시연용(demo) · 3D·전송 없음 · 이 기기에만 저장 · 연구 기록으로 쓰이지 않음 · 앱 {APP_VERSION}</p>
+      <p className="banner">시연용(demo) · 이 기기에 먼저 저장 · 전송은 교사 조작으로만{SUBMIT_IS_FAKE ? '(개발용 가짜 수신점)' : ''} · 연구 기록으로 쓰이지 않음 · 앱 {APP_VERSION}</p>
       <section className="card">
         <label>
           수업 세션 코드
@@ -89,6 +109,23 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
       <footer className="small teacher">
         교사용 · 이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 (전송 대기 {counts?.outbox ?? '…'}건) ·{' '}
         <button className="link" onClick={teacherCsv}>요약 CSV 내려받기</button>
+        {' · '}
+        {endpoint ? (
+          <>
+            <button className="link" onClick={() => teacherSend(false)} disabled={sending || !counts?.outbox}>{sending ? '전송 중…' : '대기 기록 지금 전송'}</button>
+            {' · '}
+            <button className="link" onClick={() => teacherSend(true)} disabled={sending || !counts?.outbox} title="재시도 대기 시각을 무시하고 보냄(거절·충돌은 제외)">강제 재전송</button>
+          </>
+        ) : (
+          <span>전송 주소 미설정(VITE_SUBMIT_ENDPOINT)</span>
+        )}
+        {sendLog && (
+          <ul className="sendlog" aria-label="전송 결과">
+            {sendLog.length === 0 && <li>보낼 기록이 없습니다.</li>}
+            {sendLog.map((r) => (<li key={r.recordId}>{r.recordId.slice(0, 8)}… — {OUTCOME_LABEL[r.outcome]}{r.code && r.outcome !== 'acknowledged' ? ` (${r.code})` : ''}</li>))}
+          </ul>
+        )}
+        <div>전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</div>
       </footer>
     </main>
   )
