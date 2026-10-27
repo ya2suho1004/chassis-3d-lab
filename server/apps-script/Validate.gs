@@ -84,12 +84,13 @@ function validateRequestEnvelope(req) {
 /** 스키마가 표현하지 못하는 record 의미 조건(04 §5·§7·§8, Codex 검토 B3). 실패 목록을 돌려준다. 값을 고치지 않는다. */
 function validateRecordSemantics_(p) {
   var errors = [];
-  var started = parseDateTimeMs_(p.startedAt), completed = parseDateTimeMs_(p.completedAt);
+  var order = compareDateTime_(p.startedAt, p.completedAt);
   var quality = p.timing && p.timing.timeQuality;
-  if (!(isFinite(started) && isFinite(completed))) errors.push('time: unparsable');
+  if (isNaN(order)) errors.push('time: unparsable');
   else if (quality !== 'uncertain') { // uncertain(벽시계 변경 감지)은 벽시계 비교를 하지 않는다(04 §7, Codex B3-a)
-    if (completed < started) errors.push('time: completedAt before startedAt');
-    if (typeof p.durationSeconds === 'number' && p.durationSeconds > (completed - started) / 1000 + 1) errors.push('time: durationSeconds exceeds wall clock');
+    if (order > 0) errors.push('time: completedAt before startedAt');
+    // 활성 학습시간 ≤ 벽시계 경과 + 1초(정수 반올림) + 윤초 여유(UTC 자정 횡단마다 1초). 순서 비교 키와 분리(Codex F)
+    if (typeof p.durationSeconds === 'number' && p.durationSeconds > elapsedAllowanceSeconds_(p.startedAt, p.completedAt) + 1) errors.push('time: durationSeconds exceeds wall clock');
   }
   var events = Array.isArray(p.stepEvents) ? p.stepEvents : [];
   var ids = Object.create(null); var lastMs = -1; var hints = 0; var npc = 0;
@@ -177,29 +178,48 @@ function validateStepEvents_(p, allowedStepIds, stepPrerequisites) {
   return errors;
 }
 
-/** RFC 3339 date-time을 원문 변경 없이 ms로 환산(윤초 :60은 UTC 23:59에서만, ajv-formats와 같은 범위). 유효하지 않으면 NaN. Codex D C-P2-3 */
-function parseDateTimeMs_(s) {
-  if (typeof s !== 'string') return NaN;
+/** RFC 3339 date-time을 원문 그대로 분해(정규화 없음). 유효하지 않으면 null. 윤초 :60은 UTC 23:59에서만(ajv-formats와 같은 범위). Codex C-P2-3·E·F
+ *  반환: { minuteMs(해당 UTC 분의 시작 epoch ms, 0~99년 보정 없음), sec(0~60), frac(원문 소수부 0≤f<1), leap(sec===60) } */
+function parseDateTimeParts_(s) {
+  if (typeof s !== 'string') return null;
   var m = /^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2}):(\d{2})(\.\d+)?([Zz]|([+-])(\d{2}):(\d{2}))$/.exec(s);
-  if (!m) return NaN;
+  if (!m) return null;
   var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]), h = Number(m[4]), mi = Number(m[5]), sec = Number(m[6]);
   var frac = m[7] ? Number(m[7]) : 0;
-  if (mo < 1 || mo > 12 || d < 1 || h > 23 || mi > 59 || sec > 60) return NaN;
-  var leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
-  var dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
-  if (d > dim) return NaN;
+  if (mo < 1 || mo > 12 || d < 1 || h > 23 || mi > 59 || sec > 60) return null;
+  var leapYear = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  var dim = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
+  if (d > dim) return null;
   var offMin = 0;
-  if (m[9]) { var oh = Number(m[10]), om = Number(m[11]); if (oh > 23 || om > 59) return NaN; offMin = (oh * 60 + om) * (m[9] === '-' ? -1 : 1); }
-  if (sec === 60) { var utcMin = ((h * 60 + mi - offMin) % 1440 + 1440) % 1440; if (utcMin !== 1439) return NaN; }
-  // 순서 비교 키(실제 epoch ms가 아님): 0~99년의 Date.UTC 보정을 피하고, 윤초 :60.f 는 59.999와 다음 날 00:00:00.000 사이(59999.5 + f*0.4999)에 둔다(Codex E C-P2-3).
+  if (m[9]) { var oh = Number(m[10]), om = Number(m[11]); if (oh > 23 || om > 59) return null; offMin = (oh * 60 + om) * (m[9] === '-' ? -1 : 1); }
+  if (sec === 60) { var utcMin = ((h * 60 + mi - offMin) % 1440 + 1440) % 1440; if (utcMin !== 1439) return null; }
   var base = new Date(0); base.setUTCFullYear(y, mo - 1, d); base.setUTCHours(h, mi, 0, 0);
-  var within = sec === 60 ? 59999.5 + frac * 0.4999 : sec * 1000 + frac * 1000;
-  return base.getTime() + within - offMin * 60000;
+  return { minuteMs: base.getTime() - offMin * 60000, sec: sec, frac: frac, leap: sec === 60 };
 }
 
-/** 일반 record date-time(RFC 3339)의 실제 달력 유효성: 오프셋·소문자 t/z·소수 자릿수 허용, 2000-02-31 같은 값 거절. 정규화해 수락하지 않는다. */
+/** 순서 비교(원문 소수부 그대로): (분 시작 + min(sec,59)초) → 윤초 여부 → 소수부. 윤초 :60.f 는 59.xxx 전부보다 뒤, 다음 00:00:00.000보다 앞. 유효하지 않으면 NaN. */
+function compareDateTime_(a, b) {
+  var pa = parseDateTimeParts_(a), pb = parseDateTimeParts_(b);
+  if (!pa || !pb) return NaN;
+  var ka = pa.minuteMs + Math.min(pa.sec, 59) * 1000, kb = pb.minuteMs + Math.min(pb.sec, 59) * 1000;
+  if (ka !== kb) return ka < kb ? -1 : 1;
+  if (pa.leap !== pb.leap) return pa.leap ? 1 : -1;
+  if (pa.frac !== pb.frac) return pa.frac < pb.frac ? -1 : 1;
+  return 0;
+}
+
+/** 경과시간 상한(초): 순진한 epoch 차이 + UTC 자정 횡단 횟수(윤초는 UTC 23:59:60에만 들어갈 수 있으므로 자정마다 최대 1초). 비교 키를 경과시간으로 재사용하지 않는다(Codex F). */
+function elapsedAllowanceSeconds_(a, b) {
+  var pa = parseDateTimeParts_(a), pb = parseDateTimeParts_(b);
+  if (!pa || !pb) return NaN;
+  // 순진 epoch: 윤초 :60.f 는 그 날의 59.f 로 두어(epoch에는 윤초 자리가 없음) 자정 횡단으로 1초 여유가 붙게 한다
+  var ea = pa.minuteMs + Math.min(pa.sec, 59) * 1000 + pa.frac * 1000, eb = pb.minuteMs + Math.min(pb.sec, 59) * 1000 + pb.frac * 1000;
+  var midnights = Math.floor(eb / 86400000) - Math.floor(ea / 86400000);
+  return (eb - ea) / 1000 + Math.max(0, midnights);
+}
+
 function isValidDateTimeGeneral_(s) {
-  return !isNaN(parseDateTimeMs_(s));
+  return parseDateTimeParts_(s) !== null;
 }
 
 /** 존재하는 달력 날짜의 UTC 시각(…Z)인지: 형식 + 왕복 비교(2026-02-31 같은 값 거절). Codex B4·B5 */
