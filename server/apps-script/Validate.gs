@@ -212,22 +212,23 @@ function compareDateTime_(a, b) {
   return 0;
 }
 
-/** 경과시간 상한(초, Codex F·G): 윤초가 '알려진' 끝점(시작·종료가 :60)은 그 윤초를 정확히 세고, 모르는 UTC 자정 횡단마다 1초 여유를 둔다(윤초는 UTC 23:59:60에만 가능).
+/** 경과시간 상한(초, Codex F·G·H): 윤초가 '알려진' 끝점(시작·종료가 :60)은 그 윤초를 정확히 세고, 모르는 UTC 자정 횡단마다 1초 여유를 둔다(윤초는 UTC 23:59:60에만 가능).
+ *  날짜·윤초 분기는 정수 ms(분 시작 + 초)로만 판정하고 소수부는 마지막에 따로 더한다 — 큰 epoch에 소수를 더할 때의 반올림이 자정 횟수를 바꾸지 않도록(Codex H).
  *  순서 비교 키를 재사용하지 않는다. 윤초표가 없으므로 평범한 자정에도 1초가 붙는 보수적 상한이다. */
 function elapsedAllowanceSeconds_(a, b) {
   var pa = parseDateTimeParts_(a), pb = parseDateTimeParts_(b);
   if (!pa || !pb) return NaN;
   var DAY = 86400000;
-  var naive = function (p) { return p.minuteMs + p.sec * 1000 + p.frac * 1000; }; // :60.f → 다음 날 00:00:00.f 자리(epoch에는 윤초 자리가 없음)
+  var intMs = function (p) { return p.minuteMs + p.sec * 1000; }; // 정수 ms. :60 → 다음 날 00:00:00 자리(epoch에는 윤초 자리가 없음)
   var Ma = pa.leap ? pa.minuteMs + 60000 : null, Mb = pb.leap ? pb.minuteMs + 60000 : null; // 끝점이 속한 윤초의 자정(알려진 윤초)
-  var na = naive(pa), nb = naive(pb);
-  // 알려진 윤초가 끼워 넣는 1초를 '확장 시간선'으로 반영: 그 자정 이후의 끝점은 +1초(윤초 안의 끝점 자신은 제외)
-  var ea = na + ((Mb !== null && na >= Mb && !(pa.leap && Ma === Mb)) ? 1000 : 0);
-  var eb = nb + ((Ma !== null && nb >= Ma && !(pb.leap && Mb === Ma)) ? 1000 : 0);
-  var crossings = Math.floor(nb / DAY) - Math.floor(na / DAY);
-  var known = (Mb !== null && na < Mb && !(pa.leap && Ma === Mb)) ? 1 : 0; // 종료 윤초의 자정은 이미 정확히 셈
+  var ia = intMs(pa), ib = intMs(pb);
+  // 알려진 윤초가 끼워 넣는 1초를 '확장 시간선'으로 반영: 그 자정 이후의 다른 끝점은 +1초(윤초 안의 끝점 자신은 제외)
+  var ea = ia + ((Mb !== null && ia >= Mb && !(pa.leap && Ma === Mb)) ? 1000 : 0);
+  var eb = ib + ((Ma !== null && ib >= Ma && !(pb.leap && Mb === Ma)) ? 1000 : 0);
+  var crossings = Math.floor(ib / DAY) - Math.floor(ia / DAY); // 정수만 사용 — 소수부는 날짜를 넘길 수 없다(초 ≤ 59 또는 윤초 자리)
+  var known = (Mb !== null && ia < Mb && !(pa.leap && Ma === Mb)) ? 1 : 0; // 종료 윤초의 자정은 이미 정확히 셈
   var unknown = Math.max(0, crossings - known);
-  return (eb - ea) / 1000 + unknown;
+  return (eb - ea) / 1000 + (pb.frac - pa.frac) + unknown; // 소수부는 작은 수끼리 따로
 }
 
 function isValidDateTimeGeneral_(s) {
