@@ -3,3 +3,7 @@ dist/
 .DS_Store
 *.log
 .claude/
+server/apps-script/Config.gs
+server/apps-script/.clasp.json
+.clasprc.json
+.env.production

@@ -14,7 +14,18 @@
 | `DemoSnapshots.gs` | 허용 세션 스냅샷 37개(앱 36 + 합성 fixture 1): ID별 세션·조건·과제·모드·시점·목적·표시·승인·versions·코드 패턴. `npm run build:gs-snapshots`로 자동 생성. 직접 수정 금지 |
 | `appsscript.json` | 매니페스트: V8, 실행 주체 = 배포자, 접근 = 모든 사용자(익명), 범위 spreadsheets |
 
-## 교사가 할 배포 절차 (학교 계정 정책 확인 뒤)
+## 명령줄로 배포하기 (2026-10-27부터 권장: 붙여넣기 없음)
+
+1. (한 번) https://script.google.com/home/usersettings 에서 Google Apps Script API 켜기.
+2. 터미널에서 `npx clasp login` → 브라우저에서 구글 계정 허용.
+3. 설정 파일: `node scripts/write-apps-script-config.mjs <SHEET_ID> <ACCEPT_UNTIL …Z> <MAX_NEW_ROWS>` → `server/apps-script/Config.gs`(Git 제외; 스크립트 속성이 비어 있을 때 Code.gs가 읽음).
+4. `server/apps-script/` 안에서 `npx clasp push -f` → `npx clasp deploy -d "설명"` → 배포 ID → `https://script.google.com/macros/s/<배포 ID>/exec`.
+5. **소유자가 한 번** 편집기(`npx clasp open`)에서 `setupOnce` 실행 → 권한 허용. 이게 없으면 호출이 403 HTML. `setupOnce`는 `canonical` 탭과 머리글도 만든다.
+6. 앱 `.env.production`에 /exec → `npm run build`.
+
+2026-10-27 실제 배포·D01 증거: `docs/04_0C_D01_증거_2026-10-27.md`.
+
+## 교사가 할 배포 절차 (수동, 웹 편집기에 붙여넣기)
 
 1. **시험용 Google Sheet** 새로 만들기(비공개, 운영·연구 자료와 분리). 탭 이름을 `canonical`로 바꾸고 1행에 머리글 5개를 순서대로 입력: `recordId`, `receiptId`, `acceptedAt`, `payloadHash`, `payloadJson`. 주소창의 `/d/…/` 사이 문자열이 Sheet ID.
 2. **Apps Script 프로젝트** 새로 만들기(확장 프로그램 → Apps Script, 또는 script.google.com). 프로젝트 설정에서 "appsscript.json 매니페스트 파일 표시"를 켜고, 이 폴더의 파일 **7개**(`Code.gs`, `Jcs.gs`, `JsonStrict.gs`, `Validate.gs`, `Schemas.gs`, `DemoSnapshots.gs`, `appsscript.json`)를 같은 이름으로 붙여넣기. `DemoSnapshots.gs`가 빠지면 모든 제출이 `SESSION_NOT_ALLOWED`가 된다.

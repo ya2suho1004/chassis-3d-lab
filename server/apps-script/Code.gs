@@ -100,8 +100,16 @@ function mimeAllowed_(type) {
   return type.split(';')[0].trim().toLowerCase() === 'text/plain';
 }
 
+/** 설정 읽기: 스크립트 속성 우선, 비어 있으면 Config.gs의 CONFIG(배포 시 생성, Git 제외) */
+function cfgValue_(key) {
+  var v = PropertiesService.getScriptProperties().getProperty(key);
+  if (v !== null && v !== undefined && String(v) !== '') return v;
+  if (typeof CONFIG === 'object' && CONFIG && Object.prototype.hasOwnProperty.call(CONFIG, key)) return CONFIG[key];
+  return null;
+}
+
 function loadConfig_() {
-  var p = PropertiesService.getScriptProperties();
+  var p = { getProperty: cfgValue_ };
   var untilRaw = String(p.getProperty('ACCEPT_UNTIL') || '');
   var until = isValidUtcDateTime_(untilRaw) ? Date.parse(untilRaw) : NaN; // 실제 달력 날짜의 UTC(…Z)만(Codex B4)
   var maxRows = Number(p.getProperty('MAX_NEW_ROWS'));
@@ -176,4 +184,16 @@ function json_(obj) {
 /** GET는 조회 경로를 제공하지 않는다(설계 15 §2). */
 function doGet() {
   return json_({ protocolVersion: PROTOCOL_VERSION, ok: false, code: 'INVALID_PAYLOAD', retryable: false });
+}
+
+/** 배포자가 편집기에서 한 번 실행: 정본 탭 'canonical'과 머리글 5개를 만들고, 이때 Sheet 권한을 승인한다(웹 앱 실행 전 필요). 요청으로는 호출되지 않는다. */
+function setupOnce() {
+  var cfg = loadConfig_();
+  if (!cfg.SHEET_ID) throw new Error('SHEET_ID 없음');
+  var ss = SpreadsheetApp.openById(cfg.SHEET_ID);
+  var sheet = ss.getSheetByName(cfg.TAB_NAME);
+  if (!sheet) { var first = ss.getSheets()[0]; if (first && first.getLastRow() <= 1 && ss.getSheets().length === 1) { first.setName(cfg.TAB_NAME); sheet = first; } else sheet = ss.insertSheet(cfg.TAB_NAME); }
+  sheet.getRange(1, 1, 1, 5).setNumberFormat('@').setValues([HEADER]);
+  SpreadsheetApp.flush();
+  return 'ok: ' + ss.getName() + ' / ' + cfg.TAB_NAME + ' / intake until ' + new Date(cfg.ACCEPT_UNTIL).toISOString();
 }
