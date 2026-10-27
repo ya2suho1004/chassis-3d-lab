@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import raw from '../src/data/layout/layout.dev-provisional.json'
-import { loadSceneLayout, footprintOf, nearEquipment } from '../src/scene/layoutModel'
+import { loadSceneLayout, footprintOf, nearEquipment, showsLabel } from '../src/scene/layoutModel'
 import { buildNavGrid, findPath, advanceAlongPath } from '../src/scene/pathfind'
 import { createTaskRun, changeDisplayMode } from '../src/domain/taskEngine'
 import lv1 from '../src/data/tasks/task.braking-force.case-lv1.json'
@@ -134,5 +134,16 @@ describe('2차 실측(2026-10-26) 반영', () => {
     expect(ab.zMax - ab.zMin).toBeCloseTo(10.0, 5)
     expect(ab.zMin).toBeCloseTo(layout.mainZone.zMax, 5)
     expect(ab.xMax).toBeCloseTo(layout.mainZone.xMax, 5)
+  })
+})
+
+describe('3D 이름표 표시 규칙', () => {
+  test('전체 모드는 모두, 줄이기 모드는 고른 장비·다음 단계 장비·작동 장비만 보인다', () => {
+    const plain = { selected: false, highlight: false, interactive: false }
+    expect(showsLabel('all', plain)).toBe(true)
+    expect(showsLabel('focus', plain)).toBe(false)
+    expect(showsLabel('focus', { ...plain, selected: true })).toBe(true)
+    expect(showsLabel('focus', { ...plain, highlight: true })).toBe(true)
+    expect(showsLabel('focus', { ...plain, interactive: true })).toBe(true)
   })
 })

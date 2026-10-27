@@ -119,3 +119,9 @@ export function vehiclePlacement(layout: SceneLayout, dir: 'north' | 'south' | n
   const z = dir === 'south' ? tester.z + rearAxleOffset : tester.z - rearAxleOffset
   return { x: tester.x, z, rotation: dir === 'south' ? 180 : 0, assumed: dir === null }
 }
+
+export type LabelMode = 'all' | 'focus'
+/** 3D 이름표 표시 규칙. 'focus'(과제 중 기본)는 고른 장비·다음 단계 장비·작동 장비만 보여 화면 가림을 줄인다 */
+export function showsLabel(mode: LabelMode, e: { selected: boolean; highlight: boolean; interactive: boolean }): boolean {
+  return mode === 'all' || e.selected || e.highlight || e.interactive
+}

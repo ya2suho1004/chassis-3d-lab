@@ -10,7 +10,7 @@
 
 ```bash
 npm install
-npm test          # vitest, 241 tests
+npm test          # vitest, 242 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
@@ -35,7 +35,7 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 | `src/data/layout/layout.dev-provisional.json` | 개발용 임시 배치(장비 23·기둥 4·벽·트인 변·시작점·NPC) | `sourceStatus=devProvisional`, `layoutConfirmed=false`, `metricScaleKnown=false`. 항목마다 근거(`basis`: measured / measured-partial / sketch / assumption / teacher)를 적는다. 제동력 구역만 2026-10-21 실측값, 나머지는 스케치 비례·가정 |
 | `scene/layoutModel.ts` | 배치 읽기·발자국(footprint)·근접 판정 | 원점은 임시 배치의 북서 모서리, x=동, z=남, 단위 m. 접근점 반경 1.3m 안이면 ‘근처’ |
 | `scene/pathfind.ts` | 격자(0.5m) A* 길찾기 | 장비·기둥·벽 밖을 막고 아바타 반경만큼 띄운다. 막힌 곳이 목적지면 경로 없음(null) |
-| `scene/LabScene.tsx` | three.js(R3F) 장면 | 단순 도형만, 그림자 없음, 저사양 체크 시 해상도·안티에일리어싱 낮춤. 바닥 탭 이동, 드래그 회전, 3인칭 추적 카메라, 장비 라벨(drei Html). 사진·NCS 그림 사용 안 함 |
+| `scene/LabScene.tsx` | three.js(R3F) 장면 | 단순 도형만, 그림자 없음, 저사양 체크 시 해상도·안티에일리어싱 낮춤. 바닥 탭 이동, 드래그 회전, 3인칭 추적 카메라, 장비 라벨(drei Html, 고정 크기). 과제 중에는 고른 장비·다음 단계 장비·작동 장비 이름표만(‘이름표 모두 보기’로 전환). 사진·NCS 그림 사용 안 함 |
 | `screens/LabScreen.tsx` | 실습장 HUD | 장비 탭 → 설명 카드·도감, 지정 위치 이동 버튼(교관·시험기·조작부·시작점), NPC 교관 근처(2m)에서 ‘과제 수령’ → 수행 번호 발급·초안 저장. 과제 패널은 3D 모드에서 해당 장비 접근점에 서야 단계 수행 가능(‘이동 필요’) |
 | `scene/brakeRig.ts` | 제동력 시험기 연출 상태 | 과제 진행에서 차량(밖·들림·롤러 위)·리프트·롤러 회전만 계산. 표시 전용이며 단계 완료·판정과 무관. 진입 방향 미설정이면 진입·이탈 연출 없음(U6). 장면은 차량 진입/이탈·바퀴 구름·리프트 판 상승·롤러 회전, 계기는 0→최대값 상승 뒤 ‘최대값 고정’(U1 근사). 모션 줄이기 설정이면 즉시 표시 |
 | 엔진 추가 | `changeDisplayMode` | 3D↔도식 전환을 `displayModeChanged` 이벤트(from/to/사유)로 남기고 `experiencedDisplayModes`에 누적. 기록 payload의 `displayMode`는 시작 모드 |

@@ -8,7 +8,7 @@ import type { Repository } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
 import { LabScene } from '../scene/LabScene'
 import { brakeRigState } from '../scene/brakeRig'
-import { loadSceneLayout, nearEquipment, vehiclePlacement, type Pt, type SceneLayout } from '../scene/layoutModel'
+import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen } from './TaskScreen'
 
 const NEAR_RADIUS = 1.3
@@ -38,6 +38,8 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
   const [lowSpec, setLowSpec] = useState(false)
+  /** null = 자동(둘러보기는 전체, 과제 중은 필요한 것만) */
+  const [labelChoice, setLabelChoice] = useState<LabelMode | null>(null)
   const moveRequestRef = useRef<Pt | null>(null)
   const goTo = (p: Pt) => { moveRequestRef.current = p }
 
@@ -47,6 +49,7 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
   const selected = layout.equipment.find((e) => e.id === selectedId) ?? null
   const requiredNow = run?.nextStepId ? (task.steps.find((s) => s.stepId === run.nextStepId)?.equipmentId ?? null) : null
   const displayMode = run?.displayMode ?? 'threeD'
+  const labelMode: LabelMode = labelChoice ?? (run ? 'focus' : 'all')
   const rig = useMemo(() => brakeRigState(run, session.vehicleEntryDirection), [run, session.vehicleEntryDirection])
 
   const selectEquipment = (id: string | null) => {
@@ -66,6 +69,7 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
         <div className="small">
           <span className="warnchip">실제 배치 아님 · layoutConfirmed=false</span>
           {run && <button className="link" onClick={toggleDisplay}>{displayMode === 'threeD' ? '도식 모드로' : '3D 모드로'}</button>}
+          {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}
           <label className="inline"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 저사양</label>
         </div>
       </header>
@@ -74,7 +78,7 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
             <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec}
-              onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} />
+              onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
             <div className="quicknav">
               <button onClick={() => goTo({ x: layout.npc.x - 1.0, z: layout.npc.z })}>교관에게 가기</button>
               {layout.equipment.filter((e) => e.interactive && e.accessPoint).map((e) => (

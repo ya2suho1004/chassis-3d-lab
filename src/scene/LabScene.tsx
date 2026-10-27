@@ -5,7 +5,7 @@ import { Html, OrbitControls } from '@react-three/drei'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { footprintOf, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
+import { footprintOf, showsLabel, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
 import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
 
@@ -25,6 +25,7 @@ export interface LabSceneProps {
   moveRequestRef: React.MutableRefObject<Pt | null>
   /** 제동력 시험기·시험 차량 연출 상태(brakeRig.ts) */
   rig: BrakeRigState
+  labelMode: LabelMode
 }
 
 function Avatar({ pos, color }: { pos: Pt; color: string }) {
@@ -37,7 +38,7 @@ function Avatar({ pos, color }: { pos: Pt; color: string }) {
   )
 }
 
-function Equipment({ e, selected, highlight, onTap }: { e: SceneEquipment; selected: boolean; highlight: boolean; onTap: () => void }) {
+function Equipment({ e, selected, highlight, showLabel, onTap }: { e: SceneEquipment; selected: boolean; highlight: boolean; showLabel: boolean; onTap: () => void }) {
   const f = footprintOf(e)
   const w = f.xMax - f.xMin
   const d = f.zMax - f.zMin
@@ -49,9 +50,11 @@ function Equipment({ e, selected, highlight, onTap }: { e: SceneEquipment; selec
         <meshStandardMaterial color={color} emissive={highlight ? '#3b6fd6' : '#000000'} emissiveIntensity={highlight ? 0.5 : 0} />
       </mesh>
       {e.kind === 'vehicle' && <mesh position={[0, e.h * 0.95, 0]}><boxGeometry args={[w * 0.8, e.h * 0.5, d * 0.5]} /><meshStandardMaterial color="#b0bec5" /></mesh>}
-      <Html position={[0, e.h + 0.35, 0]} center distanceFactor={14} style={{ pointerEvents: 'none' }}>
-        <div className={`label3d ${e.interactive ? 'interactive' : ''} ${highlight ? 'hl' : ''}`}>{e.label}</div>
-      </Html>
+      {showLabel && (
+        <Html position={[0, e.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
+          <div className={`label3d ${e.interactive ? 'interactive' : ''} ${highlight ? 'hl' : ''}`}>{e.label}</div>
+        </Html>
+      )}
     </group>
   )
 }
@@ -87,7 +90,7 @@ function WheelSpokes() {
 }
 
 /** 제동력 시험기 연출: 롤러 4개·리프트 판·시험 차량(진입/이탈·들림·뒷바퀴 회전). 단계 판정과 무관한 표시 전용 */
-function BrakeRig({ tester, vehicle, rig, selected, onTapVehicle }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; selected: boolean; onTapVehicle: () => void }) {
+function BrakeRig({ tester, vehicle, rig, selected, showVehicleLabel, onTapVehicle }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; selected: boolean; showVehicleLabel: boolean; onTapVehicle: () => void }) {
   const theta = (vehicle.rotation * Math.PI) / 180
   const away = { x: -Math.sin(theta), z: -Math.cos(theta) }
   const rearAxle = vehicle.d / 2 - 0.6
@@ -143,7 +146,7 @@ function BrakeRig({ tester, vehicle, rig, selected, onTapVehicle }: { tester: Sc
           </mesh>
         ))}
         {rig.rollersSpinning && (
-          <Html position={[0, 0.6, tester.d / 2 + 0.3]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
+          <Html position={[0, 0.6, tester.d / 2 + 0.3]} center style={{ pointerEvents: 'none' }}>
             <div className="label3d hl">롤러 회전 중</div>
           </Html>
         )}
@@ -173,9 +176,11 @@ function BrakeRig({ tester, vehicle, rig, selected, onTapVehicle }: { tester: Sc
             </group>
           ))}
         </group>
-        <Html position={[0, vehicle.h + 0.35, 0]} center distanceFactor={14} style={{ pointerEvents: 'none' }}>
-          <div className="label3d">{vehicle.label}</div>
-        </Html>
+        {showVehicleLabel && (
+          <Html position={[0, vehicle.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
+            <div className="label3d">{vehicle.label}</div>
+          </Html>
+        )}
       </group>
     </>
   )
@@ -222,7 +227,7 @@ function Walker({ layout, start, onMove, requestRef }: { layout: SceneLayout; st
   return <Avatar pos={pos} color="#2d6cdf" />
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode }: LabSceneProps) {
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
   const requestRef = moveRequestRef
@@ -272,7 +277,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onS
               <planeGeometry args={horizontal ? [len, 0.3] : [0.3, len]} />
               <meshBasicMaterial color="#1fbf6b" />
             </mesh>
-            <Html position={[(x1 + x2) / 2, 0.6, (z1 + z2) / 2]} center distanceFactor={16} style={{ pointerEvents: 'none' }}><div className="label3d open">→ {o.connectsTo}</div></Html>
+            <Html position={[(x1 + x2) / 2, 0.6, (z1 + z2) / 2]} center style={{ pointerEvents: 'none' }}><div className="label3d open">→ {o.connectsTo}</div></Html>
           </group>
         )
       })}
@@ -280,14 +285,16 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onS
         <mesh key={p.id} position={[p.x, 1.6, p.z]}><boxGeometry args={[p.size, 3.2, p.size]} /><meshStandardMaterial color="#cfd8dc" /></mesh>
       ))}
       {layout.equipment.filter((e) => !(vehicle && tester && e.id === vehicle.id)).map((e) => (
-        <Equipment key={e.id} e={e.id === tester?.id ? { ...e, h: TESTER_PLATE_H } : e} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)} onTap={() => onSelectEquipment(e.id)} />
+        <Equipment key={e.id} e={e.id === tester?.id ? { ...e, h: TESTER_PLATE_H } : e} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
+          showLabel={showsLabel(labelMode, { selected: selectedId === e.id, highlight: highlightIds.includes(e.id), interactive: e.interactive })} onTap={() => onSelectEquipment(e.id)} />
       ))}
-      {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} selected={selectedId === vehicle.id} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
+      {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} selected={selectedId === vehicle.id}
+        showVehicleLabel={showsLabel(labelMode, { selected: selectedId === vehicle.id, highlight: highlightIds.includes(vehicle.id), interactive: vehicle.interactive })} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
         <mesh position={[0, 0.55, 0]}><cylinderGeometry args={[0.22, 0.25, 1.1, 12]} /><meshStandardMaterial color="#ef6c00" /></mesh>
         <mesh position={[0, 1.3, 0]}><sphereGeometry args={[0.2, 12, 12]} /><meshStandardMaterial color="#f5d3b3" /></mesh>
-        <Html position={[0, 1.9, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>
+        <Html position={[0, 1.9, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
