@@ -173,7 +173,8 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
     if (r.result === 'passed') void finish(r.run, 'completed')
   }
 
-  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${m.left}   R ${m.right}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---' }
+  // U1 근사(교사 허용 2026-10-27, 장비 수리 후 확인): 페달을 끝까지 밟으면 버튼 없이 최대값이 자동 고정된다고 가정. 새 버튼·성공 사건 없음
+  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${m.left}   R ${m.right}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') }
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>
@@ -238,7 +239,9 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
           <div className="gauge">
             <div><span>AXLE Load</span><b>{gauge.axle}</b></div>
             <div><span>BRAKE L / R</span><b>{gauge.lr}</b></div>
+            {gauge.hold && <div><span>MAX HOLD</span><b>최대값 고정</b></div>}
           </div>
+          {gauge.hold && <p className="small">임시 표시: 실제 장비의 값 고정 방식은 수리 후 확인 예정(U1). 지금은 페달을 끝까지 밟으면 최대값이 자동으로 고정된다고 가정합니다.</p>}
           <h3>판독 입력 (정수, {m.unit})</h3>
           {(['axleWeight', 'left', 'right'] as const).map((id) => (
             <div className="field" key={id}>
