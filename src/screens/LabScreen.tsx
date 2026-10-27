@@ -10,6 +10,7 @@ import { LabScene } from '../scene/LabScene'
 import { brakeRigState } from '../scene/brakeRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen } from './TaskScreen'
+import { LayoutReviewPanel } from './LayoutReviewPanel'
 
 const NEAR_RADIUS = 1.3
 const NPC_RADIUS = 2.0
@@ -39,6 +40,8 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
   const [npcError, setNpcError] = useState<string | null>(null)
   const [lowSpec, setLowSpec] = useState(false)
   /** null = 자동(둘러보기는 전체, 과제 중은 필요한 것만) */
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const [reviewActiveId, setReviewActiveId] = useState<string | null>(null)
   const [labelChoice, setLabelChoice] = useState<LabelMode | null>(null)
   const moveRequestRef = useRef<Pt | null>(null)
   const goTo = (p: Pt) => { moveRequestRef.current = p }
@@ -69,12 +72,13 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
         <div className="small">
           <span className="warnchip">실제 배치 아님 · layoutConfirmed=false</span>
           {run && <button className="link" onClick={toggleDisplay}>{displayMode === 'threeD' ? '도식 모드로' : '3D 모드로'}</button>}
+          {!run && !reviewOpen && <button className="link" onClick={() => setReviewOpen(true)}>배치 눈검토(교사)</button>}
           {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}
           <label className="inline"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 저사양</label>
         </div>
       </header>
 
-      <div className={`labgrid ${run ? 'withtask' : ''} ${displayMode === 'diagram' ? 'diagram' : ''}`}>
+      <div className={`labgrid ${run || reviewOpen ? 'withtask' : ''} ${reviewOpen ? 'reviewing' : ''} ${displayMode === 'diagram' ? 'diagram' : ''}`}>
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
             <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec}
@@ -105,7 +109,13 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
             </div>
           )}
 
-          {!run && (
+          {!run && reviewOpen && (
+            <LayoutReviewPanel layout={layout} activeId={reviewActiveId}
+              onFocus={(item) => { setReviewActiveId(item.itemId); setSelectedId(item.equipmentId); goTo(item.viewPoint) }}
+              onClose={() => { setReviewOpen(false); setReviewActiveId(null) }} />
+          )}
+
+          {!run && !reviewOpen && (
             <div className="card npc">
               <b>NPC 교관</b>
               {npcOpen ? (

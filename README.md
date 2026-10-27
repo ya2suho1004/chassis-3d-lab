@@ -10,7 +10,7 @@
 
 ```bash
 npm install
-npm test          # vitest, 242 tests
+npm test          # vitest, 246 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
@@ -39,6 +39,8 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 | `screens/LabScreen.tsx` | 실습장 HUD | 장비 탭 → 설명 카드·도감, 지정 위치 이동 버튼(교관·시험기·조작부·시작점), NPC 교관 근처(2m)에서 ‘과제 수령’ → 수행 번호 발급·초안 저장. 과제 패널은 3D 모드에서 해당 장비 접근점에 서야 단계 수행 가능(‘이동 필요’) |
 | `scene/brakeRig.ts` | 제동력 시험기 연출 상태 | 과제 진행에서 차량(밖·들림·롤러 위)·리프트·롤러 회전만 계산. 표시 전용이며 단계 완료·판정과 무관. 진입 방향 미설정이면 진입·이탈 연출 없음(U6). 장면은 차량 진입/이탈·바퀴 구름·리프트 판 상승·롤러 회전, 계기는 0→최대값 상승 뒤 ‘최대값 고정’(U1 근사). 모션 줄이기 설정이면 즉시 표시 |
 | 엔진 추가 | `changeDisplayMode` | 3D↔도식 전환을 `displayModeChanged` 이벤트(from/to/사유)로 남기고 `experiencedDisplayModes`에 누적. 기록 payload의 `displayMode`는 시작 모드 |
+
+배치 눈검토(교사): 과제 수령 전 실습장 상단 ‘배치 눈검토(교사)’ → 경계 5·기둥 4·장비 23·위치 2(34항목)를 맞음/조금 다름/많이 다름/없음으로 표시, 항목을 누르면 캐릭터가 그 자리로 이동. 이 기기 초안(localStorage) + `LAYOUT_3D_REVIEW_날짜.json` 내려받기만, 전송 없음. 결과와 무관하게 layoutConfirmed=false 유지(`src/review/layoutReview.ts`, `screens/LayoutReviewPanel.tsx`).
 
 화면 흐름: 시작 → 실습장(둘러보기·도감) → NPC 교관에게 과제 수령 → 과제 패널(3D 옆) → NPC 검사 또는 중단 → 결과. 도식 모드로 바꾸면 3D 없이 과제 패널만 보인다(저사양 대체).
 

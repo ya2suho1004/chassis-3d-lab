@@ -79,3 +79,18 @@ button.far { border-color:#9e9e9e; color:#777; }
 
 .sendlog { margin:6px 0 0; padding-left:18px; }
 .sendlog li { margin:2px 0; }
+
+.review h3 { font-size:15px; margin:12px 0 4px; }
+.reviewlist { list-style:none; padding:0; margin:0; }
+.reviewlist li { padding:6px 4px; border-bottom:1px solid var(--line); }
+.reviewlist li.active { background:#fff4d6; }
+.reviewlist input, .review label input { width:100%; padding:8px; margin-top:4px; }
+.verdicts { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:4px; }
+.verdicts button { min-height:36px; padding:4px 10px; }
+.verdicts button.on { background:#3b6fd6; color:#fff; border-color:#3b6fd6; }
+/* 눈검토: 넓은 화면은 3D 옆에서 목록만 스크롤, 좁은 화면은 3D를 위에 붙여 둔다 */
+.labgrid.reviewing .card.review { max-height:min(62vh, 560px); overflow:auto; }
+@media (max-width: 1000px) {
+  .labgrid.reviewing .canvaswrap { position:sticky; top:0; z-index:2; height:42vh; min-height:260px; }
+  .labgrid.reviewing .card.review { max-height:none; }
+}
