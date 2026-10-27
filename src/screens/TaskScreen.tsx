@@ -16,6 +16,27 @@ type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: stri
 const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정' }
 const ISSUE_LABEL: Record<string, string> = { STEP_NOT_COMPLETED: '단계 미완료', UNANSWERED: '미응답', FINAL_INCORRECT: '최종 답 오답', NOT_EVALUABLE: '채점 불가', SAFETY_NOT_SATISFIED: '안전 조건 미충족' }
 
+const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+/** 페달을 밟는 동안 계기 숫자가 0에서 올라가 최대값에 멈추는 표시(연출 전용, 판독 정답·기록과 무관) */
+function useCountUp(active: boolean, ms = 1500): number {
+  const [t, setT] = useState(active ? (reduceMotion ? 1 : 0) : 0)
+  useEffect(() => {
+    if (!active) { setT(0); return }
+    if (reduceMotion) { setT(1); return }
+    const start = performance.now()
+    let raf = 0
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - start) / ms)
+      setT(1 - (1 - k) ** 3)
+      if (k < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [active, ms])
+  return t
+}
+
 export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
 
 export function TaskScreen({ repo, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange }: {
@@ -174,7 +195,10 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
   }
 
   // U1 근사(교사 허용 2026-10-27, 장비 수리 후 확인): 페달을 끝까지 밟으면 버튼 없이 최대값이 자동 고정된다고 가정. 새 버튼·성공 사건 없음
-  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${m.left}   R ${m.right}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') }
+  const rise = useCountUp(done('press'))
+  const shownL = m.left === null ? null : Math.round(m.left * rise)
+  const shownR = m.right === null ? null : Math.round(m.right * rise)
+  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${shownL}   R ${shownR}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') && rise >= 1 }
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>

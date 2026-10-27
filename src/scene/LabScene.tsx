@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { footprintOf, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
 import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
+import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
 
 const WALK_SPEED = 1.6 // m/s
 const TAP_MAX_PX = 6
@@ -22,6 +23,8 @@ export interface LabSceneProps {
   onMove: (pos: Pt, moving: boolean) => void
   /** 바닥 탭 대신 버튼으로 목적지를 넣는 통로(지정 위치 이동 보조, 설계 03 §2) */
   moveRequestRef: React.MutableRefObject<Pt | null>
+  /** 제동력 시험기·시험 차량 연출 상태(brakeRig.ts) */
+  rig: BrakeRigState
 }
 
 function Avatar({ pos, color }: { pos: Pt; color: string }) {
@@ -50,6 +53,131 @@ function Equipment({ e, selected, highlight, onTap }: { e: SceneEquipment; selec
         <div className={`label3d ${e.interactive ? 'interactive' : ''} ${highlight ? 'hl' : ''}`}>{e.label}</div>
       </Html>
     </group>
+  )
+}
+
+const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+/** 다가가는 값(지수 감쇠). 모션 줄이기 설정이면 바로 목표값 */
+function approach(cur: number, target: number, rate: number, dt: number): number {
+  if (prefersReducedMotion) return target
+  const k = 1 - Math.exp(-rate * Math.min(dt, 0.1))
+  const next = cur + (target - cur) * k
+  return Math.abs(target - next) < 1e-3 ? target : next
+}
+
+const ROLLER_R = 0.1
+const WHEEL_R = 0.3
+const LIFT_RISE = 0.15
+const ROLLER_SPIN = 14 // rad/s
+/** 덮개판은 바닥 높이(사진 28) — 장면에서는 얇은 판으로 그리고 롤러는 판 아래 홈에 둔다 */
+export const TESTER_PLATE_H = 0.05
+const ROLLER_DZ = 0.28 // 바퀴 하나를 받치는 앞뒤 롤러 간격의 절반(가정)
+const ROLLER_Y = WHEEL_R - Math.sqrt((WHEEL_R + ROLLER_R) ** 2 - ROLLER_DZ ** 2) // 바퀴가 두 롤러에 걸리는 높이
+
+/** 바퀴 양면의 흰 살(회전이 보이도록). 원통 축 = 지역 y */
+function WheelSpokes() {
+  return (
+    <>
+      {[0.101, -0.101].map((y) => (
+        <mesh key={y} position={[0, y, 0]}><boxGeometry args={[WHEEL_R * 1.5, 0.005, 0.06]} /><meshBasicMaterial color="#eceff1" /></mesh>
+      ))}
+    </>
+  )
+}
+
+/** 제동력 시험기 연출: 롤러 4개·리프트 판·시험 차량(진입/이탈·들림·뒷바퀴 회전). 단계 판정과 무관한 표시 전용 */
+function BrakeRig({ tester, vehicle, rig, selected, onTapVehicle }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; selected: boolean; onTapVehicle: () => void }) {
+  const theta = (vehicle.rotation * Math.PI) / 180
+  const away = { x: -Math.sin(theta), z: -Math.cos(theta) }
+  const rearAxle = vehicle.d / 2 - 0.6
+  const target = {
+    dist: rig.vehicle === 'outside' ? OUTSIDE_DISTANCE : 0,
+    lift: rig.liftUp ? LIFT_RISE : 0,
+  }
+  const carRef = useRef<THREE.Group>(null)
+  const liftRefs = useRef<Array<THREE.Mesh | null>>([])
+  const rollerRefs = useRef<Array<THREE.Mesh | null>>([])
+  const rearWheelRefs = useRef<Array<THREE.Mesh | null>>([])
+  const frontWheelRefs = useRef<Array<THREE.Mesh | null>>([])
+  const s = useRef({ dist: target.dist, lift: target.lift, spin: 0 })
+
+  useFrame((_, dt) => {
+    const st = s.current
+    const prevDist = st.dist
+    st.dist = approach(st.dist, target.dist, 1.6, dt)
+    st.lift = approach(st.lift, target.lift, 3, dt)
+    st.spin = approach(st.spin, rig.rollersSpinning ? ROLLER_SPIN : 0, 2.5, dt)
+    // 차량 위치·높이: 진입·이탈 중이면 바퀴가 이동 거리만큼 구른다
+    const lift = rig.vehicle === 'outside' ? 0 : st.lift
+    if (carRef.current) carRef.current.position.set(vehicle.x + away.x * st.dist, lift, vehicle.z + away.z * st.dist)
+    for (const m of liftRefs.current) if (m) m.position.y = st.lift - 0.02
+    const rollerTurn = st.spin * Math.min(dt, 0.1)
+    for (const m of rollerRefs.current) if (m) m.rotation.x += rollerTurn
+    const roll = (st.dist - prevDist) / WHEEL_R
+    // 롤러가 돌면 뒷바퀴도 롤러에 맞물려 반대로 돈다(들린 상태에서는 닿지 않음)
+    const rearDrive = st.lift < 0.02 && rig.vehicle !== 'outside' ? -rollerTurn * (ROLLER_R / WHEEL_R) : 0
+    for (const m of rearWheelRefs.current) if (m) m.rotation.x += roll + rearDrive
+    for (const m of frontWheelRefs.current) if (m) m.rotation.x += roll
+  })
+
+  const wheelX = vehicle.w / 2 - 0.1
+  // 롤러: 좌·우 바퀴 자리마다 앞뒤 2개(바퀴 아래, 축은 동서 방향)
+  const rollerSpots = [-wheelX, wheelX].flatMap((x) => [-ROLLER_DZ, ROLLER_DZ].map((dz) => ({ x, dz })))
+  const bodyBottom = WHEEL_R + 0.05
+  return (
+    <>
+      <group position={[tester.x, 0, tester.z]}>
+        {rollerSpots.map((r, i) => (
+          <mesh key={`roller-${i}`} ref={(m) => { rollerRefs.current[i] = m }} position={[r.x, ROLLER_Y, r.dz]} rotation-z={Math.PI / 2}>
+            <cylinderGeometry args={[ROLLER_R, ROLLER_R, 0.6, 12]} />
+            <meshStandardMaterial color="#9e9e9e" metalness={0.4} roughness={0.5} />
+            {/* 회전이 보이도록 축 방향 줄무늬 */}
+            <mesh position={[ROLLER_R * 0.95, 0, 0]}><boxGeometry args={[0.03, 0.6, 0.04]} /><meshBasicMaterial color="#212121" /></mesh>
+          </mesh>
+        ))}
+        {[-wheelX, wheelX].map((x, i) => (
+          <mesh key={`lift-${i}`} ref={(m) => { liftRefs.current[i] = m }} position={[x, target.lift - 0.02, 0]}>
+            <boxGeometry args={[0.5, 0.04, 0.3]} />
+            <meshStandardMaterial color="#ffd600" />
+          </mesh>
+        ))}
+        {rig.rollersSpinning && (
+          <Html position={[0, 0.6, tester.d / 2 + 0.3]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
+            <div className="label3d hl">롤러 회전 중</div>
+          </Html>
+        )}
+      </group>
+      <group ref={carRef} position={[vehicle.x + away.x * target.dist, rig.vehicle === 'outside' ? 0 : target.lift, vehicle.z + away.z * target.dist]}>
+        <group rotation-y={theta}>
+          <mesh position={[0, bodyBottom + (vehicle.h * 0.55) / 2, 0]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTapVehicle() } }}>
+            <boxGeometry args={[vehicle.w, vehicle.h * 0.55, vehicle.d]} />
+            <meshStandardMaterial color={selected ? '#ffab40' : vehicle.color} />
+          </mesh>
+          <mesh position={[0, bodyBottom + vehicle.h * 0.55 + vehicle.h * 0.15, -0.2]}>
+            <boxGeometry args={[vehicle.w * 0.8, vehicle.h * 0.3, vehicle.d * 0.5]} />
+            <meshStandardMaterial color="#b0bec5" />
+          </mesh>
+          {[-wheelX, wheelX].map((x, i) => (
+            <group key={`wheels-${i}`}>
+              <mesh ref={(m) => { rearWheelRefs.current[i] = m }} position={[x, WHEEL_R, rearAxle]} rotation-z={Math.PI / 2}>
+                <cylinderGeometry args={[WHEEL_R, WHEEL_R, 0.2, 14]} />
+                <meshStandardMaterial color="#263238" />
+                <WheelSpokes />
+              </mesh>
+              <mesh ref={(m) => { frontWheelRefs.current[i] = m }} position={[x, WHEEL_R, rearAxle - 2.4]} rotation-z={Math.PI / 2}>
+                <cylinderGeometry args={[WHEEL_R, WHEEL_R, 0.2, 14]} />
+                <meshStandardMaterial color="#263238" />
+                <WheelSpokes />
+              </mesh>
+            </group>
+          ))}
+        </group>
+        <Html position={[0, vehicle.h + 0.35, 0]} center distanceFactor={14} style={{ pointerEvents: 'none' }}>
+          <div className="label3d">{vehicle.label}</div>
+        </Html>
+      </group>
+    </>
   )
 }
 
@@ -94,7 +222,9 @@ function Walker({ layout, start, onMove, requestRef }: { layout: SceneLayout; st
   return <Avatar pos={pos} color="#2d6cdf" />
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onSelectEquipment, onNpcTap, onMove, moveRequestRef }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig }: LabSceneProps) {
+  const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
+  const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
   const requestRef = moveRequestRef
   const mz = layout.mainZone
   const ab = layout.absProtrusion
@@ -149,9 +279,10 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onS
       {layout.pillars.map((p) => (
         <mesh key={p.id} position={[p.x, 1.6, p.z]}><boxGeometry args={[p.size, 3.2, p.size]} /><meshStandardMaterial color="#cfd8dc" /></mesh>
       ))}
-      {layout.equipment.map((e) => (
-        <Equipment key={e.id} e={e} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)} onTap={() => onSelectEquipment(e.id)} />
+      {layout.equipment.filter((e) => !(vehicle && tester && e.id === vehicle.id)).map((e) => (
+        <Equipment key={e.id} e={e.id === tester?.id ? { ...e, h: TESTER_PLATE_H } : e} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)} onTap={() => onSelectEquipment(e.id)} />
       ))}
+      {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} selected={selectedId === vehicle.id} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
         <mesh position={[0, 0.55, 0]}><cylinderGeometry args={[0.22, 0.25, 1.1, 12]} /><meshStandardMaterial color="#ef6c00" /></mesh>
