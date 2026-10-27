@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-26T15:55:19.929Z",
+  "checkedAt": "2026-10-27T00:44:31.757Z",
   "root": "/Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current",
   "project": "/Users/jamingchu/claude code/chassis-3d-lab",
   "applicationExecuted": false,
@@ -4765,6 +4765,77 @@
       "passed": true
     },
     {
+      "name": "ledger-top-shape",
+      "passed": true
+    },
+    {
+      "name": "ledger-migrations-array",
+      "passed": true
+    },
+    {
+      "name": "migration-records-unique",
+      "passed": true
+    },
+    {
+      "name": "migration-shape:1",
+      "passed": true
+    },
+    {
+      "name": "migration-date:1",
+      "passed": true
+    },
+    {
+      "name": "migration-fields:1",
+      "passed": true
+    },
+    {
+      "name": "migration-ids-shape:1",
+      "passed": true
+    },
+    {
+      "name": "migration-ids-unique:1",
+      "passed": true
+    },
+    {
+      "name": "migration-ids-exist:1",
+      "passed": true,
+      "missingIds": []
+    },
+    {
+      "name": "migration-reason:1",
+      "passed": true,
+      "classification": "recorded assertion; truth not independently verified"
+    },
+    {
+      "name": "migration-date-after-generation:1",
+      "passed": true
+    },
+    {
+      "name": "migration-fields-applied:1",
+      "passed": true,
+      "mismatchedIds": [],
+      "comparison": "listed ledger/server fields versus preserved formal task version"
+    },
+    {
+      "name": "migration-known-record-count",
+      "passed": true,
+      "date": "2026-10-27",
+      "fields": [
+        "stepPrerequisites"
+      ],
+      "actual": 1,
+      "expected": 1
+    },
+    {
+      "name": "migration-known-id-count",
+      "passed": true,
+      "actual": 36,
+      "unique": 36,
+      "expected": 36,
+      "idsEqualCurrentLedger": true,
+      "coverageComparison": "diagnostic only; later ledger entries do not retroactively expand this migration"
+    },
+    {
       "name": "server-registry-complete",
       "passed": true,
       "actual": 37,
@@ -5375,7 +5446,7 @@
       "passed": true
     }
   ],
-  "passed": 891,
+  "passed": 905,
   "failed": 0,
   "strictLint": {
     "classification": "additional lint diagnostic; not counted as JSON Schema validity failures",
@@ -5488,6 +5559,33 @@
       "unverifiable": []
     },
     "snapshotLibExecuted": false
+  },
+  "migrationSummary": {
+    "recordCount": 1,
+    "knownMigration": {
+      "date": "2026-10-27",
+      "fields": [
+        "stepPrerequisites"
+      ],
+      "ids": 36,
+      "uniqueIds": 36,
+      "idsEqualCurrentLedger": true
+    },
+    "records": [
+      {
+        "date": "2026-10-27",
+        "fields": [
+          "stepPrerequisites"
+        ],
+        "ids": 36,
+        "uniqueIds": 36,
+        "missingIds": [],
+        "mismatchedIds": [],
+        "reasonRecorded": true
+      }
+    ],
+    "reasonTruthVerified": false,
+    "reasonClassification": "recorded provenance assertion, not independent proof of deployment/receipt history"
   },
   "sources": [
     {
@@ -5679,7 +5777,7 @@
     },
     {
       "path": "/Users/jamingchu/claude code/chassis-3d-lab/src/data/session/snapshot-ledger.json",
-      "sha256": "40947b34660d150f885abf744f1d78760454561f706199de564aaf980e0d4cba",
+      "sha256": "194d956d5edca95f1b31e27d4cd93482d37baa64440a60f402b397e7685ae016",
       "readOnly": true
     },
     {
@@ -5689,12 +5787,12 @@
     },
     {
       "path": "/Users/jamingchu/claude code/chassis-3d-lab/scripts/build-demo-snapshots.mjs",
-      "sha256": "70d2d9435c72445bc7c46a1924729d848a4bd384d9401e2e82b55ffa4a83fa75",
+      "sha256": "4e1ac559ba172927a8105ba3475b3a8789c40f67b2e1b2759f54b07e248296c1",
       "readOnly": true
     },
     {
       "path": "/Users/jamingchu/claude code/chassis-3d-lab/scripts/snapshotLib.mjs",
-      "sha256": "6f7721951e06b66ccf9ab0f03f73211966b25d409329a5222e80e66a3da25e2a",
+      "sha256": "fcc8318be434e98cda8a4954b9e0049d46b00d88d0702a0df6ae4e66c507d119",
       "readOnly": true
     },
     {
@@ -5715,13 +5813,258 @@
       "sha256": "b62bf53c4be8d1e022c2011caa558cca148a189cc2b75ecbdf6e1eb3fe5527ab"
     }
   ],
-  "receiverReviewD": {
-    "checkedAt": "2026-10-26T16:03:21.725920+00:00",
-    "requestedCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
-    "scope": "local contracts and synthetic in-memory domain/receiver/library only; generator writes intercepted; no network or deployment",
-    "validatorSha256": "0ea06e2440dfd3ea34ef9304cbccee9be4c31ae345e2c467552c8a351158b387",
-    "validatorBehavior": {
-      "checkedAt": "2026-10-26T15:55:19.442Z",
+  "receiverReviewE": {
+    "checkedAt": "2026-10-27T00:48:03.153592+00:00",
+    "requestedCommit": "ba87fefecb73e4b58714e3f621adf5b856da15fa",
+    "scope": "read-only project; local contracts, pure-domain/library and in-memory service mocks; no external calls or deployment",
+    "validatorSha256": "5cc9469aea1b7f1a970f8ba768053352046cee5984da221b224501046a1bbad4",
+    "migrationBehavior": {
+      "checkedAt": "2026-10-27T00:43:42.984Z",
+      "passed": 25,
+      "failed": 0,
+      "baseline": {
+        "passed": 905,
+        "failed": 0
+      },
+      "checks": [
+        {
+          "name": "baseline-pass",
+          "passed": true
+        },
+        {
+          "name": "migrations-explicit-coverage",
+          "passed": true
+        },
+        {
+          "name": "migration-summary-present",
+          "passed": true
+        },
+        {
+          "name": "reject:top-missing-migrations",
+          "passed": true,
+          "validatorFailed": 4,
+          "failedChecks": [
+            "ledger-top-shape",
+            "ledger-migrations-array",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:top-extra",
+          "passed": true,
+          "validatorFailed": 1,
+          "failedChecks": [
+            "ledger-top-shape"
+          ]
+        },
+        {
+          "name": "reject:top-proto-extra",
+          "passed": true,
+          "validatorFailed": 1,
+          "failedChecks": [
+            "ledger-top-shape"
+          ]
+        },
+        {
+          "name": "reject:migrations-object",
+          "passed": true,
+          "validatorFailed": 3,
+          "failedChecks": [
+            "ledger-migrations-array",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:migrations-empty",
+          "passed": true,
+          "validatorFailed": 2,
+          "failedChecks": [
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:record-null",
+          "passed": true,
+          "validatorFailed": 11,
+          "failedChecks": [
+            "migration-shape:1",
+            "migration-date:1",
+            "migration-fields:1",
+            "migration-ids-shape:1",
+            "migration-ids-unique:1",
+            "migration-ids-exist:1",
+            "migration-reason:1",
+            "migration-date-after-generation:1",
+            "migration-fields-applied:1",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:record-missing-date",
+          "passed": true,
+          "validatorFailed": 5,
+          "failedChecks": [
+            "migration-shape:1",
+            "migration-date:1",
+            "migration-date-after-generation:1",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:record-extra",
+          "passed": true,
+          "validatorFailed": 1,
+          "failedChecks": [
+            "migration-shape:1"
+          ]
+        },
+        {
+          "name": "reject:date-impossible",
+          "passed": true,
+          "validatorFailed": 4,
+          "failedChecks": [
+            "migration-date:1",
+            "migration-date-after-generation:1",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:reason-empty",
+          "passed": true,
+          "validatorFailed": 1,
+          "failedChecks": [
+            "migration-reason:1"
+          ]
+        },
+        {
+          "name": "reject:reason-object",
+          "passed": true,
+          "validatorFailed": 1,
+          "failedChecks": [
+            "migration-reason:1"
+          ]
+        },
+        {
+          "name": "reject:fields-empty",
+          "passed": true,
+          "validatorFailed": 4,
+          "failedChecks": [
+            "migration-fields:1",
+            "migration-fields-applied:1",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:fields-unknown",
+          "passed": true,
+          "validatorFailed": 4,
+          "failedChecks": [
+            "migration-fields:1",
+            "migration-fields-applied:1",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:fields-duplicate",
+          "passed": true,
+          "validatorFailed": 4,
+          "failedChecks": [
+            "migration-fields:1",
+            "migration-fields-applied:1",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:ids-duplicate",
+          "passed": true,
+          "validatorFailed": 2,
+          "failedChecks": [
+            "migration-ids-unique:1",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:ids-lost",
+          "passed": true,
+          "validatorFailed": 1,
+          "failedChecks": [
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:ids-other",
+          "passed": true,
+          "validatorFailed": 3,
+          "failedChecks": [
+            "migration-ids-exist:1",
+            "migration-date-after-generation:1",
+            "migration-fields-applied:1"
+          ]
+        },
+        {
+          "name": "reject:ids-number",
+          "passed": true,
+          "validatorFailed": 5,
+          "failedChecks": [
+            "migration-ids-shape:1",
+            "migration-ids-unique:1",
+            "migration-ids-exist:1",
+            "migration-date-after-generation:1",
+            "migration-fields-applied:1"
+          ]
+        },
+        {
+          "name": "reject:ids-object-no-coercion",
+          "passed": true,
+          "validatorFailed": 5,
+          "failedChecks": [
+            "migration-ids-shape:1",
+            "migration-ids-unique:1",
+            "migration-ids-exist:1",
+            "migration-date-after-generation:1",
+            "migration-fields-applied:1"
+          ]
+        },
+        {
+          "name": "reject:record-duplicate",
+          "passed": true,
+          "validatorFailed": 3,
+          "failedChecks": [
+            "migration-records-unique",
+            "migration-known-record-count",
+            "migration-known-id-count"
+          ]
+        },
+        {
+          "name": "reject:field-graph-drift",
+          "passed": true,
+          "validatorFailed": 3,
+          "failedChecks": [
+            "ledger-step-prerequisites:1",
+            "server-step-prerequisites:1",
+            "migration-fields-applied:1"
+          ]
+        },
+        {
+          "name": "migration-id-order-is-not-significant",
+          "passed": true
+        }
+      ],
+      "generatorExecuted": false,
+      "snapshotLibImported": false,
+      "projectModified": false
+    },
+    "previousGraphArchiveRegression": {
+      "checkedAt": "2026-10-27T00:41:42.729Z",
       "checks": [
         {
           "name": "baseline-current-inputs-pass",
@@ -5741,7 +6084,8 @@
           "passed": true,
           "failedChecks": [
             "ledger-step-prerequisites:1",
-            "server-step-prerequisites:1"
+            "server-step-prerequisites:1",
+            "migration-fields-applied:1"
           ]
         },
         {
@@ -5751,7 +6095,8 @@
             "ledger-entry-shape:1",
             "ledger-step-prerequisites:1",
             "server-step-prerequisites:1",
-            "server-ledger-policy:1"
+            "server-ledger-policy:1",
+            "migration-fields-applied:1"
           ]
         },
         {
@@ -5759,7 +6104,8 @@
           "passed": true,
           "failedChecks": [
             "server-step-prerequisites:1",
-            "server-ledger-policy:1"
+            "server-ledger-policy:1",
+            "migration-fields-applied:1"
           ]
         },
         {
@@ -5768,6 +6114,7 @@
           "failedChecks": [
             "server-step-prerequisites:1",
             "server-ledger-policy:1",
+            "migration-fields-applied:1",
             "server-entry-shape:0032a58c-7e66-48b4-8c10-16b0900999c1"
           ]
         },
@@ -5785,7 +6132,10 @@
           "failedChecks": [
             "app-content-derived-id:1",
             "app-current-body:1",
-            "ledger-content-derived-id:1"
+            "ledger-content-derived-id:1",
+            "migration-ids-exist:1",
+            "migration-date-after-generation:1",
+            "migration-fields-applied:1"
           ]
         },
         {
@@ -5830,503 +6180,508 @@
       "passed": 14,
       "failed": 0,
       "baseline": {
-        "passed": 891,
+        "passed": 905,
         "failed": 0
       },
       "generatorExecuted": false,
       "snapshotLibImported": false,
       "applicationExecuted": false
     },
-    "independentValidatorQA": {
-      "checks": [
-        {
-          "name": "normal-current-inputs",
-          "passed": true,
-          "exit": 0,
-          "validatorPassed": 891,
-          "validatorFailed": 0,
-          "failedChecks": [],
-          "prerequisites": {
-            "verifiedEntries": 36,
-            "mismatchedEntries": 0,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        },
-        {
-          "name": "real-legacy-1.1-retired-verified",
-          "passed": true,
-          "exit": 0,
-          "validatorPassed": 906,
-          "validatorFailed": 0,
-          "failedChecks": [],
-          "prerequisites": {
-            "verifiedEntries": 37,
-            "mismatchedEntries": 0,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        },
-        {
-          "name": "same-version-cannot-substitute-other-task",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 900,
-          "validatorFailed": 6,
-          "failedChecks": [
-            "ledger-snapshot-schema:37",
-            "ledger-task-version-verifiable:37",
-            "ledger-versioned-step-scope:37",
-            "ledger-step-prerequisites:37",
-            "server-step-prerequisites:37",
-            "server-snapshot-schema:07d20033-c384-48a9-8380-b9805f06ebf9"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 36,
-            "mismatchedEntries": 0,
-            "unverifiableEntries": 1,
-            "unverifiable": [
-              {
-                "sessionSnapshotId": "07d20033-c384-48a9-8380-b9805f06ebf9",
-                "taskId": "other-task",
-                "taskDefinitionVersion": "1.1.0-review-case-1-2026-10-21",
-                "reason": "preserved formal task version not found"
-              }
+    "independentQA": {
+      "initialReview": {
+        "validatorSha256": "dbd5b52f977c736ea880f6341820709667e1700d63bf8ef59f15e650eb500e08",
+        "checks": [
+          {
+            "name": "actual-baseline",
+            "passed": true,
+            "status": 0,
+            "resultProduced": true,
+            "passedChecks": 905,
+            "failedChecks": []
+          },
+          {
+            "name": "top-null",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 420,
+            "failedChecks": [
+              "ledger-entries-is-array",
+              "ledger-rule-version",
+              "ledger-active-equals-app",
+              "ledger-top-shape",
+              "ledger-migrations-array",
+              "migration-known-record-count",
+              "migration-known-id-count",
+              "server-registry-complete"
             ]
-          }
-        },
-        {
-          "name": "schema-invalid-other-task-formal-not-accepted",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 900,
-          "validatorFailed": 6,
-          "failedChecks": [
-            "ledger-snapshot-schema:37",
-            "ledger-task-version-verifiable:37",
-            "ledger-versioned-step-scope:37",
-            "ledger-step-prerequisites:37",
-            "server-step-prerequisites:37",
-            "server-snapshot-schema:07d20033-c384-48a9-8380-b9805f06ebf9"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 36,
-            "mismatchedEntries": 0,
-            "unverifiableEntries": 1,
-            "unverifiable": [
-              {
-                "sessionSnapshotId": "07d20033-c384-48a9-8380-b9805f06ebf9",
-                "taskId": "other-task",
-                "taskDefinitionVersion": "1.1.0-review-case-1-2026-10-21",
-                "reason": "preserved task does not validate as a 12-parent task"
-              }
+          },
+          {
+            "name": "top-number",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 420,
+            "failedChecks": [
+              "ledger-entries-is-array",
+              "ledger-rule-version",
+              "ledger-active-equals-app",
+              "ledger-top-shape",
+              "ledger-migrations-array",
+              "migration-known-record-count",
+              "migration-known-id-count",
+              "server-registry-complete"
             ]
-          }
-        },
-        {
-          "name": "conflicting-preserved-graphs-unverifiable",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 902,
-          "validatorFailed": 4,
-          "failedChecks": [
-            "ledger-task-version-verifiable:37",
-            "ledger-versioned-step-scope:37",
-            "ledger-step-prerequisites:37",
-            "server-step-prerequisites:37"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 36,
-            "mismatchedEntries": 0,
-            "unverifiableEntries": 1,
-            "unverifiable": [
-              {
-                "sessionSnapshotId": "83d3f170-554d-41e3-8707-368d429713cc",
-                "taskId": "braking-force",
-                "taskDefinitionVersion": "1.1.0-review-case-1-2026-10-21",
-                "reason": "conflicting preserved formal task scopes for this version"
-              }
+          },
+          {
+            "name": "item-array",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 894,
+            "failedChecks": [
+              "migration-shape:1",
+              "migration-date:1",
+              "migration-fields:1",
+              "migration-ids-shape:1",
+              "migration-ids-unique:1",
+              "migration-ids-exist:1",
+              "migration-reason:1",
+              "migration-date-after-generation:1",
+              "migration-fields-applied:1",
+              "migration-known-record-count",
+              "migration-known-id-count"
             ]
+          },
+          {
+            "name": "item-own-proto",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 904,
+            "failedChecks": [
+              "migration-shape:1"
+            ]
+          },
+          {
+            "name": "ids-null",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 899,
+            "failedChecks": [
+              "migration-ids-shape:1",
+              "migration-ids-unique:1",
+              "migration-ids-exist:1",
+              "migration-date-after-generation:1",
+              "migration-fields-applied:1",
+              "migration-known-id-count"
+            ]
+          },
+          {
+            "name": "ids-string",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 899,
+            "failedChecks": [
+              "migration-ids-shape:1",
+              "migration-ids-unique:1",
+              "migration-ids-exist:1",
+              "migration-date-after-generation:1",
+              "migration-fields-applied:1",
+              "migration-known-id-count"
+            ]
+          },
+          {
+            "name": "ids-object",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 899,
+            "failedChecks": [
+              "migration-ids-shape:1",
+              "migration-ids-unique:1",
+              "migration-ids-exist:1",
+              "migration-date-after-generation:1",
+              "migration-fields-applied:1",
+              "migration-known-id-count"
+            ]
+          },
+          {
+            "name": "ids-proto-string",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 900,
+            "failedChecks": [
+              "migration-ids-shape:1",
+              "migration-ids-unique:1",
+              "migration-ids-exist:1",
+              "migration-date-after-generation:1",
+              "migration-fields-applied:1"
+            ]
+          },
+          {
+            "name": "ids-object-coercion",
+            "passed": false,
+            "status": 1,
+            "resultProduced": false,
+            "error": "file:///Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/validation/validate_uitems.mjs:431\nconst knownIdsEqualCurrentLedger=same([...knownIds].sort(),[...ledgerIds].sort());\n                                                    ^\n\nTypeError: Cannot convert object to primitive value\n    at Array.sort (<anonymous>)\n    at file:///Users/jamingchu/Documents/Codex/2026-10-16/files-mentioned-by-the-user-codex/outputs/claude-code-handoff-2026-10-20/design-current/validation/validate_uitems.mjs:431:53\n    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n\nNode.js v24.14.1\n"
+          },
+          {
+            "name": "field-own-proto-string",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 901,
+            "failedChecks": [
+              "migration-fields:1",
+              "migration-fields-applied:1",
+              "migration-known-record-count",
+              "migration-known-id-count"
+            ]
+          },
+          {
+            "name": "field-number",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 901,
+            "failedChecks": [
+              "migration-fields:1",
+              "migration-fields-applied:1",
+              "migration-known-record-count",
+              "migration-known-id-count"
+            ]
+          },
+          {
+            "name": "future-id-not-member",
+            "passed": true,
+            "status": 1,
+            "resultProduced": true,
+            "passedChecks": 911,
+            "failedChecks": [
+              "migration-ids-exist:2",
+              "migration-date-after-generation:2",
+              "migration-fields-applied:2"
+            ]
+          },
+          {
+            "name": "future-valid-one-field",
+            "passed": true,
+            "status": 0,
+            "resultProduced": true,
+            "passedChecks": 914,
+            "failedChecks": []
+          },
+          {
+            "name": "future-valid-both-fields",
+            "passed": true,
+            "status": 0,
+            "resultProduced": true,
+            "passedChecks": 914,
+            "failedChecks": []
+          },
+          {
+            "name": "retired37-coverage-diagnostic",
+            "passed": true,
+            "status": 0,
+            "resultProduced": true,
+            "passedChecks": 920,
+            "failedChecks": []
           }
-        },
-        {
-          "name": "graph-extra-own-proto",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 889,
-          "validatorFailed": 2,
-          "failedChecks": [
-            "ledger-step-prerequisites:1",
-            "server-step-prerequisites:1"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 35,
-            "mismatchedEntries": 1,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        },
-        {
-          "name": "graph-null",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 889,
-          "validatorFailed": 2,
-          "failedChecks": [
-            "ledger-step-prerequisites:1",
-            "server-step-prerequisites:1"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 35,
-            "mismatchedEntries": 1,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        },
-        {
-          "name": "graph-scalar",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 889,
-          "validatorFailed": 2,
-          "failedChecks": [
-            "ledger-step-prerequisites:1",
-            "server-step-prerequisites:1"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 35,
-            "mismatchedEntries": 1,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        },
-        {
-          "name": "fixture-null-scope",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 890,
-          "validatorFailed": 1,
-          "failedChecks": [
-            "server-fixture-policy"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 36,
-            "mismatchedEntries": 0,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        },
-        {
-          "name": "library-and-generator-not-executed",
-          "passed": true,
-          "exit": 0,
-          "validatorPassed": 891,
-          "validatorFailed": 0,
-          "failedChecks": [],
-          "prerequisites": {
-            "verifiedEntries": 36,
-            "mismatchedEntries": 0,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        },
-        {
-          "name": "server-functions-not-executed",
-          "passed": true,
-          "exit": 1,
-          "validatorPassed": 668,
-          "validatorFailed": 112,
-          "failedChecks": [
-            "server-declaration-only",
-            "server-step-prerequisites:1",
-            "server-ledger-body:1",
-            "server-ledger-policy:1",
-            "server-step-prerequisites:2",
-            "server-ledger-body:2",
-            "server-ledger-policy:2",
-            "server-step-prerequisites:3",
-            "server-ledger-body:3",
-            "server-ledger-policy:3",
-            "server-step-prerequisites:4",
-            "server-ledger-body:4",
-            "server-ledger-policy:4",
-            "server-step-prerequisites:5",
-            "server-ledger-body:5",
-            "server-ledger-policy:5",
-            "server-step-prerequisites:6",
-            "server-ledger-body:6",
-            "server-ledger-policy:6",
-            "server-step-prerequisites:7",
-            "server-ledger-body:7",
-            "server-ledger-policy:7",
-            "server-step-prerequisites:8",
-            "server-ledger-body:8",
-            "server-ledger-policy:8",
-            "server-step-prerequisites:9",
-            "server-ledger-body:9",
-            "server-ledger-policy:9",
-            "server-step-prerequisites:10",
-            "server-ledger-body:10",
-            "server-ledger-policy:10",
-            "server-step-prerequisites:11",
-            "server-ledger-body:11",
-            "server-ledger-policy:11",
-            "server-step-prerequisites:12",
-            "server-ledger-body:12",
-            "server-ledger-policy:12",
-            "server-step-prerequisites:13",
-            "server-ledger-body:13",
-            "server-ledger-policy:13",
-            "server-step-prerequisites:14",
-            "server-ledger-body:14",
-            "server-ledger-policy:14",
-            "server-step-prerequisites:15",
-            "server-ledger-body:15",
-            "server-ledger-policy:15",
-            "server-step-prerequisites:16",
-            "server-ledger-body:16",
-            "server-ledger-policy:16",
-            "server-step-prerequisites:17",
-            "server-ledger-body:17",
-            "server-ledger-policy:17",
-            "server-step-prerequisites:18",
-            "server-ledger-body:18",
-            "server-ledger-policy:18",
-            "server-step-prerequisites:19",
-            "server-ledger-body:19",
-            "server-ledger-policy:19",
-            "server-step-prerequisites:20",
-            "server-ledger-body:20",
-            "server-ledger-policy:20",
-            "server-step-prerequisites:21",
-            "server-ledger-body:21",
-            "server-ledger-policy:21",
-            "server-step-prerequisites:22",
-            "server-ledger-body:22",
-            "server-ledger-policy:22",
-            "server-step-prerequisites:23",
-            "server-ledger-body:23",
-            "server-ledger-policy:23",
-            "server-step-prerequisites:24",
-            "server-ledger-body:24",
-            "server-ledger-policy:24",
-            "server-step-prerequisites:25",
-            "server-ledger-body:25",
-            "server-ledger-policy:25",
-            "server-step-prerequisites:26",
-            "server-ledger-body:26",
-            "server-ledger-policy:26",
-            "server-step-prerequisites:27",
-            "server-ledger-body:27",
-            "server-ledger-policy:27",
-            "server-step-prerequisites:28",
-            "server-ledger-body:28",
-            "server-ledger-policy:28",
-            "server-step-prerequisites:29",
-            "server-ledger-body:29",
-            "server-ledger-policy:29",
-            "server-step-prerequisites:30",
-            "server-ledger-body:30",
-            "server-ledger-policy:30",
-            "server-step-prerequisites:31",
-            "server-ledger-body:31",
-            "server-ledger-policy:31",
-            "server-step-prerequisites:32",
-            "server-ledger-body:32",
-            "server-ledger-policy:32",
-            "server-step-prerequisites:33",
-            "server-ledger-body:33",
-            "server-ledger-policy:33",
-            "server-step-prerequisites:34",
-            "server-ledger-body:34",
-            "server-ledger-policy:34",
-            "server-step-prerequisites:35",
-            "server-ledger-body:35",
-            "server-ledger-policy:35",
-            "server-step-prerequisites:36",
-            "server-ledger-body:36",
-            "server-ledger-policy:36",
-            "server-registry-complete",
-            "server-fixture-body",
-            "server-fixture-policy"
-          ],
-          "prerequisites": {
-            "verifiedEntries": 0,
-            "mismatchedEntries": 36,
-            "unverifiableEntries": 0,
-            "unverifiable": []
-          }
-        }
-      ],
-      "passed": 11,
-      "failed": 0,
-      "actualProjectUnchanged": true,
-      "canonicalVectors": [
-        {
-          "name": "snapshot-rule1-canonical-vector",
-          "passed": true
-        },
-        {
-          "name": "snapshot-rule1-id-vector",
-          "passed": true
-        }
-      ]
+        ],
+        "passed": 15,
+        "failed": 1,
+        "actualProjectUnchanged": true
+      },
+      "initialReviewClassification": "15 passes and one owned-validator malformed-ID crash, subsequently fixed",
+      "sameInputAfterFix": {
+        "redPreserved": true,
+        "sameInput": true,
+        "status": 1,
+        "resultProduced": true,
+        "structureFailure": true,
+        "failedChecks": [
+          "migration-ids-shape:1",
+          "migration-ids-unique:1",
+          "migration-ids-exist:1",
+          "migration-date-after-generation:1",
+          "migration-fields-applied:1"
+        ],
+        "passed": 900,
+        "failed": 5,
+        "error": ""
+      },
+      "finalDecision": "approved after type guard; malformed ID produces structured validation failure"
     },
     "frozenTestSuite": {
-      "sourceCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
-      "projectCopy": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/project-20e75de",
-      "files": 24,
-      "passed": 215,
+      "sourceCommit": "ba87fefecb73e4b58714e3f621adf5b856da15fa",
+      "files": 25,
+      "passed": 221,
       "failed": 0
     },
     "registryDiagnostics": {
-      "targetCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
-      "executionHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
-      "assertions": 35,
+      "targetCommit": "ba87fefecb73e4b58714e3f621adf5b856da15fa",
+      "executionHead": "ba87fefecb73e4b58714e3f621adf5b856da15fa",
+      "assertions": 43,
       "observations": [
         {
-          "name": "aborted partial ppe->tire remains accepted",
+          "name": "valid aborted partial parent history remains accepted",
           "observed": true
         },
         {
-          "name": "calc only rejected",
+          "name": "valid full off history remains accepted",
+          "observed": true
+        },
+        {
+          "name": "D early off subactions followed by later parent history now rejected",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "off without read rejected at parent completion",
+          "name": "D partial first off action before read now rejected",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "parent duplicate rejected",
+          "name": "D hint between exitVehicle and parent off now rejected",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "normal parent graph through off accepted",
+          "name": "aborted exitVehicle at final event without parent accepted",
           "observed": true
         },
         {
-          "name": "aborted partial off motor action before read currently accepted",
-          "observed": true
-        },
-        {
-          "name": "all off subactions before parent prefix and delayed off completion currently accepted",
-          "observed": true
-        },
-        {
-          "name": "off exit followed by unrelated hint before parent accepted",
-          "observed": true
-        },
-        {
-          "name": "completed claim with only ppe/tire history is schema-valid",
-          "observed": true
-        },
-        {
-          "name": "completed claim with incomplete parent history currently accepted",
-          "observed": true
-        },
-        {
-          "name": "legacy null-policy off-only accepted",
-          "observed": true
-        },
-        {
-          "name": "legacy stored content has no synthesized events",
-          "observed": 2
-        },
-        {
-          "name": "old null-policy duplicate parent accepted by old receiver",
-          "observed": true
-        },
-        {
-          "name": "new parent duplicate rule rejects identical old fixture receipt recovery",
+          "name": "exitVehicle tail followed by non-parent event rejected",
           "observed": "INVALID_PAYLOAD"
         },
         {
-          "name": "retired unchanged valid original returns first receipt",
+          "name": "registered duplicate parent remains rejected",
+          "observed": "INVALID_PAYLOAD"
+        },
+        {
+          "name": "old null fixture duplicate-parent original accepted by old receiver",
+          "observed": true
+        },
+        {
+          "name": "E null fixture duplicate-parent original recovers first receipt",
           "observed": [
             true,
             "11111111-2222-4333-8444-000000000001",
-            "2026-10-26T15:55:14.277Z"
+            "2026-10-27T00:41:30.469Z"
           ]
         },
         {
-          "name": "retired first acceptance rejected",
-          "observed": "SESSION_NOT_ALLOWED"
-        },
-        {
-          "name": "retired changed valid same ID is conflict",
-          "observed": "RECORD_ID_CONFLICT"
-        },
-        {
-          "name": "old graphless policy accepted record used for migration diagnostic",
+          "name": "null fixture off-only accepted without synthesis",
           "observed": true
         },
         {
-          "name": "same snapshot new graph blocks old accepted original before receipt lookup",
-          "observed": "INVALID_PAYLOAD"
+          "name": "retired valid original recovers first receipt",
+          "observed": [
+            true,
+            "11111111-2222-4333-8444-000000000001",
+            "2026-10-27T00:41:30.709Z"
+          ]
         },
         {
-          "name": "ledger duplicate IDs now rejected",
+          "name": "retired first acceptance remains rejected",
+          "observed": "SESSION_NOT_ALLOWED"
+        },
+        {
+          "name": "retired changed valid same-ID original remains conflict",
+          "observed": "RECORD_ID_CONFLICT"
+        },
+        {
+          "name": "ledger duplicate ID remains rejected",
           "observed": "LEDGER_DUPLICATE_ID"
         },
         {
-          "name": "current duplicate IDs now rejected by pure library",
+          "name": "current duplicate ID remains rejected",
           "observed": "CURRENT_DUPLICATE_ID"
         },
         {
-          "name": "reserved ID in current now rejected",
+          "name": "current reserved ID remains rejected",
           "observed": "RESERVED_ID"
         },
         {
-          "name": "same ID changed snapshot now rejected",
-          "observed": "LEDGER_CONTENT_MISMATCH"
+          "name": "D historical-only reserved ID now rejected",
+          "observed": "RESERVED_ID"
         },
         {
-          "name": "defined old scope allowed IDs change now rejected",
+          "name": "D missing-graph allowlist replacement bypass now rejected",
           "observed": "LEDGER_SCOPE_MISMATCH"
         },
         {
-          "name": "defined old scope graph change now rejected",
+          "name": "D missing-allowlist graph replacement bypass now rejected",
+          "observed": "LEDGER_SCOPE_UPGRADE_REQUIRED"
+        },
+        {
+          "name": "authorized missing allowlist does not waive existing graph comparison",
           "observed": "LEDGER_SCOPE_MISMATCH"
         },
         {
-          "name": "missing previous graph permits existing allowedStepIds replacement",
-          "observed": null
+          "name": "missing graph requires explicit scope upgrade",
+          "observed": "LEDGER_SCOPE_UPGRADE_REQUIRED"
         },
         {
-          "name": "existing allowlist actually replaced under unchanged snapshot ID",
+          "name": "wrong authorized field does not permit graph upgrade",
+          "observed": "LEDGER_SCOPE_UPGRADE_REQUIRED"
+        },
+        {
+          "name": "explicit graph upgrade records exact date field ID reason",
           "observed": [
-            "differentStep"
+            {
+              "date": "2026-10-27",
+              "fields": [
+                "stepPrerequisites"
+              ],
+              "ids": [
+                "0032a58c-7e66-48b4-8c10-16b0900999c1"
+              ],
+              "reason": "dev set; no deployment or receipts"
+            }
           ]
         },
         {
-          "name": "missing previous allowlist permits existing graph replacement",
-          "observed": null
-        },
-        {
-          "name": "graph backfill retains snapshot ID without explicit migration marker",
+          "name": "explicit upgrade preserves existing allowlist",
           "observed": [
-            "0032a58c-7e66-48b4-8c10-16b0900999c1",
-            12,
-            "1"
+            "ppe",
+            "tire",
+            "equip",
+            "enter",
+            "axle",
+            "mode",
+            "lower",
+            "motor",
+            "press",
+            "read",
+            "off",
+            "calc",
+            "off:motorOff",
+            "off:liftUp",
+            "off:exitVehicle"
           ]
         },
         {
-          "name": "retiring old graphless policy preserves graph absence",
+          "name": "idempotent regeneration adds no duplicate migration",
+          "observed": 1
+        },
+        {
+          "name": "null graph also requires explicit scope upgrade",
+          "observed": "LEDGER_SCOPE_UPGRADE_REQUIRED"
+        },
+        {
+          "name": "null graph can be explicitly upgraded and recorded",
           "observed": [
-            "retired",
-            false
+            "stepPrerequisites"
           ]
         },
         {
-          "name": "reserved ID already in ledger but absent from current is not rejected",
+          "name": "upgrade option cannot change an existing non-null allowlist",
+          "observed": "LEDGER_SCOPE_MISMATCH"
+        },
+        {
+          "name": "reason-boundary diagnostic missing reason currently accepted",
           "observed": null
         },
         {
-          "name": "generator memory-only baseline succeeds",
+          "name": "serialized migration for missing reason",
+          "observed": {
+            "date": "2026-10-27",
+            "fields": [
+              "stepPrerequisites"
+            ],
+            "ids": [
+              "0032a58c-7e66-48b4-8c10-16b0900999c1"
+            ]
+          }
+        },
+        {
+          "name": "reason-boundary diagnostic empty reason currently accepted",
           "observed": null
         },
         {
-          "name": "baseline output bytes match target commit",
+          "name": "serialized migration for empty reason",
+          "observed": {
+            "date": "2026-10-27",
+            "fields": [
+              "stepPrerequisites"
+            ],
+            "ids": [
+              "0032a58c-7e66-48b4-8c10-16b0900999c1"
+            ],
+            "reason": ""
+          }
+        },
+        {
+          "name": "reason-boundary diagnostic blank reason currently accepted",
+          "observed": null
+        },
+        {
+          "name": "serialized migration for blank reason",
+          "observed": {
+            "date": "2026-10-27",
+            "fields": [
+              "stepPrerequisites"
+            ],
+            "ids": [
+              "0032a58c-7e66-48b4-8c10-16b0900999c1"
+            ],
+            "reason": "   "
+          }
+        },
+        {
+          "name": "reason-boundary diagnostic numeric reason currently accepted",
+          "observed": null
+        },
+        {
+          "name": "serialized migration for numeric reason",
+          "observed": {
+            "date": "2026-10-27",
+            "fields": [
+              "stepPrerequisites"
+            ],
+            "ids": [
+              "0032a58c-7e66-48b4-8c10-16b0900999c1"
+            ],
+            "reason": 42
+          }
+        },
+        {
+          "name": "actual development migration has expected date and one field",
+          "observed": [
+            "2026-10-27",
+            [
+              "stepPrerequisites"
+            ]
+          ]
+        },
+        {
+          "name": "actual development migration covers exactly current36 IDs",
+          "observed": [
+            36,
+            36,
+            true
+          ]
+        },
+        {
+          "name": "actual migration reason states development no deployment/receipt condition",
+          "observed": true
+        },
+        {
+          "name": "actual migrated36 retain C snapshot bodies and existing allowlists",
+          "observed": true
+        },
+        {
+          "name": "actual graphs match referenced task definitions",
+          "observed": true
+        },
+        {
+          "name": "memory-only baseline generator succeeds",
+          "observed": null
+        },
+        {
+          "name": "captured baseline bytes match target commit",
           "observed": [
             true,
             true,
@@ -6334,33 +6689,40 @@
           ]
         },
         {
-          "name": "full generator silently overwrites reserved historical ledger entry with fixture",
+          "name": "actual builder without reason fails before any write",
           "observed": [
-            null,
-            37,
-            37,
-            "0.1.0-draft"
+            true,
+            0
           ]
         },
         {
-          "name": "generator Map collapses identical current duplicates before library guard",
+          "name": "actual builder blank env reason records whitespace migration",
           "observed": [
             null,
-            18
+            "   "
+          ]
+        },
+        {
+          "name": "actual builder historical reserved collision now fails before any write",
+          "observed": [
+            true,
+            0
           ]
         }
       ],
-      "limits": "Local VM and pure functions only. Generator writes captured in memory. Diagnostic observations include known accepted invalid histories; not product conformance PASS."
+      "limits": "Local VM/pure functions only. Generator writes captured in memory. reason-acceptance observations are audit-boundary diagnostics, not product-conformance PASS. Migration statements are local metadata, not external deployment/receipt proof."
     },
-    "dateAndTimeDiagnostics": {
-      "requestedHead": "20e75de8041960d0de1912319220e79a1a72cfd0",
-      "runtimeHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
-      "runtimeHeadNote": "Source reads pinned to local git archive of requested20e75de; runtimeHead records the independently changing original checkout",
+    "dateTimeDiagnostics": {
+      "requestedHead": "ba87fefecb73e4b58714e3f621adf5b856da15fa",
+      "runtimeHead": "ba87fefecb73e4b58714e3f621adf5b856da15fa",
+      "sourceMode": "All project source and JSON fixtures read with git show requestedHead:path; node_modules only from installed local dependencies",
       "ajvFormatsVersion": "3.0.1",
       "execution": "local .gs VM; in-memory TS transpilation; fake Google services; domain-only local clock",
       "summary": {
         "dateCases": 23,
         "timeCases": 6,
+        "comparisonCases": 9,
+        "duplicateDefinitions": 2,
         "assertions": "PASS"
       },
       "dateMatrix": [
@@ -6378,7 +6740,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.158Z",
+            "acceptedAt": "2026-10-27T00:41:29.367Z",
             "payloadHash": "5b94f3649660959120106b607486635ba6be6b945dd6fadbc4376f0a12d247bf",
             "duplicate": false
           }
@@ -6397,7 +6759,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.161Z",
+            "acceptedAt": "2026-10-27T00:41:29.369Z",
             "payloadHash": "6daa104693ae83e70a1706ded25b2f6c99f71d387e07f6a2137e9485c6ab6482",
             "duplicate": false
           }
@@ -6416,7 +6778,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.162Z",
+            "acceptedAt": "2026-10-27T00:41:29.371Z",
             "payloadHash": "9ad5b9880c419c5d326bcb88e821b14765e252b83067ec037b5ac5f8466d8ddd",
             "duplicate": false
           }
@@ -6435,7 +6797,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.164Z",
+            "acceptedAt": "2026-10-27T00:41:29.372Z",
             "payloadHash": "7c2d1808135690290ac59a9d53347569798553b71156a3a7f065abe5593c0c0b",
             "duplicate": false
           }
@@ -6454,7 +6816,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.165Z",
+            "acceptedAt": "2026-10-27T00:41:29.374Z",
             "payloadHash": "f0d07e137d913fa8d2109f32b966271671a29f8ce93fccb2111ecd6a1028ec50",
             "duplicate": false
           }
@@ -6473,7 +6835,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.167Z",
+            "acceptedAt": "2026-10-27T00:41:29.376Z",
             "payloadHash": "2a25e3dc2119d415dbe182f6fdebc1c5aa8dc132309f89699a485eeb15caad62",
             "duplicate": false
           }
@@ -6492,7 +6854,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.168Z",
+            "acceptedAt": "2026-10-27T00:41:29.378Z",
             "payloadHash": "3860f3f8c7c1e2203c82750ad4d70e7e2d796f17fdc525ff8759a64b420f1d4e",
             "duplicate": false
           }
@@ -6505,7 +6867,9 @@
           "formalDate": true,
           "formalRecord": true,
           "dateParseFinite": true,
-          "semanticErrors": [],
+          "semanticErrors": [
+            "time: unparsable"
+          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
@@ -6522,7 +6886,9 @@
           "formalDate": true,
           "formalRecord": true,
           "dateParseFinite": true,
-          "semanticErrors": [],
+          "semanticErrors": [
+            "time: unparsable"
+          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
@@ -6545,7 +6911,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.172Z",
+            "acceptedAt": "2026-10-27T00:41:29.382Z",
             "payloadHash": "4a3f58bd9bd4c93d607d0fb981dba8440891fb55030ece8a9c79f1fbb2232716",
             "duplicate": false
           }
@@ -6564,7 +6930,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.173Z",
+            "acceptedAt": "2026-10-27T00:41:29.384Z",
             "payloadHash": "1c715252ecdd77d40d08b58b1f047bbb552783ec65c44ea3992676ffd749d21f",
             "duplicate": false
           }
@@ -6577,7 +6943,9 @@
           "formalDate": true,
           "formalRecord": true,
           "dateParseFinite": true,
-          "semanticErrors": [],
+          "semanticErrors": [
+            "time: unparsable"
+          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
@@ -6613,15 +6981,15 @@
           "formalDate": true,
           "formalRecord": true,
           "dateParseFinite": false,
-          "semanticErrors": [
-            "time: unparsable"
-          ],
+          "semanticErrors": [],
           "response": {
             "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.389Z",
+            "payloadHash": "968d564ad5aa632ec9c127c8c5f43cc29696f6725925ffdda4af7588ea2cfc7d",
+            "duplicate": false
           }
         },
         {
@@ -6632,15 +7000,15 @@
           "formalDate": true,
           "formalRecord": true,
           "dateParseFinite": false,
-          "semanticErrors": [
-            "time: unparsable"
-          ],
+          "semanticErrors": [],
           "response": {
             "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.390Z",
+            "payloadHash": "d795abe0d0f1206a0713e2025ce4bb155f3be709c732b69c9dfe048b7dcd948e",
+            "duplicate": false
           }
         },
         {
@@ -6651,15 +7019,15 @@
           "formalDate": true,
           "formalRecord": true,
           "dateParseFinite": false,
-          "semanticErrors": [
-            "time: unparsable"
-          ],
+          "semanticErrors": [],
           "response": {
             "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "00000000-0000-4000-8000-000000000001"
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.392Z",
+            "payloadHash": "360370cd5e356dd10c7d8d5e82f1368e6be7264e768d67a3730100f7ebf070d9",
+            "duplicate": false
           }
         },
         {
@@ -6695,7 +7063,7 @@
             "ok": true,
             "recordId": "00000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.184Z",
+            "acceptedAt": "2026-10-27T00:41:29.395Z",
             "payloadHash": "54024f7959aa5bd307f04ce4ac7e183f25b38595cea2c2205ff74839b6bb19c3",
             "duplicate": false
           }
@@ -6708,7 +7076,9 @@
           "formalDate": false,
           "formalRecord": false,
           "dateParseFinite": true,
-          "semanticErrors": [],
+          "semanticErrors": [
+            "time: unparsable"
+          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
@@ -6725,7 +7095,9 @@
           "formalDate": false,
           "formalRecord": false,
           "dateParseFinite": true,
-          "semanticErrors": [],
+          "semanticErrors": [
+            "time: unparsable"
+          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
@@ -6742,7 +7114,9 @@
           "formalDate": false,
           "formalRecord": false,
           "dateParseFinite": true,
-          "semanticErrors": [],
+          "semanticErrors": [
+            "time: unparsable"
+          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
@@ -6778,7 +7152,9 @@
           "formalDate": false,
           "formalRecord": false,
           "dateParseFinite": true,
-          "semanticErrors": [],
+          "semanticErrors": [
+            "time: unparsable"
+          ],
           "response": {
             "protocolVersion": "1",
             "ok": false,
@@ -6801,8 +7177,8 @@
             "ok": true,
             "recordId": "84000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.249Z",
-            "payloadHash": "312cc71f455d43c4f6e33f9916deb134cd39f2cff872f4ec97a4294c77cb51f3",
+            "acceptedAt": "2026-10-27T00:41:29.585Z",
+            "payloadHash": "891e602c111650d433d025d95475defa9518daccc44c962e9dcaaf77056cae92",
             "duplicate": false
           }
         },
@@ -6818,32 +7194,32 @@
             "ok": true,
             "recordId": "84000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.254Z",
-            "payloadHash": "ff090f9bd33e2a21f64f4184e2b52871f558a6dc29a0c3f78e597b4e5f9fb669",
+            "acceptedAt": "2026-10-27T00:41:29.590Z",
+            "payloadHash": "ad9fd5d5cda1362cddd248e12c2aa1a2b7c186b574694ab79576f7cd4e8bf9c8",
             "duplicate": false
           }
         },
         {
           "name": "old_missing_stamp_restore_10000",
-          "runQuality": "resumed",
-          "recordQuality": "resumed",
+          "runQuality": "uncertain",
+          "recordQuality": "uncertain",
           "activeSeconds": 30,
           "wallSeconds": 10,
-          "semantics": [
-            "time: durationSeconds exceeds wall clock"
-          ],
+          "semantics": [],
           "response": {
             "protocolVersion": "1",
-            "ok": false,
-            "code": "INVALID_PAYLOAD",
-            "retryable": false,
-            "recordId": "84000000-0000-4000-8000-000000000001"
+            "ok": true,
+            "recordId": "84000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.593Z",
+            "payloadHash": "1b535370df93942ceedb62433ce66b882ab3e52e3a0d43e8ec6f1449ba05b707",
+            "duplicate": false
           }
         },
         {
           "name": "old_missing_stamp_restore_90000",
-          "runQuality": "resumed",
-          "recordQuality": "resumed",
+          "runQuality": "uncertain",
+          "recordQuality": "uncertain",
           "activeSeconds": 30,
           "wallSeconds": 90,
           "semantics": [],
@@ -6852,8 +7228,8 @@
             "ok": true,
             "recordId": "84000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.262Z",
-            "payloadHash": "b63e3a50ee04bc839cb8ee345e03e2f0432b231f0969c4c9d3c86165473ff989",
+            "acceptedAt": "2026-10-27T00:41:29.597Z",
+            "payloadHash": "adb5d0ec4aecfda055968a6cd6bbcdfa81cc26f5e3c35f4832bea2c72f5a3e1a",
             "duplicate": false
           }
         },
@@ -6870,8 +7246,8 @@
             "ok": true,
             "recordId": "84000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.268Z",
-            "payloadHash": "01e21de3f8f8927a23a67d34fe18386f54d6a8274d6bc86b25602cdb14e429bf",
+            "acceptedAt": "2026-10-27T00:41:29.602Z",
+            "payloadHash": "daa28dc23c99728a89f249aec2f4678530e3fe17ee975dd1541db6e52ecefe59",
             "duplicate": false
           }
         },
@@ -6885,172 +7261,269 @@
             "ok": true,
             "recordId": "84000000-0000-4000-8000-000000000001",
             "receiptId": "11111111-2222-4333-8444-000000000001",
-            "acceptedAt": "2026-10-26T15:55:13.271Z",
-            "payloadHash": "a5de4b82cb622987d44937f229169a08bf45153f7f5881a363de5f0c254545e4",
+            "acceptedAt": "2026-10-27T00:41:29.605Z",
+            "payloadHash": "6309a213f444ce88a01c780ca30c5ed61a2565adae2e530bd434f915429e0adf",
             "duplicate": false
+          }
+        }
+      ],
+      "comparisons": [
+        {
+          "name": "leap_forward",
+          "startedAt": "2016-12-31T23:59:59Z",
+          "completedAt": "2016-12-31T23:59:60Z",
+          "formalRecord": true,
+          "startParsed": 1483228799000,
+          "endParsed": 1483228800000,
+          "parsedDeltaMs": 1000,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.606Z",
+            "payloadHash": "30b14832a50cde03559d6e63a4493112c44db4a2dee4eb1403530ca20019bdbf",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "leap_reverse",
+          "startedAt": "2016-12-31T23:59:60Z",
+          "completedAt": "2016-12-31T23:59:59Z",
+          "formalRecord": true,
+          "startParsed": 1483228800000,
+          "endParsed": 1483228799000,
+          "parsedDeltaMs": -1000,
+          "semantics": [
+            "time: completedAt before startedAt"
+          ],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "leap_offset_forward",
+          "startedAt": "2017-01-01T08:59:59+09:00",
+          "completedAt": "2017-01-01T08:59:60+09:00",
+          "formalRecord": true,
+          "startParsed": 1483228799000,
+          "endParsed": 1483228800000,
+          "parsedDeltaMs": 1000,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.608Z",
+            "payloadHash": "e466a29bb03158eaf928e746960adaca1bd82bfba77a8aff2821938d2ad0578f",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "leap_to_next_second_fraction",
+          "startedAt": "2016-12-31T23:59:60.900Z",
+          "completedAt": "2017-01-01T00:00:00.100Z",
+          "formalRecord": true,
+          "startParsed": 1483228800900,
+          "endParsed": 1483228800100,
+          "parsedDeltaMs": -800,
+          "semantics": [
+            "time: completedAt before startedAt"
+          ],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "next_second_back_to_leap_fraction",
+          "startedAt": "2017-01-01T00:00:00.100Z",
+          "completedAt": "2016-12-31T23:59:60.900Z",
+          "formalRecord": true,
+          "startParsed": 1483228800100,
+          "endParsed": 1483228800900,
+          "parsedDeltaMs": 800,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.611Z",
+            "payloadHash": "3386f628e53125f47cff77c7b2f5bb984bed3755efea095ab0284d9b54f25f15",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "same_instant_different_offset",
+          "startedAt": "2000-01-01T09:00:00+09:00",
+          "completedAt": "2000-01-01T00:00:00Z",
+          "formalRecord": true,
+          "startParsed": 946684800000,
+          "endParsed": 946684800000,
+          "parsedDeltaMs": 0,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.612Z",
+            "payloadHash": "1fd69458811230f40cb40a7fdfeb796c8295855e0169aac58ee274b17e6adb84",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "year99_to100_forward",
+          "startedAt": "0099-12-31T23:59:59Z",
+          "completedAt": "0100-01-01T00:00:00Z",
+          "formalRecord": true,
+          "startParsed": 946684799000,
+          "endParsed": -59011459200000,
+          "parsedDeltaMs": -59958143999000,
+          "semantics": [
+            "time: completedAt before startedAt",
+            "time: durationSeconds exceeds wall clock"
+          ],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
+          }
+        },
+        {
+          "name": "submillisecond_reverse",
+          "startedAt": "2000-01-01T00:00:00.0004Z",
+          "completedAt": "2000-01-01T00:00:00.0003Z",
+          "formalRecord": true,
+          "startParsed": 946684800000,
+          "endParsed": 946684800000,
+          "parsedDeltaMs": 0,
+          "semantics": [],
+          "response": {
+            "protocolVersion": "1",
+            "ok": true,
+            "recordId": "00000000-0000-4000-8000-000000000001",
+            "receiptId": "11111111-2222-4333-8444-000000000001",
+            "acceptedAt": "2026-10-27T00:41:29.615Z",
+            "payloadHash": "8120af22beba5a2594282da3c574de585500da08094eb68503c84238e868703e",
+            "duplicate": false
+          }
+        },
+        {
+          "name": "millisecond_reverse",
+          "startedAt": "2000-01-01T00:00:00.004Z",
+          "completedAt": "2000-01-01T00:00:00.003Z",
+          "formalRecord": true,
+          "startParsed": 946684800004,
+          "endParsed": 946684800003,
+          "parsedDeltaMs": -1,
+          "semantics": [
+            "time: completedAt before startedAt"
+          ],
+          "response": {
+            "protocolVersion": "1",
+            "ok": false,
+            "code": "INVALID_PAYLOAD",
+            "retryable": false,
+            "recordId": "00000000-0000-4000-8000-000000000001"
           }
         }
       ]
     },
-    "diagnosticClassification": "Expected observations include reproduced remaining defects; not product-conformance pass totals",
+    "diagnosticClassification": "asserted observations include reproduced remaining P2s; not product-conformance pass totals",
+    "closedDReproductions": [
+      "C-P2-1 legacy missing-clock uncertainty",
+      "C-P2-2 off prerequisite/link and legacy fixture recovery",
+      "C-P2-4 historical reserved ID",
+      "C-P2-5 independent existing scope checks and recorded36-ID development migration under stated no-deployment/receipt condition"
+    ],
     "remainingP1": [],
-    "remainingP2Groups": [
-      {
-        "id": "C-P2-1",
-        "summary": "legacy draft without serializedAtWallMs can stay resumed after partial clock rollback"
-      },
-      {
-        "id": "C-P2-2",
-        "summary": "exitVehicle to immediate parent off event relationship not enforced"
-      },
+    "remainingP2": [
       {
         "id": "C-P2-3",
-        "summary": "general date-time contract accepts leap-second strings rejected by ingress Date.parse"
-      },
-      {
-        "id": "C-P2-4",
-        "summary": "reserved fixture ID in historical ledger bypasses reservation guard"
+        "summary": "leap-second to next ordinary second ordering maps to overlapping epoch interval"
       },
       {
         "id": "C-P2-5",
-        "summary": "missing-field AND bypass and unversioned policy backfill can change original receipt recovery"
+        "summary": "scopeUpgrade.reason missing/blank/non-string accepted; builder whitespace env reproduces"
       }
     ],
+    "deployed": false,
     "liveCallsExecuted": false,
-    "deployed": false
+    "previousOfficialResultArchivedAt": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/results-before.json"
   },
-  "provenanceD": {
-    "requestedCommit": "20e75de8041960d0de1912319220e79a1a72cfd0",
-    "initialHead": "20e75de8041960d0de1912319220e79a1a72cfd0",
-    "observedIntermediateHead": "f4bb88b2472caf979ced5208bec16ca5ffb6084d",
-    "finalObservedHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
-    "externalProjectDiffFromRequested": [
-      "docs/design/docs/10_CHANGELOG_2026-10-20.md",
-      "docs/design/docs/12_0D_준비검토.md",
-      "docs/design/docs/layout-draft-v2-brake-local.html",
-      "docs/design/docs/layout.surveyed.partial.json",
-      "docs/design/docs/teacher-check-0B-followup-C8.html",
-      "docs/design/examples/layout.partial-survey.v1.1.json",
-      "src/data/layout/layout.dev-provisional.json",
-      "tests/scene.test.ts"
-    ],
-    "reviewedPathsByteEqualToRequested": [
-      "scripts/snapshotLib.mjs",
-      "scripts/snapshotLib.d.mts",
-      "scripts/build-demo-snapshots.mjs",
-      "src/data/session/snapshot-ledger.json",
-      "src/data/session/demo-snapshots.json",
-      "server/apps-script/DemoSnapshots.gs",
-      "server/apps-script/Code.gs",
-      "server/apps-script/Validate.gs",
-      "src/domain/taskEngine.ts",
-      "src/domain/record.ts",
-      "src/app/session.ts",
-      "tests/timeQuality.test.ts",
-      "tests/snapshotLib.test.ts",
-      "tests/appsScriptHardening3.test.ts"
-    ],
-    "testAndTimeSource": "git archive requested commit in workspace scratch",
-    "registrySource": "git show requested commit; old policy reproduction uses090de21",
-    "validatorSource": "read-only current project inputs; snapshot/task/receiver/rule files equal requested commit",
-    "externalC8Answer": "collaboration/LAYOUT_SURVEY2_followup_C8.json; partial direction/open-structure answer; dimensions/photos remain pending",
-    "baselineOfficialResultArchivedAt": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/results-before.json"
-  },
-  "reviewArtifactsD": [
+  "reviewArtifactsE": [
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/validator/behavior.mjs",
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/validator/behavior.mjs",
+      "sha256": "7b7f039d4a716921f5c7cabd8afb8c6833eaa1a6b8a7704cd369843aa616c5f4"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/validator/red-evidence.json",
+      "sha256": "6e325593fa3e02623ac7623921d4895e0d96a786fe60c499bb635e060933b8c0"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/validator/ids-object-red-evidence.json",
+      "sha256": "9cff44d2a0a6758b103f5da076a35788efec540f46f691c1d21dbdb0c8bd4dc8"
+    },
+    {
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/validator/regression/behavior.mjs",
       "sha256": "6bcf52b66ec3d716d02f55a13dd628ca4ca9492054a7ed891134727acc02b959"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/validator/red-evidence.json",
-      "sha256": "70a515be20be6411e42352a554ca72740d8ffea3e9ea67b6ee93e9e93a1e48ae"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/qa/ids-tostring42-red-results.json",
+      "sha256": "7e2b6f856c64c4c3362dfd70ed60e3ceedb6f9b2f33b6d104a41fd15cec98260"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/validator/verification-summary.json",
-      "sha256": "543348af5b2eb2c61450172bfd06dac04ddca7d74518f1b8465d449648226e1a"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/qa/ids-tostring42-fixed-results.json",
+      "sha256": "d71bcb9abaf11edd6ed90c7201fdba00d6f9c206406bf546a2eb62f5e14380a1"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/qa/independent-results.json",
-      "sha256": "2e72abae874442a909a85d9cb464c7f3f5ea641a44ab57c46c85f287b3909ffa"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/registry/repro.cjs",
+      "sha256": "97a88084f0acf7fc4a5df0ab8102bff0a65d12a6d8b5a019a4790951b6d818dd"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/registry/repro.cjs",
-      "sha256": "b6aa97d4260222e08c6721e7bedd4b711a2a08c6460a01d74382b1c38ec29a5d"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/semantics/repro-e.cjs",
+      "sha256": "e71499cdb73ea6cd4e973b89e834df2d2eed209934e686b0fd53f35daa03df3a"
     },
     {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/semantics/repro-d.cjs",
-      "sha256": "6309458a5149d9f4b64d295856bd7a9e3d03e28b25bdb10e5ccdc627bb74a5ee"
-    },
-    {
-      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-d/vitest.config.mjs",
-      "sha256": "23410d13754dacaec491d7c2bdcd61be9e56f39478e2d4dc45877da070c2f925"
+      "path": "/Users/jamingchu/Documents/Codex/2026-10-26/codex-2026-10-26-2-users/work/review-e/vitest.config.mjs",
+      "sha256": "e7ca0122f8e812cd92ebddbaf28dc9fd3f47cbe2beeabb3924cae09145d27e4e"
     }
   ],
-  "preservationD": {
-    "checkedAt": "2026-10-26T16:03:21.983559+00:00",
+  "preservationE": {
+    "checkedAt": "2026-10-27T00:48:03.362354+00:00",
+    "projectHead": "ba87fefecb73e4b58714e3f621adf5b856da15fa",
+    "projectStatus": "",
     "excludedDirectories": [
       ".git",
       "node_modules"
     ],
-    "agentWrittenProjectFiles": [],
-    "projectInitialHead": "20e75de8041960d0de1912319220e79a1a72cfd0",
-    "projectFinalHead": "06eea8cad8c9e633cc2c3abe2af4cc4506ccb61f",
-    "projectStatus": "",
-    "projectFilesBefore": 179,
-    "projectFilesAfter": 180,
-    "baselineToFinalProjectChanges": [
-      "docs/design/docs/10_CHANGELOG_2026-10-20.md",
-      "docs/design/docs/12_0D_준비검토.md",
-      "docs/design/docs/layout-draft-v2-brake-local.html",
-      "docs/design/docs/layout.surveyed.partial.json",
-      "docs/design/docs/teacher-check-0B-followup-C8.html",
-      "docs/design/examples/layout.partial-survey.v1.1.json",
-      "src/data/layout/layout.dev-provisional.json",
-      "tests/scene.test.ts"
-    ],
-    "projectChangesMatchExternalCommittedTree": true,
+    "projectFilesChecked": 182,
+    "projectChangedFiles": [],
     "protectedFilesChecked": 75,
     "protectedChangedFiles": [],
-    "agentOwnedHandoffChanges": [
-      "collaboration/CODEX_RETURN_2026-10-27_D.txt",
+    "handoffFilesBefore": 224,
+    "handoffFilesAfter": 225,
+    "handoffChangedFiles": [
+      "collaboration/CODEX_RETURN_2026-10-27_E.txt",
       "collaboration/NEXT_STEP.txt",
       "design-current/docs/10_CHANGELOG_2026-10-20.md",
-      "design-current/docs/18_0C_DEPLOYMENT_CHECKLIST.md",
-      "design-current/docs/19_STATUS_2026-10-27.md",
       "design-current/validation/results.uitems.json",
       "design-current/validation/validate_uitems.mjs"
     ],
-    "observedExternalHandoffChanges": [
-      "collaboration/LAYOUT_SURVEY2_2026-10-26.notes.txt",
-      "collaboration/LAYOUT_SURVEY2_followup_C8.json",
-      "collaboration/NEXT_STEP.txt",
-      "design-current/docs/10_CHANGELOG_2026-10-20.md",
-      "design-current/docs/12_0D_준비검토.md",
-      "design-current/docs/layout-draft-v2-brake-local.html",
-      "design-current/docs/layout.surveyed.partial.json",
-      "design-current/docs/teacher-check-0B-followup-C8.html",
-      "design-current/examples/layout.partial-survey.v1.1.json"
-    ],
-    "totalHandoffChanges": [
-      "collaboration/CODEX_RETURN_2026-10-27_D.txt",
-      "collaboration/LAYOUT_SURVEY2_2026-10-26.notes.txt",
-      "collaboration/LAYOUT_SURVEY2_followup_C8.json",
-      "collaboration/NEXT_STEP.txt",
-      "design-current/docs/10_CHANGELOG_2026-10-20.md",
-      "design-current/docs/12_0D_준비검토.md",
-      "design-current/docs/18_0C_DEPLOYMENT_CHECKLIST.md",
-      "design-current/docs/19_STATUS_2026-10-27.md",
-      "design-current/docs/layout-draft-v2-brake-local.html",
-      "design-current/docs/layout.surveyed.partial.json",
-      "design-current/docs/teacher-check-0B-followup-C8.html",
-      "design-current/examples/layout.partial-survey.v1.1.json",
-      "design-current/validation/results.uitems.json",
-      "design-current/validation/validate_uitems.mjs"
-    ],
-    "handoffFilesBefore": 219,
-    "handoffFilesAfter": 223,
-    "externalSectionsAndNextStepPreserved": true,
-    "onlyClassifiedChanges": true,
+    "onlyAuthorizedChanges": true,
     "passed": true
   }
 }

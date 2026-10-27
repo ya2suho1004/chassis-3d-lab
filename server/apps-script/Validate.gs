@@ -191,7 +191,10 @@ function parseDateTimeMs_(s) {
   var offMin = 0;
   if (m[9]) { var oh = Number(m[10]), om = Number(m[11]); if (oh > 23 || om > 59) return NaN; offMin = (oh * 60 + om) * (m[9] === '-' ? -1 : 1); }
   if (sec === 60) { var utcMin = ((h * 60 + mi - offMin) % 1440 + 1440) % 1440; if (utcMin !== 1439) return NaN; }
-  return Date.UTC(y, mo - 1, d, h, mi, 0) + sec * 1000 + Math.round(frac * 1000) - offMin * 60000;
+  // 순서 비교 키(실제 epoch ms가 아님): 0~99년의 Date.UTC 보정을 피하고, 윤초 :60.f 는 59.999와 다음 날 00:00:00.000 사이(59999.5 + f*0.4999)에 둔다(Codex E C-P2-3).
+  var base = new Date(0); base.setUTCFullYear(y, mo - 1, d); base.setUTCHours(h, mi, 0, 0);
+  var within = sec === 60 ? 59999.5 + frac * 0.4999 : sec * 1000 + frac * 1000;
+  return base.getTime() + within - offMin * 60000;
 }
 
 /** 일반 record date-time(RFC 3339)의 실제 달력 유효성: 오프셋·소문자 t/z·소수 자릿수 허용, 2000-02-31 같은 값 거절. 정규화해 수락하지 않는다. */
@@ -207,16 +210,3 @@ function isValidUtcDateTime_(s) {
   return new Date(ms).toISOString().slice(0, 19) === s.slice(0, 19);
 }
 
-/** 일반 record date-time(RFC 3339)의 실제 달력 유효성: 오프셋·소문자 t/z·소수 자릿수 허용, 2000-02-31 같은 값 거절(Codex C-P2-3). 정규화해 수락하지 않는다. */
-function isValidDateTimeGeneral_(s) {
-  if (typeof s !== 'string') return false;
-  var m = /^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2}):(\d{2})(\.\d+)?([Zz]|[+-](\d{2}):(\d{2}))$/.exec(s);
-  if (!m) return false;
-  var y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]), h = Number(m[4]), mi = Number(m[5]), sec = Number(m[6]);
-  if (mo < 1 || mo > 12 || d < 1 || h > 23 || mi > 59 || sec > 60) return false;
-  var leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
-  var dim = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][mo - 1];
-  if (d > dim) return false;
-  if (m[9] !== undefined && (Number(m[9]) > 23 || Number(m[10]) > 59)) return false;
-  return true;
-}

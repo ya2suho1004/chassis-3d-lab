@@ -35,7 +35,8 @@ for (const t of tasks) for (const difficultyMode of ['guided', 'unguided']) for 
 
 // 원장 병합(append-only, scripts/snapshotLib.mjs)
 const prevLedger = existsSync(LEDGER_URL) ? JSON.parse(readFileSync(LEDGER_URL, 'utf8')) : { ruleVersion: SNAPSHOT_RULE_VERSION, entries: [] }
-const upgradeReason = process.env.SNAPSHOT_SCOPE_UPGRADE_REASON // 과거 항목에 검증 범위 필드를 채우는 명시 이관(개발 세트, 접수 없음 확인 뒤에만)
+const upgradeReason = (process.env.SNAPSHOT_SCOPE_UPGRADE_REASON ?? '').trim() // 과거 항목에 검증 범위 필드를 채우는 명시 이관(개발 세트, 접수 없음 확인 뒤에만). 공백 사유는 이관 아님
+if (process.env.SNAPSHOT_SCOPE_UPGRADE_REASON !== undefined && upgradeReason.length === 0) throw new Error('SNAPSHOT_SCOPE_UPGRADE_REASON이 비어 있음 — 이관 사유를 적거나 변수를 제거하세요')
 const ledger = mergeLedger(prevLedger, [...current.values()], TODAY, [fixture.sessionSnapshotId], upgradeReason ? { scopeUpgrade: { reason: upgradeReason, fields: ['allowedStepIds', 'stepPrerequisites'] } } : {})
 writeFileSync(LEDGER_URL, JSON.stringify(ledger, null, 2) + '\n')
 writeFileSync(new URL('../src/data/session/demo-snapshots.json', import.meta.url), JSON.stringify(ledger.entries.filter((e) => e.status === 'active').map((e) => e.snapshot), null, 2) + '\n')

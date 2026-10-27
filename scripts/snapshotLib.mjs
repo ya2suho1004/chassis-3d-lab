@@ -36,6 +36,11 @@ export function mergeLedger(ledger, current, today, reservedIds = [], opts = {})
   const byId = new Map(ledger.entries.map((e) => [e.snapshot.sessionSnapshotId, e]))
   const curIds = new Set()
   const upgraded = []
+  if (opts.scopeUpgrade) {
+    const r = opts.scopeUpgrade.reason
+    if (typeof r !== 'string' || r.trim().length === 0) throw new Error('LEDGER_SCOPE_UPGRADE_REASON: 비어 있지 않은 문자열 사유가 필요')
+    opts = { ...opts, scopeUpgrade: { ...opts.scopeUpgrade, reason: r.trim() } }
+  }
   for (const c of current) {
     const id = c.snapshot.sessionSnapshotId
     if (reservedIds.includes(id)) throw new Error(`RESERVED_ID: ${id}`)

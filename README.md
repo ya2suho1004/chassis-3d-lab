@@ -10,7 +10,7 @@
 
 ```bash
 npm install
-npm test          # vitest, 221 tests
+npm test          # vitest, 225 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```

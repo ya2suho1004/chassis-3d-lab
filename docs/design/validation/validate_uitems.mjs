@@ -395,6 +395,45 @@ for(const [i,entry]of ledgerEntries.entries()) {
   // Retired entries retain their recorded historical scope; never recompute it from current tasks.
   report(`server-ledger-policy:${i+1}`,Boolean(serverEntry)&&serverEntry.status===entry?.status&&serverEntry.anonymousCodePattern===demoPattern&&same(serverEntry.allowedStepIds,scope)&&same(serverEntry.stepPrerequisites,entry?.stepPrerequisites));
 }
+// Scope-migration records are provenance assertions, not proof that no deployment/receipt existed.
+const migrationInput=ledgerInput?.migrations,migrations=Array.isArray(migrationInput)?migrationInput:[];
+const objectWithKeys=(value,keys)=>Boolean(value)&&typeof value==='object'&&!Array.isArray(value)&&same(Object.keys(value).sort(),[...keys].sort());
+report('ledger-top-shape',objectWithKeys(ledgerInput,['ruleVersion','migrations','entries']));
+report('ledger-migrations-array',Array.isArray(migrationInput));
+report('migration-records-unique',new Set(migrations.map(snapshotCanonical)).size===migrations.length);
+const ledgerById=new Map(ledgerEntries.map(entry=>[entry?.snapshot?.sessionSnapshotId,entry]));
+const migrationRecords=[];
+for(const [i,migration]of migrations.entries()) {
+  const fields=Array.isArray(migration?.fields)?migration.fields:[],ids=Array.isArray(migration?.ids)?migration.ids:[];
+  const fieldsValid=Array.isArray(migration?.fields)&&fields.length>0&&new Set(fields).size===fields.length&&fields.every(field=>['allowedStepIds','stepPrerequisites'].includes(field));
+  const idsValid=Array.isArray(migration?.ids)&&ids.length>0&&ids.every(id=>typeof id==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+  const missingIds=ids.filter(id=>!ledgerById.has(id));
+  report(`migration-shape:${i+1}`,objectWithKeys(migration,['date','fields','ids','reason']));
+  report(`migration-date:${i+1}`,validDate(migration?.date));
+  report(`migration-fields:${i+1}`,fieldsValid);
+  report(`migration-ids-shape:${i+1}`,idsValid);
+  report(`migration-ids-unique:${i+1}`,idsValid&&new Set(ids).size===ids.length);
+  report(`migration-ids-exist:${i+1}`,idsValid&&missingIds.length===0,{missingIds});
+  report(`migration-reason:${i+1}`,typeof migration?.reason==='string'&&migration.reason.trim().length>0,{classification:'recorded assertion; truth not independently verified'});
+  report(`migration-date-after-generation:${i+1}`,validDate(migration?.date)&&idsValid&&ids.every(id=>validDate(ledgerById.get(id)?.firstGeneratedOn)&&ledgerById.get(id).firstGeneratedOn<=migration.date));
+  const mismatchedIds=[];
+  if(fieldsValid&&idsValid)for(const id of ids) {
+    const entry=ledgerById.get(id),expected=versionedTaskScope(entry?.snapshot),server=serverRegistry[id];
+    if(!entry||expected.classification!=='verified'||fields.some(field=>!Object.hasOwn(entry,field)||!same(entry[field],expected[field])||!same(server?.[field],expected[field])))mismatchedIds.push(id);
+  }
+  report(`migration-fields-applied:${i+1}`,fieldsValid&&idsValid&&mismatchedIds.length===0,{mismatchedIds,comparison:'listed ledger/server fields versus preserved formal task version'});
+  migrationRecords.push({date:migration?.date??null,fields,ids:ids.length,uniqueIds:new Set(ids).size,missingIds,mismatchedIds,reasonRecorded:typeof migration?.reason==='string'&&migration.reason.trim().length>0});
+}
+// Audit the recorded 36-ID development backfill. Future ledger entries need not be in this past migration.
+const knownMigrations=migrations.filter(migration=>migration?.date==='2026-10-27'&&same(migration?.fields,['stepPrerequisites']));
+report('migration-known-record-count',knownMigrations.length===1,{date:'2026-10-27',fields:['stepPrerequisites'],actual:knownMigrations.length,expected:1});
+const knownMigration=knownMigrations[0],knownIds=Array.isArray(knownMigration?.ids)?knownMigration.ids:[];
+// Malformed migration IDs must yield structured validation failures, not invoke
+// user-controlled object coercion during diagnostic sorting.
+const knownIdsEqualCurrentLedger=knownIds.every(id=>typeof id==='string')&&ledgerIds.every(id=>typeof id==='string')&&same([...knownIds].sort(),[...ledgerIds].sort());
+report('migration-known-id-count',knownMigrations.length===1&&knownIds.length===36&&new Set(knownIds).size===36,{actual:knownIds.length,unique:new Set(knownIds).size,expected:36,idsEqualCurrentLedger:knownIdsEqualCurrentLedger,coverageComparison:'diagnostic only; later ledger entries do not retroactively expand this migration'});
+const migrationSummary={recordCount:migrations.length,knownMigration:knownMigrations.length===1?{date:knownMigration.date,fields:knownMigration.fields,ids:knownIds.length,uniqueIds:new Set(knownIds).size,idsEqualCurrentLedger:knownIdsEqualCurrentLedger}:null,records:migrationRecords,reasonTruthVerified:false,reasonClassification:'recorded provenance assertion, not independent proof of deployment/receipt history'};
+
 const expectedServerIds=[...ledgerIds,fixtureId];
 report('server-registry-complete',same(serverIds.sort(),expectedServerIds.sort()),{actual:serverIds.length,expected:ledgerEntries.length+1});
 for(const [id,entry]of Object.entries(serverRegistry)) {
@@ -410,7 +449,7 @@ report('server-fixture-body',Boolean(expectedFixture)&&same(fixtureEntry?.snapsh
 report('server-fixture-policy',fixtureEntry?.status==='active'&&fixtureEntry?.anonymousCodePattern==='^D-00$'&&fixtureEntry?.allowedStepIds===null&&fixtureEntry?.stepPrerequisites===null);
 const snapshotSummary={ruleVersion:ledgerInput?.ruleVersion??null,appSnapshots:appSnapshots.length,appUniqueIds:new Set(appIds).size,expectedCombinations:expectedByCombination.size,actualCombinations:new Set(appSnapshots.map(snapshotCombination)).size,ledgerEntries:ledgerEntries.length,activeEntries:activeEntries.length,retiredEntries:retiredEntries.length,serverEntries:serverIds.length,fixtureEntries:fixtureEntry?1:0,generatedCodePattern:demoPattern,fixtureCodePattern:'^D-00$',generatorExecuted:false,serverFunctionsExecuted:false,retiredScopePolicy:'compare recorded historical scope/graph with exact preserved formal task version; no current-task fallback',prerequisites:prerequisiteSummary,snapshotLibExecuted:false};
 
-const result={checkedAt:new Date().toISOString(),root,project,applicationExecuted:false,projectModified:false,dependenciesUsed:['node:fs','node:path','node:crypto','node:module',path.join(project,'node_modules/ajv/dist/2020.js'),path.join(project,'node_modules/ajv-formats')],validatorOptions:ajvOptions,checks,passed:checks.filter(c=>c.passed).length,failed:checks.filter(c=>!c.passed).length,strictLint:{classification:'additional lint diagnostic; not counted as JSON Schema validity failures',passed:diagnostics.filter(d=>d.passed).length,failed:diagnostics.filter(d=>!d.passed).length,diagnostics},projectComparisons,snapshotSummary,sources};
+const result={checkedAt:new Date().toISOString(),root,project,applicationExecuted:false,projectModified:false,dependenciesUsed:['node:fs','node:path','node:crypto','node:module',path.join(project,'node_modules/ajv/dist/2020.js'),path.join(project,'node_modules/ajv-formats')],validatorOptions:ajvOptions,checks,passed:checks.filter(c=>c.passed).length,failed:checks.filter(c=>!c.passed).length,strictLint:{classification:'additional lint diagnostic; not counted as JSON Schema validity failures',passed:diagnostics.filter(d=>d.passed).length,failed:diagnostics.filter(d=>!d.passed).length,diagnostics},projectComparisons,snapshotSummary,migrationSummary,sources};
 fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify({output,passed:result.passed,failed:result.failed,strictLintPassed:result.strictLint.passed,strictLintFailed:result.strictLint.failed,applicationExecuted:false,projectModified:false}));
 for(const c of checks.filter(c=>!c.passed))console.log('FAIL',c.name,JSON.stringify(c.errors||c.differences||{}));
