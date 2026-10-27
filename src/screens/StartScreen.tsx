@@ -42,15 +42,21 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
     setEntryDir(p.vehicleEntryDirection)
   }
 
+  // 실패하면 버튼 옆에 이유를 보이고 버튼을 다시 쓸 수 있게 한다(구형 태블릿에서 조용히 멈추던 문제, 2026-10-28)
   const start = async () => {
     const v = validateStudentCode(code)
     if (!v.ok) return setError(v.reason)
     setError(null)
     setBusy(true)
-    const task = tasks[taskIdx]!
-    const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase, vehicleEntryDirection: entryDir, task, difficultyMode: mode }), task, mode)
-    setBusy(false)
-    if (err) setError(err)
+    try {
+      const task = tasks[taskIdx]!
+      const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase, vehicleEntryDirection: entryDir, task, difficultyMode: mode }), task, mode)
+      if (err) setError(err)
+    } catch (e) {
+      setError(`시작하지 못했습니다: ${(e as Error).message || String(e)} — 이 문구를 교사에게 알려 주세요.`)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -64,10 +70,10 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
         </label>
         <label>
           익명 코드 (예: A-01)
-          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="A-01" inputMode="text" aria-label="익명 코드" />
+          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="A-01" inputMode="text" autoCapitalize="characters" autoCorrect="off" spellCheck={false} aria-label="익명 코드" />
         </label>
         <span className="small">이름·학번·연락처는 입력하지 않습니다. 코드 형식 검사는 본인 확인이 아닙니다. 전송 시험 중에는 합성 코드 D-01 같은 D-xx만 수신점이 받습니다.</span>
-        {error && <p className="error" role="alert">{error}</p>}
+        {error && <p className="error">{error}</p>}
       </section>
       {locked ? (
         <section className="card">
@@ -105,7 +111,8 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
           </section>
         </>
       )}
-      <button className="primary" onClick={start} disabled={busy}>{busy ? '초안 저장 중…' : '과제 수령하러 가기'}</button>
+      {error && <p className="error" role="alert">{error}</p>}
+      <button className="primary" onClick={start} disabled={busy}>{busy ? '준비 중…' : '과제 수령하러 가기'}</button>
       {teacherOpen ? (
         <TeacherPanel repo={repo} tasks={tasks} preset={preset} counts={counts} onPresetChange={applyPreset} onCountsChange={refreshCounts} onClose={() => setTeacherOpen(false)} />
       ) : (

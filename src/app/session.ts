@@ -6,6 +6,7 @@ import snapshots from '../data/session/demo-snapshots.json'
 import type { SessionContext } from '../domain/record'
 import type { DifficultyMode, TaskRun } from '../domain/taskEngine'
 import type { ApprovedTask, FeedbackText } from '../domain/types'
+import { newUuid } from '../domain/uuid'
 
 export const APP_VERSION = '0.3.0-demo'
 
@@ -14,7 +15,7 @@ const CODE_RE = /^[A-Z]-\d{2}$/
 
 export function validateStudentCode(raw: string): { ok: true; code: string } | { ok: false; reason: string } {
   const code = raw.trim().toUpperCase()
-  if (!CODE_RE.test(code)) return { ok: false, reason: '익명 코드는 A-01 처럼 "학급 글자-두 자리 번호" 형식입니다.' }
+  if (!CODE_RE.test(code)) return { ok: false, reason: '익명 코드는 A-01 처럼 "영문 학급 글자-두 자리 번호" 형식입니다. 한글 자판이면 영문으로 바꿔 입력하세요.' }
   return { ok: true, code }
 }
 
@@ -34,7 +35,7 @@ export function createDemoSession(opts: { studentCode: string; sessionCode: stri
   const snap = snapshots.find((s) => s.sessionCode === opts.sessionCode && s.versions.taskDefinitionVersion === task.taskDefinitionVersion && s.difficultyMode === mode && s.usagePhase === opts.usagePhase && s.sessionConfiguration.vehicleEntryDirection === dir)
   if (!snap) throw new Error(`SNAPSHOT_NOT_FOUND: ${opts.sessionCode}/${task.taskDefinitionVersion}/${mode}/${opts.usagePhase}/${dir}`)
   return {
-    recordId: crypto.randomUUID(),
+    recordId: newUuid(),
     anonymousStudentCode: opts.studentCode,
     classConditionCode: snap.classConditionCode,
     sessionCode: snap.sessionCode,

@@ -8,8 +8,9 @@ import type { Repository } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
 import { inspectPerformance, type InspectionIssue } from '../domain/npcInspection'
 import type { FeedbackText } from '../domain/types'
+import { newUuid } from '../domain/uuid'
 
-const newId = () => crypto.randomUUID()
+const newId = () => newUuid()
 
 type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string }
 

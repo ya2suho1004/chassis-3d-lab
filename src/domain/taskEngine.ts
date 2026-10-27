@@ -7,6 +7,7 @@
 //  - 화면·네트워크·저장소에 의존하지 않는다(순수 함수).
 import { createResponseSheet, submitAnswer, type ResponseSheet, type SubmitResult } from './grading'
 import type { ApprovedTask, TaskStep } from './types'
+import { newUuid } from './uuid'
 
 export type DifficultyMode = 'guided' | 'unguided' | 'timedAssessment'
 
@@ -115,7 +116,7 @@ const RESPONSE_REQUIREMENTS: Record<string, string[]> = {
 }
 
 function defaultDeps(): EngineDeps {
-  return { now: () => Date.now(), newId: () => crypto.randomUUID() }
+  return { now: () => Date.now(), newId: () => newUuid() }
 }
 
 const depsByRun = new WeakMap<TaskRun, EngineDeps>()
