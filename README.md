@@ -26,7 +26,7 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 | `src/data/session/demo-snapshots.json`, `snapshot-ledger.json` | 시연 세션 스냅샷 36개(active)와 append-only 원장 | 선택(사례·모드·시점·진입 방향)마다 불변 ID·versions·승인(과제 pending)과 검증 범위(등록 단계·선행 그래프). 옛 스냅샷은 retired로 보존(접수번호 회수용). 같은 ID의 내용·검증 범위 변경, 중복 ID는 생성 실패(`scripts/snapshotLib.mjs`). `npm run build:gs-snapshots`로 수신점 목록과 함께 생성 |
 | `server/dev/fakeSubmitServer.ts` | 개발 서버 가짜 수신점 | 같은 .gs 코드를 Node에서 실행. `/__fake-submit/control?mode=html|badhash|drop|lockbusy`로 D04·D07 재현. 운영 번들 제외 |
 
-실배포(Google 웹 앱·GitHub Pages·학교 기기)는 아직 하지 않았다. 절차는 `server/apps-script/README.md`, 시험 상태는 `docs/03_0C_전송_시험_계획_2026-10-26.md`.
+실배포(Google 웹 앱·GitHub Pages·학교 기기)는 아직 하지 않았다. 절차는 `server/apps-script/README.md`, 시험 상태는 `docs/03_0C_전송_시험_계획_2026-10-26.md`, 학교 점검표는 `docs/design/docs/18_0C_DEPLOYMENT_CHECKLIST.md`. Codex 코드 검토는 2026-10-27(커밋 54634d4)에 종결(배포 승인 아님).
 
 ## 3단계: 3D 실습장 (`src/scene/`, `src/screens/LabScreen.tsx`)
 
