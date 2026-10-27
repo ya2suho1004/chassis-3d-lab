@@ -194,7 +194,7 @@ function parseDateTimeParts_(s) {
   if (m[9]) { var oh = Number(m[10]), om = Number(m[11]); if (oh > 23 || om > 59) return null; offMin = (oh * 60 + om) * (m[9] === '-' ? -1 : 1); }
   if (sec === 60) { var utcMin = ((h * 60 + mi - offMin) % 1440 + 1440) % 1440; if (utcMin !== 1439) return null; }
   var base = new Date(0); base.setUTCFullYear(y, mo - 1, d); base.setUTCHours(h, mi, 0, 0);
-  return { minuteMs: base.getTime() - offMin * 60000, sec: sec, frac: frac, leap: sec === 60 };
+  return { minuteMs: base.getTime() - offMin * 60000, sec: sec, frac: frac, fracDigits: m[7] ? m[7].slice(1).replace(/0+$/, '') : '', leap: sec === 60 };
 }
 
 /** 순서 비교(원문 소수부 그대로): (분 시작 + min(sec,59)초) → 윤초 여부 → 소수부. 윤초 :60.f 는 59.xxx 전부보다 뒤, 다음 00:00:00.000보다 앞. 유효하지 않으면 NaN. */
@@ -204,18 +204,30 @@ function compareDateTime_(a, b) {
   var ka = pa.minuteMs + Math.min(pa.sec, 59) * 1000, kb = pb.minuteMs + Math.min(pb.sec, 59) * 1000;
   if (ka !== kb) return ka < kb ? -1 : 1;
   if (pa.leap !== pb.leap) return pa.leap ? 1 : -1;
-  if (pa.frac !== pb.frac) return pa.frac < pb.frac ? -1 : 1;
+  // 소수부는 원문 숫자열로 비교(Number 정밀도 무관, Codex G P3): 우측 0을 뗀 뒤 짧은 쪽을 0으로 채워 사전식 비교
+  var fa = pa.fracDigits, fb = pb.fracDigits, len = Math.max(fa.length, fb.length);
+  while (fa.length < len) fa += '0';
+  while (fb.length < len) fb += '0';
+  if (fa !== fb) return fa < fb ? -1 : 1;
   return 0;
 }
 
-/** 경과시간 상한(초): 순진한 epoch 차이 + UTC 자정 횡단 횟수(윤초는 UTC 23:59:60에만 들어갈 수 있으므로 자정마다 최대 1초). 비교 키를 경과시간으로 재사용하지 않는다(Codex F). */
+/** 경과시간 상한(초, Codex F·G): 윤초가 '알려진' 끝점(시작·종료가 :60)은 그 윤초를 정확히 세고, 모르는 UTC 자정 횡단마다 1초 여유를 둔다(윤초는 UTC 23:59:60에만 가능).
+ *  순서 비교 키를 재사용하지 않는다. 윤초표가 없으므로 평범한 자정에도 1초가 붙는 보수적 상한이다. */
 function elapsedAllowanceSeconds_(a, b) {
   var pa = parseDateTimeParts_(a), pb = parseDateTimeParts_(b);
   if (!pa || !pb) return NaN;
-  // 순진 epoch: 윤초 :60.f 는 그 날의 59.f 로 두어(epoch에는 윤초 자리가 없음) 자정 횡단으로 1초 여유가 붙게 한다
-  var ea = pa.minuteMs + Math.min(pa.sec, 59) * 1000 + pa.frac * 1000, eb = pb.minuteMs + Math.min(pb.sec, 59) * 1000 + pb.frac * 1000;
-  var midnights = Math.floor(eb / 86400000) - Math.floor(ea / 86400000);
-  return (eb - ea) / 1000 + Math.max(0, midnights);
+  var DAY = 86400000;
+  var naive = function (p) { return p.minuteMs + p.sec * 1000 + p.frac * 1000; }; // :60.f → 다음 날 00:00:00.f 자리(epoch에는 윤초 자리가 없음)
+  var Ma = pa.leap ? pa.minuteMs + 60000 : null, Mb = pb.leap ? pb.minuteMs + 60000 : null; // 끝점이 속한 윤초의 자정(알려진 윤초)
+  var na = naive(pa), nb = naive(pb);
+  // 알려진 윤초가 끼워 넣는 1초를 '확장 시간선'으로 반영: 그 자정 이후의 끝점은 +1초(윤초 안의 끝점 자신은 제외)
+  var ea = na + ((Mb !== null && na >= Mb && !(pa.leap && Ma === Mb)) ? 1000 : 0);
+  var eb = nb + ((Ma !== null && nb >= Ma && !(pb.leap && Mb === Ma)) ? 1000 : 0);
+  var crossings = Math.floor(nb / DAY) - Math.floor(na / DAY);
+  var known = (Mb !== null && na < Mb && !(pa.leap && Ma === Mb)) ? 1 : 0; // 종료 윤초의 자정은 이미 정확히 셈
+  var unknown = Math.max(0, crossings - known);
+  return (eb - ea) / 1000 + unknown;
 }
 
 function isValidDateTimeGeneral_(s) {
