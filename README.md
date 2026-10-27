@@ -10,7 +10,7 @@
 
 ```bash
 npm install
-npm test          # vitest, 246 tests
+npm test          # vitest, 250 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
@@ -57,7 +57,7 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 | `types.ts` | `DeliveryEnvelope` | delivery.schema 대응. 연구 payload와 분리 |
 | 엔진 추가 | `pauseRun / resumeRun / serializeRun / rehydrateRun` | 숨김·새로고침 공백은 학습시간 제외(`timeQuality: resumed`). 복원 시 모터는 정지 상태 |
 
-화면: 시작 시 초안 저장이 끝나야 과제로 진입 · 조작마다 자동저장(상단에 ‘이 기기 저장됨/실패’) · 화면 숨김 시 일시중지 · 새로고침 후 ‘이어서 하기/새 수행’ · 완료·중단 시 확정 저장 · ‘다음 학생’은 포인터만 초기화(확정 기록 보존) · 시작 화면 하단 교사용 요약 CSV(시연 PIN 0000, 보안 통제 아님).
+화면: 시작 시 초안 저장이 끝나야 과제로 진입 · 조작마다 자동저장(상단에 ‘이 기기 저장됨/실패’) · 화면 숨김 시 일시중지 · 새로고침 후 ‘이어서 하기/새 수행’ · 완료·중단 시 확정 저장 · ‘다음 학생’은 포인터만 초기화(확정 기록 보존) · 시작 화면 하단 ‘교사 화면’(시연 PIN 0000, 보안 통제 아님): 수업 설정(사례·수업 시점·도움 방식·진입 방향을 이 기기 기본값으로 저장, ‘학생이 바꾸지 못하게’면 학생은 익명 코드만 입력, `src/app/teacherPreset.ts`)과 기록 관리(요약 CSV·대기 기록 전송, `screens/TeacherPanel.tsx`).
 
 ## 1단계 결과물 (`src/domain/`)
 
