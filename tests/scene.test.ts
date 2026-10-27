@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import raw from '../src/data/layout/layout.dev-provisional.json'
-import { loadSceneLayout, footprintOf, nearEquipment, showsLabel } from '../src/scene/layoutModel'
+import { loadSceneLayout, footprintOf, nearEquipment, pillarRect, showsLabel } from '../src/scene/layoutModel'
 import { buildNavGrid, findPath, advanceAlongPath } from '../src/scene/pathfind'
 import { createTaskRun, changeDisplayMode } from '../src/domain/taskEngine'
 import lv1 from '../src/data/tasks/task.braking-force.case-lv1.json'
@@ -145,5 +145,20 @@ describe('3D 이름표 표시 규칙', () => {
     expect(showsLabel('focus', { ...plain, selected: true })).toBe(true)
     expect(showsLabel('focus', { ...plain, highlight: true })).toBe(true)
     expect(showsLabel('focus', { ...plain, interactive: true })).toBe(true)
+  })
+})
+
+describe('교사 3D 눈검토 반영(2026-10-28)', () => {
+  test('어떤 장비도 기둥과 겹치지 않고, 리프트 3대는 이웃한 두 기둥 사이에 있다', () => {
+    const overlap = (a: { xMin: number; xMax: number; zMin: number; zMax: number }, b: typeof a) => a.xMin < b.xMax && b.xMin < a.xMax && a.zMin < b.zMax && b.zMin < a.zMax
+    for (const e of layout.equipment) for (const p of layout.pillars) expect(overlap(footprintOf(e), pillarRect(p)), `${e.id}↔${p.id}`).toBe(false)
+    const xs = layout.pillars.map((p) => p.x).sort((a, b) => a - b)
+    const lifts = layout.equipment.filter((e) => e.kind === 'lift').sort((a, b) => a.x - b.x)
+    expect(lifts).toHaveLength(3)
+    lifts.forEach((l, i) => {
+      const f = footprintOf(l)
+      expect(f.xMin).toBeGreaterThan(xs[i]!)
+      expect(f.xMax).toBeLessThan(xs[i + 1]!)
+    })
   })
 })
