@@ -11,6 +11,7 @@ import { brakeRigState } from '../scene/brakeRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen } from './TaskScreen'
 import { LayoutReviewPanel } from './LayoutReviewPanel'
+import { LayoutSurveyPanel } from './LayoutSurveyPanel'
 
 const NEAR_RADIUS = 1.3
 const NPC_RADIUS = 2.0
@@ -40,7 +41,9 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
   const [npcError, setNpcError] = useState<string | null>(null)
   const [lowSpec, setLowSpec] = useState(false)
   /** null = 자동(둘러보기는 전체, 과제 중은 필요한 것만) */
-  const [reviewOpen, setReviewOpen] = useState(false)
+  /** 교사 도구: 배치 눈검토 또는 실측 입력(과제 수령 전에만) */
+  const [teacherTool, setTeacherTool] = useState<'review' | 'survey' | null>(null)
+  const reviewOpen = teacherTool !== null
   const [reviewActiveId, setReviewActiveId] = useState<string | null>(null)
   const [labelChoice, setLabelChoice] = useState<LabelMode | null>(null)
   const moveRequestRef = useRef<Pt | null>(null)
@@ -72,7 +75,8 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
         <div className="small">
           <span className="warnchip">실제 배치 아님 · layoutConfirmed=false</span>
           {run && <button className="link" onClick={toggleDisplay}>{displayMode === 'threeD' ? '도식 모드로' : '3D 모드로'}</button>}
-          {!run && !reviewOpen && <button className="link" onClick={() => setReviewOpen(true)}>배치 눈검토(교사)</button>}
+          {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('review')}>배치 눈검토(교사)</button>}
+          {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('survey')}>실측 입력(교사)</button>}
           {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}
           <label className="inline"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 저사양</label>
         </div>
@@ -109,10 +113,15 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
             </div>
           )}
 
-          {!run && reviewOpen && (
+          {!run && teacherTool === 'review' && (
             <LayoutReviewPanel layout={layout} activeId={reviewActiveId}
               onFocus={(item) => { setReviewActiveId(item.itemId); setSelectedId(item.equipmentId); goTo(item.viewPoint) }}
-              onClose={() => { setReviewOpen(false); setReviewActiveId(null) }} />
+              onClose={() => { setTeacherTool(null); setReviewActiveId(null) }} />
+          )}
+          {!run && teacherTool === 'survey' && (
+            <LayoutSurveyPanel layout={layout} activeId={reviewActiveId}
+              onFocus={(item) => { if (!item.review) return; setReviewActiveId(item.itemId); setSelectedId(item.review.equipmentId); goTo(item.review.viewPoint) }}
+              onClose={() => { setTeacherTool(null); setReviewActiveId(null) }} />
           )}
 
           {!run && !reviewOpen && (

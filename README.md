@@ -10,7 +10,7 @@
 
 ```bash
 npm install
-npm test          # vitest, 251 tests
+npm test          # vitest, 255 tests
 npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
@@ -41,6 +41,8 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 | 엔진 추가 | `changeDisplayMode` | 3D↔도식 전환을 `displayModeChanged` 이벤트(from/to/사유)로 남기고 `experiencedDisplayModes`에 누적. 기록 payload의 `displayMode`는 시작 모드 |
 
 배치 눈검토(교사): 과제 수령 전 실습장 상단 ‘배치 눈검토(교사)’ → 경계 5·기둥 4·장비 23·위치 2(34항목)를 맞음/조금 다름/많이 다름/없음으로 표시, 항목을 누르면 캐릭터가 그 자리로 이동. 이 기기 초안(localStorage) + `LAYOUT_3D_REVIEW_날짜.json` 내려받기만, 전송 없음. 결과와 무관하게 layoutConfirmed=false 유지(`src/review/layoutReview.ts`, `screens/LayoutReviewPanel.tsx`).
+
+실측 입력(교사): 같은 자리 ‘실측 입력(교사)’ → 실습장 전체(북·동 벽 길이, 천장)·기둥 4·장비 22(시험 차량 제외)를 중요도 순으로, 가로·세로·높이와 북쪽 벽/동쪽 벽(안쪽 면)에서 각 끝까지 거리를 m로 입력. 칸에 지금 3D 짐작값 표시, 잘못된 값(cm·문자) 표시, 이 기기 초안 + `LAYOUT_SURVEY3_날짜.json` 내려받기만(`src/review/layoutSurvey.ts`, `screens/LayoutSurveyPanel.tsx`).
 
 화면 흐름: 시작 → 실습장(둘러보기·도감) → NPC 교관에게 과제 수령 → 과제 패널(3D 옆) → NPC 검사 또는 중단 → 결과. 도식 모드로 바꾸면 3D 없이 과제 패널만 보인다(저사양 대체).
 
