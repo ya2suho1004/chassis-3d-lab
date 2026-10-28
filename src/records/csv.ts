@@ -40,3 +40,19 @@ export function toSummaryCsv(rows: Array<{ payload: RecordPayload; envelope: Del
   for (const { payload, envelope } of rows) lines.push(COLUMNS.map(([, f]) => csvCell(f(payload, envelope))).join(','))
   return '﻿' + lines.join('\r\n') + '\r\n'
 }
+
+/** 서버 대화 기록 CSV(교사 화면, 설계 07 §5). 질문은 서버에서 가림 처리된 원문이다. */
+export const CHAT_CSV_HEADER = ['created_at', 'session_code', 'anonymous_student_code', 'record_id', 'difficulty_mode', 'step_id', 'turn_index', 'status', 'question_masked', 'answer', 'masked_patterns', 'provider', 'model', 'model_version', 'prompt_version', 'latency_ms'] as const
+export function toChatCsv(rows: Array<Record<(typeof CHAT_CSV_HEADER)[number], unknown>>): string {
+  const lines = [CHAT_CSV_HEADER.join(',')]
+  for (const r of rows) lines.push(CHAT_CSV_HEADER.map((k) => csvCell(k === 'masked_patterns' && Array.isArray(r[k]) ? (r[k] as string[]).join('|') : r[k])).join(','))
+  return '\ufeff' + lines.join('\r\n') + '\r\n'
+}
+
+/** 서버 정본 기록을 기기 요약 CSV와 같은 열로 만든다(접수번호·시각은 서버 값). */
+export function serverRecordsToSummaryCsv(rows: Array<{ record_id: string; receipt_id: string; accepted_at: string; payload_hash: string; payload_json: string }>): string {
+  return toSummaryCsv(rows.map((r) => ({
+    payload: JSON.parse(r.payload_json) as RecordPayload,
+    envelope: { recordId: r.record_id, localSaveStatus: 'saved', uploadStatus: 'acknowledged', uploadedAt: r.accepted_at, receiptId: r.receipt_id, payloadHash: r.payload_hash, uploadAttemptCount: 0, lastErrorCode: null, nextRetryAt: null } as DeliveryEnvelope,
+  })))
+}

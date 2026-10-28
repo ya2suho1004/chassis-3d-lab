@@ -8,6 +8,8 @@ import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
 import { toSummaryCsv } from '../records/csv'
 import type { Repository } from '../records/repository'
+import { ServerAdmin } from './ServerAdmin'
+import { LESSON_LABEL } from '../app/lesson'
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
 const OUTCOME_LABEL: Record<OutboxItemResult['outcome'], string> = { acknowledged: '서버 접수 확인됨', rejected: '거절(제출자료 확인 필요)', conflict: '기록 충돌', pending: '대기(잠시 뒤 재시도)', confirmationPending: '접수 확인 필요(같은 ID로 재전송)', skipped: '건너뜀', saveFailed: '이 기기 저장 실패' }
@@ -84,16 +86,17 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         ))}
       </div>
       <div className="field-group">
-        <span className="small">수업 시점</span>
+        <span className="small">차시</span>
         {(['preview', 'review', 'other'] as UsagePhase[]).map((p) => (
-          <label key={p} className="radio"><input type="radio" name="t-phase" checked={form.usagePhase === p} onChange={() => setForm({ ...form, usagePhase: p })} /> {PHASE_LABEL[p]}</label>
+          <label key={p} className="radio"><input type="radio" name="t-phase" checked={form.usagePhase === p} onChange={() => setForm({ ...form, usagePhase: p, difficultyMode: p === 'review' ? 'unguided' : form.difficultyMode })} /> {LESSON_LABEL[p]}</label>
         ))}
       </div>
       <div className="field-group">
         <span className="small">도움 방식</span>
         {(['guided', 'unguided'] as const).map((m) => (
-          <label key={m} className="radio"><input type="radio" name="t-mode" checked={form.difficultyMode === m} onChange={() => setForm({ ...form, difficultyMode: m })} /> {MODE_LABEL[m]}</label>
+          <label key={m} className="radio"><input type="radio" name="t-mode" disabled={form.usagePhase === 'review'} checked={form.difficultyMode === m} onChange={() => setForm({ ...form, difficultyMode: m })} /> {MODE_LABEL[m]}</label>
         ))}
+        {form.usagePhase === 'review' && <span className="small">5차시 정리는 안내 없음으로 고정됩니다.</span>}
       </div>
       <div className="field-group">
         <span className="small">차량 진입 방향</span>
@@ -128,6 +131,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         </ul>
       )}
       <p className="small">전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</p>
+      <ServerAdmin />
       <button className="link" onClick={onClose}>교사 화면 닫기</button>
     </section>
   )

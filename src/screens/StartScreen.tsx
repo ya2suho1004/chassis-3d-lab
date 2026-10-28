@@ -8,6 +8,7 @@ import type { ApprovedTask } from '../domain/types'
 import type { Repository } from '../records/repository'
 import { SUBMIT_IS_FAKE } from '../delivery/config'
 import { TeacherPanel } from './TeacherPanel'
+import { LESSON_LABEL, lessonAttemptRole, lessonMode } from '../app/lesson'
 
 export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: SessionContext, t: ApprovedTask, m: DifficultyMode) => Promise<string | null> }) {
   const tasks = listTasks()
@@ -50,7 +51,8 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
     setBusy(true)
     try {
       const task = tasks[taskIdx]!
-      const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: phase === 'review' ? 'remediation' : mode === 'guided' ? 'practice' : 'primary', usagePhase: phase, vehicleEntryDirection: entryDir, task, difficultyMode: mode }), task, mode)
+      const m = lessonMode(phase, mode)
+      const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: lessonAttemptRole(phase), usagePhase: phase, vehicleEntryDirection: entryDir, task, difficultyMode: m }), task, m)
       if (err) setError(err)
     } catch (e) {
       setError(`시작하지 못했습니다: ${(e as Error).message || String(e)} — 이 문구를 교사에게 알려 주세요.`)
@@ -78,7 +80,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
       {locked ? (
         <section className="card">
           <h2>오늘 수업 설정 (교사가 정함)</h2>
-          <p>{tasks[taskIdx]!.title} · {PHASE_LABEL[phase]} · {MODE_LABEL[mode]} · {ENTRY_LABEL(entryDir)}</p>
+          <p>{tasks[taskIdx]!.title} · {PHASE_LABEL[phase]} · {MODE_LABEL[lessonMode(phase, mode)]} · {ENTRY_LABEL(entryDir)}</p>
           <p className="small">익명 코드만 입력하고 시작하세요. 설정은 교사 화면에서 바꿉니다.</p>
         </section>
       ) : (
@@ -92,15 +94,16 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
             ))}
           </section>
           <section className="card">
-            <h2>수업 시점 (언제 하는가)</h2>
-            <label className="radio"><input type="radio" name="phase" checked={phase === 'preview'} onChange={() => setPhase('preview')} /> 대기 중 예습 — 실제 실습 순번을 기다리는 동안</label>
-            <label className="radio"><input type="radio" name="phase" checked={phase === 'review'} onChange={() => setPhase('review')} /> 실습 후 복습 — 실제 실습을 마치고 다시 확인</label>
-            <label className="radio"><input type="radio" name="phase" checked={phase === 'other'} onChange={() => setPhase('other')} /> 기타(시연·연습)</label>
+            <h2>차시 (5차시 수업 중 언제인가)</h2>
+            {(['preview', 'review', 'other'] as UsagePhase[]).map((p) => (
+              <label key={p} className="radio"><input type="radio" name="phase" checked={phase === p} onChange={() => { setPhase(p); if (p === 'review') setMode('unguided') }} /> {LESSON_LABEL[p]}</label>
+            ))}
           </section>
           <section className="card">
             <h2>도움 방식 (어떻게 돕는가)</h2>
-            <label className="radio"><input type="radio" name="mode" checked={mode === 'guided'} onChange={() => setMode('guided')} /> 안내 있음 (견습) — 다음 할 일을 알려 줌</label>
-            <label className="radio"><input type="radio" name="mode" checked={mode === 'unguided'} onChange={() => setMode('unguided')} /> 안내 없음 (정비사) — 순서를 스스로 찾음, 안전 경고는 유지</label>
+            <label className="radio"><input type="radio" name="mode" disabled={phase === 'review'} checked={lessonMode(phase, mode) === 'guided'} onChange={() => setMode('guided')} /> 안내 있음 (견습) — 다음 할 일을 알려 줌</label>
+            <label className="radio"><input type="radio" name="mode" disabled={phase === 'review'} checked={lessonMode(phase, mode) === 'unguided'} onChange={() => setMode('unguided')} /> 안내 없음 (정비사) — 순서를 스스로 찾음, 안전 경고는 유지</label>
+            {phase === 'review' && <span className="small">5차시 정리는 안내 없음으로 고정됩니다.</span>}
           </section>
           <section className="card">
             <h2>차량 진입 방향 (교사 설정 · 세션 값)</h2>

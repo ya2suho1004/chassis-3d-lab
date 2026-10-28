@@ -47,6 +47,6 @@ export function savePreset(p: TeacherPreset | null): boolean {
   } catch { return false }
 }
 
-export const PHASE_LABEL: Record<UsagePhase, string> = { preview: '대기 중 예습', review: '실습 후 복습', other: '기타(시연·연습)' }
+export const PHASE_LABEL: Record<UsagePhase, string> = { preview: '1~2차시 연습(실습 전)', review: '5차시 정리(실습 후)', other: '그 밖의 사용(보조·시연)' }
 export const MODE_LABEL: Record<DifficultyMode, string> = { guided: '안내 있음(견습)', unguided: '안내 없음(정비사)', timedAssessment: '시간제한 평가(1차 비활성)' }
 export const ENTRY_LABEL = (d: 'north' | 'south' | null) => (d === 'north' ? '북쪽 진입' : d === 'south' ? '남쪽 진입' : '진입 방향 미설정')
