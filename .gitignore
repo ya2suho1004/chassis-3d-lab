@@ -9,3 +9,7 @@ archive/apps-script/.clasp.json
 .env.production
 .env.local
 .env.*.local
+
+# Supabase local metadata
+supabase/.temp/
+supabase/.branches/
