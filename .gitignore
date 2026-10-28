@@ -13,3 +13,6 @@ archive/apps-script/.clasp.json
 # Supabase local metadata
 supabase/.temp/
 supabase/.branches/
+
+# Vercel CLI 연결 정보
+.vercel/
