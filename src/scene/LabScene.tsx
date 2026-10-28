@@ -12,6 +12,7 @@ import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFra
 import { epoxyFloorTexture } from './models/textures'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
+import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
 const WALK_SPEED = 1.6 // m/s
@@ -43,7 +44,10 @@ function Avatar({ pos }: { pos: Pt }) {
 function EquipmentModel({ e, m, facing, lowSpec, raised }: { e: SceneEquipment; m: Mats; facing: number | null; lowSpec: boolean; raised: boolean }) {
   const id = e.id
   switch (e.kind) {
-    case 'panel': return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}><AbsPanel w={e.w} d={e.d} h={e.h} m={m} /></group>
+    case 'panel': {
+      const code = <AbsPanel w={e.w} d={e.d} h={e.h} m={m} />
+      return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}>{!lowSpec && fitsAbsPanel(e) ? <Suspense fallback={code}><AbsPanelModel /></Suspense> : code}</group>
+    }
     case 'desk': return <Desk w={e.w} d={e.d} h={e.h} m={m} />
     case 'lift': return <LiftRig e={e} m={m} lowSpec={lowSpec} raised={raised} car={LIFT_CARS[id] ?? null} />
     case 'vehicle': return <StaticCar w={e.w} d={e.d} h={e.h} m={m} />

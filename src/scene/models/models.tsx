@@ -177,9 +177,9 @@ export function AbsPanel({ w, d, h, m }: { w: number; d: number; h: number; m: M
   return (
     <group>
       <RoundedBox args={[w, h, d]} radius={0.02} smoothness={2} position={[0, h / 2, 0]} material={m.olive} castShadow receiveShadow />
-      <mesh material={m.cabinetPlate} position={[0, h * 0.62, -d / 2 - 0.005]}><boxGeometry args={[w * 0.82, h * 0.12, 0.01]} /></mesh>
+      <mesh material={m.cabinetPlate} position={[0, h * 0.62, -d / 2 - 0.005]} rotation-y={Math.PI}><boxGeometry args={[w * 0.82, h * 0.12, 0.01]} /></mesh>
       <mesh material={m.yellow} position={[0, h * 0.8, -d / 2 - 0.06]} castShadow><boxGeometry args={[w * 0.92, h * 0.26, 0.1]} /></mesh>
-      <mesh material={m.absFace} position={[0, h * 0.8, -d / 2 - 0.112]}><planeGeometry args={[w * 0.9, h * 0.25]} /></mesh>
+      <mesh material={m.absFace} position={[0, h * 0.8, -d / 2 - 0.112]} rotation-y={Math.PI}><planeGeometry args={[w * 0.9, h * 0.25]} /></mesh>
       {/* 서랍 두 칸 */}
       {[0.38, 0.18].map((y) => <mesh key={y} material={m.olive} position={[0, h * y, -d / 2 - 0.006]}><boxGeometry args={[w * 0.86, h * 0.16, 0.01]} /></mesh>)}
     </group>

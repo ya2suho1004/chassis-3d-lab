@@ -81,6 +81,18 @@ export function absTesterFaceTexture(): THREE.Texture {
   })
 }
 
+/** 블렌더 조작부 위에 덧붙이는 글자만(배경 투명). 버튼·화면은 모델에 있고 자리는 absTesterFaceTexture와 같다 */
+export function absTesterLabelTexture(): THREE.Texture {
+  return canvasTexture('abs-labels', 1024, 576, (g) => {
+    g.scale(2, 2)
+    g.fillStyle = '#1a1a1a'; g.font = 'bold 22px serif'; g.textAlign = 'center'; g.fillText('ABS TESTER', 210, 46)
+    const labels = ['ESC', 'SIDE SLIP', 'BRAKE', 'SPEED', 'AXLE Load', 'LIFT UpDn', 'MOTOR']
+    g.textAlign = 'left'; g.font = 'bold 13px sans-serif'
+    labels.forEach((l, i) => g.fillText(l, 410, 78 + i * 24 + 5))
+    g.font = 'bold 18px serif'; g.textAlign = 'center'; g.fillText('GS-17GA', 420, 262)
+  })
+}
+
 /** 올리브색 캐비닛 아래 명판 (사진 14) */
 export function cabinetPlateTexture(): THREE.Texture {
   return canvasTexture('cabinet-plate', 256, 96, (g) => {
