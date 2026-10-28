@@ -1,0 +1,20 @@
+// 자동 생성: node scripts/build-receiver-core.mjs — 원본 .gs가 ES5라 타입은 any로 둔다.
+export declare const parseJsonStrict: any
+export declare const validateRequestEnvelope: any
+export declare const validateAgainst: any
+export declare const validateRecordSemantics_: any
+export declare const validateStepEvents_: any
+export declare const jcsCanonicalize: any
+export declare const jcsSha256Hex: any
+export declare const utf8ByteLength_: any
+export declare const isValidUtcDateTime_: any
+export declare const sessionAllowed_: any
+export declare const RECORD_SCHEMAS: any
+export declare const ALLOWED_SNAPSHOTS: any
+export declare const UUID_RE: any
+export declare const HEX64_RE: any
+export declare const PROTOCOL_VERSION: any
+export declare const SUPPORTED_RECORD_VERSIONS: any
+export declare const REQUEST_MAX_BYTES: any
+export declare const CANONICAL_MAX_BYTES: any
+export declare const MAX_STEP_EVENTS: any
