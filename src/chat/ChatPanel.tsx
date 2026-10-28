@@ -9,11 +9,13 @@ function Bold({ text }: { text: string }) {
   return <>{splitBold(text).map((p, i) => (p.bold ? <b key={i}>{p.text}</b> : <span key={i}>{p.text}</span>))}</>
 }
 
-export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId, difficultyMode }: {
+export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId, difficultyMode, initialOpen = false }: {
   sessionCode: string; anonymousStudentCode: string; recordId: string | null; stepId: string | null; difficultyMode: ChatMode
+  /** 게임 화면의 질문 서랍처럼 바로 입력 창을 보여 줄 때 */
+  initialOpen?: boolean
 }) {
   const endpoint = getChatEndpoint()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(initialOpen)
   const [lines, setLines] = useState<Line[]>([])
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)

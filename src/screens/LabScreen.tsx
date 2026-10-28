@@ -1,5 +1,5 @@
 // 실습장 화면 — 3D 장면 + HUD(도감·장비 카드·NPC 대화) + 과제 패널(TaskScreen) 연결
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import rawLayout from '../data/layout/layout.dev-provisional.json'
 import type { SessionContext } from '../domain/record'
 import { changeDisplayMode, type TaskRun } from '../domain/taskEngine'
@@ -9,7 +9,9 @@ import type { DeliveryEnvelope } from '../records/types'
 import { LabScene } from '../scene/LabScene'
 import { brakeRigState } from '../scene/brakeRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
-import { TaskScreen } from './TaskScreen'
+import { TaskScreen, type TaskContext } from './TaskScreen'
+import { Joystick, type MoveInput } from '../scene/Joystick'
+import { NpcDialog } from './NpcDialog'
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
 import { ChatPanel } from '../chat/ChatPanel'
@@ -56,6 +58,16 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const [labelChoice, setLabelChoice] = useState<LabelMode | null>(null)
   const moveRequestRef = useRef<Pt | null>(null)
   const goTo = (p: Pt) => { moveRequestRef.current = p }
+  /** 화면 방식: 게임(3D 꽉 찬 화면 + 겹친 정보, 기본) · 기본(3D 옆에 패널) */
+  const [uiStyle, setUiStyle] = useState<'game' | 'classic'>('game')
+  const joystickRef = useRef<MoveInput>({ x: 0, y: 0 })
+  const [ctx, setCtx] = useState<TaskContext | null>(null)
+  const onContext = useCallback((c: TaskContext) => setCtx(c), [])
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  /** 멀리서 교관을 눌렀으면 걸어가서 도착하는 순간 대화를 연다 */
+  const [talkOnArrive, setTalkOnArrive] = useState(false)
 
   const onMove = useCallback((p: Pt, m: boolean) => { setPos(p); setMoving(m) }, [])
   const nearIds = useMemo(() => layout.equipment.filter((e) => nearEquipment(pos, e, NEAR_RADIUS)).map((e) => e.id), [pos, layout])
@@ -75,6 +87,107 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
     const r = changeDisplayMode(run, displayMode === 'threeD' ? 'diagram' : 'threeD', 'userChoice')
     if (r.outcome === 'confirmed') onRunChange(r.run)
   }
+  const npcSpot = { x: layout.npc.x - 1.0, z: layout.npc.z }
+  useEffect(() => { if (talkOnArrive && nearNpc && !moving) { setTalkOnArrive(false); setNpcOpen(true) } }, [talkOnArrive, nearNpc, moving])
+
+  const gameUi = uiStyle === 'game' && displayMode === 'threeD' && !reviewOpen
+  if (gameUi) {
+    const navTargets = layout.equipment.filter((e) => e.interactive && e.accessPoint)
+    const talking = npcOpen && nearNpc
+    return (
+      <main className={`game ${talking ? 'talking' : ''}`}>
+        <div className="g-canvas">
+          <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
+            joystickRef={joystickRef} npcTalking={talking}
+            onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
+        </div>
+
+        {!talking && (
+          <>
+            <div className="g-status">
+              <div className="g-badge"><b>{session.anonymousStudentCode}</b><span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
+              <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
+              {menuOpen && (
+                <div className="g-menu" role="menu">
+                  <button onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>
+                  <label className="g-check"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
+                  {run && <button onClick={toggleDisplay}>도식 모드로</button>}
+                  <button onClick={() => { setUiStyle('classic'); setMenuOpen(false) }}>기본 화면(패널)으로</button>
+                  {!run && <button onClick={() => { setUiStyle('classic'); setTeacherTool('review'); setMenuOpen(false) }}>배치 눈검토(교사)</button>}
+                  {!run && <button onClick={() => { setUiStyle('classic'); setTeacherTool('survey'); setMenuOpen(false) }}>실측 입력(교사)</button>}
+                  <p className="small">실제 배치 아님(개발용 임시 배치). 제동력 구역 일부 실측, 나머지는 손 스케치 비례·가정.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="g-quest">
+              <div className="g-quest-title">{run ? task.title : '실습장 둘러보기'}</div>
+              {!run && <p>장비를 눌러 도감을 채우고, 교관에게 가서 과제를 받으세요.</p>}
+              {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
+              {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
+              {run && ctx && <p className="g-progress">{ctx.doneCount}/{ctx.total} 단계 완료</p>}
+              <div className="g-quest-btns">
+                {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
+                <button onClick={() => goTo(npcSpot)}>교관에게</button>
+                {navTargets.map((e) => <button key={e.id} onClick={() => goTo(e.accessPoint!)}>{e.label.replace(/\(.*\)/, '').trim()}</button>)}
+              </div>
+            </div>
+
+            {ctx?.shown && (
+              <div className={`g-toast feedback ${ctx.shown.kind}`} role="alert">
+                <button className="g-x" aria-label="닫기" onClick={ctx.clearShown}>✕</button>
+                <b>{ctx.shown.title}</b>
+                {ctx.shown.text ? (<ul><li>무엇: {ctx.shown.text.what}</li><li>왜: {ctx.shown.text.why}</li><li>어떻게: {ctx.shown.text.how}</li></ul>) : <p>{ctx.shown.plain}</p>}
+              </div>
+            )}
+
+            {selected && (
+              <div className="g-info">
+                <button className="g-x" aria-label="닫기" onClick={() => setSelectedId(null)}>✕</button>
+                <b>{selected.label}</b> <span className="small">[{BASIS_LABEL[selected.basis] ?? selected.basis}]</span>
+                <p>{selected.info}</p>
+                {selected.kind === 'lift' && <p><button onClick={() => toggleLift(selected.id)}>{raisedLifts.includes(selected.id) ? '리프트 내리기' : '리프트 올리기'}</button> <span className="small">보기 전용(기록 없음). 실제로는 올리기 전 주변 확인, 올린 뒤 안전 고리.</span></p>}
+              </div>
+            )}
+
+            <div className="g-hud">{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => layout.equipment.find((e) => e.id === id)?.label).join(', ')}` : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
+
+            <Joystick input={joystickRef} />
+            <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>
+
+            <div className="g-actions">
+              {run && ctx?.nextActions.map((a) => <button key={a.key} className={`g-act ${a.cls ?? ''}`} onClick={a.onClick}>{a.label}</button>)}
+              {run && <button className="g-act small" onClick={() => ctx?.hint()}>힌트</button>}
+            </div>
+          </>
+        )}
+
+        {/* 과제 패널은 늘 붙여 두고(상태·자동 저장 유지) 서랍으로만 열고 닫는다 */}
+        {run && (
+          <aside className={`g-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>
+            <button className="g-x" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>
+            <TaskScreen repo={repo} session={session} initialRun={run} embedded onRunChange={onRunChange} onContext={onContext}
+              proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
+              onFinish={onFinish} />
+          </aside>
+        )}
+        <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
+          <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
+          <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
+            stepId={run?.nextStepId ?? null} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
+        </aside>
+
+        {npcOpen && (
+          <NpcDialog near={nearNpc} taskTitle={task.title} running={!!run} error={npcError}
+            onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
+            onGoToNpc={() => { setNpcOpen(false); setTalkOnArrive(true); goTo(npcSpot) }}
+            onOpenTasks={() => { setNpcOpen(false); setDrawerOpen(true) }}
+            onInspect={() => { setNpcOpen(false); ctx?.inspect(); setDrawerOpen(true) }}
+            onClose={() => setNpcOpen(false)} />
+        )}
+      </main>
+    )
+  }
 
   return (
     <main className="screen lab">
@@ -83,6 +196,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
         <div className="small">
           <span className="warnchip">실제 배치 아님 · layoutConfirmed=false</span>
           {run && <button className="link" onClick={toggleDisplay}>{displayMode === 'threeD' ? '도식 모드로' : '3D 모드로'}</button>}
+          {displayMode === 'threeD' && !reviewOpen && <button className="link" onClick={() => setUiStyle('game')}>게임 화면으로</button>}
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('review')}>배치 눈검토(교사)</button>}
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('survey')}>실측 입력(교사)</button>}
           {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}

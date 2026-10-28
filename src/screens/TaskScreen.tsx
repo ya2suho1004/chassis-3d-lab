@@ -12,7 +12,22 @@ import { newUuid } from '../domain/uuid'
 
 const newId = () => newUuid()
 
-type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string }
+export type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string }
+
+/** 단계 하나에서 누를 수 있는 버튼(목록과 게임 화면 행동 버튼이 같은 것을 쓴다) */
+export interface TaskAction { key: string; label: string; onClick: () => void; disabled?: boolean; cls?: string }
+/** 게임 화면(퀘스트 표시·행동 버튼·알림)에 넘기는 현재 상태. 안내 없음 모드에서는 다음 단계를 넘기지 않는다 */
+export interface TaskContext {
+  guided: boolean
+  next: { num: number; text: string } | null
+  nextActions: TaskAction[]
+  shown: Shown | null
+  clearShown: () => void
+  doneCount: number
+  total: number
+  hint: () => void
+  inspect: () => void
+}
 
 const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정' }
 const ISSUE_LABEL: Record<string, string> = { STEP_NOT_COMPLETED: '단계 미완료', UNANSWERED: '미응답', FINAL_INCORRECT: '최종 답 오답', NOT_EVALUABLE: '채점 불가', SAFETY_NOT_SATISFIED: '안전 조건 미충족' }
@@ -40,7 +55,7 @@ function useCountUp(active: boolean, ms = 1500): number {
 
 export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
 
-export function TaskScreen({ repo, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange }: {
+export function TaskScreen({ repo, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext }: {
   repo: Repository; session: SessionContext; initialRun: TaskRun
   onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
   /** 실습장 화면 안에 끼워 넣을 때 true(머리글 생략) */
@@ -48,6 +63,8 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
   /** 3D 모드에서 장비 근접 여부. null이면 게이팅 없음(도식 모드) */
   proximity?: Proximity | null
   onRunChange?: (run: TaskRun) => void
+  /** 게임 화면용 상태 알림 */
+  onContext?: (c: TaskContext) => void
 }) {
   const [run, setRun] = useState(initialRun)
   // 부모와 마지막으로 주고받은 run. 부모→패널 갱신과 패널→부모 알림이 서로 되돌리지 않게 한다.
@@ -201,6 +218,39 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
   const shownR = m.right === null ? null : Math.round(m.right * rise)
   const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${shownL}   R ${shownR}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') && rise >= 1 }
 
+  const actionsFor = (stepId: string): TaskAction[] => {
+    const out: TaskAction[] = []
+    if ((stepId === 'tire' || stepId === 'equip') && !run.satisfiedSafety.includes('s-engine')) out.push({ key: 'engine', label: '시동 OFF 확인', onClick: confirmEngine })
+    if (stepId === 'lower' && !run.satisfiedSafety.includes('s-lift')) out.push({ key: 'lift', label: '주변 확인', onClick: confirmLift })
+    if (stepId === 'off') {
+      for (const a of OFF_SUBSTEPS) {
+        if (a === 'liftUp' && run.offProgress.includes('motorOff') && !run.satisfiedSafety.includes('s-lift')) out.push({ key: 'lift-' + a, label: '주변 확인', onClick: confirmLift })
+        const isDone = run.offProgress.includes(a)
+        out.push({ key: a, label: OFF_LABEL[a] + (isDone ? ' ✓' : ''), onClick: () => doOffSub(a), disabled: isDone, cls: isDone ? 'done' : '' })
+      }
+    } else {
+      const far = needsMove(stepId)
+      out.push({ key: 'do', label: far ? '이동 필요' : '수행', onClick: () => doStep(stepId), cls: far ? 'far' : '' })
+    }
+    return out
+  }
+
+  const nextIdx = task.steps.findIndex((s) => s.stepId === run.nextStepId)
+  const nearKey = proximity ? proximity.nearIds.join(',') : ''
+  useEffect(() => {
+    if (!onContext) return
+    const g = run.difficultyMode === 'guided' && nextIdx >= 0
+    onContext({
+      guided: run.difficultyMode === 'guided',
+      next: g ? { num: nextIdx + 1, text: task.steps[nextIdx]!.instruction } : null,
+      nextActions: g ? actionsFor(task.steps[nextIdx]!.stepId).filter((a) => !a.disabled) : [],
+      shown, clearShown: () => setShown(null),
+      doneCount: run.completedSteps.length, total: task.steps.length,
+      hint, inspect,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [run, shown, nearKey, onContext])
+
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>
       <header className="topbar">
@@ -232,18 +282,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
                   <span className="text">{s.instruction}{s.requiredSafetyConditions.some((c) => c !== 's-ppe') && <em className="safe"> 안전</em>}</span>
                   {!isDone && (
                     <span className="btns">
-                      {(s.stepId === 'tire' || s.stepId === 'equip') && !run.satisfiedSafety.includes('s-engine') && <button onClick={confirmEngine}>시동 OFF 확인</button>}
-                      {s.stepId === 'lower' && !run.satisfiedSafety.includes('s-lift') && <button onClick={confirmLift}>주변 확인</button>}
-                      {s.stepId === 'off' ? (
-                        OFF_SUBSTEPS.map((a) => (
-                          <span key={a}>
-                            {a === 'liftUp' && run.offProgress.includes('motorOff') && !run.satisfiedSafety.includes('s-lift') && <button onClick={confirmLift}>주변 확인</button>}
-                            <button onClick={() => doOffSub(a)} disabled={run.offProgress.includes(a)} className={run.offProgress.includes(a) ? 'done' : ''}>{OFF_LABEL[a]}{run.offProgress.includes(a) ? ' ✓' : ''}</button>
-                          </span>
-                        ))
-                      ) : (
-                        <button onClick={() => doStep(s.stepId)} className={needsMove(s.stepId) ? 'far' : ''}>{needsMove(s.stepId) ? '이동 필요' : '수행'}</button>
-                      )}
+                      {actionsFor(s.stepId).map((a) => <button key={a.key} onClick={a.onClick} disabled={a.disabled} className={a.cls}>{a.label}</button>)}
                     </span>
                   )}
                   {isDone && <span className="ok">완료</span>}

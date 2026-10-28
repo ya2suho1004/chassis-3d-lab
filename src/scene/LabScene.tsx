@@ -13,6 +13,7 @@ import { epoxyFloorTexture } from './models/textures'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
 import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
+import type { MoveInput } from './Joystick'
 import { CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
@@ -34,6 +35,10 @@ export interface LabSceneProps {
   moveRequestRef: React.MutableRefObject<Pt | null>
   /** 제동력 시험기·시험 차량 연출 상태(brakeRig.ts) */
   rig: BrakeRigState
+  /** 조이스틱·키보드 이동 입력(게임 화면). 없으면 탭 이동만 */
+  joystickRef?: React.MutableRefObject<MoveInput>
+  /** NPC 대화 중: 카메라가 교관 상반신을 비추고 교관이 손짓한다 */
+  npcTalking?: boolean
   labelMode: LabelMode
 }
 
@@ -61,13 +66,14 @@ function Avatar({ pos, heading, moving, lowSpec }: { pos: Pt; heading: React.Mut
 const NPC_FACING: Record<string, number> = { west: headingFor(-1, 0), east: headingFor(1, 0), north: headingFor(0, -1), south: headingFor(0, 1) }
 
 /** NPC 교관: 서 있다가 가끔 설명 손짓(6초 서 있기 → 2초 손짓) */
-function Instructor({ facing, lowSpec }: { facing: number; lowSpec: boolean }) {
+function Instructor({ facing, lowSpec, talking = false }: { facing: number; lowSpec: boolean; talking?: boolean }) {
   const [action, setAction] = useState<CharacterAction>('Idle')
   const t = useRef(0)
   useFrame((_, dt) => {
     if (lowSpec) return
     t.current = (t.current + Math.min(dt, 0.1)) % 8
-    const next: CharacterAction = t.current > 6 ? 'Gesture' : 'Idle'
+    // 대화 중에는 손짓을 더 자주(2초 손짓 · 1초 쉼)
+    const next: CharacterAction = talking ? (t.current % 3 < 2 ? 'Gesture' : 'Idle') : t.current > 6 ? 'Gesture' : 'Idle'
     if (next !== action) setAction(next)
   })
   const code = <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
@@ -322,7 +328,36 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
   )
 }
 
-function Walker({ layout, start, onMove, requestRef, lowSpec }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean }) {
+/** NPC 대화 연출: 카메라를 교관 앞 대각선 위치로 부드럽게 옮겨 상반신을 비춘다. 대화가 끝나면 원래 자리로 돌아간다 */
+function NpcCamera({ npc, facing }: { npc: Pt; facing: number }) {
+  const { camera, controls } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: OrbitControlsImpl | null }
+  const saved = useRef<{ pos: THREE.Vector3; target: THREE.Vector3 } | null>(null)
+  const look = useRef(new THREE.Vector3())
+  useEffect(() => {
+    saved.current = { pos: camera.position.clone(), target: controls ? controls.target.clone() : new THREE.Vector3(npc.x, 1, npc.z) }
+    look.current.copy(saved.current.target)
+    return () => {
+      const s = saved.current
+      if (!s) return
+      camera.position.copy(s.pos)
+      if (controls) { controls.target.copy(s.target); controls.update() } else camera.lookAt(s.target)
+    }
+  }, [camera, controls, npc.x, npc.z])
+  useFrame((_, dt) => {
+    // 교관 얼굴 앞(바라보는 쪽) 1.45 m, 살짝 옆에서 가슴~얼굴 높이를 본다
+    const fx = -Math.sin(facing), fz = -Math.cos(facing)
+    const sx = -fz, sz = fx
+    const goal = new THREE.Vector3(npc.x + fx * 1.45 + sx * 0.35, 1.52, npc.z + fz * 1.45 + sz * 0.35)
+    const tgt = new THREE.Vector3(npc.x + sx * 0.12, 1.38, npc.z + sz * 0.12)
+    const k = prefersReducedMotion ? 1 : 1 - Math.exp(-4 * Math.min(dt, 0.1))
+    camera.position.lerp(goal, k)
+    look.current.lerp(tgt, k)
+    camera.lookAt(look.current)
+  })
+  return null
+}
+
+function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
   const posRef = useRef<Pt>(start)
@@ -345,7 +380,34 @@ function Walker({ layout, start, onMove, requestRef, lowSpec }: { layout: SceneL
       if (!path) onMove(posRef.current, false)
     }
     let moving = false
-    if (pathRef.current) {
+    // 조이스틱·키보드: 카메라가 보는 쪽 기준으로 걷는다. 막힌 칸이면 x·z 한쪽만 움직여 벽을 따라 미끄러진다
+    const j = joystickRef?.current
+    const mag = j && !frozen ? Math.hypot(j.x, j.y) : 0
+    if (j && mag > 0.15) {
+      pathRef.current = null
+      const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd)
+      const fl = Math.hypot(fwd.x, fwd.z) || 1
+      const fx = fwd.x / fl, fz = fwd.z / fl
+      const k = Math.min(1, mag), step = WALK_SPEED * k * Math.min(dt, 0.1)
+      const vx = ((-fz) * j.x + fx * -j.y) / mag, vz = (fx * j.x + fz * -j.y) / mag
+      const prev = posRef.current
+      const cands: Pt[] = [{ x: prev.x + vx * step, z: prev.z + vz * step }, { x: prev.x + vx * step, z: prev.z }, { x: prev.x, z: prev.z + vz * step }]
+      const nextPos = cands.find((c) => !grid.isBlocked(c.x, c.z))
+      heading.current = headingFor(vx, vz)
+      if (nextPos) {
+        posRef.current = nextPos
+        camera.position.x += nextPos.x - prev.x
+        camera.position.z += nextPos.z - prev.z
+        if (controls) { controls.target.set(nextPos.x, 1.0, nextPos.z); controls.update() }
+        setPos(nextPos)
+        moving = true
+        lastReport.current += dt
+        if (lastReport.current > 0.25) { lastReport.current = 0; onMove(nextPos, true) }
+      }
+    } else if (walkingRef.current && !pathRef.current) {
+      onMove(posRef.current, false)
+    }
+    if (pathRef.current && !frozen) {
       const r = advanceAlongPath(posRef.current, pathRef.current, idxRef.current, WALK_SPEED, Math.min(dt, 0.1))
       const prev = posRef.current
       posRef.current = r.pos
@@ -366,10 +428,11 @@ function Walker({ layout, start, onMove, requestRef, lowSpec }: { layout: SceneL
   })
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
-  return <Avatar pos={pos} heading={heading} moving={walking} lowSpec={lowSpec} />
+  // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼)
+  return <group visible={!frozen}><Avatar pos={pos} heading={heading} moving={walking} lowSpec={lowSpec} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -457,13 +520,14 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         showVehicleLabel={showsLabel(labelMode, { selected: selectedId === vehicle.id, highlight: highlightIds.includes(vehicle.id), interactive: vehicle.interactive })} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
-        <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} lowSpec={lowSpec} />
+        <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} lowSpec={lowSpec} talking={npcTalking} />
         <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} />
-      <OrbitControls makeDefault enablePan={false} minDistance={3} maxDistance={18} maxPolarAngle={Math.PI / 2.1} target={[start.x, 1, start.z]} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={npcTalking} />
+      {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
+      <OrbitControls makeDefault enabled={!npcTalking} enablePan={false} minDistance={3} maxDistance={18} maxPolarAngle={Math.PI / 2.1} target={[start.x, 1, start.z]} />
     </Canvas>
   )
 }
