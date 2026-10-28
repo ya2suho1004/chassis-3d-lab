@@ -13,6 +13,7 @@ import { epoxyFloorTexture } from './models/textures'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
 import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
+import { CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
 const WALK_SPEED = 1.6 // m/s
@@ -36,8 +37,41 @@ export interface LabSceneProps {
   labelMode: LabelMode
 }
 
-function Avatar({ pos }: { pos: Pt }) {
-  return <group position={[pos.x, 0, pos.z]}><Person suit="#2f5fb3" helmet="#ffd600" /></group>
+/** 학생 아바타: 품질 높음은 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎), 낮음은 코드 모델 */
+function Avatar({ pos, heading, moving, lowSpec }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; lowSpec: boolean }) {
+  const turn = useRef<THREE.Group>(null)
+  useFrame((_, dt) => {
+    const g = turn.current
+    if (!g) return
+    // 가장 짧은 쪽으로 부드럽게 돈다
+    let d = heading.current - g.rotation.y
+    d = Math.atan2(Math.sin(d), Math.cos(d))
+    g.rotation.y += d * (prefersReducedMotion ? 1 : 1 - Math.exp(-10 * Math.min(dt, 0.1)))
+  })
+  const code = <Person suit="#2f5fb3" helmet="#ffd600" />
+  return (
+    <group position={[pos.x, 0, pos.z]}>
+      <group ref={turn}>
+        {lowSpec ? code : <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : 'Idle'} outfit={STUDENT_OUTFIT} speed={WALK_SPEED / WALK_CYCLE_DISTANCE} /></Suspense>}
+      </group>
+    </group>
+  )
+}
+
+const NPC_FACING: Record<string, number> = { west: headingFor(-1, 0), east: headingFor(1, 0), north: headingFor(0, -1), south: headingFor(0, 1) }
+
+/** NPC 교관: 서 있다가 가끔 설명 손짓(6초 서 있기 → 2초 손짓) */
+function Instructor({ facing, lowSpec }: { facing: number; lowSpec: boolean }) {
+  const [action, setAction] = useState<CharacterAction>('Idle')
+  const t = useRef(0)
+  useFrame((_, dt) => {
+    if (lowSpec) return
+    t.current = (t.current + Math.min(dt, 0.1)) % 8
+    const next: CharacterAction = t.current > 6 ? 'Gesture' : 'Idle'
+    if (next !== action) setAction(next)
+  })
+  const code = <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
+  return <group rotation-y={facing}>{lowSpec ? code : <Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} /></Suspense>}</group>
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
@@ -288,13 +322,16 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
   )
 }
 
-function Walker({ layout, start, onMove, requestRef }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null> }) {
+function Walker({ layout, start, onMove, requestRef, lowSpec }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
   const posRef = useRef<Pt>(start)
   const pathRef = useRef<Pt[] | null>(null)
   const idxRef = useRef(0)
   const lastReport = useRef(0)
+  const heading = useRef(0)
+  const [walking, setWalking] = useState(false)
+  const walkingRef = useRef(false)
   const { camera, controls } = useThree() as unknown as { camera: THREE.Camera; controls: OrbitControlsImpl | null }
 
   useFrame((_, dt) => {
@@ -315,6 +352,8 @@ function Walker({ layout, start, onMove, requestRef }: { layout: SceneLayout; st
       idxRef.current = r.index
       moving = !r.done
       if (r.done) pathRef.current = null
+      const dx = r.pos.x - prev.x, dz = r.pos.z - prev.z
+      if (dx * dx + dz * dz > 1e-8) heading.current = headingFor(dx, dz)
       // 카메라가 아바타를 따라가도록 이동량만큼 함께 이동
       camera.position.x += r.pos.x - prev.x
       camera.position.z += r.pos.z - prev.z
@@ -323,10 +362,11 @@ function Walker({ layout, start, onMove, requestRef }: { layout: SceneLayout; st
       lastReport.current += dt
       if (!moving || lastReport.current > 0.25) { lastReport.current = 0; onMove(r.pos, moving) }
     }
+    if (moving !== walkingRef.current) { walkingRef.current = moving; setWalking(moving) }
   })
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
-  return <Avatar pos={pos} />
+  return <Avatar pos={pos} heading={heading} moving={walking} lowSpec={lowSpec} />
 }
 
 export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode }: LabSceneProps) {
@@ -417,12 +457,12 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         showVehicleLabel={showsLabel(labelMode, { selected: selectedId === vehicle.id, highlight: highlightIds.includes(vehicle.id), interactive: vehicle.interactive })} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
-        <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
+        <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} lowSpec={lowSpec} />
         <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} />
       <OrbitControls makeDefault enablePan={false} minDistance={3} maxDistance={18} maxPolarAngle={Math.PI / 2.1} target={[start.x, 1, start.z]} />
     </Canvas>
   )
