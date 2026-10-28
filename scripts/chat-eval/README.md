@@ -25,3 +25,4 @@
 - `mask.mjs` 전화번호·이메일·주민번호 형식 가림
 - `providers.mjs` 모델 교체 지점(gemini 시험 대상, anthropic 미검증, openai 미구현)
 - `questions.mjs` 합성 질문 5개와 기대 동작
+- `build-doc.mjs` 교사 검토 문서 `docs/06_챗봇_시스템프롬프트_초안.md` 생성

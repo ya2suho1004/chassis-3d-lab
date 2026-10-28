@@ -22,7 +22,7 @@ for (const q of QUESTIONS) {
   await new Promise((r) => setTimeout(r, 4000)) // 무료 등급 분당 한도 보호
 }
 const date = new Date().toISOString().slice(0, 10)
-const out = new URL(`../../docs/chat-eval/${date}_${provider}_${model}.md`, import.meta.url)
+const out = new URL(`../../docs/chat-eval/${date}_${provider}_${model}_${PROMPT_VERSION}.md`, import.meta.url)
 const md = [`# 챗봇 비교 시험 — ${provider} / ${model}`, '',
   `- 실행: ${new Date().toISOString()} · 프롬프트 ${PROMPT_VERSION} · 합성 질문 ${QUESTIONS.length}개 · 실제 학생 자료 없음`,
   provider === 'gemini' ? '- Gemini 무료 API: 성인 한정 개발·시연 시험. 무료 등급 입력은 구글이 학습·검토에 쓸 수 있음.' : '', '',
