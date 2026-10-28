@@ -8,10 +8,11 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { footprintOf, showsLabel, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
 import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
-import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, ScissorLift, StaticCar, Stand, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
+import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, StaticCar, Stand, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
 import { epoxyFloorTexture } from './models/textures'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
+import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
 const WALK_SPEED = 1.6 // m/s
 const TAP_MAX_PX = 6
@@ -22,6 +23,8 @@ export interface LabSceneProps {
   selectedId: string | null
   highlightIds: string[]
   lowSpec: boolean
+  /** 올려 둔 리프트 ID(표시 전용, 과제 기록과 무관) */
+  raisedLiftIds?: string[]
   onSelectEquipment: (id: string | null) => void
   onNpcTap: () => void
   onMove: (pos: Pt, moving: boolean) => void
@@ -37,12 +40,12 @@ function Avatar({ pos }: { pos: Pt }) {
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
-function EquipmentModel({ e, m, facing }: { e: SceneEquipment; m: Mats; facing: number | null }) {
+function EquipmentModel({ e, m, facing, lowSpec, raised }: { e: SceneEquipment; m: Mats; facing: number | null; lowSpec: boolean; raised: boolean }) {
   const id = e.id
   switch (e.kind) {
     case 'panel': return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}><AbsPanel w={e.w} d={e.d} h={e.h} m={m} /></group>
     case 'desk': return <Desk w={e.w} d={e.d} h={e.h} m={m} />
-    case 'lift': return <ScissorLift w={e.w} d={e.d} h={e.h} m={m} />
+    case 'lift': return <LiftRig e={e} m={m} lowSpec={lowSpec} raised={raised} car={LIFT_CARS[id] ?? null} />
     case 'vehicle': return <StaticCar w={e.w} d={e.d} h={e.h} m={m} />
     case 'stand': return <Stand w={e.w} d={e.d} h={e.h} m={m} kind={id.includes('shock') ? 'shock' : 'generic'} />
     case 'bench':
@@ -55,13 +58,13 @@ function EquipmentModel({ e, m, facing }: { e: SceneEquipment; m: Mats; facing: 
   }
 }
 
-function Equipment({ e, m, facing, selected, highlight, showLabel, onTap }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; showLabel: boolean; onTap: () => void }) {
+function Equipment({ e, m, facing, selected, highlight, showLabel, onTap, lowSpec, raised }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; showLabel: boolean; onTap: () => void; lowSpec: boolean; raised: boolean }) {
   const f = footprintOf(e)
   const w = f.xMax - f.xMin
   const d = f.zMax - f.zMin
   return (
     <group position={[e.x, 0, e.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTap() } }}>
-      <EquipmentModel e={e} m={m} facing={facing} />
+      <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} />
       {(selected || highlight) && <FootprintFrame w={w} d={d} color={selected ? '#ff9800' : '#2d6cdf'} />}
       {showLabel && (
         <Html position={[0, e.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
@@ -90,6 +93,82 @@ const ROLLER_SPIN = 14 // rad/s
 export const TESTER_PLATE_H = 0.05
 const ROLLER_DZ = 0.28 // 바퀴 하나를 받치는 앞뒤 롤러 간격의 절반(가정)
 const ROLLER_Y = WHEEL_R - Math.sqrt((WHEEL_R + ROLLER_R) ** 2 - ROLLER_DZ ** 2) // 바퀴가 두 롤러에 걸리는 높이
+
+/** 리프트 위에 올려 둔 차량(사진 8: 가운데 리프트 위 1세대 아반떼). 위치·방향은 가정 */
+const LIFT_CARS: Record<string, 'avante'> = { 'lift-zone-01/b': 'avante' }
+const LIFT_SPEED = 0.9 // 오르내림 빠르기(지수 접근 계수)
+
+/** 가위형 리프트: 발판이 오르내리고 가위 다리가 따라 펴진다(표시 전용). 품질 높음은 블렌더 모델, 낮음은 코드 모델 */
+function LiftRig({ e, m, lowSpec, raised, car }: { e: SceneEquipment; m: Mats; lowSpec: boolean; raised: boolean; car: 'avante' | null }) {
+  const useModel = !lowSpec && fitsScissorLift(e)
+  const rest = e.h
+  const up = useModel ? SCISSOR.raisedTop : rest + 1.2
+  const parts = useRef<ScissorParts | null>(null)
+  const onParts = useCallback((p: ScissorParts) => { parts.current = p }, [])
+  const runwayRefs = useRef<Array<THREE.Object3D | null>>([])
+  const legRefs = useRef<Array<THREE.Object3D | null>>([])
+  const carRef = useRef<THREE.Group>(null)
+  const top = useRef(raised ? up : rest)
+  const runW = Math.min(0.62, e.w * 0.3)
+  const px = e.w / 2 - runW / 2
+  const half = e.d * 0.5
+  // 코드 발판은 두께 0.08 상자의 가운데가 높이 top이라 윗면이 0.04 높다
+  const carLift = useModel ? 0 : 0.04
+
+  useFrame((_, dt) => {
+    const t = approach(top.current, raised ? up : rest, LIFT_SPEED, dt)
+    top.current = t
+    const p = parts.current
+    if (useModel && p) {
+      const { phi, armTopY } = scissorPose(t)
+      for (const r of p.runways) r.position.y = t
+      for (const a of p.armBase) a.rotation.x = phi
+      for (const a of p.armTop) { a.position.y = armTopY; a.rotation.x = -phi }
+    }
+    for (const r of runwayRefs.current) if (r) r.position.y = t
+    legRefs.current.forEach((l, i) => {
+      if (!l) return
+      const s = i % 2 === 0 ? 1 : -1
+      l.position.y = t / 2
+      l.rotation.x = s * Math.atan2(t, half)
+      l.scale.z = Math.hypot(t, half)
+    })
+    if (carRef.current) carRef.current.position.y = t + carLift
+  })
+
+  const codeLift = (
+    <group>
+      {[-px, px].map((x, k) => (
+        <group key={x} position={[x, 0, 0]}>
+          <mesh ref={(o) => { runwayRefs.current[k] = o }} material={m.blueChecker} position={[0, top.current, 0]} castShadow receiveShadow><boxGeometry args={[runW, 0.08, e.d * 0.78]} /></mesh>
+          {[-1, 1].map((s) => (
+            <mesh key={s} material={m.blueChecker} position={[0, rest / 2, s * (e.d * 0.39 + e.d * 0.06)]} rotation-x={s * Math.atan2(rest, e.d * 0.12)} castShadow>
+              <boxGeometry args={[runW, 0.04, Math.hypot(rest, e.d * 0.12)]} />
+            </mesh>
+          ))}
+          {[0, 1].map((j) => (
+            <mesh key={j} ref={(o) => { legRefs.current[k * 2 + j] = o }} material={m.blue} position={[0, top.current / 2, 0]}
+              rotation-x={(j === 0 ? 1 : -1) * Math.atan2(top.current, half)} scale={[1, 1, Math.hypot(top.current, half)]} castShadow>
+              <boxGeometry args={[0.08, 0.08, 1]} />
+            </mesh>
+          ))}
+          <mesh material={m.blue} position={[0, 0.02, 0]}><boxGeometry args={[runW * 0.7, 0.04, e.d * 0.55]} /></mesh>
+        </group>
+      ))}
+    </group>
+  )
+  const codeCar = <StaticCar w={AVANTE_SPEC.w} d={AVANTE_SPEC.d} h={AVANTE_SPEC.h} m={m} />
+  return (
+    <>
+      {useModel ? <Suspense fallback={codeLift}><ScissorLiftModel onParts={onParts} /></Suspense> : codeLift}
+      {car && (
+        <group ref={carRef} position={[0, top.current + carLift, 0]}>
+          {useModel ? <Suspense fallback={codeCar}><AvanteModel /></Suspense> : codeCar}
+        </group>
+      )}
+    </>
+  )
+}
 
 /** 제동력 시험기 연출: 롤러 4개·리프트 판·시험 차량(진입/이탈·들림·뒷바퀴 회전). 단계 판정과 무관한 표시 전용 */
 function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehicleLabel, onTapVehicle, lowSpec }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; m: Mats; selected: boolean; testerHighlight: boolean; showVehicleLabel: boolean; onTapVehicle: () => void; lowSpec: boolean }) {
@@ -245,7 +324,7 @@ function Walker({ layout, start, onMove, requestRef }: { layout: SceneLayout; st
   return <Avatar pos={pos} />
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -317,7 +396,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onS
       })}
       {layout.pillars.map((p) => <group key={p.id} position={[p.x, 0, p.z]}><Pillar size={p.size} m={m} /></group>)}
       {layout.equipment.filter((e) => !(vehicle && tester && (e.id === vehicle.id || e.id === tester.id))).map((e) => (
-        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
+        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
           showLabel={showsLabel(labelMode, { selected: selectedId === e.id, highlight: highlightIds.includes(e.id), interactive: e.interactive })} onTap={() => onSelectEquipment(e.id)} />
       ))}
       {tester && (

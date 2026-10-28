@@ -186,33 +186,7 @@ export function AbsPanel({ w, d, h, m }: { w: number; d: number; h: number; m: M
   )
 }
 
-// ---------- 가위형 리프트(파란색, 발판·경사로, 사진 3) ----------
-export function ScissorLift({ w, d, h, m }: { w: number; d: number; h: number; m: Mats }) {
-  const runW = Math.min(0.62, w * 0.3)
-  const x = w / 2 - runW / 2
-  return (
-    <group>
-      {[-x, x].map((px) => (
-        <group key={px} position={[px, 0, 0]}>
-          <mesh material={m.blueChecker} position={[0, h, 0]} castShadow receiveShadow><boxGeometry args={[runW, 0.08, d * 0.78]} /></mesh>
-          {/* 경사로 앞뒤 */}
-          {[-1, 1].map((s) => (
-            <mesh key={s} material={m.blueChecker} position={[0, h / 2, s * (d * 0.39 + d * 0.06)]} rotation-x={s * Math.atan2(h, d * 0.12)} castShadow>
-              <boxGeometry args={[runW, 0.04, Math.hypot(h, d * 0.12)]} />
-            </mesh>
-          ))}
-          {/* 가위 다리(X) */}
-          {[-1, 1].map((s) => (
-            <mesh key={s} material={m.blue} position={[0, h / 2, 0]} rotation-x={s * Math.atan2(h, d * 0.5)} castShadow><boxGeometry args={[0.08, 0.08, Math.hypot(h, d * 0.5)]} /></mesh>
-          ))}
-          <mesh material={m.blue} position={[0, 0.02, 0]}><boxGeometry args={[runW * 0.7, 0.04, d * 0.55]} /></mesh>
-        </group>
-      ))}
-      {/* 유압 실린더 */}
-      <mesh material={m.greyMetal} position={[0, h * 0.45, 0]} rotation-x={Math.PI / 2.6}><cylinderGeometry args={[0.05, 0.05, h * 1.1, 12]} /></mesh>
-    </group>
-  )
-}
+// 가위형 리프트(사진 3)는 LabScene.tsx LiftRig에서 오르내림과 함께 그린다(블렌더 모델 + 코드 대체 모델).
 
 // ---------- 작업대·기계·스탠드·책상 ----------
 export function Workbench({ w, d, h, m, load }: { w: number; d: number; h: number; m: Mats; load?: 'transmission' | 'parts' | null }) {

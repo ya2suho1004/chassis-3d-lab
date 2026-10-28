@@ -40,6 +40,9 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const [pos, setPos] = useState<Pt>(layout.studentStart)
   const [moving, setMoving] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  /** 올려 둔 리프트(보기 전용 — 과제 기록·판정과 무관) */
+  const [raisedLifts, setRaisedLifts] = useState<string[]>([])
+  const toggleLift = (id: string) => setRaisedLifts((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]))
   const [codex, setCodex] = useState<string[]>([])
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
@@ -90,7 +93,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
       <div className={`labgrid ${run || reviewOpen ? 'withtask' : ''} ${reviewOpen ? 'reviewing' : ''} ${displayMode === 'diagram' ? 'diagram' : ''}`}>
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
-            <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec}
+            <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
               onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
             <div className="quicknav">
               <button onClick={() => goTo({ x: layout.npc.x - 1.0, z: layout.npc.z })}>교관에게 가기</button>
@@ -114,6 +117,12 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               <p>{selected.info}</p>
               <p className="small">참고 사진 {selected.photos.join('·') || '없음'} · 도감 {codex.includes(selected.id) ? '등록됨' : ''}</p>
               {selected.interactive && <p className="small">작동 과제 장비. 접근점에 서면 과제 패널의 해당 단계를 수행할 수 있습니다.</p>}
+              {selected.kind === 'lift' && (
+                <p>
+                  <button onClick={() => toggleLift(selected.id)}>{raisedLifts.includes(selected.id) ? '리프트 내리기' : '리프트 올리기'}</button>{' '}
+                  <span className="small">보기 전용(과제 기록에 남지 않음). 실제로는 올리기 전 주변을 확인하고, 올린 뒤 안전 고리를 겁니다.</span>
+                </p>
+              )}
               <button className="link" onClick={() => setSelectedId(null)}>닫기</button>
             </div>
           )}

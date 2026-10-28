@@ -2,6 +2,9 @@
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/blender/build_test_car.py -- <출력.glb> [미리보기.png] [HDRI]
 # 치수는 배치 데이터(brake-vehicle-01: 폭 1.6 · 길이 3.6 · 높이 1.5)와 장면 코드(바퀴 반지름 0.3, 축간 2.4, 바퀴 중심 x=±0.7)에 맞춘다.
 # 이 치수는 국산 경차(길이 약 3.6 m, 축간 2.4 m) 비례와 같아, 실습장 사진(27·28)의 흰색 경형 해치백 모양을 따랐다.
+# 앞모습·옆 장식은 사용자가 준 기아 모닝(3세대) 사진을 따랐다: 넓은 벌집 그릴, 쓸려 올라간 전조등(둥근 프로젝터·LED 띠),
+# 큰 검정 아래 흡입구와 둥근 안개등, 바깥 아래 모서리의 노란 C자 장식, 검정 A·B 기둥, 사이드 스커트의 노란 줄, 크롬 손잡이.
+# 노란 장식은 재질 하나(Accent)로 모아 색을 바꾸기 쉽게 했다.
 # 상표·로고·번호 글자는 넣지 않는다. 실측값이 바뀌면 아래 숫자만 바꿔 다시 만든다.
 # Blender 좌표: X 오른쪽, Y 앞(+Y가 차 앞), Z 위. glTF 내보내기에서 Y-up으로 바뀌어 차 앞은 -z가 된다(앱의 코드 차량과 같음).
 # 노드: TestCar(뿌리, 바닥 가운데) > Body(돌지 않는 부분 전부), Wheel_FL/FR/RL/RR(바퀴 중심, 지역 X축으로 돈다).
@@ -46,7 +49,7 @@ M = {
     'Glass': material('Glass', '#10161b', metal=0.3, rough=0.06),
     'Trim': material('Trim', '#1c1d1f', rough=0.55),
     'WellBlack': material('WellBlack', '#0b0b0b', rough=0.95),
-    'HeadLight': material('HeadLight', '#dde3e7', metal=0.7, rough=0.12, emit='#2c3238'),
+    'HeadLight': material('HeadLight', '#8f989f', metal=0.85, rough=0.1, emit='#1c2228'),
     'TailLight': material('TailLight', '#a8121c', rough=0.22, emit='#3d0005'),
     'Plate': material('Plate', '#f3f3f3', rough=0.5),
     'Tire': material('Tire', '#151515', rough=0.9),
@@ -54,6 +57,12 @@ M = {
     'Disc': material('Disc', '#76787b', metal=0.9, rough=0.5),
     'Caliper': material('Caliper', '#b71c1c', rough=0.45),
     'Chrome': material('Chrome', '#d3d7db', metal=1.0, rough=0.12),
+    'Accent': material('Accent', '#d6df1f', rough=0.35, coat=0.6),
+    'LowerGrey': material('LowerGrey', '#34373b', rough=0.6),
+    'Honeycomb': material('Honeycomb', '#26282b', metal=0.2, rough=0.45),
+    'DRL': material('DRL', '#f4f8ff', rough=0.2, emit='#cfe3ff', emit_strength=1.5),
+    'Signal': material('Signal', '#ffb02e', rough=0.25, emit='#5a2a00'),
+    'RimDark': material('RimDark', '#4a4e53', metal=0.8, rough=0.4),
 }
 
 # ---------------- 옆모습·단면 곡선 ----------------
@@ -76,8 +85,9 @@ def pchip(keys):
     return f
 
 # 지붕선(뒤 → 앞): 거의 선 뒤 해치 · 지붕 · 많이 누운 앞 유리 · 짧은 보닛 · 앞코
-ZTOP = pchip([(-1.80, 1.00), (-1.74, 1.18), (-1.58, 1.40), (-1.40, 1.465), (-0.60, 1.485), (0.10, 1.45), (0.55, 1.17), (0.98, 0.925), (1.30, 0.855), (1.62, 0.775), (1.80, 0.66)])
-BELT = pchip([(-1.80, 0.93), (-1.50, 1.02), (0.98, 0.93), (1.80, 0.66)])  # 창 아래 허리선(뒤로 갈수록 올라감)
+# 모닝 JA 비례: 지붕 꼭대기는 B 기둥 근처(1.485)만, 뒤로 내려가고 해치는 많이 눕고, 앞 유리 하단은 앞으로(카울 y≈1.08), 보닛은 짧고 낮게
+ZTOP = pchip([(-1.80, 0.97), (-1.76, 1.08), (-1.64, 1.25), (-1.48, 1.355), (-1.15, 1.43), (-0.45, 1.485), (0.05, 1.462), (0.35, 1.34), (0.70, 1.13), (1.08, 0.905), (1.35, 0.845), (1.62, 0.77), (1.80, 0.66)])
+BELT = pchip([(-1.80, 0.99), (-1.55, 1.07), (-1.20, 1.06), (0.0, 1.0), (0.90, 0.955), (1.80, 0.66)])  # 창 아래 허리선(앞 0.95 → 뒤 1.05)
 ZLOW = pchip([(-1.80, 0.36), (-1.62, 0.21), (-1.40, 0.17), (1.45, 0.17), (1.66, 0.22), (1.80, 0.30)])  # 차체 바닥
 
 def smooth01(t): t = max(0.0, min(1.0, t)); return t * t * (3 - 2 * t)
@@ -173,17 +183,18 @@ def classify(seg, c, normal):
     if seg == LOWER:
         return T if normal.z < -0.7 else P  # 바닥 아래는 검게
     if seg in (GH0, GH):
-        if y > 0.82 or y < -1.54: return P   # 거울 아래 삼각 부분·보닛 어깨 · C 기둥
-        if seg == GH0: return T              # 창 아래 고무 몰딩
+        if y > 0.92: return P                # 거울 아래 삼각 부분·보닛 어깨
+        if seg == GH0: return P              # 창 아래는 차체색(검정 몰딩 없음)
         if -0.50 <= y <= -0.42: return T     # B 기둥(검정)
-        if -1.34 <= y <= -1.30: return T     # 뒷문 유리와 쪽유리 사이 칸막이
-        return G                             # 앞·뒷문 유리, 뒤 쪽유리
-    if seg == CORNER:
-        return P
+        if -1.36 <= y <= -1.33: return T     # 뒷문 유리와 삼각 쪽유리 사이 칸막이(얇게)
+        if y < -1.33: return P               # 굵은 차체색 D 기둥(삼각 쪽유리는 아래에서 따로 붙인다)
+        return G                             # 앞·뒷문 유리
+    if seg == CORNER:  # 지붕 옆 모서리: A 기둥 옆면만 얇게 검정, 나머지 차체색
+        return T if (0.10 < y <= 1.06 and abs(normal.x) > 0.8) else P
     # ROOF
-    if 0.96 < y <= 1.04: return T            # 앞 유리 아래 카울
-    if 0.12 < y <= 0.96: return G            # 앞 유리
-    if -1.72 < y <= -1.44: return G          # 뒤 해치 유리
+    if 1.06 < y <= 1.12: return T            # 앞 유리 아래 카울
+    if 0.10 < y <= 1.06: return G            # 앞 유리
+    if -1.70 < y <= -1.40: return G          # 뒤 해치 유리(많이 누움)
     return P
 
 me = shell.data
@@ -258,7 +269,11 @@ def decal(name, mat, plane, sign, outline, max_edge=0.03, offset=0.004):
     sw.use_negative_direction = sign > 0; sw.use_positive_direction = sign < 0
     sw.offset = offset
     apply_mod(ob, sw)
-    bm = bmesh.new(); bm.from_mesh(m); bm.normal_update()
+    bm = bmesh.new(); bm.from_mesh(m)
+    # 차체에 닿지 못한 점(투영 실패)은 멀리 남으므로 그 면을 지운다(가시 같은 조각 방지)
+    lost = [v for v in bm.verts if abs(v.co.y if plane == 'Y' else v.co.x) > 2.5]
+    if lost: bmesh.ops.delete(bm, geom=lost, context='VERTS')
+    bm.normal_update()
     want = Vector((0, sign, 0)) if plane == 'Y' else Vector((sign, 0, 0))
     if sum(f.normal.dot(want) for f in bm.faces) < 0: bmesh.ops.reverse_faces(bm, faces=bm.faces)
     bm.to_mesh(m); bm.free(); m.shade_smooth()
@@ -291,31 +306,61 @@ def pair(name, mat, plane, sign, outline_r, **kw):  # 좌우 대칭 한 쌍(앞�
 def sides(name, mat, outline, **kw):  # 양쪽 옆면
     for s in (1, -1): add(decal(f'{name}_{"R" if s > 0 else "L"}', mat, 'X', s, outline, **kw))
 
-# 앞: 옆으로 쓸려 올라가는 전조등, 가운데 작은 그릴, 아래 공기 흡입구, 번호판, 안개등
-HEAD = [(0.30, 0.585), (0.50, 0.595), (0.66, 0.625), (0.745, 0.665), (0.765, 0.70), (0.73, 0.725), (0.60, 0.70), (0.42, 0.665), (0.31, 0.64), (0.29, 0.61)]
-pair('HeadLight', 'HeadLight', 'Y', 1, HEAD, max_edge=0.02)
-pair('HeadLightInner', 'Trim', 'Y', 1, [(0.36, 0.605), (0.47, 0.612), (0.47, 0.645), (0.36, 0.635)], max_edge=0.02, offset=0.006)
-add(decal('UpperGrille', 'Trim', 'Y', 1, [(-0.26, 0.585), (0.26, 0.585), (0.28, 0.62), (0.25, 0.645), (-0.25, 0.645), (-0.28, 0.62)], max_edge=0.02))
-INTAKE = [(-0.30, 0.34), (0.30, 0.34), (0.36, 0.36), (0.42, 0.50), (0.40, 0.53), (-0.40, 0.53), (-0.42, 0.50), (-0.36, 0.36)]
+# 앞(모닝 사진): 쓸려 올라간 전조등, 넓은 벌집 그릴, 큰 검정 아래 흡입구·안개등, 바깥 모서리 노란 C자 장식, 짙은 회색 아래 립
+HEAD = [(0.345, 0.625), (0.45, 0.605), (0.58, 0.605), (0.68, 0.628), (0.745, 0.67), (0.768, 0.72), (0.745, 0.752), (0.64, 0.742), (0.50, 0.715), (0.39, 0.68), (0.35, 0.655)]
+cx_, cz_ = sum(p[0] for p in HEAD) / len(HEAD), sum(p[1] for p in HEAD) / len(HEAD)
+pair('HeadBezel', 'Trim', 'Y', 1, [(cx_ + (u - cx_) * 1.07, cz_ + (v - cz_) * 1.12) for u, v in HEAD], max_edge=0.02)
+pair('HeadLight', 'HeadLight', 'Y', 1, HEAD, max_edge=0.02, offset=0.006)
+pair('HeadProjRing', 'Trim', 'Y', 1, circle(0.585, 0.668, 0.042, 24), max_edge=0.012, offset=0.008)
+pair('HeadProj', 'Chrome', 'Y', 1, circle(0.585, 0.668, 0.030, 24), max_edge=0.01, offset=0.010)
+pair('HeadDRL', 'DRL', 'Y', 1, strip([(0.38, 0.628), (0.50, 0.618), (0.64, 0.626), (0.73, 0.668)], 0.010), max_edge=0.015, offset=0.009)
+GRILLE = [(0.34, 0.585), (0.10, 0.570), (0.0, 0.556), (-0.10, 0.570), (-0.34, 0.585), (-0.355, 0.625), (-0.335, 0.662),
+          (-0.10, 0.660), (0.0, 0.648), (0.10, 0.660), (0.335, 0.662), (0.355, 0.625)]
+add(decal('UpperGrille', 'Honeycomb', 'Y', 1, GRILLE, max_edge=0.02))
+add(decal('GrilleChrome', 'Chrome', 'Y', 1, strip([(-0.34, 0.581), (-0.10, 0.566), (0.0, 0.552), (0.10, 0.566), (0.34, 0.581)], 0.008), max_edge=0.02, offset=0.006))
+for row, zc in enumerate((0.588, 0.606, 0.624, 0.642)):  # 벌집 칸(노란 삽입물)
+    k = 0
+    while True:
+        xc = -0.30 + (0.021 if row % 2 else 0) + 0.042 * k
+        if xc > 0.31: break
+        k += 1
+        dip = 0.013 * max(0.0, 1 - abs(xc) / 0.10)
+        if row == 0 and abs(xc) > 0.30: continue
+        add(decal('GrilleCell', 'Accent', 'Y', 1, rect(xc - 0.012, xc + 0.012, zc - dip - 0.0055, zc - dip + 0.0055), max_edge=0.02, offset=0.006))
+INTAKE = [(-0.30, 0.535), (0.30, 0.535), (0.36, 0.52), (0.40, 0.49), (0.46, 0.35), (0.44, 0.325), (-0.44, 0.325), (-0.46, 0.35), (-0.40, 0.49), (-0.36, 0.52)]
 add(decal('LowerIntake', 'Trim', 'Y', 1, INTAKE, max_edge=0.03))
-add(decal('FrontPlate', 'Plate', 'Y', 1, rect(-0.26, 0.26, 0.405, 0.515, 0.01), max_edge=0.03, offset=0.009))
-pair('FogSurround', 'Trim', 'Y', 1, circle(0.57, 0.42, 0.06), max_edge=0.02)
-pair('FogLamp', 'HeadLight', 'Y', 1, circle(0.57, 0.42, 0.04), max_edge=0.015, offset=0.007)
-# 뒤: 모서리에 세로로 선 후미등, 가운데 장식띠, 번호판, 범퍼 띠, 반사기
-TAIL = [(0.53, 0.80), (0.74, 0.80), (0.765, 0.86), (0.75, 1.03), (0.62, 1.04), (0.55, 0.97), (0.525, 0.88)]
+add(decal('IntakeBar', 'Honeycomb', 'Y', 1, rect(-0.36, 0.36, 0.392, 0.408), max_edge=0.03, offset=0.006))
+for z in (0.352, 0.372):
+    add(decal('IntakeSlat', 'Honeycomb', 'Y', 1, rect(-0.30, 0.30, z - 0.004, z + 0.004), max_edge=0.03, offset=0.006))
+add(decal('FrontPlate', 'Plate', 'Y', 1, rect(-0.20, 0.20, 0.425, 0.512, 0.01), max_edge=0.03, offset=0.010))
+pair('FogRing', 'Chrome', 'Y', 1, circle(0.395, 0.370, 0.034, 24), max_edge=0.012, offset=0.007)
+pair('FogLamp', 'HeadLight', 'Y', 1, circle(0.395, 0.370, 0.025, 24), max_edge=0.01, offset=0.009)
+pair('CornerVent', 'Trim', 'Y', 1, rect(0.565, 0.69, 0.365, 0.50, 0.012), max_edge=0.02)
+pair('CornerAccent', 'Accent', 'Y', 1, strip([(0.70, 0.515), (0.57, 0.515), (0.548, 0.495), (0.548, 0.37), (0.57, 0.35), (0.70, 0.35)], 0.020), max_edge=0.015, offset=0.006)
+add(decal('LowerLip', 'LowerGrey', 'Y', 1, [(-0.50, 0.305), (0.50, 0.305), (0.52, 0.29), (0.49, 0.258), (-0.49, 0.258), (-0.52, 0.29)], max_edge=0.03))
+# 뒤(모닝 JA): 해치 옆 모서리에 세로로 긴 후미등(옆면까지 감쌈), 얇은 크롬 장식띠, 번호판, 검정 디퓨저와 반사기
+TAIL = [(0.585, 0.80), (0.70, 0.78), (0.735, 0.82), (0.742, 0.95), (0.732, 1.075), (0.70, 1.112), (0.64, 1.10), (0.605, 1.02), (0.588, 0.90)]
 pair('TailLight', 'TailLight', 'Y', -1, TAIL, max_edge=0.02)
-add(decal('RearGarnish', 'Trim', 'Y', -1, rect(-0.42, 0.42, 0.845, 0.895, 0.015), max_edge=0.03))
+pair('TailInner', 'Trim', 'Y', -1, [(0.625, 0.93), (0.70, 0.925), (0.705, 0.955), (0.63, 0.96)], max_edge=0.015, offset=0.006)
+sides('TailWrap', 'TailLight', [(-1.725, 0.82), (-1.69, 0.84), (-1.655, 0.93), (-1.66, 1.03), (-1.70, 1.075), (-1.725, 1.08)], max_edge=0.02)
+add(decal('RearGarnish', 'Chrome', 'Y', -1, rect(-0.50, 0.50, 0.893, 0.908, 0.006), max_edge=0.03))
 add(decal('RearPlate', 'Plate', 'Y', -1, rect(-0.26, 0.26, 0.52, 0.63, 0.01), max_edge=0.03, offset=0.006))
-add(decal('RearBumperBand', 'Trim', 'Y', -1, rect(-0.66, 0.66, 0.38, 0.43, 0.02), max_edge=0.04))
-pair('Reflector', 'TailLight', 'Y', -1, rect(0.56, 0.68, 0.455, 0.48, 0.008), max_edge=0.02, offset=0.006)
+add(decal('RearDiffuser', 'Trim', 'Y', -1, [(-0.60, 0.405), (0.60, 0.405), (0.62, 0.38), (0.60, 0.25), (-0.60, 0.25), (-0.62, 0.38)], max_edge=0.03))
+for xf in (-0.24, -0.08, 0.08, 0.24):
+    add(decal('DiffuserFin', 'LowerGrey', 'Y', -1, rect(xf - 0.012, xf + 0.012, 0.255, 0.33), max_edge=0.02, offset=0.006))
+pair('Reflector', 'TailLight', 'Y', -1, rect(0.44, 0.56, 0.355, 0.375, 0.006), max_edge=0.02, offset=0.006)
 # 옆: 아래 몰딩, 문 틈(앞문 앞·가운데·뒷문 뒤에서 바퀴집 따라 내려감), 문 아래 틈
 sides('SideSkirt', 'Trim', rect(-0.80, 0.80, 0.19, 0.27, 0.02), max_edge=0.05)
+sides('SkirtStripe', 'Accent', rect(-0.74, 0.76, 0.246, 0.258, 0.005), max_edge=0.05, offset=0.006)
 SEAM = 0.007
-rear_door = [(-1.30, 0.975), (-1.30, 0.78)] + [(-1.2 + 0.44 * math.cos(math.radians(a)), 0.3 + 0.44 * math.sin(math.radians(a))) for a in range(103, -10, -12)]
-for path in ([(0.80, 0.28), (0.80, 0.92)], [(-0.44, 0.28), (-0.44, 0.985)], [(-0.80, 0.285), (0.80, 0.285)]):
+rear_door = [(-1.30, zbelt(-1.30)), (-1.30, 0.78)] + [(-1.2 + 0.44 * math.cos(math.radians(a)), 0.3 + 0.44 * math.sin(math.radians(a))) for a in range(103, -10, -12)]
+for path in ([(0.86, 0.28), (0.86, zbelt(0.86))], [(-0.44, 0.28), (-0.44, zbelt(-0.44))], [(-0.80, 0.285), (0.86, 0.285)]):
     sides('DoorSeam', 'Trim', strip(path, SEAM), max_edge=0.03, offset=0.003)
 for a, b in zip(rear_door, rear_door[1:]):
     sides('DoorSeam', 'Trim', strip([a, b], SEAM), max_edge=0.03, offset=0.003)
+# 삼각 쪽유리(뒷문 유리 뒤, 모닝 JA): 앞 세로변 · 위는 좁고 아래가 뒤로 넓다 → 뒤가 굵은 차체색 D 기둥
+QG = [(-1.36, zbelt(-1.36) + 0.012), (-1.36, ZTOP(-1.36) - 0.085), (-1.43, ZTOP(-1.43) - 0.10), (-1.58, zbelt(-1.58) + 0.012)]
+sides('QuarterGlass', 'Glass', QG, max_edge=0.02, offset=0.003)
 # 주유구(오른쪽 뒤): 둥근 사각 테두리 틈
 fuel = rect(-1.62, -1.49, 0.80, 0.90, 0.02, 3)
 for a, b in zip(fuel, fuel[1:] + fuel[:1]):
@@ -337,29 +382,30 @@ def box(name, mat, size, loc, rot=(0, 0, 0), bevel=0.0):
 
 # 문 손잡이(각 문 뒤쪽)
 for s in (1, -1):
-    for y, z in ((-0.22, 0.885), (-1.10, 0.905)):
+    for y, z in ((-0.22, zbelt(-0.22) - 0.09), (-1.10, zbelt(-1.10) - 0.09)):
         p = surface_x(y, z, s)
-        box('Handle', 'Paint', (0.022, 0.15, 0.032), (p.x + s * 0.010, y, z), bevel=0.008)
+        box('Handle', 'Chrome', (0.022, 0.15, 0.032), (p.x + s * 0.010, y, z), bevel=0.008)
 # 옆 거울(앞문 앞 모서리)
 for s in (1, -1):
-    my, mz = 0.88, 0.975
+    my = 0.90; mz = zbelt(my) + 0.05
     p = surface_x(my, mz, s)
     box('MirrorArm', 'Trim', (0.08, 0.06, 0.035), (p.x + s * 0.03, my, mz), bevel=0.008)
     bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=1, location=(p.x + s * 0.12, my - 0.01, mz + 0.03))
     mh = bpy.context.active_object; mh.name = 'MirrorHousing'; mh.scale = (0.10, 0.055, 0.065)
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     mh.data.materials.append(M['Paint']); mh.data.shade_smooth(); parts.append(mh)
+    box('MirrorSignal', 'Signal', (0.07, 0.012, 0.012), (p.x + s * 0.15, my + 0.035, mz + 0.005), rot=(0, 0, s * math.radians(-25)), bevel=0.004)
     bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=1, depth=0.004, location=(p.x + s * 0.12, my - 0.01 - 0.052, mz + 0.03), rotation=(math.pi / 2, 0, 0))
     mg = bpy.context.active_object; mg.name = 'MirrorGlass'; mg.scale = (0.085, 0.055, 1)
     bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
     mg.data.materials.append(M['Chrome']); parts.append(mg)
 # 와이퍼(앞 유리 아래), 뒤 와이퍼, 안테나, 지붕 끝 스포일러
-wz = ZTOP(0.985) + 0.012
-box('WiperL', 'Trim', (0.56, 0.014, 0.012), (-0.25, 0.985, wz), rot=(0, 0, math.radians(4)))
-box('WiperR', 'Trim', (0.50, 0.014, 0.012), (0.30, 0.985, wz), rot=(0, 0, math.radians(-3)))
-box('RearWiper', 'Trim', (0.32, 0.012, 0.012), (0.0, -1.69, ZTOP(-1.69) - 0.005), rot=(math.radians(-60), 0, math.radians(8)))
+wz = ZTOP(1.08) + 0.012
+box('WiperL', 'Trim', (0.56, 0.014, 0.012), (-0.25, 1.08, wz), rot=(0, 0, math.radians(4)))
+box('WiperR', 'Trim', (0.50, 0.014, 0.012), (0.30, 1.08, wz), rot=(0, 0, math.radians(-3)))
+box('RearWiper', 'Trim', (0.32, 0.012, 0.012), (0.0, -1.66, ZTOP(-1.66) + 0.004), rot=(math.radians(-55), 0, math.radians(8)))
 box('Antenna', 'Trim', (0.035, 0.13, 0.05), (0.0, -1.22, ZTOP(-1.22) + 0.02), rot=(math.radians(-12), 0, 0), bevel=0.012)
-box('Spoiler', 'Paint', (1.06, 0.15, 0.035), (0.0, -1.50, ZTOP(-1.50) - 0.004), rot=(math.radians(14), 0, 0), bevel=0.014)
+box('Spoiler', 'Paint', (1.02, 0.14, 0.03), (0.0, -1.43, ZTOP(-1.43) + 0.002), rot=(math.radians(10), 0, 0), bevel=0.012)
 
 # 캘리퍼(돌지 않음 → 차체에 붙인다)
 for yy in (AXLE_Y, -AXLE_Y):
@@ -410,19 +456,22 @@ RIM = [(-0.086, 0.208), (0.068, 0.208), (0.077, 0.201), (0.074, 0.188), (0.060, 
 
 def spoke_mesh():
     bm = bmesh.new()
-    for i in range(5):
-        for off in (-0.11, 0.11):
-            ang = 2 * math.pi * i / 5 + off
+    for i in range(10):  # 모닝 사진: 가는 쌍살 10쌍(바깥으로 갈수록 벌어짐)
+        for off in (-0.045, 0.045):
+            ang = 2 * math.pi * i / 10
             c, s_ = math.cos(ang), math.sin(ang)
             def P(a, r, w): return bm.verts.new((a, r * c - w * s_, r * s_ + w * c))
             r0, r1 = 0.05, 0.188
-            v = [P(0.050, r0, -0.012), P(0.050, r0, 0.012), P(0.064, r1, 0.009), P(0.064, r1, -0.009),
-                 P(0.072, r0, -0.012), P(0.072, r0, 0.012), P(0.074, r1, 0.009), P(0.074, r1, -0.009)]
+            w0, w1 = off * 0.05 / 0.188 * 2.2, off * 1.0
+            v = [P(0.050, r0, w0 - 0.006), P(0.050, r0, w0 + 0.006), P(0.064, r1, w1 * r1 / 0.188 * 0.188 + 0.0055), P(0.064, r1, w1 + -0.0055),
+                 P(0.072, r0, w0 - 0.006), P(0.072, r0, w0 + 0.006), P(0.074, r1, w1 + 0.0055), P(0.074, r1, w1 - 0.0055)]
             for f in ((0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)):
                 bm.faces.new([v[j] for j in f])
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     m = bpy.data.meshes.new('Spokes'); bm.to_mesh(m); bm.free()
     ob = bpy.data.objects.new('Spokes', m); scene.collection.objects.link(ob); m.materials.append(M['Rim'])
+    m.materials.append(M['RimDark'])  # 투톤: 살 앞면만 은색, 옆면은 어두운 색
+    for f in m.polygons: f.material_index = 0 if f.normal.x > 0.7 else 1
     bv = ob.modifiers.new('bevel', 'BEVEL'); bv.width = 0.003; bv.segments = 2
     apply_mod(ob, bv); m.shade_smooth(); m.set_sharp_from_angle(angle=math.radians(40))
     return ob
