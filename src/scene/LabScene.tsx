@@ -8,7 +8,7 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { footprintOf, showsLabel, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
 import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
-import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, StaticCar, Stand, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
+import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, StaticCar, Stand, ToeGauge, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
 import { epoxyFloorTexture } from './models/textures'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
@@ -49,6 +49,7 @@ function EquipmentModel({ e, m, facing, lowSpec, raised }: { e: SceneEquipment; 
       return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}>{!lowSpec && fitsAbsPanel(e) ? <Suspense fallback={code}><AbsPanelModel /></Suspense> : code}</group>
     }
     case 'desk': return <Desk w={e.w} d={e.d} h={e.h} m={m} />
+    case 'toeGauge': return <ToeGauge w={e.w} d={e.d} h={e.h} m={m} />
     case 'lift': return <LiftRig e={e} m={m} lowSpec={lowSpec} raised={raised} car={LIFT_CARS[id] ?? null} />
     case 'vehicle': return <StaticCar w={e.w} d={e.d} h={e.h} m={m} />
     case 'stand': return <Stand w={e.w} d={e.d} h={e.h} m={m} kind={id.includes('shock') ? 'shock' : 'generic'} />

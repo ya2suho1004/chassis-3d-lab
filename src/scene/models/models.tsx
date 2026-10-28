@@ -186,6 +186,34 @@ export function AbsPanel({ w, d, h, m }: { w: number; d: number; h: number; m: M
   )
 }
 
+// ---------- 이동식 토 게이지(바퀴 2개, 사진 38·40) ----------
+/** 늘어나는 가로 막대(지역 x) 양끝에 바늘 기둥과 눈금판, 아래에 작은 바퀴 2개. 크기는 가정 */
+export function ToeGauge({ w, d, h, m }: { w: number; d: number; h: number; m: Mats }) {
+  const half = w / 2
+  const barY = 0.11
+  return (
+    <group>
+      {/* 바깥 관(가운데)과 안쪽 관(양쪽으로 늘어남) */}
+      <mesh material={m.greyMetal} position={[0, barY, 0]} castShadow><boxGeometry args={[w * 0.55, 0.04, 0.04]} /></mesh>
+      <mesh material={m.chromeLeg} position={[0, barY, 0]} castShadow><boxGeometry args={[w - 0.08, 0.026, 0.026]} /></mesh>
+      {/* 고정 나사 손잡이 */}
+      {[-1, 1].map((s) => <mesh key={s} material={m.trim} position={[s * w * 0.27, barY + 0.035, 0]}><cylinderGeometry args={[0.012, 0.012, 0.04, 8]} /></mesh>)}
+      {[-1, 1].map((s) => (
+        <group key={s} position={[s * (half - 0.04), 0, 0]}>
+          {/* 바늘 기둥(빨강) + 끝 바늘 + 눈금판 */}
+          <mesh material={m.redPaint} position={[0, (barY + h) / 2, 0]} castShadow><boxGeometry args={[0.03, h - barY, 0.03]} /></mesh>
+          <mesh material={m.chromeLeg} position={[-s * 0.05, h - 0.03, 0]} rotation-z={Math.PI / 2}><coneGeometry args={[0.008, 0.08, 8]} /></mesh>
+          <mesh material={m.wallWhite} position={[0, barY + 0.09, -0.022]}><boxGeometry args={[0.07, 0.1, 0.004]} /></mesh>
+          {/* 받침 다리와 바퀴 */}
+          <mesh material={m.greyMetal} position={[0, barY / 2, 0]}><boxGeometry args={[0.025, barY, 0.025]} /></mesh>
+          <mesh material={m.rubber} position={[0, 0.035, d / 2 - 0.06]} rotation-z={Math.PI / 2} castShadow><cylinderGeometry args={[0.035, 0.035, 0.022, 14]} /></mesh>
+          <mesh material={m.greyMetal} position={[0, 0.02, 0]}><boxGeometry args={[0.04, 0.012, d - 0.04]} /></mesh>
+        </group>
+      ))}
+    </group>
+  )
+}
+
 // 가위형 리프트(사진 3)는 LabScene.tsx LiftRig에서 오르내림과 함께 그린다(블렌더 모델 + 코드 대체 모델).
 
 // ---------- 작업대·기계·스탠드·책상 ----------
