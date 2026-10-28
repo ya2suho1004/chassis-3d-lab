@@ -43,7 +43,8 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const [codex, setCodex] = useState<string[]>([])
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
-  const [lowSpec, setLowSpec] = useState(false)
+  /** 품질 단계(설계 07 §7-5): 터치 기기(태블릿·폰)는 '낮음'(그림자·환경광 끔, 해상도 1배)으로 시작, 교사·학생이 바꿀 수 있다 */
+  const [lowSpec, setLowSpec] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches)
   /** null = 자동(둘러보기는 전체, 과제 중은 필요한 것만) */
   /** 교사 도구: 배치 눈검토 또는 실측 입력(과제 수령 전에만) */
   const [teacherTool, setTeacherTool] = useState<'review' | 'survey' | null>(null)
@@ -82,7 +83,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('review')}>배치 눈검토(교사)</button>}
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('survey')}>실측 입력(교사)</button>}
           {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}
-          <label className="inline"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 저사양</label>
+          <label className="inline" title="낮음: 그림자·반사광을 꺼서 태블릿에서 부드럽게"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
         </div>
       </header>
 
