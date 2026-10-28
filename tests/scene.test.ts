@@ -149,6 +149,21 @@ describe('3D 이름표 표시 규칙', () => {
 })
 
 describe('교사 3D 눈검토 반영(2026-10-28)', () => {
+  test('장비끼리 겹치지 않고 모두 실습장 안에 있다(제동력 시험기 위 차량·조작부 0.20 겹침(C-5)만 예외)', () => {
+    const overlap = (a: { xMin: number; xMax: number; zMin: number; zMax: number }, b: typeof a) => a.xMin < b.xMax - 1e-6 && b.xMin < a.xMax - 1e-6 && a.zMin < b.zMax - 1e-6 && b.zMin < a.zMax - 1e-6
+    const allowed = new Set(['brake-tester-01|brake-vehicle-01', 'brake-control-panel-01|brake-tester-01'])
+    const eq = layout.equipment
+    for (let i = 0; i < eq.length; i++) for (let k = i + 1; k < eq.length; k++) {
+      const key = [eq[i]!.id, eq[k]!.id].sort().join('|')
+      if (!allowed.has(key)) expect(overlap(footprintOf(eq[i]!), footprintOf(eq[k]!)), key).toBe(false)
+    }
+    const m = layout.mainZone
+    for (const e of eq) {
+      const f = footprintOf(e)
+      expect(f.xMin >= m.xMin && f.xMax <= m.xMax && f.zMin >= m.zMin && f.zMax <= m.zMax, e.id).toBe(true)
+    }
+  })
+
   test('어떤 장비도 기둥과 겹치지 않고, 리프트 3대는 이웃한 두 기둥 사이에 있다', () => {
     const overlap = (a: { xMin: number; xMax: number; zMin: number; zMax: number }, b: typeof a) => a.xMin < b.xMax && b.xMin < a.xMax && a.zMin < b.zMax && b.zMin < a.zMax
     for (const e of layout.equipment) for (const p of layout.pillars) expect(overlap(footprintOf(e), pillarRect(p)), `${e.id}↔${p.id}`).toBe(false)
