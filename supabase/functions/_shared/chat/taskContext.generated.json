@@ -1,0 +1,62 @@
+{
+  "source": "src/data/tasks/task.braking-force.case-lv1.json (사례 2와 기준·순서 동일)",
+  "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+  "ruleset": {
+    "deviationMaxPercent": 8,
+    "sumMinFrontPercent": 50,
+    "sumMinRearPercent": 20,
+    "decisionPrecision": {
+      "digits": 1
+    }
+  },
+  "steps": [
+    {
+      "stepId": "ppe",
+      "instruction": "보호구 착용(안전화·보안경)을 확인한다."
+    },
+    {
+      "stepId": "tire",
+      "instruction": "타이어 마모·공기압을 육안으로 점검한다."
+    },
+    {
+      "stepId": "equip",
+      "instruction": "설비를 점검한다: 롤러 이물질, 오일 댐퍼, 컴프레서 압력, 모든 스위치 OFF 확인 후 전원 ON."
+    },
+    {
+      "stepId": "enter",
+      "instruction": "차량을 롤러 중앙으로 진입시킨다(후륜을 롤러 위에). 조향 정위치."
+    },
+    {
+      "stepId": "axle",
+      "instruction": "조작부 AXLE Load로 축중을 확인하고 기록한다."
+    },
+    {
+      "stepId": "mode",
+      "instruction": "조작부 BRAKE 모드를 선택하고 지침 0을 확인한다."
+    },
+    {
+      "stepId": "lower",
+      "instruction": "주변을 확인한 뒤 LIFT UpDn으로 리프트를 하강시킨다."
+    },
+    {
+      "stepId": "motor",
+      "instruction": "MOTOR ON, 롤러 회전을 확인한다."
+    },
+    {
+      "stepId": "press",
+      "instruction": "브레이크 페달을 서서히 끝까지 밟는다(가속 페달 조작 금지)."
+    },
+    {
+      "stepId": "read",
+      "instruction": "최대 제동력에서 좌·우 값을 판독하고 기록한다."
+    },
+    {
+      "stepId": "off",
+      "instruction": "MOTOR OFF → 리프트 상승 → 차량 이탈."
+    },
+    {
+      "stepId": "calc",
+      "instruction": "편차·합을 산출하고 기준과 비교해 양호/불량을 판정하고 조치를 기재한다."
+    }
+  ]
+}

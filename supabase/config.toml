@@ -418,3 +418,6 @@ enabled = true
 # 설계 07 §3: 학생 화면은 인증 머리글 없이 text/plain으로 보낸다(브라우저 사전 확인 요청 없음). 막는 장치는 함수 안의 허용 세션·접수 기간·건수 상한.
 [functions.submit]
 verify_jwt = false
+
+[functions.chat]
+verify_jwt = false

@@ -12,6 +12,8 @@ import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type 
 import { TaskScreen } from './TaskScreen'
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
+import { ChatPanel } from '../chat/ChatPanel'
+import type { DifficultyMode } from '../domain/taskEngine'
 
 const NEAR_RADIUS = 1.3
 const NPC_RADIUS = 2.0
@@ -23,8 +25,10 @@ function layoutFor(dir: 'north' | 'south' | null): SceneLayout {
 }
 const BASIS_LABEL: Record<string, string> = { measured: '실측', 'measured-partial': '부분 실측', sketch: '스케치 비례', assumption: '가정', teacher: '교사 답' }
 
-export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange, onFinish }: {
+export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
   repo: Repository
+  /** 시작 화면에서 고른 도움 방식(과제 수령 전 챗봇 규칙에도 쓴다) */
+  mode: DifficultyMode
   session: SessionContext
   task: ApprovedTask
   run: TaskRun | null
@@ -151,6 +155,11 @@ export function LabScreen({ repo, session, task, run, onReceiveTask, onRunChange
             <TaskScreen repo={repo} session={session} initialRun={run} embedded onRunChange={onRunChange}
               proximity={displayMode === 'threeD' ? { nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id } : null}
               onFinish={onFinish} />
+          )}
+
+          {!reviewOpen && (
+            <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
+              stepId={run?.nextStepId ?? null} difficultyMode={run?.difficultyMode ?? mode} />
           )}
         </section>
       </div>

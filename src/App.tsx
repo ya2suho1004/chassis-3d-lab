@@ -70,6 +70,7 @@ export function App() {
         repo={repo!}
         session={session}
         task={task}
+        mode={mode}
         run={screen.run}
         onReceiveTask={async () => {
           if (!repo) return '저장소가 아직 열리지 않았습니다.'
