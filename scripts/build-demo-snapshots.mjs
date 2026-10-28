@@ -1,7 +1,7 @@
 // 시연용 세션 스냅샷 목록 생성 — 계약 docs/design/contracts/session.snapshot.schema.json(1.0.0), docs/17 §4, Codex 회신 B §2
 // 원장 src/data/session/snapshot-ledger.json 은 append-only: 한 번 생성된 스냅샷은 지우지 않고 status(active|retired)만 바꾼다.
 //  - 앱(src/data/session/demo-snapshots.json)은 active 목록만 쓴다(새 세션을 만들 수 있는 조합).
-//  - 수신점(server/apps-script/DemoSnapshots.gs)은 원장 전체 + 합성 fixture를 가진다. retired는 기존 receipt 회수만 허용(신규 접수 불가).
+//  - 수신점(archive/apps-script/DemoSnapshots.gs)은 원장 전체 + 합성 fixture를 가진다. retired는 기존 receipt 회수만 허용(신규 접수 불가).
 // ID = 스냅샷 내용(ID 제외)의 정규형 SHA-256 → UUID v4 모양(해시 120비트 사용). 규칙 버전 SNAPSHOT_RULE_VERSION. 같은 ID에 다른 내용이면 실패.
 // 주의: ID는 '버전 참조'에서 나온다. 과제·피드백 본문이 바뀌면 docs/17 §1대로 그 버전을 올려야 ID가 바뀐다(본문만 바꾸면 검출되지 않음).
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
@@ -48,7 +48,7 @@ server[fixture.sessionSnapshotId] = {
   snapshot: { schemaVersion: '1.0.0', sessionSnapshotId: fixture.sessionSnapshotId, sessionCode: fixture.sessionCode, classConditionCode: fixture.classConditionCode, taskId: fixture.taskId, difficultyMode: fixture.difficultyMode, usagePhase: fixture.usagePhase, runPurpose: fixture.runPurpose, displayMode: fixture.displayMode, configurationApproval: fixture.configurationApproval, versions: fixture.versions, sessionConfiguration: { vehicleEntryDirection: null } },
   status: 'active', anonymousCodePattern: '^D-00$', allowedStepIds: null, stepPrerequisites: null,
 }
-writeFileSync(new URL('../server/apps-script/DemoSnapshots.gs', import.meta.url), `// 자동 생성: npm run build:gs-snapshots (원본 scripts/build-demo-snapshots.mjs, 규칙 v${SNAPSHOT_RULE_VERSION}). 직접 고치지 말 것.
+writeFileSync(new URL('../archive/apps-script/DemoSnapshots.gs', import.meta.url), `// 자동 생성: npm run build:gs-snapshots (원본 scripts/build-demo-snapshots.mjs, 규칙 v${SNAPSHOT_RULE_VERSION}). 직접 고치지 말 것.
 // 허용 스냅샷 = 시험 배포가 받는 세션 문맥(설계 15 §3 4항·docs/17 §4). status=retired 는 기존 receipt 회수만 허용(신규 접수 불가). anonymousCodePattern 은 시험용 합성 코드 범위.
 var ALLOWED_SNAPSHOTS = ${JSON.stringify(server)};
 `)

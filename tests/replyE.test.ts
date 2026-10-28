@@ -33,7 +33,7 @@ describe('C-P2-3 윤초와 그 직후 일반 초의 순서', () => {
     expect(post(reqOf(mk('2000-01-01T00:00:00.0005Z', '2000-01-01T00:00:00.0001Z')))).toMatchObject({ ok: false, code: 'INVALID_PAYLOAD' })
   })
   test('isValidDateTimeGeneral_는 한 번만 선언된다(P3)', () => {
-    const src = readFileSync('server/apps-script/Validate.gs', 'utf8')
+    const src = readFileSync('archive/apps-script/Validate.gs', 'utf8')
     expect((src.match(/^function isValidDateTimeGeneral_\(/gm) ?? []).length).toBe(1)
   })
 })

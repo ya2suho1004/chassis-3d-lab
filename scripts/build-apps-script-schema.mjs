@@ -5,5 +5,5 @@ const legacy = JSON.parse(readFileSync(new URL('../docs/design/contracts/legacy/
 const out = `// 자동 생성: npm run build:gs-schema (원본 docs/design/contracts/record.schema.json, $id ${schema.$id}). 직접 고치지 말 것.
 var RECORD_SCHEMAS = { '1.0.0': ${JSON.stringify(legacy)}, '1.1.0': ${JSON.stringify(schema)} };
 `
-writeFileSync(new URL('../server/apps-script/Schemas.gs', import.meta.url), out)
+writeFileSync(new URL('../archive/apps-script/Schemas.gs', import.meta.url), out)
 console.log('Schemas.gs written', legacy.$id, schema.$id)

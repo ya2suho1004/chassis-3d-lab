@@ -1,4 +1,4 @@
-// 개발 전용 가짜 수신점 — Apps Script 코드(server/apps-script/*.gs)를 그대로 Node에서 돌려 메모리 시트에 쓴다.
+// 개발 전용 가짜 수신점 — Apps Script 코드(archive/apps-script/*.gs)를 그대로 Node에서 돌려 메모리 시트에 쓴다.
 // 운영 배포에 포함하지 않는다(설계 15 §8 D07 "시험 장치는 운영 배포에 포함하지 않음"). vite dev 서버의 /__fake-submit 에만 붙는다.
 // 제어: GET /__fake-submit/control?mode=normal|html|badhash|drop|lockbusy  (다음 POST 1회에 적용)
 import { createHash } from 'node:crypto'
@@ -37,7 +37,7 @@ export function createFakeSubmitServer(root: string) {
     },
     Logger: { log: () => {} },
   }
-  const src = ['Jcs.gs', 'JsonStrict.gs', 'Validate.gs', 'Schemas.gs', 'DemoSnapshots.gs', 'Code.gs'].map((f) => readFileSync(resolve(root, 'server/apps-script', f), 'utf8')).join('\n')
+  const src = ['Jcs.gs', 'JsonStrict.gs', 'Validate.gs', 'Schemas.gs', 'DemoSnapshots.gs', 'Code.gs'].map((f) => readFileSync(resolve(root, 'archive/apps-script', f), 'utf8')).join('\n')
   const names = Object.keys(globals)
   const doPost = new Function(...names, src + '\nreturn doPost;')(...names.map((n) => globals[n])) as (e: unknown) => { text: string }
 

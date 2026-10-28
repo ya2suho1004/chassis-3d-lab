@@ -1,5 +1,7 @@
 # chassis-3d-lab — 자동차섀시정비 3D 가상 실습장
 
+> **2026-10-28:** 수신 서버를 Supabase로 바꾸기로 해 Apps Script 수신점은 `archive/apps-script/`로 보관했다(시험·개발용 가짜 수신점은 계속 그 코드를 씀). 결정 기록은 `docs/design/docs/20_2026-10-28_면담결정_변경기록.md`, 영향 분석은 `docs/05_영향분석_2026-10-28.md`.
+
 대구공고 섀시 실습장을 재현한 브라우저용 3D 게임형 가상 실습장. 1차 과제는 제동력 측정·판독 하나다.
 
 - 설계 정본: 인계 폴더(Codex 협업) `design-current/`. 이 저장소의 `docs/design/`은 2026-10-21 시점 사본(사진 제외).
@@ -15,18 +17,18 @@ npx tsc --noEmit  # 타입 검사
 npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/launch.json은 5174)
 ```
 
-## 0C: 직접 제출 전송 (`src/delivery/`, `server/apps-script/`)
+## 0C: 직접 제출 전송 (`src/delivery/`, `archive/apps-script/`)
 
 | 파일 | 역할 | 지키는 원칙 |
 |---|---|---|
 | `src/delivery/jcs.ts` | RFC 8785 정규화·SHA-256 | 키 UTF-16 순 정렬, NFC/NFD·trim·숫자 재절사 없음, 비유한 수·짝 없는 서로게이트 거절. 서버 `Jcs.gs`와 결과 동일 |
 | `src/delivery/submit.ts` | 제출 1건 전송·ack 검증 | `text/plain` POST, cors·omit·follow, 인증 헤더·쿼리 없음. JSON 모양·protocol·recordId·독립 계산 hash·receipt·시각이 모두 맞아야 acknowledged. HTML·opaque·네트워크 오류는 confirmationPending |
 | `src/delivery/outbox.ts` | 대기열 처리(교사 조작) | 같은 ID·같은 원본만 재전송, rejected·conflict는 자동 재시도 없음, 보내기 전 uploading 저장 |
-| `server/apps-script/*.gs` | Apps Script 수신점 | 엄격 파싱(prototype 없는 객체, 중복 키 거절) → 버전별 스키마(record 1.0.0·1.1.0) → 의미 검증 → 허용 스냅샷 문맥 대조(`DemoSnapshots.gs`) → 잠금 안 정본 1행(5열)·기존 행 재검증·중복/충돌·flush·재읽기 → ack. 접수 창·행 상한 설정은 필수(fail-closed) |
+| `archive/apps-script/*.gs` | Apps Script 수신점 | 엄격 파싱(prototype 없는 객체, 중복 키 거절) → 버전별 스키마(record 1.0.0·1.1.0) → 의미 검증 → 허용 스냅샷 문맥 대조(`DemoSnapshots.gs`) → 잠금 안 정본 1행(5열)·기존 행 재검증·중복/충돌·flush·재읽기 → ack. 접수 창·행 상한 설정은 필수(fail-closed) |
 | `src/data/session/demo-snapshots.json`, `snapshot-ledger.json` | 시연 세션 스냅샷 36개(active)와 append-only 원장 | 선택(사례·모드·시점·진입 방향)마다 불변 ID·versions·승인(과제 pending)과 검증 범위(등록 단계·선행 그래프). 옛 스냅샷은 retired로 보존(접수번호 회수용). 같은 ID의 내용·검증 범위 변경, 중복 ID는 생성 실패(`scripts/snapshotLib.mjs`). `npm run build:gs-snapshots`로 수신점 목록과 함께 생성 |
 | `server/dev/fakeSubmitServer.ts` | 개발 서버 가짜 수신점 | 같은 .gs 코드를 Node에서 실행. `/__fake-submit/control?mode=html|badhash|drop|lockbusy`로 D04·D07 재현. 운영 번들 제외 |
 
-실배포(Google 웹 앱·GitHub Pages·학교 기기)는 아직 하지 않았다. 절차는 `server/apps-script/README.md`, 시험 상태는 `docs/03_0C_전송_시험_계획_2026-10-26.md`, 학교 점검표는 `docs/design/docs/18_0C_DEPLOYMENT_CHECKLIST.md`. Codex 코드 검토는 2026-10-27(커밋 54634d4)에 종결(배포 승인 아님).
+실배포(Google 웹 앱·GitHub Pages·학교 기기)는 아직 하지 않았다. 절차는 `archive/apps-script/README.md`, 시험 상태는 `docs/03_0C_전송_시험_계획_2026-10-26.md`, 학교 점검표는 `docs/design/docs/18_0C_DEPLOYMENT_CHECKLIST.md`. Codex 코드 검토는 2026-10-27(커밋 54634d4)에 종결(배포 승인 아님).
 
 ## 3단계: 3D 실습장 (`src/scene/`, `src/screens/LabScreen.tsx`)
 

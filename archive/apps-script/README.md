@@ -18,8 +18,8 @@
 
 1. (한 번) https://script.google.com/home/usersettings 에서 Google Apps Script API 켜기.
 2. 터미널에서 `npx clasp login` → 브라우저에서 구글 계정 허용.
-3. 설정 파일: `node scripts/write-apps-script-config.mjs <SHEET_ID> <ACCEPT_UNTIL …Z> <MAX_NEW_ROWS>` → `server/apps-script/Config.gs`(Git 제외; 스크립트 속성이 비어 있을 때 Code.gs가 읽음).
-4. `server/apps-script/` 안에서 `npx clasp push -f` → `npx clasp deploy -d "설명"` → 배포 ID → `https://script.google.com/macros/s/<배포 ID>/exec`.
+3. 설정 파일: `node scripts/write-apps-script-config.mjs <SHEET_ID> <ACCEPT_UNTIL …Z> <MAX_NEW_ROWS>` → `archive/apps-script/Config.gs`(Git 제외; 스크립트 속성이 비어 있을 때 Code.gs가 읽음).
+4. `archive/apps-script/` 안에서 `npx clasp push -f` → `npx clasp deploy -d "설명"` → 배포 ID → `https://script.google.com/macros/s/<배포 ID>/exec`.
 5. **소유자가 한 번** 편집기(`npx clasp open`)에서 `setupOnce` 실행 → 권한 허용. 이게 없으면 호출이 403 HTML. `setupOnce`는 `canonical` 탭과 머리글도 만든다.
 6. 앱 `.env.production`에 /exec → `npm run build`.
 
