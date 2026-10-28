@@ -2,7 +2,7 @@
 // 이 장면은 '개발용 임시 배치'를 그린다. 실제 학교 재현 완료가 아니다(layoutConfirmed=false).
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Environment, Html, OrbitControls } from '@react-three/drei'
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { footprintOf, showsLabel, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
@@ -10,6 +10,7 @@ import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
 import { AbsPanel, BrakeTesterBase, CarBody, Desk, FootprintFrame, Machine, Person, Pillar, Roller, ScissorLift, StaticCar, Stand, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
 import { epoxyFloorTexture } from './models/textures'
+import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 
 const WALK_SPEED = 1.6 // m/s
 const TAP_MAX_PX = 6
@@ -90,7 +91,7 @@ const ROLLER_DZ = 0.28 // 바퀴 하나를 받치는 앞뒤 롤러 간격의 절
 const ROLLER_Y = WHEEL_R - Math.sqrt((WHEEL_R + ROLLER_R) ** 2 - ROLLER_DZ ** 2) // 바퀴가 두 롤러에 걸리는 높이
 
 /** 제동력 시험기 연출: 롤러 4개·리프트 판·시험 차량(진입/이탈·들림·뒷바퀴 회전). 단계 판정과 무관한 표시 전용 */
-function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehicleLabel, onTapVehicle }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; m: Mats; selected: boolean; testerHighlight: boolean; showVehicleLabel: boolean; onTapVehicle: () => void }) {
+function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehicleLabel, onTapVehicle, lowSpec }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; m: Mats; selected: boolean; testerHighlight: boolean; showVehicleLabel: boolean; onTapVehicle: () => void; lowSpec: boolean }) {
   const theta = (vehicle.rotation * Math.PI) / 180
   const away = { x: -Math.sin(theta), z: -Math.cos(theta) }
   const rearAxle = vehicle.d / 2 - 0.6
@@ -101,8 +102,11 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
   const carRef = useRef<THREE.Group>(null)
   const liftRefs = useRef<Array<THREE.Mesh | null>>([])
   const rollerRefs = useRef<Array<THREE.Mesh | null>>([])
-  const rearWheelRefs = useRef<Array<THREE.Group | null>>([])
-  const frontWheelRefs = useRef<Array<THREE.Group | null>>([])
+  const rearWheelRefs = useRef<Array<THREE.Object3D | null>>([])
+  const frontWheelRefs = useRef<Array<THREE.Object3D | null>>([])
+  // 품질 높음 + 치수가 맞으면 블렌더 모델(바퀴 노드를 같은 방식으로 돌린다), 아니면 코드 차량
+  const useModel = !lowSpec && fitsTestCar(vehicle)
+  const onModelWheels = useCallback((front: THREE.Object3D[], rear: THREE.Object3D[]) => { frontWheelRefs.current = front; rearWheelRefs.current = rear }, [])
   const s = useRef({ dist: target.dist, lift: target.lift, spin: 0 })
 
   useFrame((_, dt) => {
@@ -128,6 +132,25 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
   // 롤러: 좌·우 바퀴 자리마다 앞뒤 2개(바퀴 아래, 축은 동서 방향)
   const rollerSpots = [-wheelX, wheelX].flatMap((x) => [-ROLLER_DZ, ROLLER_DZ].map((dz) => ({ x, dz })))
   const bodyBottom = WHEEL_R + 0.05
+  const tapVehicle = (ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTapVehicle() } }
+  const codeCar = (
+    <>
+      <group onClick={tapVehicle}>
+        <CarBody w={vehicle.w} d={vehicle.d} h={vehicle.h} m={m} highlight={selected} />
+      </group>
+      {[-wheelX, wheelX].map((x, i) => {
+        const out = (x > 0 ? 1 : -1) as 1 | -1
+        return (
+          <group key={`wheels-${i}`}>
+            <group ref={(g) => { rearWheelRefs.current[i] = g }} position={[x, WHEEL_R, rearAxle]} rotation-z={Math.PI / 2}><Wheel r={WHEEL_R} width={0.2} m={m} outward={(-out) as 1 | -1} /></group>
+            <group ref={(g) => { frontWheelRefs.current[i] = g }} position={[x, WHEEL_R, rearAxle - 2.4]} rotation-z={Math.PI / 2}><Wheel r={WHEEL_R} width={0.2} m={m} outward={(-out) as 1 | -1} /></group>
+            {/* 캘리퍼는 돌지 않는다 */}
+            <mesh material={m.caliper} position={[x - out * 0.06, WHEEL_R + 0.1, rearAxle - 0.08]}><boxGeometry args={[0.05, 0.12, 0.09]} /></mesh>
+          </group>
+        )
+      })}
+    </>
+  )
   return (
     <>
       <group position={[tester.x, 0, tester.z]}>
@@ -151,20 +174,11 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
       </group>
       <group ref={carRef} position={[vehicle.x + away.x * target.dist, rig.vehicle === 'outside' ? 0 : target.lift, vehicle.z + away.z * target.dist]}>
         <group rotation-y={theta}>
-          <group onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTapVehicle() } }}>
-            <CarBody w={vehicle.w} d={vehicle.d} h={vehicle.h} m={m} highlight={selected} />
-          </group>
-          {[-wheelX, wheelX].map((x, i) => {
-            const out = (x > 0 ? 1 : -1) as 1 | -1
-            return (
-              <group key={`wheels-${i}`}>
-                <group ref={(g) => { rearWheelRefs.current[i] = g }} position={[x, WHEEL_R, rearAxle]} rotation-z={Math.PI / 2}><Wheel r={WHEEL_R} width={0.2} m={m} outward={(-out) as 1 | -1} /></group>
-                <group ref={(g) => { frontWheelRefs.current[i] = g }} position={[x, WHEEL_R, rearAxle - 2.4]} rotation-z={Math.PI / 2}><Wheel r={WHEEL_R} width={0.2} m={m} outward={(-out) as 1 | -1} /></group>
-                {/* 캘리퍼는 돌지 않는다 */}
-                <mesh material={m.caliper} position={[x - out * 0.06, WHEEL_R + 0.1, rearAxle - 0.08]}><boxGeometry args={[0.05, 0.12, 0.09]} /></mesh>
-              </group>
-            )
-          })}
+          {useModel ? (
+            <Suspense fallback={codeCar}>
+              <group onClick={tapVehicle}><TestCarModel highlight={selected} onWheels={onModelWheels} /></group>
+            </Suspense>
+          ) : codeCar}
         </group>
         {showVehicleLabel && (
           <Html position={[0, vehicle.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
@@ -301,7 +315,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, onS
           )}
         </group>
       )}
-      {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} m={m} selected={selectedId === vehicle.id} testerHighlight={highlightIds.includes(tester.id) || selectedId === tester.id}
+      {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} m={m} lowSpec={lowSpec} selected={selectedId === vehicle.id} testerHighlight={highlightIds.includes(tester.id) || selectedId === tester.id}
         showVehicleLabel={showsLabel(labelMode, { selected: selectedId === vehicle.id, highlight: highlightIds.includes(vehicle.id), interactive: vehicle.interactive })} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
