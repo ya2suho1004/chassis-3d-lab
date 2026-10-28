@@ -8,9 +8,10 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { footprintOf, showsLabel, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
 import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
-import { AbsPanel, BrakeTesterBase, CarBody, Desk, FootprintFrame, Machine, Person, Pillar, Roller, ScissorLift, StaticCar, Stand, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
+import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, ScissorLift, StaticCar, Stand, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
 import { epoxyFloorTexture } from './models/textures'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
+import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
 
 const WALK_SPEED = 1.6 // m/s
 const TAP_MAX_PX = 6
@@ -100,13 +101,17 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
     lift: rig.liftUp ? LIFT_RISE : 0,
   }
   const carRef = useRef<THREE.Group>(null)
-  const liftRefs = useRef<Array<THREE.Mesh | null>>([])
-  const rollerRefs = useRef<Array<THREE.Mesh | null>>([])
+  const liftRefs = useRef<Array<THREE.Object3D | null>>([])
+  const rollerRefs = useRef<Array<THREE.Object3D | null>>([])
   const rearWheelRefs = useRef<Array<THREE.Object3D | null>>([])
   const frontWheelRefs = useRef<Array<THREE.Object3D | null>>([])
   // 품질 높음 + 치수가 맞으면 블렌더 모델(바퀴 노드를 같은 방식으로 돌린다), 아니면 코드 차량
   const useModel = !lowSpec && fitsTestCar(vehicle)
   const onModelWheels = useCallback((front: THREE.Object3D[], rear: THREE.Object3D[]) => { frontWheelRefs.current = front; rearWheelRefs.current = rear }, [])
+  // 시험기도 같은 규칙: 블렌더 모델의 롤러·리프트 판 노드를 코드 시험기와 같은 방식으로 움직인다
+  const wheelX = vehicle.w / 2 - 0.1
+  const useTesterModel = !lowSpec && fitsBrakeTester(tester, wheelX)
+  const onTesterParts = useCallback((rollers: THREE.Object3D[], lifts: THREE.Object3D[]) => { rollerRefs.current = rollers; liftRefs.current = lifts }, [])
   const s = useRef({ dist: target.dist, lift: target.lift, spin: 0 })
 
   useFrame((_, dt) => {
@@ -128,7 +133,6 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
     for (const m of frontWheelRefs.current) if (m) m.rotation.x += roll
   })
 
-  const wheelX = vehicle.w / 2 - 0.1
   // 롤러: 좌·우 바퀴 자리마다 앞뒤 2개(바퀴 아래, 축은 동서 방향)
   const rollerSpots = [-wheelX, wheelX].flatMap((x) => [-ROLLER_DZ, ROLLER_DZ].map((dz) => ({ x, dz })))
   const bodyBottom = WHEEL_R + 0.05
@@ -151,21 +155,31 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
       })}
     </>
   )
+  const codeTester = (
+    <>
+      <BrakeTesterBase w={tester.w} d={tester.d} wheelX={wheelX} m={m} />
+      {rollerSpots.map((r, i) => (
+        <group key={`roller-${i}`} position={[r.x, ROLLER_Y, r.dz]}>
+          <Roller ref={(mm) => { rollerRefs.current[i] = mm }} r={ROLLER_R} len={0.6} m={m} />
+        </group>
+      ))}
+      {[-wheelX, wheelX].map((x, i) => (
+        <mesh key={`lift-${i}`} ref={(mm) => { liftRefs.current[i] = mm }} material={m.greyMetal} position={[x, target.lift - 0.02, 0]} castShadow>
+          <boxGeometry args={[0.55, 0.03, 0.22]} />
+        </mesh>
+      ))}
+    </>
+  )
   return (
     <>
       <group position={[tester.x, 0, tester.z]}>
-        <BrakeTesterBase w={tester.w} d={tester.d} wheelX={wheelX} m={m} />
+        {useTesterModel ? (
+          <>
+            <CheckerSurround w={tester.w} d={tester.d} m={m} />
+            <Suspense fallback={codeTester}><BrakeTesterModel onParts={onTesterParts} /></Suspense>
+          </>
+        ) : codeTester}
         {testerHighlight && <FootprintFrame w={tester.w} d={tester.d} color="#2d6cdf" />}
-        {rollerSpots.map((r, i) => (
-          <group key={`roller-${i}`} position={[r.x, ROLLER_Y, r.dz]}>
-            <Roller ref={(mm) => { rollerRefs.current[i] = mm }} r={ROLLER_R} len={0.6} m={m} />
-          </group>
-        ))}
-        {[-wheelX, wheelX].map((x, i) => (
-          <mesh key={`lift-${i}`} ref={(mm) => { liftRefs.current[i] = mm }} material={m.greyMetal} position={[x, target.lift - 0.02, 0]} castShadow>
-            <boxGeometry args={[0.55, 0.03, 0.22]} />
-          </mesh>
-        ))}
         {rig.rollersSpinning && (
           <Html position={[0, 0.6, tester.d / 2 + 0.3]} center style={{ pointerEvents: 'none' }}>
             <div className="label3d hl">롤러 회전 중</div>

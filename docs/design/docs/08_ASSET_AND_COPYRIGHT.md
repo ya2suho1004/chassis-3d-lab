@@ -140,7 +140,8 @@
 |---|---|---|---|---|---|---|
 | `public/assets/hdri/autoshop_01_1k.hdr` (1.6MB) | https://polyhaven.com/a/autoshop_01 (파일: dl.polyhaven.org …/1k/autoshop_01_1k.hdr) | Oliksiy Yakovlyev (Poly Haven) | CC0 — https://polyhaven.com/license "Our assets are all licensed as CC0" (2026-10-28 원문 확인) | 2026-10-28 | 없음 | 품질 '높음'의 반사·환경광. '낮음'에서는 불러오지 않음 |
 | `public/assets/models/test-car.glb` (약 0.53MB, 삼각형 약 5.4만) | 외부 출처 없음. `scripts/blender/build_test_car.py`가 Blender 5.2로 만든다 | 이 프로젝트(Claude Code 작성 스크립트) | 자체 제작 | 2026-10-28 | — | 시험 차량(경형 흰색 해치백). 품질 '높음'에서만 쓰고 '낮음'은 코드 차량. meshopt 압축(해제기는 앱 내장) |
+| `public/assets/models/brake-tester.glb` (약 0.27MB, 삼각형 약 1.2만) | 외부 출처 없음. `scripts/blender/build_brake_tester.py`가 Blender 5.2로 만든다 | 이 프로젝트(Claude Code 작성 스크립트) | 자체 제작 | 2026-10-28 | — | 제동력 시험기(빨간 틀·덮개 상자·리브 롤러 4개·리프트 판 2개). 품질 '높음'에서만 쓰고 '낮음'은 코드 시험기. 둘레 줄무늬 철판은 코드가 그림. meshopt 압축 |
 
-- 시험 차량은 2026-10-28부터 블렌더 스크립트로 만든 모델을 쓴다(위 표). 사진은 비례·색 참고만 했고 상표·로고·번호판 글자는 넣지 않았다. 다른 차량 2대는 아직 코드 모델이다.
+- 시험 차량·제동력 시험기는 2026-10-28부터 블렌더 스크립트로 만든 모델을 쓴다(위 표). 시험기는 사진 27·28의 빨간 틀·덮개 상자 배치를 따르고, 롤러 표면 리브·축받이·경고 띠·환기구는 일반적인 롤러식 시험기 구조를 참고한 가정이다(학교 장비 세부와 다를 수 있음). 사진은 비례·색 참고만 했고 상표·로고·번호판 글자는 넣지 않았다. 다른 차량 2대는 아직 코드 모델이다.
 - 그 밖의 장비·차량·사람 모델과 바닥·철판·롤러·조작부 표시창·안전 표지 질감은 외부 파일 없이 코드로 그렸다(`src/scene/models/`). 실습장 사진은 모양·색 참고만 했고 화면에 넣지 않았다. 상표·로고·번호판 글자는 넣지 않았다.
 - 설계 07 §7-4에서 후보로 둔 Poly Haven·ambientCG 질감(콘크리트·도장 금속)은 코드 질감으로 충분해 이번에는 쓰지 않았다.

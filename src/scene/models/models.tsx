@@ -133,13 +133,17 @@ export function StaticCar({ w, d, h, m, highlight }: { w: number; d: number; h: 
 }
 
 // ---------- 제동력 시험기 (사진 27·28) ----------
+/** 시험기 둘레 줄무늬 철판(코드 시험기·블렌더 시험기 공통) */
+export function CheckerSurround({ w, d, m }: { w: number; d: number; m: Mats }) {
+  return <mesh material={m.redChecker} rotation-x={-Math.PI / 2} position={[0, 0.004, 0]} receiveShadow><planeGeometry args={[w + 0.6, d + 0.6]} /></mesh>
+}
+
 /** 바닥 구덩이·빨간 틀·양끝 빨간 덮개 상자·둘레 줄무늬 철판. 롤러·리프트 판은 BrakeRig가 움직인다. */
 export function BrakeTesterBase({ w, d, wheelX, m }: { w: number; d: number; wheelX: number; m: Mats }) {
   const coverW = Math.max(0.3, w / 2 - wheelX - 0.35)
   return (
     <group>
-      {/* 둘레 줄무늬 철판 */}
-      <mesh material={m.redChecker} rotation-x={-Math.PI / 2} position={[0, 0.004, 0]} receiveShadow><planeGeometry args={[w + 0.6, d + 0.6]} /></mesh>
+      <CheckerSurround w={w} d={d} m={m} />
       {/* 롤러 구덩이(좌·우 바퀴 자리) */}
       {[-wheelX, wheelX].map((x) => (
         <group key={x}>
