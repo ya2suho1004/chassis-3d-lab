@@ -113,11 +113,12 @@ describe('화면 모드 전환 기록', () => {
 
 describe('2차 실측(2026-10-26) 반영', () => {
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')!
-  test('조작부 앞면(버튼면)은 롤러 중심에서 동쪽 1.30, 같은 남북선 위이고 서쪽을 향한다', () => {
+  test('조작부 앞면(버튼면)은 롤러 중심에서 동쪽 1.30(실측), 남북은 시험기와 겹치지 않게 남쪽(2026-10-29 사용자 지시 — 2차 실측 "남북 0"과 다름)', () => {
     const panel = layout.equipment.find((e) => e.id === 'brake-control-panel-01')!
     const f = footprintOf(panel)
+    const t = footprintOf(tester)
     expect(f.xMin - tester.x).toBeCloseTo(1.3, 5) // 앞면 = 본체 서쪽 면
-    expect(panel.z).toBeCloseTo(tester.z, 5)
+    expect(f.zMin).toBeGreaterThanOrEqual(t.zMax) // 시험기 남쪽 끝보다 남쪽
     expect(f.xMax).toBeLessThanOrEqual(layout.mainZone.xMax) // 벽 안
   })
   test('리프트 옆 기둥의 동쪽 면은 장비 서쪽 끝에서 1.50 서쪽에 있다', () => {
@@ -149,9 +150,9 @@ describe('3D 이름표 표시 규칙', () => {
 })
 
 describe('교사 3D 눈검토 반영(2026-10-28)', () => {
-  test('장비끼리 겹치지 않고 모두 실습장 안에 있다(제동력 시험기 위 차량·조작부 0.20 겹침(C-5)만 예외)', () => {
+  test('장비끼리 겹치지 않고 모두 실습장 안에 있다(제동력 시험기 위 차량만 예외)', () => {
     const overlap = (a: { xMin: number; xMax: number; zMin: number; zMax: number }, b: typeof a) => a.xMin < b.xMax - 1e-6 && b.xMin < a.xMax - 1e-6 && a.zMin < b.zMax - 1e-6 && b.zMin < a.zMax - 1e-6
-    const allowed = new Set(['brake-tester-01|brake-vehicle-01', 'brake-control-panel-01|brake-tester-01'])
+    const allowed = new Set(['brake-tester-01|brake-vehicle-01'])
     const eq = layout.equipment
     for (let i = 0; i < eq.length; i++) for (let k = i + 1; k < eq.length; k++) {
       const key = [eq[i]!.id, eq[k]!.id].sort().join('|')
