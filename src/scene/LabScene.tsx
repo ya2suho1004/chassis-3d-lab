@@ -2,7 +2,7 @@
 // 이 장면은 '개발용 임시 배치'를 그린다. 실제 학교 재현 완료가 아니다(layoutConfirmed=false).
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Environment, Html, OrbitControls } from '@react-three/drei'
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { footprintOf, showsLabel, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
@@ -14,10 +14,13 @@ import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
 import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
 import type { MoveInput } from './Joystick'
+import { Surroundings } from './Surroundings'
+import { STEP_STRIDE, stepsCrossed } from './sound'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
 import { CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
+const Effects = lazy(() => import('./Effects'))
 const WALK_SPEED = 1.6 // m/s
 const TAP_MAX_PX = 6
 
@@ -47,6 +50,10 @@ export interface LabSceneProps {
   playerPos?: Pt
   /** 1인칭 가운데 조준점이 가리키는 장비 ID(교관은 '__npc'), 없으면 null. 바뀔 때만 부른다 */
   onAim?: (id: string | null) => void
+  /** 바닥 둘레가 빛나는 장비(가까이 있는 장비·조준한 장비) */
+  glowIds?: string[]
+  /** 한 걸음 디딜 때마다(발소리) */
+  onStep?: () => void
 }
 
 /** 학생 아바타: 품질 높음은 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎), 낮음은 코드 모델 */
@@ -110,13 +117,30 @@ function EquipmentModel({ e, m, facing, lowSpec, raised }: { e: SceneEquipment; 
   }
 }
 
-function Equipment({ e, m, facing, selected, highlight, showLabel, onTap, lowSpec, raised }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; showLabel: boolean; onTap: () => void; lowSpec: boolean; raised: boolean }) {
+/** 가까이 있거나 조준한 장비: 바닥 둘레에 노란 띠가 천천히 숨 쉬듯 밝아졌다 어두워진다(모션 줄이기면 고정) */
+function GlowFrame({ w, d }: { w: number; d: number }) {
+  const geo = useMemo(() => {
+    const s = new THREE.Shape()
+    const W = w / 2 + 0.3, D = d / 2 + 0.3, t = 0.12
+    s.moveTo(-W, -D); s.lineTo(W, -D); s.lineTo(W, D); s.lineTo(-W, D); s.lineTo(-W, -D)
+    const hole = new THREE.Path()
+    hole.moveTo(-W + t, -D + t); hole.lineTo(-W + t, D - t); hole.lineTo(W - t, D - t); hole.lineTo(W - t, -D + t); hole.lineTo(-W + t, -D + t)
+    s.holes.push(hole)
+    return new THREE.ShapeGeometry(s)
+  }, [w, d])
+  const mat = useMemo(() => new THREE.MeshBasicMaterial({ color: '#ffd54a', transparent: true, opacity: 0.75, depthWrite: false, toneMapped: false }), [])
+  useFrame(({ clock }) => { mat.opacity = prefersReducedMotion ? 0.75 : 0.45 + 0.4 * (0.5 + 0.5 * Math.sin(clock.elapsedTime * 3)) })
+  return <mesh rotation-x={-Math.PI / 2} position={[0, 0.014, 0]} geometry={geo} material={mat} renderOrder={2} />
+}
+
+function Equipment({ e, m, facing, selected, highlight, showLabel, onTap, lowSpec, raised, glow }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; showLabel: boolean; onTap: () => void; lowSpec: boolean; raised: boolean; glow: boolean }) {
   const f = footprintOf(e)
   const w = f.xMax - f.xMin
   const d = f.zMax - f.zMin
   return (
     <group position={[e.x, 0, e.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTap() } }}>
       <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} />
+      {glow && <GlowFrame w={w} d={d} />}
       {(selected || highlight) && <FootprintFrame w={w} d={d} color={selected ? '#ff9800' : '#2d6cdf'} />}
       {showLabel && (
         <Html position={[0, e.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
@@ -452,7 +476,7 @@ function AimProbe({ layout, onAim }: { layout: SceneLayout; onAim: (id: string |
   return null
 }
 
-function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode }) {
+function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view, onStep }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
   // 1인칭은 카메라를 FirstPersonLook이 눈높이에 직접 둔다. 궤도 시점만 이동량만큼 카메라를 함께 옮긴다
@@ -466,7 +490,18 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   const walkingRef = useRef(false)
   const { camera, controls } = useThree() as unknown as { camera: THREE.Camera; controls: OrbitControlsImpl | null }
 
+  const walked = useRef(0)
+  const lastPos = useRef<Pt>(start)
   useFrame((_, dt) => {
+    // 발소리: 실제로 움직인 거리로 걸음을 센다(조이스틱·탭 이동 모두)
+    const lp = lastPos.current, cp = posRef.current
+    const moved = Math.hypot(cp.x - lp.x, cp.z - lp.z)
+    lastPos.current = cp
+    if (moved > 0 && moved < 1) {
+      const n = stepsCrossed(walked.current, walked.current + moved, STEP_STRIDE)
+      walked.current += moved
+      if (n > 0) onStep?.()
+    }
     // 새 목적지 요청 처리
     if (requestRef.current) {
       const target = requestRef.current
@@ -533,7 +568,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} lowSpec={lowSpec} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -584,6 +619,8 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
   return (
     <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
       <color attach="background" args={['#d9dfe4']} />
+      <fog attach="fog" args={['#d9dfe4', 24, 60]} />
+      <Surroundings layout={layout} />
       <hemisphereLight args={['#ffffff', '#2f6b4c', lowSpec ? 1.1 : 0.7]} />
       <directionalLight position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
         shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0005} />
@@ -616,7 +653,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       })}
       {layout.pillars.map((p) => <group key={p.id} position={[p.x, 0, p.z]}><Pillar size={p.size} m={m} /></group>)}
       {layout.equipment.filter((e) => !(vehicle && tester && (e.id === vehicle.id || e.id === tester.id))).map((e) => (
-        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
+        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} glow={glowIds.includes(e.id)} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
           showLabel={labelFor(e)} onTap={() => onSelectEquipment(e.id)} />
       ))}
       {tester && (
@@ -628,6 +665,9 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
           )}
         </group>
       )}
+      {tester && (glowIds.includes(tester.id) || (vehicle && glowIds.includes(vehicle.id))) && (
+        <group position={[tester.x, 0, tester.z]}><GlowFrame w={footprintOf(tester).xMax - footprintOf(tester).xMin} d={footprintOf(tester).zMax - footprintOf(tester).zMin} /></group>
+      )}
       {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} m={m} lowSpec={lowSpec} selected={selectedId === vehicle.id} testerHighlight={highlightIds.includes(tester.id) || selectedId === tester.id}
         showVehicleLabel={labelFor(vehicle)} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
@@ -637,12 +677,14 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={npcTalking} posRef={posRef} view={viewMode} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={npcTalking} posRef={posRef} view={viewMode} onStep={onStep} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       <CameraRig view={viewMode} posRef={posRef} look={look} start={start} face={{ x: (mz.xMin + mz.xMax) / 2, z: (mz.zMin + mz.zMax) / 2 }} />
       {first && !npcTalking && <FirstPersonLook posRef={posRef} look={look} />}
       {first && !npcTalking && onAim && <AimProbe layout={layout} onAim={onAim} />}
       <OrbitControls makeDefault enabled={!npcTalking && !first} enablePan={false} minDistance={orbit.minDistance} maxDistance={orbit.maxDistance} minPolarAngle={orbit.minPolar} maxPolarAngle={orbit.maxPolar} />
+      {/* 품질 높음: 구석 그늘(AO)·색 보정·가장자리 어둡게. 태블릿(품질 낮음)은 끈다 */}
+      {!lowSpec && <Suspense fallback={null}><Effects /></Suspense>}
     </Canvas>
   )
 }

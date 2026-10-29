@@ -12,6 +12,7 @@ import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type 
 import { TaskScreen, type TaskContext } from './TaskScreen'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog } from './NpcDialog'
+import { LabSound } from '../scene/sound'
 import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '../scene/viewMode'
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
@@ -74,6 +75,12 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const nextView = () => setViewMode(VIEW_MODES[(VIEW_MODES.indexOf(viewMode) + 1) % VIEW_MODES.length] ?? 'overview')
   /** 1인칭 가운데 조준점이 가리키는 장비(교관은 NPC_AIM) */
   const [aimId, setAimId] = useState<string | null>(null)
+  /** 소리(발소리·실습장 소음). 교실에서 여러 대가 함께 켜지므로 처음엔 끔 */
+  const sound = useMemo(() => new LabSound(), [])
+  const [soundOn, setSoundOn] = useState(false)
+  useEffect(() => () => sound.setEnabled(false), [sound])
+  const toggleSound = () => { const on = !soundOn; sound.setEnabled(on); setSoundOn(on) }
+  const onStep = useCallback(() => sound.step(), [sound])
 
   const onMove = useCallback((p: Pt, m: boolean) => { setPos(p); setMoving(m) }, [])
   const nearIds = useMemo(() => layout.equipment.filter((e) => nearEquipment(pos, e, NEAR_RADIUS)).map((e) => e.id), [pos, layout])
@@ -105,6 +112,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
+            glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
@@ -113,6 +121,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
             <div className="g-status">
               <div className="g-badge"><b>{session.anonymousStudentCode}</b><span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
               <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}>🎥 {VIEW_LABEL[viewMode]}</button>
+              <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}>{soundOn ? '🔊' : '🔇'}</button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
               {menuOpen && (
                 <div className="g-menu" role="menu">
