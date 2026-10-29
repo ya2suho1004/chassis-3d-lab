@@ -120,8 +120,29 @@ export function vehiclePlacement(layout: SceneLayout, dir: 'north' | 'south' | n
   return { x: tester.x, z, rotation: dir === 'south' ? 180 : 0, assumed: dir === null }
 }
 
-export type LabelMode = 'all' | 'focus'
+export type LabelMode = 'all' | 'focus' | 'near'
 /** 3D 이름표 표시 규칙. 'focus'(과제 중 기본)는 고른 장비·다음 단계 장비·작동 장비만 보여 화면 가림을 줄인다 */
 export function showsLabel(mode: LabelMode, e: { selected: boolean; highlight: boolean; interactive: boolean }): boolean {
   return mode === 'all' || e.selected || e.highlight || e.interactive
+}
+
+/** 'near'(게임 화면 기본) 모드에서 이름표를 보이는 거리(m, 장비 바닥 둘레까지) */
+export const NEAR_LABEL_RADIUS = 3
+/**
+ * 게임 화면 이름표: 가까운(3 m)·고른·강조·조준한 장비는 이름표, 멀리 있는 작동 장비는 작은 표시(◆)만, 나머지는 숨김.
+ * 표시는 '작동 장비'면 늘 같아 다음 단계를 드러내지 않는다(안내 없음 조건).
+ * 'all'·'focus'는 기존 규칙(showsLabel) 그대로 이름표 또는 숨김.
+ */
+export function labelState(mode: LabelMode, e: { selected: boolean; highlight: boolean; interactive: boolean; aimed?: boolean; distance: number }): 'label' | 'marker' | null {
+  if (mode !== 'near') return showsLabel(mode, e) ? 'label' : null
+  if (e.selected || e.highlight || e.aimed || e.distance <= NEAR_LABEL_RADIUS) return 'label'
+  return e.interactive ? 'marker' : null
+}
+
+/** 점에서 장비 바닥 둘레까지 거리(m). 안이면 0 */
+export function distanceToFootprint(p: Pt, e: { x: number; z: number; w: number; d: number; rotation: number }): number {
+  const f = footprintOf(e)
+  const dx = Math.max(f.xMin - p.x, 0, p.x - f.xMax)
+  const dz = Math.max(f.zMin - p.z, 0, p.z - f.zMax)
+  return Math.hypot(dx, dz)
 }

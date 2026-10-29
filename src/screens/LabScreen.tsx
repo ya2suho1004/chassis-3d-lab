@@ -88,7 +88,8 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const selected = layout.equipment.find((e) => e.id === selectedId) ?? null
   const requiredNow = run?.nextStepId ? (task.steps.find((s) => s.stepId === run.nextStepId)?.equipmentId ?? null) : null
   const displayMode = run?.displayMode ?? 'threeD'
-  const labelMode: LabelMode = labelChoice ?? (run ? 'focus' : 'all')
+  /** 이름표: 게임 화면 기본은 '가까운 것만'(먼 작동 장비는 ◆), 기본 화면은 둘러보기 전체·과제 중 필요한 것만 */
+  const labelMode: LabelMode = labelChoice ?? (uiStyle === 'game' ? 'near' : run ? 'focus' : 'all')
   const rig = useMemo(() => brakeRigState(run, session.vehicleEntryDirection), [run, session.vehicleEntryDirection])
 
   const selectEquipment = (id: string | null) => {
@@ -125,7 +126,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
               {menuOpen && (
                 <div className="g-menu" role="menu">
-                  <button onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>
+                  <button onClick={() => setLabelChoice(labelMode === 'all' ? 'near' : 'all')}>{labelMode === 'all' ? '이름표 가까운 것만' : '이름표 모두 보기'}</button>
                   <label className="g-check"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
                   {run && <button onClick={toggleDisplay}>도식 모드로</button>}
                   <button onClick={() => { setUiStyle('classic'); setMenuOpen(false) }}>기본 화면(패널)으로</button>

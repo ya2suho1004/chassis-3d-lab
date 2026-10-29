@@ -5,7 +5,7 @@ import { Environment, Html, Lightformer, OrbitControls } from '@react-three/drei
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { footprintOf, showsLabel, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
+import { distanceToFootprint, footprintOf, labelState, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
 import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
 import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, StaticCar, Stand, ToeGauge, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
@@ -132,7 +132,14 @@ function GlowFrame({ w, d }: { w: number; d: number }) {
   return <mesh rotation-x={-Math.PI / 2} position={[0, 0.014, 0]} geometry={geo} material={mat} renderOrder={2} />
 }
 
-function Equipment({ e, m, facing, selected, highlight, showLabel, onTap, lowSpec, raised, glow }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; showLabel: boolean; onTap: () => void; lowSpec: boolean; raised: boolean; glow: boolean }) {
+type LabelKind = 'label' | 'marker' | null
+
+/** 멀리 있는 작동 장비 표시(◆). 이름표 대신 작게 */
+function Marker({ y }: { y: number }) {
+  return <Html position={[0, y, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d marker" aria-hidden>◆</div></Html>
+}
+
+function Equipment({ e, m, facing, selected, highlight, label, onTap, lowSpec, raised, glow }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; label: LabelKind; onTap: () => void; lowSpec: boolean; raised: boolean; glow: boolean }) {
   const f = footprintOf(e)
   const w = f.xMax - f.xMin
   const d = f.zMax - f.zMin
@@ -141,11 +148,12 @@ function Equipment({ e, m, facing, selected, highlight, showLabel, onTap, lowSpe
       <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} />
       {glow && <GlowFrame w={w} d={d} />}
       {(selected || highlight) && <FootprintFrame w={w} d={d} color={selected ? '#ff9800' : '#2d6cdf'} />}
-      {showLabel && (
+      {label === 'label' && (
         <Html position={[0, e.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
           <div className={`label3d ${e.interactive ? 'interactive' : ''} ${highlight ? 'hl' : ''}`}>{e.label}</div>
         </Html>
       )}
+      {label === 'marker' && <Marker y={e.h + 0.3} />}
     </group>
   )
 }
@@ -246,7 +254,7 @@ function LiftRig({ e, m, lowSpec, raised, car }: { e: SceneEquipment; m: Mats; l
 }
 
 /** 제동력 시험기 연출: 롤러 4개·리프트 판·시험 차량(진입/이탈·들림·뒷바퀴 회전). 단계 판정과 무관한 표시 전용 */
-function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehicleLabel, onTapVehicle, lowSpec }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; m: Mats; selected: boolean; testerHighlight: boolean; showVehicleLabel: boolean; onTapVehicle: () => void; lowSpec: boolean }) {
+function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, vehicleLabel, onTapVehicle, lowSpec }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; m: Mats; selected: boolean; testerHighlight: boolean; vehicleLabel: LabelKind; onTapVehicle: () => void; lowSpec: boolean }) {
   const theta = (vehicle.rotation * Math.PI) / 180
   const away = { x: -Math.sin(theta), z: -Math.cos(theta) }
   const rearAxle = vehicle.d / 2 - 0.6
@@ -348,11 +356,12 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
             </Suspense>
           ) : codeCar}
         </group>
-        {showVehicleLabel && (
+        {vehicleLabel === 'label' && (
           <Html position={[0, vehicle.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
             <div className="label3d">{vehicle.label}</div>
           </Html>
         )}
+        {vehicleLabel === 'marker' && <Marker y={vehicle.h + 0.3} />}
       </group>
     </>
   )
@@ -576,13 +585,17 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
   const look = useRef({ yaw: 0, pitch: 0 })
   const first = viewMode === 'first'
   const orbit = ORBIT_PRESET[first ? 'overview' : viewMode]
-  /** 1인칭은 가까운 장비 이름표만(고른 것·다음 단계 장비는 늘) */
-  const labelFor = (e: SceneEquipment): boolean => {
+  const me = playerPos ?? start
+  /** 이름표·표시·숨김. 'near'(게임 기본)는 가까운 것만 이름표, 먼 작동 장비는 ◆. 다른 모드의 1인칭은 가까운 것만(고른 것·강조는 늘) */
+  const labelFor = (e: SceneEquipment): LabelKind => {
     const sel = selectedId === e.id, hl = highlightIds.includes(e.id)
-    if (!showsLabel(labelMode, { selected: sel, highlight: hl, interactive: e.interactive })) return false
-    return !first || firstPersonLabel(playerPos ?? start, e, sel || hl)
+    const k = labelState(labelMode, { selected: sel, highlight: hl, interactive: e.interactive, aimed: glowIds.includes(e.id), distance: distanceToFootprint(me, e) })
+    if (k === 'label' && first && labelMode !== 'near' && !firstPersonLabel(me, e, sel || hl)) return null
+    return k
   }
-  const npcLabel = !first || Math.hypot((playerPos ?? start).x - layout.npc.x, (playerPos ?? start).z - layout.npc.z) <= FIRST_LABEL_RADIUS
+  const npcDist = Math.hypot(me.x - layout.npc.x, me.z - layout.npc.z)
+  /** 교관 이름표: 'near'·1인칭에서 멀면 짧게("교관"), 1인칭에서 아주 멀면 숨김 */
+  const npcLabel: 'full' | 'short' | null = first && labelMode !== 'near' ? (npcDist <= FIRST_LABEL_RADIUS ? 'full' : null) : labelMode === 'near' && npcDist > 5 ? 'short' : 'full'
   const mz = layout.mainZone
   const ab = layout.absProtrusion
   const onFloorTap = (ev: ThreeEvent<MouseEvent>) => {
@@ -660,26 +673,27 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       {layout.pillars.map((p) => <group key={p.id} position={[p.x, 0, p.z]}><Pillar size={p.size} m={m} /></group>)}
       {layout.equipment.filter((e) => !(vehicle && tester && (e.id === vehicle.id || e.id === tester.id))).map((e) => (
         <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} glow={glowIds.includes(e.id)} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
-          showLabel={labelFor(e)} onTap={() => onSelectEquipment(e.id)} />
+          label={labelFor(e)} onTap={() => onSelectEquipment(e.id)} />
       ))}
       {tester && (
         <group onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onSelectEquipment(tester.id) } }}>
-          {labelFor(tester) && (
+          {labelFor(tester) === 'label' && (
             <Html position={[tester.x, 0.6, tester.z - tester.d / 2 - 0.2]} center style={{ pointerEvents: 'none' }}>
               <div className={`label3d interactive ${highlightIds.includes(tester.id) ? 'hl' : ''}`}>{tester.label}</div>
             </Html>
           )}
+          {labelFor(tester) === 'marker' && <group position={[tester.x, 0, tester.z - tester.d / 2 - 0.2]}><Marker y={0.6} /></group>}
         </group>
       )}
       {tester && (glowIds.includes(tester.id) || (vehicle && glowIds.includes(vehicle.id))) && (
         <group position={[tester.x, 0, tester.z]}><GlowFrame w={footprintOf(tester).xMax - footprintOf(tester).xMin} d={footprintOf(tester).zMax - footprintOf(tester).zMin} /></group>
       )}
       {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} m={m} lowSpec={lowSpec} selected={selectedId === vehicle.id} testerHighlight={highlightIds.includes(tester.id) || selectedId === tester.id}
-        showVehicleLabel={labelFor(vehicle)} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
+        vehicleLabel={labelFor(vehicle)} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
         <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} talking={npcTalking} />
-        {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>}
+        {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">{npcLabel === 'full' ? 'NPC 교관 — 탭하여 대화' : '교관'}</div></Html>}
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
