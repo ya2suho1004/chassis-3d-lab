@@ -15,6 +15,10 @@ import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
 import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
 import type { MoveInput } from './Joystick'
 import { Surroundings } from './Surroundings'
+import type { PanelReadout } from './panelReadout'
+import { K3Model, PrideModel, fitsK3, fitsPride } from './models/ParkedCarsModel'
+import { TireChangerModel, WheelBalancerModel, fitsTireChanger, fitsWheelBalancer } from './models/ShopMachinesModel'
+import { ShockStandModel, TransmissionSimulatorModel, fitsShockStand, fitsTransmissionSimulator } from './models/TrainersModel'
 import { STEP_STRIDE, stepsCrossed } from './sound'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
 import { CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
@@ -54,6 +58,10 @@ export interface LabSceneProps {
   glowIds?: string[]
   /** 한 걸음 디딜 때마다(발소리) */
   onStep?: () => void
+  /** 공용 조작부 계기 화면 값(과제 중) */
+  panelReadout?: PanelReadout | null
+  /** 계기 화면 가까이 보기: 카메라가 조작부 앞면을 비춘다 */
+  panelCloseUp?: boolean
 }
 
 /** 학생 아바타: 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎). 불러오는 중에는 코드 모델 */
@@ -94,22 +102,36 @@ function Instructor({ facing, talking = false }: { facing: number; talking?: boo
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
-function EquipmentModel({ e, m, facing, lowSpec, raised }: { e: SceneEquipment; m: Mats; facing: number | null; lowSpec: boolean; raised: boolean }) {
+function EquipmentModel({ e, m, facing, lowSpec, raised, readout }: { e: SceneEquipment; m: Mats; facing: number | null; lowSpec: boolean; raised: boolean; readout: PanelReadout | null }) {
   const id = e.id
   switch (e.kind) {
     case 'panel': {
       const code = <AbsPanel w={e.w} d={e.d} h={e.h} m={m} />
-      return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}>{fitsAbsPanel(e) ? <Suspense fallback={code}><AbsPanelModel /></Suspense> : code}</group>
+      return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}>{fitsAbsPanel(e) ? <Suspense fallback={code}><AbsPanelModel readout={readout} /></Suspense> : code}</group>
     }
     case 'desk': return <Desk w={e.w} d={e.d} h={e.h} m={m} />
     case 'toeGauge': return <ToeGauge w={e.w} d={e.d} h={e.h} m={m} />
     case 'lift': return <LiftRig e={e} m={m} lowSpec={lowSpec} raised={raised} car={LIFT_CARS[id] ?? null} />
-    case 'vehicle': return <StaticCar w={e.w} d={e.d} h={e.h} m={m} />
-    case 'stand': return <Stand w={e.w} d={e.d} h={e.h} m={m} kind={id.includes('shock') ? 'shock' : 'generic'} />
+    case 'vehicle': {
+      // 사진 31 최소회전반경 차량(K3형 세단 + 회전반경 측정판), 사진 35 캠버·캐스터 차량(프라이드형 해치백)
+      const code = <StaticCar w={e.w} d={e.d} h={e.h} m={m} />
+      const alongX = e.w > e.d
+      if (id === 'min-turning-radius-01' && fitsK3(e)) return <Suspense fallback={code}><K3Model alongX={alongX} /></Suspense>
+      if (id === 'camber-caster-vehicle-01' && fitsPride(e)) return <Suspense fallback={code}><PrideModel alongX={alongX} /></Suspense>
+      return code
+    }
+    case 'stand': {
+      const code = <Stand w={e.w} d={e.d} h={e.h} m={m} kind={id.includes('shock') ? 'shock' : 'generic'} />
+      if (id === 'shock-absorber-stand-01' && fitsShockStand(e)) return <Suspense fallback={code}><ShockStandModel /></Suspense>
+      return code
+    }
     case 'bench':
-      if (id.includes('simulator')) return <Machine w={e.w} d={e.d} h={e.h} m={m} kind="simulator" />
-      if (id.includes('balancer')) return <Machine w={e.w} d={e.d} h={e.h} m={m} kind="balancer" />
-      if (id.includes('changer')) return <Machine w={e.w} d={e.d} h={e.h} m={m} kind="changer" />
+      if (id.includes('simulator')) {
+        const code = <Machine w={e.w} d={e.d} h={e.h} m={m} kind="simulator" />
+        return id === 'transmission-simulator-01' && fitsTransmissionSimulator(e) ? <Suspense fallback={code}><TransmissionSimulatorModel /></Suspense> : code
+      }
+      if (id.includes('balancer')) { const code = <Machine w={e.w} d={e.d} h={e.h} m={m} kind="balancer" />; return fitsWheelBalancer(e) ? <Suspense fallback={code}><WheelBalancerModel /></Suspense> : code }
+      if (id.includes('changer')) { const code = <Machine w={e.w} d={e.d} h={e.h} m={m} kind="changer" />; return fitsTireChanger(e) ? <Suspense fallback={code}><TireChangerModel /></Suspense> : code }
       return <Workbench w={e.w} d={e.d} h={e.h} m={m} load={id.includes('at-mt') || id.includes('endplay') ? 'transmission' : id.includes('parts') || id.includes('toe') ? 'parts' : null} />
     default:
       return <mesh position={[0, e.h / 2, 0]}><boxGeometry args={[e.w, e.h, e.d]} /><meshStandardMaterial color={e.color} /></mesh>
@@ -139,13 +161,13 @@ function Marker({ y }: { y: number }) {
   return <Html position={[0, y, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d marker" aria-hidden>◆</div></Html>
 }
 
-function Equipment({ e, m, facing, selected, highlight, label, onTap, lowSpec, raised, glow }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; label: LabelKind; onTap: () => void; lowSpec: boolean; raised: boolean; glow: boolean }) {
+function Equipment({ e, m, facing, selected, highlight, label, onTap, lowSpec, raised, glow, readout }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; label: LabelKind; onTap: () => void; lowSpec: boolean; raised: boolean; glow: boolean; readout: PanelReadout | null }) {
   const f = footprintOf(e)
   const w = f.xMax - f.xMin
   const d = f.zMax - f.zMin
   return (
     <group position={[e.x, 0, e.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTap() } }}>
-      <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} />
+      <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} readout={readout} />
       {glow && <GlowFrame w={w} d={d} />}
       {(selected || highlight) && <FootprintFrame w={w} d={d} color={selected ? '#ff9800' : '#2d6cdf'} />}
       {label === 'label' && (
@@ -400,6 +422,33 @@ function NpcCamera({ npc, facing }: { npc: Pt; facing: number }) {
   return null
 }
 
+/** 계기 화면 가까이 보기: 조작부 앞면(바라보는 쪽) 0.8 m에서 계기 높이를 비춘다. 끝나면 원래 자리로 */
+function PanelCamera({ panel, facing }: { panel: SceneEquipment; facing: number }) {
+  const { camera, controls } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: OrbitControlsImpl | null }
+  const look = useRef(new THREE.Vector3())
+  useEffect(() => {
+    const pos = camera.position.clone(), target = controls ? controls.target.clone() : null, fov = camera.fov, quat = camera.quaternion.clone()
+    const dir = new THREE.Vector3(); camera.getWorldDirection(dir)
+    look.current.copy(camera.position).add(dir)
+    camera.fov = 45; camera.updateProjectionMatrix()
+    return () => {
+      camera.fov = fov; camera.updateProjectionMatrix()
+      camera.position.copy(pos); camera.quaternion.copy(quat)
+      if (controls && target) { controls.target.copy(target); controls.update() }
+    }
+  }, [camera, controls])
+  useFrame((_, dt) => {
+    const fx = -Math.sin(facing), fz = -Math.cos(facing)
+    const goal = new THREE.Vector3(panel.x + fx * 0.85, 1.28, panel.z + fz * 0.85)
+    const tgt = new THREE.Vector3(panel.x + fx * 0.3, 1.2, panel.z + fz * 0.3)
+    const k = prefersReducedMotion ? 1 : 1 - Math.exp(-5 * Math.min(dt, 0.1))
+    camera.position.lerp(goal, k)
+    look.current.lerp(tgt, k)
+    camera.lookAt(look.current)
+  })
+  return null
+}
+
 /** 시점을 바꿀 때 카메라 자리·시야각을 한 번 맞춘다. 지금 보던 수평 방향은 그대로 이어 간다 */
 function CameraRig({ view, posRef, look, start, face }: { view: ViewMode; posRef: React.MutableRefObject<Pt>; look: React.MutableRefObject<{ yaw: number; pitch: number }>; start: Pt; face: Pt }) {
   const { camera, controls } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: OrbitControlsImpl | null }
@@ -576,11 +625,14 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
   const requestRef = moveRequestRef
+  const panel = layout.equipment.find((e) => e.kind === 'panel')
+  /** 대화·계기 가까이 보기 중에는 카메라를 연출이 쥐고 학생은 멈춰 숨는다 */
+  const camBusy = npcTalking || panelCloseUp
   const posRef = useRef<Pt>(start)
   const look = useRef({ yaw: 0, pitch: 0 })
   const first = viewMode === 'first'
@@ -672,7 +724,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       })}
       {layout.pillars.map((p) => <group key={p.id} position={[p.x, 0, p.z]}><Pillar size={p.size} m={m} /></group>)}
       {layout.equipment.filter((e) => !(vehicle && tester && (e.id === vehicle.id || e.id === tester.id))).map((e) => (
-        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} glow={glowIds.includes(e.id)} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
+        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} glow={glowIds.includes(e.id)} readout={e.kind === 'panel' ? panelReadout : null} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
           label={labelFor(e)} onTap={() => onSelectEquipment(e.id)} />
       ))}
       {tester && (
@@ -697,12 +749,13 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={npcTalking} posRef={posRef} view={viewMode} onStep={onStep} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} posRef={posRef} view={viewMode} onStep={onStep} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
+      {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}
       <CameraRig view={viewMode} posRef={posRef} look={look} start={start} face={{ x: (mz.xMin + mz.xMax) / 2, z: (mz.zMin + mz.zMax) / 2 }} />
-      {first && !npcTalking && <FirstPersonLook posRef={posRef} look={look} />}
-      {first && !npcTalking && onAim && <AimProbe layout={layout} onAim={onAim} />}
-      <OrbitControls makeDefault enabled={!npcTalking && !first} enablePan={false} minDistance={orbit.minDistance} maxDistance={orbit.maxDistance} minPolarAngle={orbit.minPolar} maxPolarAngle={orbit.maxPolar} />
+      {first && !camBusy && <FirstPersonLook posRef={posRef} look={look} />}
+      {first && !camBusy && onAim && <AimProbe layout={layout} onAim={onAim} />}
+      <OrbitControls makeDefault enabled={!camBusy && !first} enablePan={false} minDistance={orbit.minDistance} maxDistance={orbit.maxDistance} minPolarAngle={orbit.minPolar} maxPolarAngle={orbit.maxPolar} />
       {/* 품질 높음: 구석 그늘(AO)·색 보정·가장자리 어둡게. 태블릿(품질 낮음)은 끈다 */}
       {!lowSpec && <Suspense fallback={null}><Effects /></Suspense>}
     </Canvas>

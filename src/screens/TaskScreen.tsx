@@ -9,6 +9,7 @@ import type { DeliveryEnvelope } from '../records/types'
 import { inspectPerformance, type InspectionIssue } from '../domain/npcInspection'
 import type { FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
+import type { PanelReadout } from '../scene/panelReadout'
 
 const newId = () => newUuid()
 
@@ -27,6 +28,8 @@ export interface TaskContext {
   total: number
   hint: () => void
   inspect: () => void
+  /** 3D 조작부 계기 화면에 보일 값(숫자식 계기와 같음) */
+  panel: PanelReadout
 }
 
 const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정' }
@@ -247,9 +250,10 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
       shown, clearShown: () => setShown(null),
       doneCount: run.completedSteps.length, total: task.steps.length,
       hint, inspect,
+      panel: { axle: done('enter') ? m.axleWeight : null, left: done('press') ? shownL : run.motorOn ? 0 : null, right: done('press') ? shownR : run.motorOn ? 0 : null, hold: gauge.hold, unit: m.unit ?? '' },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run, shown, nearKey, onContext])
+  }, [run, shown, nearKey, onContext, shownL, shownR])
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>

@@ -81,9 +81,12 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   useEffect(() => () => sound.setEnabled(false), [sound])
   const toggleSound = () => { const on = !soundOn; sound.setEnabled(on); setSoundOn(on) }
   const onStep = useCallback(() => sound.step(), [sound])
+  /** 계기 화면 가까이 보기(조작부 근처, 과제 중) */
+  const [closeUp, setCloseUp] = useState(false)
 
   const onMove = useCallback((p: Pt, m: boolean) => { setPos(p); setMoving(m) }, [])
   const nearIds = useMemo(() => layout.equipment.filter((e) => nearEquipment(pos, e, NEAR_RADIUS)).map((e) => e.id), [pos, layout])
+  const panelNear = nearIds.some((id) => layout.equipment.find((e) => e.id === id)?.kind === 'panel')
   const nearNpc = Math.hypot(pos.x - layout.npc.x, pos.z - layout.npc.z) <= NPC_RADIUS
   const selected = layout.equipment.find((e) => e.id === selectedId) ?? null
   const requiredNow = run?.nextStepId ? (task.steps.find((s) => s.stepId === run.nextStepId)?.equipmentId ?? null) : null
@@ -114,6 +117,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
+            panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
@@ -176,7 +180,9 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               </button>
             )}
 
-            <Joystick input={joystickRef} />
+            {!closeUp && <Joystick input={joystickRef} />}
+            {run && !closeUp && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}>📟 계기 보기</button>}
+            {closeUp && <button className="g-gaugebtn on" onClick={() => setCloseUp(false)}>✕ 계기 닫기</button>}
             <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>
 
             <div className="g-actions">
