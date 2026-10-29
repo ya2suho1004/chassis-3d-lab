@@ -15,6 +15,10 @@ export interface Outfit { top: string; bottom: string; shoes?: string }
 export const STUDENT_OUTFIT: Outfit = { top: '#2f5fb3', bottom: '#2b3a55' }
 export const INSTRUCTOR_OUTFIT: Outfit = { top: '#24324a', bottom: '#1f2733' }
 
+/** 사람은 레이어 2에만 둔다: 바닥 그림자를 한 번 구울 때(ContactShadows, 레이어 0만 봄) 빠져 움직인 뒤 그림자가 남지 않게 한다.
+ *  화면 카메라·클릭·조준 광선은 레이어 2도 켠다(LabScene LayerSetup) */
+export const CHARACTER_LAYER = 2
+
 /** 걷기 동작 한 주기(1초)에 나아가는 거리(m) — 이동 속도에 맞춰 재생 속도를 정한다 */
 export const WALK_CYCLE_DISTANCE = 1.47
 
@@ -34,6 +38,7 @@ export function CharacterModel({ action, outfit, speed = 1 }: { action: Characte
     clone.traverse((o) => {
       const mesh = o as THREE.Mesh
       if (!mesh.isMesh) return
+      mesh.layers.set(CHARACTER_LAYER)
       mesh.castShadow = true
       mesh.frustumCulled = false // 뼈로 움직인 몸이 원래 경계 상자를 벗어나도 사라지지 않게
       const mat = (mesh.material as THREE.MeshStandardMaterial).clone()

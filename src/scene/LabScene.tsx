@@ -1,7 +1,7 @@
 // 3D 실습장 장면 — 사진 기준 장비 모델(models/), 품질 2단계(낮음: 그림자·화면 효과 끔, 해상도 1배, 반사광은 간단한 빛 — 모델은 두 품질 같음), 바닥 탭 이동, 시점 3단계
 // 이 장면은 '개발용 임시 배치'를 그린다. 실제 학교 재현 완료가 아니다(layoutConfirmed=false).
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { Environment, Html, Lightformer, OrbitControls } from '@react-three/drei'
+import { ContactShadows, Environment, Html, Lightformer, OrbitControls, useProgress } from '@react-three/drei'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -21,7 +21,7 @@ import { TireChangerModel, WheelBalancerModel, fitsTireChanger, fitsWheelBalance
 import { ShockStandModel, TransmissionSimulatorModel, fitsShockStand, fitsTransmissionSimulator } from './models/TrainersModel'
 import { STEP_STRIDE, stepsCrossed } from './sound'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
-import { CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
+import { CHARACTER_LAYER, CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
 const Effects = lazy(() => import('./Effects'))
@@ -65,6 +65,25 @@ export interface LabSceneProps {
 }
 
 /** 학생 아바타: 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎). 불러오는 중에는 코드 모델 */
+/** 사람 발밑 둥근 그림자(바닥 그림자 굽기에서 빠지므로 따로 둔다) */
+const blobTexture = (() => {
+  let t: THREE.Texture | null = null
+  return () => {
+    if (t) return t
+    const c = document.createElement('canvas'); c.width = c.height = 64
+    const g = c.getContext('2d')!
+    const grd = g.createRadialGradient(32, 32, 2, 32, 32, 31)
+    grd.addColorStop(0, 'rgba(0,0,0,0.55)'); grd.addColorStop(1, 'rgba(0,0,0,0)')
+    g.fillStyle = grd; g.fillRect(0, 0, 64, 64)
+    t = new THREE.CanvasTexture(c)
+    return t
+  }
+})()
+function BlobShadow() {
+  const mat = useMemo(() => new THREE.MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false }), [])
+  return <mesh rotation-x={-Math.PI / 2} position-y={0.008} material={mat} renderOrder={1}><planeGeometry args={[0.9, 0.9]} /></mesh>
+}
+
 function Avatar({ pos, heading, moving }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean }) {
   const turn = useRef<THREE.Group>(null)
   useFrame((_, dt) => {
@@ -78,6 +97,7 @@ function Avatar({ pos, heading, moving }: { pos: Pt; heading: React.MutableRefOb
   const code = <Person suit="#2f5fb3" helmet="#ffd600" />
   return (
     <group position={[pos.x, 0, pos.z]}>
+      <BlobShadow />
       <group ref={turn}>
         <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : 'Idle'} outfit={STUDENT_OUTFIT} speed={WALK_SPEED / WALK_CYCLE_DISTANCE} /></Suspense>
       </group>
@@ -98,7 +118,7 @@ function Instructor({ facing, talking = false }: { facing: number; talking?: boo
     if (next !== action) setAction(next)
   })
   const code = <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
-  return <group rotation-y={facing}><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} /></Suspense></group>
+  return <group rotation-y={facing}><BlobShadow /><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} /></Suspense></group>
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
@@ -422,6 +442,27 @@ function NpcCamera({ npc, facing }: { npc: Pt; facing: number }) {
   return null
 }
 
+/** 화면 카메라와 클릭 광선이 사람 레이어(2)도 보게 한다 */
+function LayerSetup() {
+  const { camera, raycaster } = useThree()
+  useEffect(() => { camera.layers.enable(CHARACTER_LAYER); raycaster.layers.enable(CHARACTER_LAYER) }, [camera, raycaster])
+  return null
+}
+
+/**
+ * 바닥 그림자 굽기: 장비·차량 그림자를 위에서 한 번(20프레임) 계산해 바닥에 깐다. 품질 낮음(폰·태블릿)도 거의 공짜로 그림자가 생긴다.
+ * 모델을 다 불러온 뒤·리프트를 올리고 내린 뒤·시험 차량 자세가 바뀐 뒤 2.5초 기다렸다 다시 굽는다. 사람은 레이어 2라 빠진다.
+ */
+function BakedFloorShadows({ bounds, stateKey, strong }: { bounds: { xMin: number; xMax: number; zMin: number; zMax: number }; stateKey: string; strong: boolean }) {
+  const { active } = useProgress()
+  const want = `${active ? 'loading' : 'ready'}|${stateKey}`
+  const [key, setKey] = useState(want)
+  useEffect(() => { const t = setTimeout(() => setKey(want), 2500); return () => clearTimeout(t) }, [want])
+  const w = bounds.xMax - bounds.xMin, d = bounds.zMax - bounds.zMin
+  return <ContactShadows key={key} frames={20} position={[(bounds.xMin + bounds.xMax) / 2, 0.006, (bounds.zMin + bounds.zMax) / 2]} scale={[w, d]}
+    resolution={1024} blur={2.4} far={3.2} opacity={strong ? 0.6 : 0.38} color="#0b1a12" />
+}
+
 /** 계기 화면 가까이 보기: 조작부 앞면(바라보는 쪽) 0.8 m에서 계기 높이를 비춘다. 끝나면 원래 자리로 */
 function PanelCamera({ panel, facing }: { panel: SceneEquipment; facing: number }) {
   const { camera, controls } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: OrbitControlsImpl | null }
@@ -513,7 +554,7 @@ function FirstPersonLook({ posRef, look }: { posRef: React.MutableRefObject<Pt>;
 /** 1인칭 가운데 조준점: 0.15초마다 화면 가운데로 광선을 쏴 처음 닿은 보이는 물체가 어느 장비인지 알린다 */
 function AimProbe({ layout, onAim }: { layout: SceneLayout; onAim: (id: string | null) => void }) {
   const { camera, scene } = useThree()
-  const ray = useMemo(() => new THREE.Raycaster(), [])
+  const ray = useMemo(() => { const r = new THREE.Raycaster(); r.layers.enable(CHARACTER_LAYER); return r }, [])
   const last = useRef<string | null>(null)
   const t = useRef(0)
   useEffect(() => () => { if (last.current !== null) onAim(null) }, [onAim])
@@ -696,7 +737,10 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
           <Lightformer form="rect" intensity={0.6} position={[0, 1, 8]} rotation-y={Math.PI} scale={[20, 3, 1]} />
         </Environment>
       )}
+      <LayerSetup />
       <Floor r={mz} />
+      <BakedFloorShadows bounds={{ xMin: mz.xMin, xMax: mz.xMax, zMin: mz.zMin, zMax: Math.max(mz.zMax, ab?.zMax ?? mz.zMax) }}
+        stateKey={`${raisedLiftIds.join(',')}|${rig.vehicle}|${rig.liftUp}`} strong={lowSpec} />
       {ab && <Floor r={ab} />}
       {/* 시험 차로 흰 차선(사진 27·28) */}
       {tester && [-1, 1].map((s) => (
