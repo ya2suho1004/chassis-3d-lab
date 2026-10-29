@@ -14,6 +14,7 @@ import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
 import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
 import type { MoveInput } from './Joystick'
+import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
 import { CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
@@ -40,6 +41,12 @@ export interface LabSceneProps {
   /** NPC 대화 중: 카메라가 교관 상반신을 비추고 교관이 손짓한다 */
   npcTalking?: boolean
   labelMode: LabelMode
+  /** 시점(게임 화면). 없으면 내려다보기 */
+  viewMode?: ViewMode
+  /** 학생 위치(1인칭 이름표 거리 판단) */
+  playerPos?: Pt
+  /** 1인칭 가운데 조준점이 가리키는 장비 ID(교관은 '__npc'), 없으면 null. 바뀔 때만 부른다 */
+  onAim?: (id: string | null) => void
 }
 
 /** 학생 아바타: 품질 높음은 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎), 낮음은 코드 모델 */
@@ -336,7 +343,11 @@ function NpcCamera({ npc, facing }: { npc: Pt; facing: number }) {
   useEffect(() => {
     saved.current = { pos: camera.position.clone(), target: controls ? controls.target.clone() : new THREE.Vector3(npc.x, 1, npc.z) }
     look.current.copy(saved.current.target)
+    // 대화 장면 구도는 시야각 50 기준(1인칭 70이면 교관이 작게 보인다)
+    const fov = camera.fov
+    camera.fov = 50; camera.updateProjectionMatrix()
     return () => {
+      camera.fov = fov; camera.updateProjectionMatrix()
       const s = saved.current
       if (!s) return
       camera.position.copy(s.pos)
@@ -357,10 +368,96 @@ function NpcCamera({ npc, facing }: { npc: Pt; facing: number }) {
   return null
 }
 
-function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean }) {
+/** 시점을 바꿀 때 카메라 자리·시야각을 한 번 맞춘다. 지금 보던 수평 방향은 그대로 이어 간다 */
+function CameraRig({ view, posRef, look, start, face }: { view: ViewMode; posRef: React.MutableRefObject<Pt>; look: React.MutableRefObject<{ yaw: number; pitch: number }>; start: Pt; face: Pt }) {
+  const { camera, controls } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: OrbitControlsImpl | null }
+  const pending = useRef<ViewMode | null>(view)
+  // 처음에는 시작점에서 실습장 가운데를 보는 방향(시작점이 서쪽 끝이라 바깥을 보지 않게)
+  const fwd = useRef(new THREE.Vector3(face.x - start.x, 0, face.z - start.z))
+  const prev = useRef<ViewMode | null>(null)
+  useEffect(() => {
+    // 바뀐 직후(다음 프레임에 궤도 조작기가 옛 중심을 보게 돌리기 전)에 지금 보던 방향을 잡아 둔다
+    if (prev.current !== null && prev.current !== view) camera.getWorldDirection(fwd.current)
+    prev.current = view
+    pending.current = view
+  }, [view, camera])
+  useFrame(() => {
+    const v = pending.current
+    if (!v || (v !== 'first' && !controls)) return
+    pending.current = null
+    const f = fwd.current
+    const p = posRef.current ?? start
+    if (v === 'first') {
+      look.current = { yaw: yawFromForward(f.x, f.z), pitch: -0.12 }
+      camera.fov = FIRST_FOV
+    } else {
+      const { target, position } = orbitPlacement(v, p, f.x, f.z)
+      camera.fov = ORBIT_PRESET[v].fov
+      camera.position.set(...position)
+      if (controls) { controls.target.set(...target); controls.update() }
+    }
+    camera.updateProjectionMatrix()
+  })
+  return null
+}
+
+/** 1인칭: 눈높이에 카메라를 두고, 화면(캔버스)을 끌면 고개를 돌린다. 손가락 하나만 쓴다(조이스틱은 캔버스 밖이라 겹치지 않음) */
+function FirstPersonLook({ posRef, look }: { posRef: React.MutableRefObject<Pt>; look: React.MutableRefObject<{ yaw: number; pitch: number }> }) {
+  const { camera, gl } = useThree()
+  useEffect(() => {
+    const el = gl.domElement
+    let active: number | null = null
+    let lx = 0, ly = 0
+    const down = (e: PointerEvent) => { if (active !== null || (e.pointerType === 'mouse' && e.button !== 0)) return; active = e.pointerId; lx = e.clientX; ly = e.clientY }
+    const move = (e: PointerEvent) => {
+      if (e.pointerId !== active) return
+      look.current = lookStep(look.current.yaw, look.current.pitch, e.clientX - lx, e.clientY - ly)
+      lx = e.clientX; ly = e.clientY
+    }
+    const up = (e: PointerEvent) => { if (e.pointerId === active) active = null }
+    el.addEventListener('pointerdown', down)
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    return () => { el.removeEventListener('pointerdown', down); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up) }
+  }, [gl, look])
+  useFrame(() => {
+    const p = posRef.current
+    camera.position.set(p.x, EYE_HEIGHT, p.z)
+    camera.rotation.set(look.current.pitch, look.current.yaw, 0, 'YXZ')
+  })
+  return null
+}
+
+/** 1인칭 가운데 조준점: 0.15초마다 화면 가운데로 광선을 쏴 처음 닿은 보이는 물체가 어느 장비인지 알린다 */
+function AimProbe({ layout, onAim }: { layout: SceneLayout; onAim: (id: string | null) => void }) {
+  const { camera, scene } = useThree()
+  const ray = useMemo(() => new THREE.Raycaster(), [])
+  const last = useRef<string | null>(null)
+  const t = useRef(0)
+  useEffect(() => () => { if (last.current !== null) onAim(null) }, [onAim])
+  useFrame((_, dt) => {
+    t.current += dt
+    if (t.current < 0.15) return
+    t.current = 0
+    ray.setFromCamera(new THREE.Vector2(0, 0), camera)
+    ray.far = AIM_RANGE + 0.5
+    const meshes: THREE.Object3D[] = []
+    const collect = (o: THREE.Object3D) => { if (!o.visible) return; if ((o as THREE.Mesh).isMesh) meshes.push(o); o.children.forEach(collect) }
+    collect(scene)
+    const hit = ray.intersectObjects(meshes, false).find((h) => h.distance > 0.2)
+    const id = hit ? aimedTarget(layout.equipment, layout.npc, hit.point, hit.distance) : null
+    if (id !== last.current) { last.current = id; onAim(id) }
+  })
+  return null
+}
+
+function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
-  const posRef = useRef<Pt>(start)
+  // 1인칭은 카메라를 FirstPersonLook이 눈높이에 직접 둔다. 궤도 시점만 이동량만큼 카메라를 함께 옮긴다
+  const orbitFollow = view !== 'first'
+  const targetY = view === 'first' ? 1.0 : ORBIT_PRESET[view].targetY
   const pathRef = useRef<Pt[] | null>(null)
   const idxRef = useRef(0)
   const lastReport = useRef(0)
@@ -396,9 +493,11 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       heading.current = headingFor(vx, vz)
       if (nextPos) {
         posRef.current = nextPos
-        camera.position.x += nextPos.x - prev.x
-        camera.position.z += nextPos.z - prev.z
-        if (controls) { controls.target.set(nextPos.x, 1.0, nextPos.z); controls.update() }
+        if (orbitFollow) {
+          camera.position.x += nextPos.x - prev.x
+          camera.position.z += nextPos.z - prev.z
+          if (controls) { controls.target.set(nextPos.x, targetY, nextPos.z); controls.update() }
+        }
         setPos(nextPos)
         moving = true
         lastReport.current += dt
@@ -417,9 +516,11 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       const dx = r.pos.x - prev.x, dz = r.pos.z - prev.z
       if (dx * dx + dz * dz > 1e-8) heading.current = headingFor(dx, dz)
       // 카메라가 아바타를 따라가도록 이동량만큼 함께 이동
-      camera.position.x += r.pos.x - prev.x
-      camera.position.z += r.pos.z - prev.z
-      if (controls) { controls.target.set(r.pos.x, 1.0, r.pos.z); controls.update() }
+      if (orbitFollow) {
+        camera.position.x += r.pos.x - prev.x
+        camera.position.z += r.pos.z - prev.z
+        if (controls) { controls.target.set(r.pos.x, targetY, r.pos.z); controls.update() }
+      }
       setPos(r.pos)
       lastReport.current += dt
       if (!moving || lastReport.current > 0.25) { lastReport.current = 0; onMove(r.pos, moving) }
@@ -428,15 +529,26 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   })
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
-  // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼)
-  return <group visible={!frozen}><Avatar pos={pos} heading={heading} moving={walking} lowSpec={lowSpec} /></group>
+  // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼). 1인칭은 내 몸을 숨긴다
+  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} lowSpec={lowSpec} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
   const requestRef = moveRequestRef
+  const posRef = useRef<Pt>(start)
+  const look = useRef({ yaw: 0, pitch: 0 })
+  const first = viewMode === 'first'
+  const orbit = ORBIT_PRESET[first ? 'overview' : viewMode]
+  /** 1인칭은 가까운 장비 이름표만(고른 것·다음 단계 장비는 늘) */
+  const labelFor = (e: SceneEquipment): boolean => {
+    const sel = selectedId === e.id, hl = highlightIds.includes(e.id)
+    if (!showsLabel(labelMode, { selected: sel, highlight: hl, interactive: e.interactive })) return false
+    return !first || firstPersonLabel(playerPos ?? start, e, sel || hl)
+  }
+  const npcLabel = !first || Math.hypot((playerPos ?? start).x - layout.npc.x, (playerPos ?? start).z - layout.npc.z) <= FIRST_LABEL_RADIUS
   const mz = layout.mainZone
   const ab = layout.absProtrusion
   const onFloorTap = (ev: ThreeEvent<MouseEvent>) => {
@@ -470,7 +582,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
   }
   const hdri = `${import.meta.env.BASE_URL}assets/hdri/autoshop_01_1k.hdr`
   return (
-    <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.1, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
+    <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
       <color attach="background" args={['#d9dfe4']} />
       <hemisphereLight args={['#ffffff', '#2f6b4c', lowSpec ? 1.1 : 0.7]} />
       <directionalLight position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
@@ -505,11 +617,11 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       {layout.pillars.map((p) => <group key={p.id} position={[p.x, 0, p.z]}><Pillar size={p.size} m={m} /></group>)}
       {layout.equipment.filter((e) => !(vehicle && tester && (e.id === vehicle.id || e.id === tester.id))).map((e) => (
         <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
-          showLabel={showsLabel(labelMode, { selected: selectedId === e.id, highlight: highlightIds.includes(e.id), interactive: e.interactive })} onTap={() => onSelectEquipment(e.id)} />
+          showLabel={labelFor(e)} onTap={() => onSelectEquipment(e.id)} />
       ))}
       {tester && (
         <group onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onSelectEquipment(tester.id) } }}>
-          {showsLabel(labelMode, { selected: selectedId === tester.id, highlight: highlightIds.includes(tester.id), interactive: tester.interactive }) && (
+          {labelFor(tester) && (
             <Html position={[tester.x, 0.6, tester.z - tester.d / 2 - 0.2]} center style={{ pointerEvents: 'none' }}>
               <div className={`label3d interactive ${highlightIds.includes(tester.id) ? 'hl' : ''}`}>{tester.label}</div>
             </Html>
@@ -517,17 +629,20 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         </group>
       )}
       {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} m={m} lowSpec={lowSpec} selected={selectedId === vehicle.id} testerHighlight={highlightIds.includes(tester.id) || selectedId === tester.id}
-        showVehicleLabel={showsLabel(labelMode, { selected: selectedId === vehicle.id, highlight: highlightIds.includes(vehicle.id), interactive: vehicle.interactive })} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
+        showVehicleLabel={labelFor(vehicle)} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
         <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} lowSpec={lowSpec} talking={npcTalking} />
-        <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>
+        {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>}
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={npcTalking} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={npcTalking} posRef={posRef} view={viewMode} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
-      <OrbitControls makeDefault enabled={!npcTalking} enablePan={false} minDistance={3} maxDistance={18} maxPolarAngle={Math.PI / 2.1} target={[start.x, 1, start.z]} />
+      <CameraRig view={viewMode} posRef={posRef} look={look} start={start} face={{ x: (mz.xMin + mz.xMax) / 2, z: (mz.zMin + mz.zMax) / 2 }} />
+      {first && !npcTalking && <FirstPersonLook posRef={posRef} look={look} />}
+      {first && !npcTalking && onAim && <AimProbe layout={layout} onAim={onAim} />}
+      <OrbitControls makeDefault enabled={!npcTalking && !first} enablePan={false} minDistance={orbit.minDistance} maxDistance={orbit.maxDistance} minPolarAngle={orbit.minPolar} maxPolarAngle={orbit.maxPolar} />
     </Canvas>
   )
 }

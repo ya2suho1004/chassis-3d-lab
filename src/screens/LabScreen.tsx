@@ -12,6 +12,7 @@ import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type 
 import { TaskScreen, type TaskContext } from './TaskScreen'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog } from './NpcDialog'
+import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '../scene/viewMode'
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
 import { ChatPanel } from '../chat/ChatPanel'
@@ -68,6 +69,11 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const [menuOpen, setMenuOpen] = useState(false)
   /** 멀리서 교관을 눌렀으면 걸어가서 도착하는 순간 대화를 연다 */
   const [talkOnArrive, setTalkOnArrive] = useState(false)
+  /** 시점: 내려다보기 · 따라가기(기본, 잠정) · 내 눈으로(1인칭). 안내 있음·없음 조건에 똑같이 제공 */
+  const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_VIEW)
+  const nextView = () => setViewMode(VIEW_MODES[(VIEW_MODES.indexOf(viewMode) + 1) % VIEW_MODES.length] ?? 'overview')
+  /** 1인칭 가운데 조준점이 가리키는 장비(교관은 NPC_AIM) */
+  const [aimId, setAimId] = useState<string | null>(null)
 
   const onMove = useCallback((p: Pt, m: boolean) => { setPos(p); setMoving(m) }, [])
   const nearIds = useMemo(() => layout.equipment.filter((e) => nearEquipment(pos, e, NEAR_RADIUS)).map((e) => e.id), [pos, layout])
@@ -98,7 +104,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
       <main className={`game ${talking ? 'talking' : ''}`}>
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
-            joystickRef={joystickRef} npcTalking={talking}
+            joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
@@ -106,6 +112,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
           <>
             <div className="g-status">
               <div className="g-badge"><b>{session.anonymousStudentCode}</b><span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
+              <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}>🎥 {VIEW_LABEL[viewMode]}</button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
               {menuOpen && (
                 <div className="g-menu" role="menu">
@@ -150,7 +157,14 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               </div>
             )}
 
-            <div className="g-hud">{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => layout.equipment.find((e) => e.id === id)?.label).join(', ')}` : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
+            <div className="g-hud">{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => layout.equipment.find((e) => e.id === id)?.label).join(', ')}` : viewMode === 'first' ? '왼쪽 조이스틱으로 걷기 · 화면을 끌어 둘러보기 · 가운데 점을 장비에 맞추기' : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
+
+            {viewMode === 'first' && <div className={`g-reticle ${aimId ? 'on' : ''}`} aria-hidden />}
+            {viewMode === 'first' && aimId && (
+              <button className="g-aim" onClick={() => (aimId === NPC_AIM ? setNpcOpen(true) : selectEquipment(aimId))}>
+                {aimId === NPC_AIM ? '💬 교관과 대화' : `🔍 ${layout.equipment.find((e) => e.id === aimId)?.label.replace(/\(.*\)/, '').trim() ?? ''} 살펴보기`}
+              </button>
+            )}
 
             <Joystick input={joystickRef} />
             <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>
