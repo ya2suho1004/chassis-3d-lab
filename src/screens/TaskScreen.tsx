@@ -253,7 +253,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
       panel: { axle: done('enter') ? m.axleWeight : null, left: done('press') ? shownL : run.motorOn ? 0 : null, right: done('press') ? shownR : run.motorOn ? 0 : null, hold: gauge.hold, unit: m.unit ?? '' },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run, shown, nearKey, onContext, shownL, shownR])
+  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold])
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>
