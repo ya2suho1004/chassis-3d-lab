@@ -13,6 +13,8 @@ import { TaskScreen, type TaskContext } from './TaskScreen'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog } from './NpcDialog'
 import { LabSound } from '../scene/sound'
+import { useProgress } from '@react-three/drei'
+import { initialQuality, shouldAutoLower } from '../app/quality'
 import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '../scene/viewMode'
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
@@ -51,7 +53,29 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
   /** 품질 단계(설계 07 §7-5): 터치 기기(태블릿·폰)는 '낮음'(그림자·환경광 끔, 해상도 1배)으로 시작, 교사·학생이 바꿀 수 있다 */
-  const [lowSpec, setLowSpec] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches)
+  // ?q=high|low로 고정할 수 있고(시험·시연), 처음 4초가 느리면 한 번 자동으로 낮춘다(app/quality.ts)
+  const [quality0] = useState(() => initialQuality(typeof window !== 'undefined' ? window.location.search : '', typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches))
+  const [lowSpec, setLowSpecRaw] = useState(quality0.low)
+  const userChoseQuality = useRef(false)
+  const setLowSpec = (v: boolean) => { userChoseQuality.current = true; setLowSpecRaw(v) }
+  const [qualityNote, setQualityNote] = useState<string | null>(null)
+  const onFps = useCallback((fps: number) => {
+    if (shouldAutoLower({ low: lowSpecRef.current, locked: quality0.locked, userChose: userChoseQuality.current, fps })) {
+      setLowSpecRaw(true)
+      setQualityNote(`화면이 느려(${Math.round(fps)} fps) 품질을 낮췄습니다. 메뉴에서 바꿀 수 있습니다.`)
+      setTimeout(() => setQualityNote(null), 6000)
+    }
+  }, [quality0.locked])
+  const lowSpecRef = useRef(lowSpec)
+  lowSpecRef.current = lowSpec
+  /** 처음 불러오기 화면(모델·빛 파일). 한 번 끝나면 다시 띄우지 않는다. 20초가 지나도 안 끝나면 그냥 닫는다 */
+  const { active: loadingActive, progress } = useProgress()
+  const [loadedOnce, setLoadedOnce] = useState(false)
+  useEffect(() => { if (!loadingActive && progress >= 100) { const t = setTimeout(() => setLoadedOnce(true), 400); return () => clearTimeout(t) } }, [loadingActive, progress])
+  useEffect(() => { const t = setTimeout(() => setLoadedOnce(true), 20000); return () => clearTimeout(t) }, [])
+  /** 첫 조작 안내(이 기기에서 한 번만) */
+  const [guideOpen, setGuideOpen] = useState(() => { try { return localStorage.getItem('lab.guide.v1') !== 'seen' } catch { return true } })
+  const closeGuide = () => { setGuideOpen(false); try { localStorage.setItem('lab.guide.v1', 'seen') } catch { /* 저장 못 해도 진행 */ } }
   /** null = 자동(둘러보기는 전체, 과제 중은 필요한 것만) */
   /** 교사 도구: 배치 눈검토 또는 실측 입력(과제 수령 전에만) */
   const [teacherTool, setTeacherTool] = useState<'review' | 'survey' | null>(null)
@@ -117,7 +141,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
-            panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking}
+            panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
@@ -191,6 +215,27 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
             </div>
           </>
         )}
+
+        {!loadedOnce && (
+          <div className="g-loading" role="status" aria-live="polite">
+            <b>실습장 불러오는 중…</b>
+            <div className="g-bar"><span style={{ width: `${Math.round(progress)}%` }} /></div>
+            <small>{Math.round(progress)}% · 처음 한 번만 조금 걸립니다</small>
+          </div>
+        )}
+        {loadedOnce && guideOpen && !talking && (
+          <div className="g-guide" role="dialog" aria-label="조작 안내">
+            <b>조작 안내</b>
+            <ul>
+              <li>🕹️ 왼쪽 조이스틱(키보드 W·A·S·D) 또는 바닥을 눌러 걷기</li>
+              <li>👆 화면을 끌어 둘러보기</li>
+              <li>🎥 왼쪽 위 버튼으로 시점 바꾸기(내 눈으로 보면 가운데 점으로 장비를 살펴봄)</li>
+              <li>🔧 장비를 누르면 설명, 교관에게 가면 과제</li>
+            </ul>
+            <button className="primary" onClick={closeGuide}>알겠어요</button>
+          </div>
+        )}
+        {qualityNote && <div className="g-note" role="status">{qualityNote}</div>}
 
         {/* 과제 패널은 늘 붙여 두고(상태·자동 저장 유지) 서랍으로만 열고 닫는다 */}
         {run && (

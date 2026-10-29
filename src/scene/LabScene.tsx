@@ -62,6 +62,8 @@ export interface LabSceneProps {
   panelReadout?: PanelReadout | null
   /** 계기 화면 가까이 보기: 카메라가 조작부 앞면을 비춘다 */
   panelCloseUp?: boolean
+  /** 모델을 다 불러온 뒤 4초 동안 잰 평균 화면 속도(fps)를 한 번 알린다(자동 품질) */
+  onFps?: (fps: number) => void
 }
 
 /** 학생 아바타: 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎). 불러오는 중에는 코드 모델 */
@@ -442,6 +444,20 @@ function NpcCamera({ npc, facing }: { npc: Pt; facing: number }) {
   return null
 }
 
+/** 모델을 다 불러온 뒤 1초 쉬고 4초 동안 평균 fps를 재서 한 번 알린다 */
+function FpsProbe({ onFps }: { onFps: (fps: number) => void }) {
+  const { active } = useProgress()
+  const st = useRef({ wait: 1, t: 0, n: 0, done: false })
+  useFrame((_, dt) => {
+    const s = st.current
+    if (s.done || active) return
+    if (s.wait > 0) { s.wait -= dt; return }
+    s.t += dt; s.n += 1
+    if (s.t >= 4) { s.done = true; onFps(s.n / s.t) }
+  })
+  return null
+}
+
 /** 화면 카메라와 클릭 광선이 사람 레이어(2)도 보게 한다 */
 function LayerSetup() {
   const { camera, raycaster } = useThree()
@@ -666,7 +682,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -738,6 +754,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         </Environment>
       )}
       <LayerSetup />
+      {onFps && <FpsProbe onFps={onFps} />}
       <Floor r={mz} />
       <BakedFloorShadows bounds={{ xMin: mz.xMin, xMax: mz.xMax, zMin: mz.zMin, zMax: Math.max(mz.zMax, ab?.zMax ?? mz.zMax) }}
         stateKey={`${raisedLiftIds.join(',')}|${rig.vehicle}|${rig.liftUp}`} strong={lowSpec} />
