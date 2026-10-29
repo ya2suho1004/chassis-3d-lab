@@ -1,5 +1,5 @@
 // 시험 차량 블렌더 모델(public/assets/models/test-car.glb) — scripts/blender/build_test_car.py로 만든다.
-// 품질 높음에서만 쓴다. 품질 낮음(태블릿)·불러오는 중·치수가 다를 때는 코드로 만든 차량(CarBody)을 쓴다.
+// 두 품질 모두 쓴다(2026-10-29부터). 불러오는 중·치수가 다를 때는 코드로 만든 차량(CarBody)을 쓴다.
 // 파일은 meshopt 압축이다. 압축 해제기는 앱 안에 들어 있어 외부 사이트에서 받지 않는다(Draco 끔).
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'

@@ -1,5 +1,5 @@
 // 공용 조작부 블렌더 모델(public/assets/models/abs-panel.glb) — scripts/blender/build_abs_panel.py로 만든다.
-// 품질 높음에서만 쓴다. 품질 낮음(태블릿)·불러오는 중·치수가 다를 때는 코드 모델(AbsPanel)을 쓴다.
+// 두 품질 모두 쓴다(2026-10-29부터). 불러오는 중·치수가 다를 때는 코드 모델(AbsPanel)을 쓴다.
 // 모델에는 글자가 없다. 버튼 이름·ABS TESTER·명판 글자는 아래 평면 두 장으로 덧붙인다(자리는 블렌더 스크립트의 FACE·PLATE 값과 같다).
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'

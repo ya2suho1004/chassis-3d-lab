@@ -223,7 +223,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('review')}>배치 눈검토(교사)</button>}
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('survey')}>실측 입력(교사)</button>}
           {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}
-          <label className="inline" title="낮음: 그림자·반사광을 꺼서 태블릿에서 부드럽게"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
+          <label className="inline" title="낮음: 그림자·화면 효과를 끄고 해상도를 낮춰 태블릿에서 부드럽게(모델은 같음)"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
         </div>
       </header>
 

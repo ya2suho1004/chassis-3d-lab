@@ -1,6 +1,6 @@
 // 실습장 사람 캐릭터(public/assets/models/character.glb) — scripts/blender/build_character.py로 만든다.
 // 학생 아바타와 NPC 교관이 같은 모델을 쓰고 옷 색만 바꾼다. 동작: Idle(서 있기)·Walk(걷기)·Gesture(설명 손짓).
-// 품질 높음에서만 쓴다. 품질 낮음(태블릿)·불러오는 중은 코드 모델(Person)을 쓴다. 특정 인물을 닮지 않은 일반 캐릭터다.
+// 두 품질 모두 쓴다(2026-10-29부터). 불러오는 중은 코드 모델(Person)을 쓴다. 특정 인물을 닮지 않은 일반 캐릭터다.
 import { useAnimations, useGLTF } from '@react-three/drei'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'

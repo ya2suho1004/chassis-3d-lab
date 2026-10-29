@@ -1,5 +1,5 @@
 // 제동력 시험기 블렌더 모델(public/assets/models/brake-tester.glb) — scripts/blender/build_brake_tester.py로 만든다.
-// 품질 높음에서만 쓴다. 품질 낮음(태블릿)·불러오는 중·치수가 다를 때는 코드로 만든 시험기(BrakeTesterBase+Roller)를 쓴다.
+// 두 품질 모두 쓴다(2026-10-29부터). 불러오는 중·치수가 다를 때는 코드로 만든 시험기(BrakeTesterBase+Roller)를 쓴다.
 // 둘레 줄무늬 철판은 모델에 없고 장면 코드(CheckerSurround)가 그린다. 압축은 meshopt(외부 다운로드 없음).
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'

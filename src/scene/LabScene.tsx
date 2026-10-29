@@ -1,7 +1,7 @@
-// 3D 실습장 장면 — 사진 기준 장비 모델(models/), 품질 2단계(낮음: 그림자·환경광 끔), 바닥 탭 이동, 3인칭 추적 카메라
+// 3D 실습장 장면 — 사진 기준 장비 모델(models/), 품질 2단계(낮음: 그림자·화면 효과 끔, 해상도 1배, 반사광은 간단한 빛 — 모델은 두 품질 같음), 바닥 탭 이동, 시점 3단계
 // 이 장면은 '개발용 임시 배치'를 그린다. 실제 학교 재현 완료가 아니다(layoutConfirmed=false).
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { Environment, Html, OrbitControls } from '@react-three/drei'
+import { Environment, Html, Lightformer, OrbitControls } from '@react-three/drei'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -56,8 +56,8 @@ export interface LabSceneProps {
   onStep?: () => void
 }
 
-/** 학생 아바타: 품질 높음은 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎), 낮음은 코드 모델 */
-function Avatar({ pos, heading, moving, lowSpec }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; lowSpec: boolean }) {
+/** 학생 아바타: 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎). 불러오는 중에는 코드 모델 */
+function Avatar({ pos, heading, moving }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean }) {
   const turn = useRef<THREE.Group>(null)
   useFrame((_, dt) => {
     const g = turn.current
@@ -71,7 +71,7 @@ function Avatar({ pos, heading, moving, lowSpec }: { pos: Pt; heading: React.Mut
   return (
     <group position={[pos.x, 0, pos.z]}>
       <group ref={turn}>
-        {lowSpec ? code : <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : 'Idle'} outfit={STUDENT_OUTFIT} speed={WALK_SPEED / WALK_CYCLE_DISTANCE} /></Suspense>}
+        <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : 'Idle'} outfit={STUDENT_OUTFIT} speed={WALK_SPEED / WALK_CYCLE_DISTANCE} /></Suspense>
       </group>
     </group>
   )
@@ -80,18 +80,17 @@ function Avatar({ pos, heading, moving, lowSpec }: { pos: Pt; heading: React.Mut
 const NPC_FACING: Record<string, number> = { west: headingFor(-1, 0), east: headingFor(1, 0), north: headingFor(0, -1), south: headingFor(0, 1) }
 
 /** NPC 교관: 서 있다가 가끔 설명 손짓(6초 서 있기 → 2초 손짓) */
-function Instructor({ facing, lowSpec, talking = false }: { facing: number; lowSpec: boolean; talking?: boolean }) {
+function Instructor({ facing, talking = false }: { facing: number; talking?: boolean }) {
   const [action, setAction] = useState<CharacterAction>('Idle')
   const t = useRef(0)
   useFrame((_, dt) => {
-    if (lowSpec) return
     t.current = (t.current + Math.min(dt, 0.1)) % 8
     // 대화 중에는 손짓을 더 자주(2초 손짓 · 1초 쉼)
     const next: CharacterAction = talking ? (t.current % 3 < 2 ? 'Gesture' : 'Idle') : t.current > 6 ? 'Gesture' : 'Idle'
     if (next !== action) setAction(next)
   })
   const code = <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
-  return <group rotation-y={facing}>{lowSpec ? code : <Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} /></Suspense>}</group>
+  return <group rotation-y={facing}><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} /></Suspense></group>
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
@@ -100,7 +99,7 @@ function EquipmentModel({ e, m, facing, lowSpec, raised }: { e: SceneEquipment; 
   switch (e.kind) {
     case 'panel': {
       const code = <AbsPanel w={e.w} d={e.d} h={e.h} m={m} />
-      return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}>{!lowSpec && fitsAbsPanel(e) ? <Suspense fallback={code}><AbsPanelModel /></Suspense> : code}</group>
+      return <group rotation-y={facing ?? (e.rotation * Math.PI) / 180}>{fitsAbsPanel(e) ? <Suspense fallback={code}><AbsPanelModel /></Suspense> : code}</group>
     }
     case 'desk': return <Desk w={e.w} d={e.d} h={e.h} m={m} />
     case 'toeGauge': return <ToeGauge w={e.w} d={e.d} h={e.h} m={m} />
@@ -176,7 +175,7 @@ const LIFT_SPEED = 0.9 // 오르내림 빠르기(지수 접근 계수)
 
 /** 가위형 리프트: 발판이 오르내리고 가위 다리가 따라 펴진다(표시 전용). 품질 높음은 블렌더 모델, 낮음은 코드 모델 */
 function LiftRig({ e, m, lowSpec, raised, car }: { e: SceneEquipment; m: Mats; lowSpec: boolean; raised: boolean; car: 'avante' | null }) {
-  const useModel = !lowSpec && fitsScissorLift(e)
+  const useModel = fitsScissorLift(e)
   const rest = e.h
   const up = useModel ? SCISSOR.raisedTop : rest + 1.2
   const parts = useRef<ScissorParts | null>(null)
@@ -261,11 +260,11 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, showVehi
   const rearWheelRefs = useRef<Array<THREE.Object3D | null>>([])
   const frontWheelRefs = useRef<Array<THREE.Object3D | null>>([])
   // 품질 높음 + 치수가 맞으면 블렌더 모델(바퀴 노드를 같은 방식으로 돌린다), 아니면 코드 차량
-  const useModel = !lowSpec && fitsTestCar(vehicle)
+  const useModel = fitsTestCar(vehicle)
   const onModelWheels = useCallback((front: THREE.Object3D[], rear: THREE.Object3D[]) => { frontWheelRefs.current = front; rearWheelRefs.current = rear }, [])
   // 시험기도 같은 규칙: 블렌더 모델의 롤러·리프트 판 노드를 코드 시험기와 같은 방식으로 움직인다
   const wheelX = vehicle.w / 2 - 0.1
-  const useTesterModel = !lowSpec && fitsBrakeTester(tester, wheelX)
+  const useTesterModel = fitsBrakeTester(tester, wheelX)
   const onTesterParts = useCallback((rollers: THREE.Object3D[], lifts: THREE.Object3D[]) => { rollerRefs.current = rollers; liftRefs.current = lifts }, [])
   const s = useRef({ dist: target.dist, lift: target.lift, spin: 0 })
 
@@ -565,7 +564,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
   // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼). 1인칭은 내 몸을 숨긴다
-  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} lowSpec={lowSpec} /></group>
+  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} /></group>
 }
 
 export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep }: LabSceneProps) {
@@ -624,7 +623,14 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       <hemisphereLight args={['#ffffff', '#2f6b4c', lowSpec ? 1.1 : 0.7]} />
       <directionalLight position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
         shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0005} />
-      {!lowSpec && <Suspense fallback={null}><Environment files={hdri} environmentIntensity={0.55} /></Suspense>}
+      {/* 반사광: 품질 높음은 정비소 HDRI(1.6 MB), 낮음은 내려받기 없이 천장 조명판 모양의 간단한 빛으로 만든다 */}
+      {!lowSpec ? <Suspense fallback={null}><Environment files={hdri} environmentIntensity={0.55} /></Suspense> : (
+        <Environment resolution={32} environmentIntensity={0.6}>
+          <Lightformer form="rect" intensity={2} position={[0, 5, 0]} rotation-x={Math.PI / 2} scale={[10, 10, 1]} />
+          <Lightformer form="rect" intensity={0.6} position={[0, 1, -8]} scale={[20, 3, 1]} />
+          <Lightformer form="rect" intensity={0.6} position={[0, 1, 8]} rotation-y={Math.PI} scale={[20, 3, 1]} />
+        </Environment>
+      )}
       <Floor r={mz} />
       {ab && <Floor r={ab} />}
       {/* 시험 차로 흰 차선(사진 27·28) */}
@@ -672,7 +678,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         showVehicleLabel={labelFor(vehicle)} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
-        <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} lowSpec={lowSpec} talking={npcTalking} />
+        <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} talking={npcTalking} />
         {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">NPC 교관 — 탭하여 대화</div></Html>}
       </group>
       {/* 시작점 표시 */}

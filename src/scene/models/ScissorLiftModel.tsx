@@ -1,6 +1,6 @@
 // 가위형 리프트 블렌더 모델(public/assets/models/scissor-lift.glb) — scripts/blender/build_scissor_lift.py로 만든다.
 // 리프트 위 차량(1세대 아반떼, public/assets/models/avante.glb) — scripts/blender/build_avante.py로 만든다.
-// 품질 높음에서만 쓴다. 품질 낮음(태블릿)·불러오는 중·치수가 다를 때는 코드 모델(CodeScissorLift·StaticCar)을 쓴다.
+// 두 품질 모두 쓴다(2026-10-29부터). 불러오는 중·치수가 다를 때는 코드 모델(CodeScissorLift·StaticCar)을 쓴다.
 // 오르내림은 표시 전용이다(과제 판정·기록과 무관). 압축은 meshopt(외부 다운로드 없음).
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'
