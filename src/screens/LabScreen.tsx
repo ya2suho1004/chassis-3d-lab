@@ -6,7 +6,8 @@ import { changeDisplayMode, type TaskRun } from '../domain/taskEngine'
 import type { ApprovedTask } from '../domain/types'
 import type { Repository } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
-import { LabScene } from '../scene/LabScene'
+import { LabScene, type AvatarCue } from '../scene/LabScene'
+import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen, type TaskContext } from './TaskScreen'
@@ -105,6 +106,22 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   useEffect(() => () => sound.setEnabled(false), [sound])
   const toggleSound = () => { const on = !soundOn; sound.setEnabled(on); setSoundOn(on) }
   const onStep = useCallback(() => sound.step(), [sound])
+  /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
+  const [avatarCue, setAvatarCue] = useState<AvatarCue | null>(null)
+  const cuePrev = useRef<{ completed: string[]; off: string[] } | null>(null)
+  useEffect(() => {
+    if (!run) { cuePrev.current = null; return }
+    const now = { completed: run.completedSteps, off: run.offProgress as string[] }
+    const step = newCue(cuePrev.current, now)
+    cuePrev.current = now
+    if (!step) return
+    const action = actionForStep(step)
+    if (!action) return
+    const eqId = actionTarget(step, task.steps.find((st) => st.stepId === step)?.equipmentId ?? null)
+    const eq = eqId ? layout.equipment.find((e) => e.id === eqId) : null
+    setAvatarCue((c) => ({ action, seq: (c?.seq ?? 0) + 1, target: eq ? { x: eq.x, z: eq.z } : null }))
+  }, [run, task, layout])
+  const ppe = !!run?.completedSteps.includes('ppe')
   /** 계기 화면 가까이 보기(조작부 근처, 과제 중) */
   const [closeUp, setCloseUp] = useState(false)
 
@@ -142,6 +159,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
+            avatarCue={avatarCue} ppe={ppe}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 

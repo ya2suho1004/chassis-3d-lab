@@ -17,7 +17,7 @@ export function fitsTestCar(v: { w: number; d: number; h: number }): boolean {
   return near(v.w, TEST_CAR_SPEC.w) && near(v.d, TEST_CAR_SPEC.d) && near(v.h, TEST_CAR_SPEC.h)
 }
 
-export function TestCarModel({ highlight, onWheels }: { highlight?: boolean; onWheels: (front: THREE.Object3D[], rear: THREE.Object3D[]) => void }) {
+export function TestCarModel({ highlight, onWheels, brakeLights = false }: { highlight?: boolean; onWheels: (front: THREE.Object3D[], rear: THREE.Object3D[]) => void; brakeLights?: boolean }) {
   const gltf = useGLTF(TEST_CAR_URL, false, true)
   const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene])
   const glow = useMemo(() => new THREE.MeshStandardMaterial({ color: '#ffb74d', emissive: '#ff8f00', emissiveIntensity: 0.35, roughness: 0.4 }), [])
@@ -33,6 +33,23 @@ export function TestCarModel({ highlight, onWheels }: { highlight?: boolean; onW
     })
     return list
   }, [scene])
+  // 브레이크등: 미등 재질을 이 차 것만 복제해 제동 중에 밝힌다
+  const tail = useMemo(() => {
+    let m: THREE.MeshStandardMaterial | null = null
+    scene.traverse((o) => {
+      const mesh = o as THREE.Mesh
+      if (!mesh.isMesh || (mesh.material as THREE.Material).name !== 'TailLight') return
+      if (!m) m = (mesh.material as THREE.MeshStandardMaterial).clone()
+      mesh.material = m
+    })
+    return m as THREE.MeshStandardMaterial | null
+  }, [scene])
+  useLayoutEffect(() => {
+    if (!tail) return
+    // 너무 밝으면 색 보정(ACES)에서 주황으로 바래므로 진한 빨강을 적당히
+    tail.emissive.set(brakeLights ? '#ff0000' : '#3d0005')
+    tail.emissiveIntensity = brakeLights ? 1.6 : 1
+  }, [tail, brakeLights])
 
   useLayoutEffect(() => {
     for (const p of paint) p.mesh.material = highlight ? glow : p.original

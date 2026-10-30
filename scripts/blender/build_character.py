@@ -1,7 +1,9 @@
 # 실습장 사람(학생 아바타·NPC 교관 공용) 3D 캐릭터 생성 스크립트 — Blender 5.x에서 화면 없이 실행한다.
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/blender/build_character.py -- <출력.glb> [미리보기.png] [HDRI]
 # 특정 인물을 닮지 않은 일반 얼굴·체형(키 1.72 m)이다. 옷은 재질 이름으로만 나눠 둔다(Top·Bottom·Shoes) — 실습복 색·모양은 사진을 받은 뒤 정한다.
-# 뼈대 15개(Hips·Spine·Chest·Neck·Head, 팔·다리 좌우 3개씩)에 몸을 자동 가중치로 붙이고, 동작 3개(Idle·Walk·Gesture)를 넣는다.
+# 뼈대 15개(Hips·Spine·Chest·Neck·Head, 팔·다리 좌우 3개씩)에 몸을 자동 가중치로 붙이고, 동작 6개를 넣는다:
+#   Idle·Walk·Gesture(손짓) + 과제 연출 Crouch(쪼그려 살펴보기)·Press(조작부 버튼 누르기)·Equip(보호구 쓰기).
+# 보안경(Goggles)은 따로 된 물체로 Head 뼈에 붙여 두고 앱이 보이기·숨기기를 정한다(보호구 착용 단계).
 # Blender 좌표: X 오른쪽(캐릭터의 왼쪽 = +X), Y 앞(+Y가 얼굴, glTF에서 -z), Z 위. 노드: Character(뿌리) > Armature, Body.
 import bpy, bmesh, math, os, sys
 from mathutils import Vector
@@ -34,6 +36,9 @@ def material(name, color, metal=0.0, rough=0.6):
 M = {'Skin': material('Skin', '#e2b796', rough=0.55), 'Hair': material('Hair', '#1e1a17', rough=0.7),
      'Top': material('Top', '#2f5fb3', rough=0.8), 'Bottom': material('Bottom', '#2b3a55', rough=0.85),
      'Shoes': material('Shoes', '#1c1c1c', rough=0.5), 'Eye': material('Eye', '#121212', rough=0.2)}
+GOG = {'GogglesFrame': material('GogglesFrame', '#22262b', rough=0.5), 'GogglesLens': material('GogglesLens', '#bfe3f2', metal=0.1, rough=0.05)}
+lens = GOG['GogglesLens']; lens.node_tree.nodes['Principled BSDF'].inputs['Alpha'].default_value = 0.35
+if hasattr(lens, 'surface_render_method'): lens.surface_render_method = 'BLENDED'   # 반투명 렌즈(glTF alphaMode BLEND)
 SLOT = ['Skin', 'Hair', 'Top', 'Bottom', 'Shoes', 'Eye']
 
 # ---------------- 관절 위치(서 있는 자세, 팔은 몸 옆으로 살짝 벌림) ----------------
@@ -169,6 +174,40 @@ body.select_set(True); bpy.context.view_layer.objects.active = body
 bpy.ops.object.join()
 body = bpy.context.active_object; body.name = 'Body'
 
+# ---------------- 보안경(따로 된 물체, Head 뼈에 통째로) ----------------
+EYE_Z = 1.615
+def ellipse_band(rx, ry, z0, z1, a0, a1, segs, mat):
+    # 머리 둘레 타원 띠(각도 a0~a1, 앞 = +Y)를 얇은 판으로
+    bm = bmesh.new()
+    vs = []
+    for i in range(segs + 1):
+        a = a0 + (a1 - a0) * i / segs
+        x, y = rx * math.sin(a), 0.008 + ry * math.cos(a)
+        vs.append((bm.verts.new((x, y, z0)), bm.verts.new((x, y, z1))))
+    for i in range(segs):
+        bm.faces.new((vs[i][0], vs[i + 1][0], vs[i + 1][1], vs[i][1]))
+    me = bpy.data.meshes.new('band'); bm.to_mesh(me); bm.free()
+    ob = bpy.data.objects.new('band', me); scene.collection.objects.link(ob)
+    sol = ob.modifiers.new('sol', 'SOLIDIFY'); sol.thickness = 0.004; sol.offset = 1
+    bpy.context.view_layer.objects.active = ob; bpy.ops.object.modifier_apply(modifier='sol')
+    me.materials.append(GOG[mat]); ob.data.shade_smooth()
+    return ob
+gparts = [
+    ellipse_band(0.104, 0.128, EYE_Z - 0.026, EYE_Z + 0.026, -1.25, 1.25, 28, 'GogglesLens'),   # 앞 렌즈(코 위를 지나게 앞으로 둥글게)
+    ellipse_band(0.106, 0.130, EYE_Z + 0.024, EYE_Z + 0.032, -1.3, 1.3, 28, 'GogglesFrame'),     # 위 테
+    ellipse_band(0.106, 0.130, EYE_Z - 0.032, EYE_Z - 0.024, -1.3, 1.3, 28, 'GogglesFrame'),     # 아래 테
+    ellipse_band(0.114, 0.124, EYE_Z - 0.006, EYE_Z + 0.012, 1.25, 2 * math.pi - 1.25, 24, 'GogglesFrame'),  # 뒤 끈
+]
+bpy.ops.object.select_all(action='DESELECT')
+for o in gparts: o.select_set(True)
+bpy.context.view_layer.objects.active = gparts[0]
+bpy.ops.object.join()
+gog = bpy.context.active_object; gog.name = 'Goggles'
+bpy.ops.object.transform_apply(location=True, rotation=False, scale=False)
+vg = gog.vertex_groups.new(name='Head'); vg.add(list(range(len(gog.data.vertices))), 1.0, 'REPLACE')
+gog.parent = arm
+am = gog.modifiers.new('arm', 'ARMATURE'); am.object = arm
+
 # ---------------- 동작 ----------------
 pb = arm.pose.bones
 for b in pb: b.rotation_mode = 'XYZ'
@@ -217,7 +256,44 @@ def gesture(t):
     pb['LowerArm.L'].rotation_euler.x = D(6)
     pb['Chest'].rotation_euler.x = D(1.5) * math.sin(a)
 
-acts = {'Walk': clip('Walk', FPS, walk), 'Idle': clip('Idle', FPS * 3, idle), 'Gesture': clip('Gesture', FPS * 2, gesture)}
+# 과제 연출(한 번 재생, 앱이 길이를 재고 Idle로 돌아간다). 들어갔다 나오는 모양: 0 → 자세 유지 → 0
+def hold(t, rise=0.25):
+    return min(1.0, t / rise, (1 - t) / rise)
+def crouch(t):
+    # 쪼그려 앉아 바퀴·롤러를 살펴보기. 엉덩이 뼈 지역 Y = 위, 지역 Z = 뒤(얼굴 +Y의 반대)
+    k = hold(t, 0.22)
+    pb['Hips'].location.y = -0.40 * k
+    pb['Hips'].location.z = 0.22 * k
+    for s in ('L', 'R'):
+        pb['UpperLeg.' + s].rotation_euler.x = D(88) * k
+        pb['LowerLeg.' + s].rotation_euler.x = -D(112) * k
+        pb['Foot.' + s].rotation_euler.x = D(24) * k
+        pb['UpperArm.' + s].rotation_euler.x = D(42) * k
+        pb['LowerArm.' + s].rotation_euler.x = D(48) * k
+    # 위로 선 뼈(척추·머리)는 지역 X − 가 앞으로 숙임
+    pb['Spine'].rotation_euler.x = -D(30) * k
+    pb['Chest'].rotation_euler.x = -D(8) * k
+    pb['Head'].rotation_euler.x = -D(22) * k
+def press(t):
+    # 오른손을 뻗어 버튼을 꾹 누르기(가운데에서 한 번 밀기)
+    k = hold(t, 0.3)
+    jab = math.sin(math.pi * min(1.0, max(0.0, (t - 0.35) / 0.3)))
+    pb['UpperArm.R'].rotation_euler.x = D(62) * k + D(6) * jab
+    pb['LowerArm.R'].rotation_euler.x = D(22) * k - D(14) * jab
+    pb['Spine'].rotation_euler.x = -D(6) * k
+    pb['Head'].rotation_euler.x = -D(6) * k
+    pb['LowerArm.L'].rotation_euler.x = D(6)
+def equip(t):
+    # 두 손을 얼굴로 올려 보안경을 쓰는 몸짓
+    k = hold(t, 0.3)
+    for s in ('L', 'R'):
+        pb['UpperArm.' + s].rotation_euler.x = D(68) * k
+        pb['LowerArm.' + s].rotation_euler.x = D(128) * k
+        pb['UpperArm.' + s].rotation_euler.z = (-D(24) if s == 'L' else D(24)) * k   # 팔꿈치를 안으로 모아 손이 얼굴 앞에 오게
+    pb['Head'].rotation_euler.x = D(4) * k
+
+acts = {'Walk': clip('Walk', FPS, walk), 'Idle': clip('Idle', FPS * 3, idle), 'Gesture': clip('Gesture', FPS * 2, gesture),
+        'Crouch': clip('Crouch', int(FPS * 2.4), crouch), 'Press': clip('Press', int(FPS * 1.4), press), 'Equip': clip('Equip', int(FPS * 1.6), equip)}
 arm.animation_data.action = acts['Idle']
 for b in pb: b.rotation_euler = (0, 0, 0); b.location = (0, 0, 0)
 # NLA 트랙에 동작을 올려 두면 내보낼 때 각각 하나의 애니메이션이 된다
@@ -261,12 +337,14 @@ if PREVIEW:
     for tr in arm.animation_data.nla_tracks: tr.mute = True
     base_, ext = os.path.splitext(PREVIEW)
     shots = [('idle_front', 'Idle', 0, (1.2, 3.6, 1.2)), ('walk_a', 'Walk', 6, (3.6, 0.6, 1.1)), ('walk_b', 'Walk', 18, (3.6, 0.6, 1.1)),
-             ('walk_34', 'Walk', 6, (2.4, 2.8, 1.3)), ('gesture', 'Gesture', 24, (1.6, 3.4, 1.3)), ('gesture_side', 'Gesture', 24, (-3.6, 0.6, 1.2))]
+             ('walk_34', 'Walk', 6, (2.4, 2.8, 1.3)), ('gesture', 'Gesture', 24, (1.6, 3.4, 1.3)), ('gesture_side', 'Gesture', 24, (-3.6, 0.6, 1.2)),
+             ('crouch_side', 'Crouch', 28, (-3.6, 0.6, 1.0)), ('crouch_34', 'Crouch', 28, (2.2, 2.8, 1.2)), ('press_side', 'Press', 16, (-3.6, 0.6, 1.2)),
+             ('equip_front', 'Equip', 19, (1.0, 3.0, 1.5)), ('goggles_face', 'Idle', 0, (0.35, 0.9, 1.62))]
     for tag, an, fr, loc in shots:
         arm.animation_data.action = acts[an]
         scene.frame_set(fr)
         cam.location = loc
-        d = Vector((0, 0, 0.92)) - Vector(loc)
+        d = Vector((0, 0, 1.6 if tag == 'goggles_face' else 0.92)) - Vector(loc)
         cam.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()
         scene.render.filepath = f'{base_}_{tag}{ext}'
         bpy.ops.render.render(write_still=True)

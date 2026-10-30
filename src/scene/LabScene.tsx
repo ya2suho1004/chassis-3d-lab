@@ -16,12 +16,13 @@ import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
 import type { MoveInput } from './Joystick'
 import { Surroundings } from './Surroundings'
 import type { PanelReadout } from './panelReadout'
+import { ACTION_SECONDS, type AvatarAction } from './avatarActions'
 import { K3Model, PrideModel, fitsK3, fitsPride } from './models/ParkedCarsModel'
 import { TireChangerModel, WheelBalancerModel, fitsTireChanger, fitsWheelBalancer } from './models/ShopMachinesModel'
 import { ShockStandModel, TransmissionSimulatorModel, fitsShockStand, fitsTransmissionSimulator } from './models/TrainersModel'
 import { STEP_STRIDE, stepsCrossed } from './sound'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
-import { CHARACTER_LAYER, CharacterModel, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
+import { CHARACTER_LAYER, CharacterModel, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
 const Effects = lazy(() => import('./Effects'))
@@ -64,7 +65,13 @@ export interface LabSceneProps {
   panelCloseUp?: boolean
   /** 모델을 다 불러온 뒤 4초 동안 잰 평균 화면 속도(fps)를 한 번 알린다(자동 품질) */
   onFps?: (fps: number) => void
+  /** 단계를 마친 뒤 학생 몸짓(seq가 바뀔 때마다 한 번, target을 바라본다) */
+  avatarCue?: AvatarCue | null
+  /** 보호구 착용 단계를 마쳤으면 학생에게 보안경·안전화 */
+  ppe?: boolean
 }
+
+export interface AvatarCue { action: AvatarAction; seq: number; target: Pt | null }
 
 /** 학생 아바타: 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎). 불러오는 중에는 코드 모델 */
 /** 사람 발밑 둥근 그림자(바닥 그림자 굽기에서 빠지므로 따로 둔다) */
@@ -86,7 +93,8 @@ function BlobShadow() {
   return <mesh rotation-x={-Math.PI / 2} position-y={0.008} material={mat} renderOrder={1}><planeGeometry args={[0.9, 0.9]} /></mesh>
 }
 
-function Avatar({ pos, heading, moving }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean }) {
+function Avatar({ pos, heading, moving, oneShot, ppe }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; oneShot: AvatarAction | null; ppe: boolean }) {
+  const outfit = useMemo(() => (ppe ? { ...STUDENT_OUTFIT, shoes: SAFETY_SHOES } : STUDENT_OUTFIT), [ppe])
   const turn = useRef<THREE.Group>(null)
   useFrame((_, dt) => {
     const g = turn.current
@@ -101,7 +109,7 @@ function Avatar({ pos, heading, moving }: { pos: Pt; heading: React.MutableRefOb
     <group position={[pos.x, 0, pos.z]}>
       <BlobShadow />
       <group ref={turn}>
-        <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : 'Idle'} outfit={STUDENT_OUTFIT} speed={WALK_SPEED / WALK_CYCLE_DISTANCE} /></Suspense>
+        <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : oneShot ?? 'Idle'} outfit={outfit} goggles={ppe} speed={moving ? WALK_SPEED / WALK_CYCLE_DISTANCE : 1} /></Suspense>
       </group>
     </group>
   )
@@ -120,7 +128,7 @@ function Instructor({ facing, talking = false }: { facing: number; talking?: boo
     if (next !== action) setAction(next)
   })
   const code = <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
-  return <group rotation-y={facing}><BlobShadow /><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} /></Suspense></group>
+  return <group rotation-y={facing}><BlobShadow /><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} goggles /></Suspense></group>
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
@@ -318,14 +326,18 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, vehicleL
   const wheelX = vehicle.w / 2 - 0.1
   const useTesterModel = fitsBrakeTester(tester, wheelX)
   const onTesterParts = useCallback((rollers: THREE.Object3D[], lifts: THREE.Object3D[]) => { rollerRefs.current = rollers; liftRefs.current = lifts }, [])
-  const s = useRef({ dist: target.dist, lift: target.lift, spin: 0 })
+  const s = useRef({ dist: target.dist, lift: target.lift, spin: 0, brake: 0, t: 0 })
+  const bodyRef = useRef<THREE.Group>(null)
 
   useFrame((_, dt) => {
     const st = s.current
     const prevDist = st.dist
     st.dist = approach(st.dist, target.dist, 1.6, dt)
     st.lift = approach(st.lift, target.lift, 3, dt)
-    st.spin = approach(st.spin, rig.rollersSpinning ? ROLLER_SPIN : 0, 2.5, dt)
+    // 제동 중: 롤러는 부하로 느려지고(멈추지는 않음) 뒷바퀴는 잡혀 멈춘다
+    st.brake = approach(st.brake, rig.braking ? 1 : 0, 4, dt)
+    st.t += dt
+    st.spin = approach(st.spin, rig.rollersSpinning ? ROLLER_SPIN * (1 - 0.55 * st.brake) : 0, 2.5, dt)
     // 차량 위치·높이: 진입·이탈 중이면 바퀴가 이동 거리만큼 구른다
     const lift = rig.vehicle === 'outside' ? 0 : st.lift
     if (carRef.current) carRef.current.position.set(vehicle.x + away.x * st.dist, lift, vehicle.z + away.z * st.dist)
@@ -334,7 +346,13 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, vehicleL
     for (const m of rollerRefs.current) if (m) m.rotation.x += rollerTurn
     const roll = (st.dist - prevDist) / WHEEL_R
     // 롤러가 돌면 뒷바퀴도 롤러에 맞물려 반대로 돈다(들린 상태에서는 닿지 않음)
-    const rearDrive = st.lift < 0.02 && rig.vehicle !== 'outside' ? -rollerTurn * (ROLLER_R / WHEEL_R) : 0
+    const rearDrive = st.lift < 0.02 && rig.vehicle !== 'outside' ? -rollerTurn * (ROLLER_R / WHEEL_R) * (1 - st.brake) : 0
+    // 제동하면 차체가 살짝 눌리고 잠깐 떨린다(모션 줄이기면 떨림 없음)
+    if (bodyRef.current) {
+      const shake = prefersReducedMotion ? 0 : 0.003 * st.brake * (1 - st.brake) * 4 * Math.sin(st.t * 38)
+      bodyRef.current.position.y = -0.012 * st.brake + shake
+      bodyRef.current.rotation.x = 0.006 * st.brake
+    }
     for (const m of rearWheelRefs.current) if (m) m.rotation.x += roll + rearDrive
     for (const m of frontWheelRefs.current) if (m) m.rotation.x += roll
   })
@@ -394,11 +412,13 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, vehicleL
       </group>
       <group ref={carRef} position={[vehicle.x + away.x * target.dist, rig.vehicle === 'outside' ? 0 : target.lift, vehicle.z + away.z * target.dist]}>
         <group rotation-y={theta}>
+          <group ref={bodyRef}>
           {useModel ? (
             <Suspense fallback={codeCar}>
-              <group onClick={tapVehicle}><TestCarModel highlight={selected} onWheels={onModelWheels} /></group>
+              <group onClick={tapVehicle}><TestCarModel highlight={selected} onWheels={onModelWheels} brakeLights={rig.braking} /></group>
             </Suspense>
           ) : codeCar}
+          </group>
         </group>
         {vehicleLabel === 'label' && (
           <Html position={[0, vehicle.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
@@ -590,7 +610,7 @@ function AimProbe({ layout, onAim }: { layout: SceneLayout; onAim: (id: string |
   return null
 }
 
-function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view, onStep }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void }) {
+function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view, onStep, cue, ppe }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void; cue: AvatarCue | null; ppe: boolean }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
   // 1인칭은 카메라를 FirstPersonLook이 눈높이에 직접 둔다. 궤도 시점만 이동량만큼 카메라를 함께 옮긴다
@@ -604,9 +624,27 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   const walkingRef = useRef(false)
   const { camera, controls } = useThree() as unknown as { camera: THREE.Camera; controls: OrbitControlsImpl | null }
 
+  // 단계를 마친 뒤 몸짓: 장비 쪽으로 돌아 한 번 하고, 걷기 시작하면 바로 그친다
+  const [oneShot, setOneShot] = useState<AvatarAction | null>(null)
+  const shotLeft = useRef(0)
+  useEffect(() => {
+    if (!cue) return
+    const p = posRef.current
+    if (cue.target) {
+      const dx = cue.target.x - p.x, dz = cue.target.z - p.z
+      if (dx * dx + dz * dz > 1e-4) heading.current = headingFor(dx, dz)
+    }
+    shotLeft.current = ACTION_SECONDS[cue.action]
+    setOneShot(cue.action)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cue?.seq])
   const walked = useRef(0)
   const lastPos = useRef<Pt>(start)
   useFrame((_, dt) => {
+    if (shotLeft.current > 0) {
+      shotLeft.current -= Math.min(dt, 0.1)
+      if (shotLeft.current <= 0 || walkingRef.current) { shotLeft.current = 0; setOneShot(null) }
+    }
     // 발소리: 실제로 움직인 거리로 걸음을 센다(조이스틱·탭 이동 모두)
     const lp = lastPos.current, cp = posRef.current
     const moved = Math.hypot(cp.x - lp.x, cp.z - lp.z)
@@ -679,10 +717,10 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
   // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼). 1인칭은 내 몸을 숨긴다
-  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} /></group>
+  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -810,7 +848,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} posRef={posRef} view={viewMode} onStep={onStep} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}
       <CameraRig view={viewMode} posRef={posRef} look={look} start={start} face={{ x: (mz.xMin + mz.xMax) / 2, z: (mz.zMin + mz.zMax) / 2 }} />

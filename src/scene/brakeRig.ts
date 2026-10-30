@@ -10,6 +10,8 @@ export interface BrakeRigState {
   /** 시험기 리프트 판이 올라와 있는지(차량 진입·이탈 자세) */
   liftUp: boolean
   rollersSpinning: boolean
+  /** 페달을 밟아 제동 중(페달 단계를 마친 뒤 판독 전, 모터가 돌 때): 브레이크등·뒷바퀴 멈춤·차체 눌림 */
+  braking: boolean
 }
 
 /** 차량이 롤러 밖에서 대기하는 거리(m, 차량 길이 방향). 연출용 가정값 */
@@ -17,7 +19,7 @@ export const OUTSIDE_DISTANCE = 3.5
 
 export function brakeRigState(run: Pick<TaskRun, 'completedSteps' | 'offProgress' | 'motorOn'> | null, entryDirection: 'north' | 'south' | null): BrakeRigState {
   // 과제 수령 전 둘러보기: 지금까지처럼 차량이 롤러 위에 있는 모습
-  if (!run) return { vehicle: 'onRollers', liftUp: false, rollersSpinning: false }
+  if (!run) return { vehicle: 'onRollers', liftUp: false, rollersSpinning: false, braking: false }
   const done = (id: string) => run.completedSteps.includes(id)
   const exited = run.offProgress.includes('exitVehicle')
   const entered = done('enter') && !exited
@@ -27,5 +29,5 @@ export function brakeRigState(run: Pick<TaskRun, 'completedSteps' | 'offProgress
   if (entered) vehicle = liftUp ? 'lifted' : 'onRollers'
   else if (directional) vehicle = 'outside'
   else vehicle = liftUp ? 'lifted' : 'onRollers'
-  return { vehicle, liftUp, rollersSpinning: run.motorOn }
+  return { vehicle, liftUp, rollersSpinning: run.motorOn, braking: run.motorOn && done('press') && !done('read') }
 }

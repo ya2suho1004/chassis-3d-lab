@@ -24,6 +24,11 @@ describe('사람 캐릭터 모델(character.glb)', () => {
     const mats = j.materials.map((m) => m.name)
     for (const m of ['Top', 'Bottom', 'Shoes', 'Skin', 'Hair']) expect(mats).toContain(m)
   })
+  it('보안경(Goggles)이 따로 된 물체로 있다(보호구 착용 뒤에만 보임)', () => {
+    expect(j.nodes.map((n) => n.name)).toContain('Goggles')
+    const mats = j.materials.map((m) => m.name)
+    for (const m of ['GogglesFrame', 'GogglesLens']) expect(mats).toContain(m)
+  })
   it('meshopt만 쓰고 그림 파일이 없으며 0.4 MB 이하다', () => {
     expect(j.extensionsUsed ?? []).toContain('EXT_meshopt_compression')
     expect(j.images ?? []).toHaveLength(0)
