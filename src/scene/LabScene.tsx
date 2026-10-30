@@ -19,6 +19,7 @@ import type { PanelReadout } from './panelReadout'
 import { ACTION_SECONDS, type AvatarAction } from './avatarActions'
 import { K3Model, PrideModel, fitsK3, fitsPride } from './models/ParkedCarsModel'
 import { TireChangerModel, WheelBalancerModel, fitsTireChanger, fitsWheelBalancer } from './models/ShopMachinesModel'
+import { DialGaugeModel } from './models/DialGaugeModel'
 import { ShockStandModel, TransmissionSimulatorModel, fitsShockStand, fitsTransmissionSimulator } from './models/TrainersModel'
 import { STEP_STRIDE, stepsCrossed } from './sound'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
@@ -162,6 +163,15 @@ function EquipmentModel({ e, m, facing, lowSpec, raised, readout }: { e: SceneEq
       }
       if (id.includes('balancer')) { const code = <Machine w={e.w} d={e.d} h={e.h} m={m} kind="balancer" />; return fitsWheelBalancer(e) ? <Suspense fallback={code}><WheelBalancerModel /></Suspense> : code }
       if (id.includes('changer')) { const code = <Machine w={e.w} d={e.d} h={e.h} m={m} kind="changer" />; return fitsTireChanger(e) ? <Suspense fallback={code}><TireChangerModel /></Suspense> : code }
+      if (id === 'parts-bench-01/디스크') {
+        // 디스크 런아웃 자리: 다이얼 게이지(마그네틱 베이스)를 작업대 위에 둔다(과제 연결 전 — 바늘은 미리 눌러 둔 0.50 mm)
+        return (
+          <group>
+            <Workbench w={e.w} d={e.d} h={e.h} m={m} load="parts" />
+            <group position={[-e.w / 2 + 0.16, e.h, e.d / 2 - 0.2]} rotation-y={Math.PI / 2}><Suspense fallback={null}><DialGaugeModel travel={0.5} /></Suspense></group>
+          </group>
+        )
+      }
       return <Workbench w={e.w} d={e.d} h={e.h} m={m} load={id.includes('at-mt') || id.includes('endplay') ? 'transmission' : id.includes('parts') || id.includes('toe') ? 'parts' : null} />
     default:
       return <mesh position={[0, e.h / 2, 0]}><boxGeometry args={[e.w, e.h, e.d]} /><meshStandardMaterial color={e.color} /></mesh>
