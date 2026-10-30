@@ -6,7 +6,8 @@ import { changeDisplayMode, type TaskRun } from '../domain/taskEngine'
 import type { ApprovedTask } from '../domain/types'
 import type { Repository } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
-import { DISC_BENCH_ID, LabScene, type AvatarCue, type DiscPractice } from '../scene/LabScene'
+import { BACKLASH_BENCH_ID, DISC_BENCH_ID, LabScene, type AvatarCue, type BacklashPractice, type DiscPractice } from '../scene/LabScene'
+import { backlashTravel, checkBacklash, initialBacklashState, randomBacklashCase, type BacklashState } from '../scene/backlash'
 import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRunout'
 import { needleAngle } from '../scene/dialGauge'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
@@ -142,6 +143,36 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
       ? { ok: true, text: `맞습니다. 이 디스크의 런아웃은 ${discCase.tir.toFixed(2)} mm입니다.` }
       : { ok: false, text: '다시 읽어 보세요. 한 바퀴 돌리는 동안 가장 큰 값 − 가장 작은 값입니다.' })
   }
+  /** 차동기어 백래시 연습(기록 없음, 값은 연습용) — 차동기어 작업대 근처에서 연다 */
+  const [blCase, setBlCase] = useState(() => randomBacklashCase())
+  const blSt = useRef<BacklashState>(initialBacklashState(blCase))
+  const blPushFrom = useRef(0)
+  const [blBezel, setBlBezel] = useState(0)
+  const [blOpen, setBlOpen] = useState(false)
+  const [blHeld, setBlHeld] = useState(false)
+  const [blAnswer, setBlAnswer] = useState('')
+  const [blMsg, setBlMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const blZero = () => { const deg = ((needleAngle(backlashTravel(blSt.current, blCase)) * 180) / Math.PI) % 360; setBlBezel(deg) }
+  const blNew = () => { const c = randomBacklashCase(); setBlCase(c); blSt.current = { ...initialBacklashState(c), held: blHeld }; setBlBezel(0); setBlAnswer(''); setBlMsg(null) }
+  const blToggleHeld = () => { const h = !blHeld; setBlHeld(h); blSt.current.held = h; setBlMsg(null) }
+  const blCheck = () => {
+    const v = Number(blAnswer.replace(',', '.'))
+    if (!blAnswer.trim() || !Number.isFinite(v)) return setBlMsg({ ok: false, text: '숫자로 적어 주세요(예: 0.12).' })
+    setBlMsg(checkBacklash(v, blCase)
+      ? { ok: true, text: `맞습니다. 이 기어의 백래시는 ${blCase.bl.toFixed(2)} mm입니다.` }
+      : { ok: false, text: '다시 읽어 보세요. 한쪽 끝까지 민 자리와 반대쪽 끝까지 민 자리의 차이입니다.' })
+  }
+  const blStop = () => {
+    const st = blSt.current
+    if (!st.push) return
+    st.push = 0
+    // 피니언을 안 잡고 밀어 기어가 같이 돌았으면 알려 준다
+    if (!st.held && Math.abs(st.p - blPushFrom.current) > 1e-6) setBlMsg({ ok: false, text: '피니언까지 같이 돌아 바늘이 멈추지 않았습니다. 이대로는 백래시를 읽을 수 없어요.' })
+  }
+  const pushHold = (dir: number) => ({
+    onPointerDown: (ev: React.PointerEvent) => { (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId); blPushFrom.current = blSt.current.p; blSt.current.push = dir },
+    onPointerUp: blStop, onPointerCancel: blStop, onLostPointerCapture: blStop,
+  })
   const spinHold = (dir: number) => ({
     onPointerDown: (ev: React.PointerEvent) => { (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId); discCtl.current.spin = dir },
     onPointerUp: () => { discCtl.current.spin = 0 }, onPointerCancel: () => { discCtl.current.spin = 0 }, onLostPointerCapture: () => { discCtl.current.spin = 0 },
@@ -149,7 +180,15 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
 
   const onMove = useCallback((p: Pt, m: boolean) => { setPos(p); setMoving(m) }, [])
   const nearIds = useMemo(() => layout.equipment.filter((e) => nearEquipment(pos, e, NEAR_RADIUS)).map((e) => e.id), [pos, layout])
-  const discNear = nearIds.includes(DISC_BENCH_ID)
+  // 두 연습 작업대가 나란해 둘 다 가까우면 더 가까운 쪽 버튼만 보인다
+  const practiceNear = useMemo(() => {
+    const ids = [DISC_BENCH_ID, BACKLASH_BENCH_ID].filter((id) => nearIds.includes(id))
+    const dist = (id: string) => { const e = layout.equipment.find((q) => q.id === id)!; return Math.hypot(pos.x - e.x, pos.z - e.z) }
+    return ids.sort((a, b) => dist(a) - dist(b))[0] ?? null
+  }, [nearIds, layout, pos])
+  const discNear = practiceNear === DISC_BENCH_ID
+  const blNear = practiceNear === BACKLASH_BENCH_ID
+  const practicing = discOpen || blOpen
   const panelNear = nearIds.some((id) => layout.equipment.find((e) => e.id === id)?.kind === 'panel')
   const nearNpc = Math.hypot(pos.x - layout.npc.x, pos.z - layout.npc.z) <= NPC_RADIUS
   const selected = layout.equipment.find((e) => e.id === selectedId) ?? null
@@ -176,6 +215,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
     const navTargets = layout.equipment.filter((e) => e.interactive && e.accessPoint)
     const talking = npcOpen && nearNpc
     const discPractice: DiscPractice = { ctl: discCtl, disc: discCase, bezelDeg: discBezel, open: discOpen && !talking }
+    const backlashPractice: BacklashPractice = { st: blSt, bl: blCase, bezelDeg: blBezel, held: blHeld, open: blOpen && !talking }
     return (
       <main className={`game ${talking ? 'talking' : ''}`}>
         <div className="g-canvas">
@@ -183,7 +223,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
-            avatarCue={avatarCue} ppe={ppe} discPractice={discPractice}
+            avatarCue={avatarCue} ppe={ppe} discPractice={discPractice} backlashPractice={backlashPractice}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
@@ -207,7 +247,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               )}
             </div>
 
-            <div className="g-quest">
+            {!practicing && <div className="g-quest">
               <div className="g-quest-title">{run ? task.title : '실습장 둘러보기'}</div>
               {!run && <p>장비를 눌러 도감을 채우고, 교관에게 가서 과제를 받으세요.</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
@@ -218,7 +258,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
                 <button onClick={() => goTo(npcSpot)}>교관에게</button>
                 {navTargets.map((e) => <button key={e.id} onClick={() => goTo(e.accessPoint!)}>{e.label.replace(/\(.*\)/, '').trim()}</button>)}
               </div>
-            </div>
+            </div>}
 
             {ctx?.shown && (
               <div className={`g-toast feedback ${ctx.shown.kind}`} role="alert">
@@ -237,7 +277,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               </div>
             )}
 
-            <div className="g-hud" hidden={discOpen}>{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => layout.equipment.find((e) => e.id === id)?.label).join(', ')}` : viewMode === 'first' ? '왼쪽 조이스틱으로 걷기 · 화면을 끌어 둘러보기 · 가운데 점을 장비에 맞추기' : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
+            <div className="g-hud" hidden={practicing}>{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => layout.equipment.find((e) => e.id === id)?.label).join(', ')}` : viewMode === 'first' ? '왼쪽 조이스틱으로 걷기 · 화면을 끌어 둘러보기 · 가운데 점을 장비에 맞추기' : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
 
             {viewMode === 'first' && <div className={`g-reticle ${aimId ? 'on' : ''}`} aria-hidden />}
             {viewMode === 'first' && aimId && (
@@ -246,9 +286,9 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               </button>
             )}
 
-            {!closeUp && !discOpen && <Joystick input={joystickRef} />}
+            {!closeUp && !practicing && <Joystick input={joystickRef} />}
             {run && !closeUp && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}>📟 계기 보기</button>}
-            {!discOpen && !closeUp && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}>🔍 디스크 런아웃 연습</button>}
+            {!practicing && !closeUp && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}>🔍 디스크 런아웃 연습</button>}
             {discOpen && (
               <div className="g-practice" role="dialog" aria-label="디스크 런아웃 연습">
                 <div className="g-practice-head"><b>디스크 런아웃 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { discCtl.current.spin = 0; setDiscOpen(false) }}>✕</button></div>
@@ -266,8 +306,27 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
                 {discMsg && <p className={discMsg.ok ? 'ok' : 'bad'}>{discMsg.text}</p>}
               </div>
             )}
+            {!practicing && !closeUp && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}>🔍 차동기어 백래시 연습</button>}
+            {blOpen && (
+              <div className="g-practice" role="dialog" aria-label="차동기어 백래시 연습">
+                <div className="g-practice-head"><b>차동기어 백래시 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { blSt.current.push = 0; setBlOpen(false) }}>✕</button></div>
+                <p className="small">게이지는 링기어 이빨 면에 직각으로 대 두었습니다. 링기어를 한쪽 끝까지 밀었다가 반대쪽 끝까지 밀어, 바늘이 오간 폭(백래시)을 적습니다. 1눈금 = 0.01 mm.</p>
+                <div className="g-practice-row">
+                  <button {...pushHold(-1)}>◀ 누르는 동안 밀기</button>
+                  <button {...pushHold(1)}>밀기 ▶</button>
+                  <button aria-pressed={blHeld} className={blHeld ? 'on' : ''} onClick={blToggleHeld}>{blHeld ? '🔧 피니언 잡음' : '🔧 피니언 잡기'}</button>
+                  <button onClick={blZero}>영점 맞추기</button>
+                </div>
+                <div className="g-practice-row">
+                  <label>백래시 <input inputMode="decimal" value={blAnswer} onChange={(e) => setBlAnswer(e.target.value)} placeholder="0.00" aria-label="백래시(mm)" /> mm</label>
+                  <button className="primary" onClick={blCheck}>확인</button>
+                  <button onClick={blNew}>새 기어</button>
+                </div>
+                {blMsg && <p className={blMsg.ok ? 'ok' : 'bad'}>{blMsg.text}</p>}
+              </div>
+            )}
             {closeUp && <button className="g-gaugebtn on" onClick={() => setCloseUp(false)}>✕ 계기 닫기</button>}
-            {!discOpen && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
+            {!practicing && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
 
             <div className="g-actions">
               {run && ctx?.nextActions.map((a) => <button key={a.key} className={`g-act ${a.cls ?? ''}`} onClick={a.onClick}>{a.label}</button>)}

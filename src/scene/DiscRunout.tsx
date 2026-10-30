@@ -99,10 +99,47 @@ export function DiscRunoutRig({ position, ctl, disc, bezelDeg }: { position: [nu
   )
 }
 
-/** 연습 가까이 보기 카메라: 게이지 눈금판 앞(서쪽) 조금 남쪽 위에서 게이지와 디스크를 함께 비춘다. 끝나면 원래 자리로 */
-export function DiscCamera({ gaugeWorld }: { gaugeWorld: THREE.Vector3 }) {
-  const { camera, controls } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: { target: THREE.Vector3; update: () => void } | null }
+type V3 = readonly [number, number, number]
+
+/** 눈금판 지름(m, build_dial_gauge.py DIAL_R·2) — 화면에 이만큼 크게 보이도록 카메라 거리를 정한다 */
+const DIAL_DIAM = 0.057
+/** 위쪽 상태 막대 높이(px) — 눈금판을 그 아래에 둔다 */
+const TOP_BAR = 64
+
+/** 화면에서 연습 판이 가리지 않는 빈 곳(px) */
+export interface FreeRect { x0: number; x1: number; y0: number; y1: number }
+
+/** 연습 판 자리(getBoundingClientRect)로 빈 곳을 정한다: 판이 오른쪽에 붙어 있으면(폰 가로) 왼쪽, 아니면 판 위쪽 */
+export function freeRectAround(w: number, h: number, panel: { left: number; top: number } | null, topBar = TOP_BAR): FreeRect {
+  if (!panel) return { x0: 0, x1: w, y0: topBar, y1: h * 0.7 }
+  if (panel.left > w * 0.35) return { x0: 0, x1: panel.left, y0: topBar, y1: h }
+  return { x0: 0, x1: w, y0: topBar, y1: panel.top }
+}
+
+/**
+ * 연습 가까이 보기 구도(화면 크기에 맞춤): 빈 곳 가운데에 눈금판이 오도록
+ * 카메라 거리(dist, m)와 화면 밀기(offX·offY, px — camera.setViewOffset 값)를 정한다.
+ * 빈 곳이 화면 폭 전체이면 가로 화면은 눈금판을 xFrac 자리(왼쪽에 측정 대상이 보이게), 세로 화면은 가운데에 둔다.
+ */
+export function practiceFraming(w: number, h: number, free: FreeRect, fovDeg = 40, xFrac = 0.6) {
+  const fw = Math.max(120, free.x1 - free.x0), fh = Math.max(120, free.y1 - free.y0)
+  const dialPx = Math.min(0.8 * fh, 0.6 * fw, 300)
+  const dist = (DIAL_DIAM * h) / (2 * Math.tan((fovDeg * Math.PI) / 360) * dialPx)
+  const yTarget = free.y0 + fh / 2
+  const xTarget = fw < w * 0.9 ? free.x0 + fw / 2 : w > h ? w * xFrac : w / 2
+  return { dist, dialPx, offX: w / 2 - xTarget, offY: h / 2 - yTarget }
+}
+
+/**
+ * 연습 가까이 보기 카메라: 게이지 눈금판을 back 방향(눈금판 가운데에서 카메라 쪽, 길이 무관)에서 바라본다.
+ * 거리와 화면 속 자리는 practiceFraming으로 화면 크기·연습 판 높이에 맞춘다(폰 세로·가로에서도 눈금판이 판에 가리지 않게). 끝나면 원래대로.
+ * 기본 back은 디스크 런아웃: 서쪽 조금 위·남쪽에서(디스크가 왼쪽에 함께 보이게)
+ */
+export function DiscCamera({ gaugeWorld, back = [-0.24, 0.065, 0.105], xFrac = 0.6 }: { gaugeWorld: THREE.Vector3; back?: V3; xFrac?: number }) {
+  const { camera, controls, size } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: { target: THREE.Vector3; update: () => void } | null; size: { width: number; height: number } }
   const look = useRef(new THREE.Vector3())
+  const panel = useRef<{ left: number; top: number } | null>(null)
+  const since = useRef(1)
   useLayoutEffect(() => {
     const pos = camera.position.clone(), quat = camera.quaternion.clone(), fov = camera.fov, near = camera.near
     const target = controls ? controls.target.clone() : null
@@ -110,18 +147,24 @@ export function DiscCamera({ gaugeWorld }: { gaugeWorld: THREE.Vector3 }) {
     look.current.copy(camera.position).add(dir)
     camera.fov = 40; camera.near = 0.01; camera.updateProjectionMatrix()
     return () => {
+      camera.clearViewOffset()
       camera.fov = fov; camera.near = near; camera.updateProjectionMatrix()
       camera.position.copy(pos); camera.quaternion.copy(quat)
       if (controls && target) { controls.target.copy(target); controls.update() }
     }
   }, [camera, controls])
   useFrame((_, dt) => {
-    // 눈금판 앞 0.25 m, 디스크 쪽(북)이 함께 보이게 남쪽으로 조금 비켜서. 아래 연습 판에 가리지 않게 화면 위쪽에 눈금판이 오도록 조금 아래를 본다
-    const goal = new THREE.Vector3(gaugeWorld.x - 0.24, gaugeWorld.y + 0.02, gaugeWorld.z + 0.07)
-    const tgt = new THREE.Vector3(gaugeWorld.x, gaugeWorld.y - 0.045, gaugeWorld.z - 0.035)
+    // 연습 판 자리는 가끔만 잰다(글자 줄바꿈·화면 돌림으로 바뀐다)
+    since.current += dt
+    if (since.current > 0.3) { since.current = 0; panel.current = document.querySelector('.g-practice')?.getBoundingClientRect() ?? null }
+    const { width: w, height: h } = size
+    const f = practiceFraming(w, h, freeRectAround(w, h, panel.current), 40, xFrac)
+    const view = camera.view
+    if (!view || Math.abs(view.offsetX - f.offX) > 0.5 || Math.abs(view.offsetY - f.offY) > 0.5 || view.fullWidth !== w || view.fullHeight !== h) camera.setViewOffset(w, h, f.offX, f.offY, w, h)
+    const goal = new THREE.Vector3(...back).normalize().multiplyScalar(f.dist).add(gaugeWorld)
     const k = 1 - Math.exp(-5 * Math.min(dt, 0.1))
     camera.position.lerp(goal, k)
-    look.current.lerp(tgt, k)
+    look.current.lerp(gaugeWorld, k)
     camera.lookAt(look.current)
   })
   return null

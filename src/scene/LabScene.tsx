@@ -20,6 +20,8 @@ import { ACTION_SECONDS, type AvatarAction } from './avatarActions'
 import { K3Model, PrideModel, fitsK3, fitsPride } from './models/ParkedCarsModel'
 import { TireChangerModel, WheelBalancerModel, fitsTireChanger, fitsWheelBalancer } from './models/ShopMachinesModel'
 import { DiscCamera, DiscRunoutRig, gaugeFaceInRig, type DiscCase, type DiscControl } from './DiscRunout'
+import { BacklashRig, backlashFaceInRig } from './BacklashRig'
+import type { BacklashCase, BacklashState } from './backlash'
 import { ShockStandModel, TransmissionSimulatorModel, fitsShockStand, fitsTransmissionSimulator } from './models/TrainersModel'
 import { STEP_STRIDE, stepsCrossed } from './sound'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
@@ -72,6 +74,7 @@ export interface LabSceneProps {
   ppe?: boolean
   /** 디스크 런아웃 연습 */
   discPractice?: DiscPractice | null
+  backlashPractice?: BacklashPractice | null
 }
 
 export interface AvatarCue { action: AvatarAction; seq: number; target: Pt | null }
@@ -81,6 +84,13 @@ export interface DiscPractice { ctl: React.MutableRefObject<DiscControl>; disc: 
 export const DISC_BENCH_ID = 'parts-bench-01/디스크'
 /** 디스크 작업대(지역 좌표) 위 연습 장면 자리 */
 const DISC_RIG_AT = { x: 0.05, z: -0.15 }
+/** 차동기어 백래시 연습(기록 없음): 피니언 잡기 여부는 화면에서 바꾼다 */
+export interface BacklashPractice { st: React.MutableRefObject<BacklashState>; bl: BacklashCase; bezelDeg: number; held: boolean; open: boolean }
+export const BACKLASH_BENCH_ID = 'parts-bench-01/차동'
+/** 작업대 가운데 기준 연습 장면 자리(링기어가 학생 쪽 모서리 가까이, 게이지 받침이 남쪽) */
+const BL_RIG_AT = { x: -0.12, z: -0.05 }
+/** 백래시 가까이 보기: 눈금판 서쪽 조금 위에서(링기어 맨 위 이빨이 눈금판 왼쪽에 함께 보이게) */
+const BL_CAM_BACK = [-0.19, 0.057, 0.03] as const
 
 /** 학생 아바타: 블렌더 캐릭터(걷기·서 있기, 가는 방향으로 돎). 불러오는 중에는 코드 모델 */
 /** 사람 발밑 둥근 그림자(바닥 그림자 굽기에서 빠지므로 따로 둔다) */
@@ -141,7 +151,7 @@ function Instructor({ facing, talking = false }: { facing: number; talking?: boo
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
-function EquipmentModel({ e, m, facing, lowSpec, raised, readout, disc }: { e: SceneEquipment; m: Mats; facing: number | null; lowSpec: boolean; raised: boolean; readout: PanelReadout | null; disc: DiscPractice | null }) {
+function EquipmentModel({ e, m, facing, lowSpec, raised, readout, disc, backlash }: { e: SceneEquipment; m: Mats; facing: number | null; lowSpec: boolean; raised: boolean; readout: PanelReadout | null; disc: DiscPractice | null; backlash: BacklashPractice | null }) {
   const id = e.id
   switch (e.kind) {
     case 'panel': {
@@ -180,6 +190,15 @@ function EquipmentModel({ e, m, facing, lowSpec, raised, readout, disc }: { e: S
           </group>
         )
       }
+      if (id === BACKLASH_BENCH_ID && backlash) {
+        // 차동기어 백래시 연습 장면: 받침대에 물린 캐리어 + 링기어 이빨에 댄 다이얼 게이지
+        return (
+          <group>
+            <Workbench w={e.w} d={e.d} h={e.h} m={m} load={null} />
+            <BacklashRig position={[BL_RIG_AT.x, e.h, BL_RIG_AT.z]} st={backlash.st} bl={backlash.bl} bezelDeg={backlash.bezelDeg} held={backlash.held} />
+          </group>
+        )
+      }
       return <Workbench w={e.w} d={e.d} h={e.h} m={m} load={id.includes('at-mt') || id.includes('endplay') ? 'transmission' : id.includes('parts') || id.includes('toe') ? 'parts' : null} />
     default:
       return <mesh position={[0, e.h / 2, 0]}><boxGeometry args={[e.w, e.h, e.d]} /><meshStandardMaterial color={e.color} /></mesh>
@@ -209,13 +228,13 @@ function Marker({ y }: { y: number }) {
   return <Html position={[0, y, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d marker" aria-hidden>◆</div></Html>
 }
 
-function Equipment({ e, m, facing, selected, highlight, label, onTap, lowSpec, raised, glow, readout, disc }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; label: LabelKind; onTap: () => void; lowSpec: boolean; raised: boolean; glow: boolean; readout: PanelReadout | null; disc: DiscPractice | null }) {
+function Equipment({ e, m, facing, selected, highlight, label, onTap, lowSpec, raised, glow, readout, disc, backlash }: { e: SceneEquipment; m: Mats; facing: number | null; selected: boolean; highlight: boolean; label: LabelKind; onTap: () => void; lowSpec: boolean; raised: boolean; glow: boolean; readout: PanelReadout | null; disc: DiscPractice | null; backlash: BacklashPractice | null }) {
   const f = footprintOf(e)
   const w = f.xMax - f.xMin
   const d = f.zMax - f.zMin
   return (
     <group position={[e.x, 0, e.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTap() } }}>
-      <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} readout={readout} disc={disc} />
+      <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} readout={readout} disc={disc} backlash={backlash} />
       {glow && <GlowFrame w={w} d={d} />}
       {(selected || highlight) && <FootprintFrame w={w} d={d} color={selected ? '#ff9800' : '#2d6cdf'} />}
       {label === 'label' && (
@@ -738,7 +757,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, discPractice = null }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, discPractice = null, backlashPractice = null }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -751,8 +770,15 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
     const f = gaugeFaceInRig(discPractice?.disc.preload ?? 0.5)
     return new THREE.Vector3(discBench.x + DISC_RIG_AT.x + f.x, discBench.h + f.y, discBench.z + DISC_RIG_AT.z + f.z)
   }, [discBench, discPractice?.disc.preload])
-  /** 대화·계기 가까이 보기·런아웃 연습 중에는 카메라를 연출이 쥐고 학생은 멈춰 숨는다 */
-  const camBusy = npcTalking || panelCloseUp || discOpen
+  const blBench = layout.equipment.find((e) => e.id === BACKLASH_BENCH_ID)
+  const blOpen = !!backlashPractice?.open && !!blBench && !npcTalking && !discOpen
+  const blGauge = useMemo(() => {
+    if (!blBench) return null
+    const f = backlashFaceInRig(backlashPractice?.bl.preload ?? 1)
+    return new THREE.Vector3(blBench.x + BL_RIG_AT.x + f.x, blBench.h + f.y, blBench.z + BL_RIG_AT.z + f.z)
+  }, [blBench, backlashPractice?.bl.preload])
+  /** 대화·계기 가까이 보기·런아웃·백래시 연습 중에는 카메라를 연출이 쥐고 학생은 멈춰 숨는다 */
+  const camBusy = npcTalking || panelCloseUp || discOpen || blOpen
   const posRef = useRef<Pt>(start)
   const look = useRef({ yaw: 0, pitch: 0 })
   const first = viewMode === 'first'
@@ -848,8 +874,8 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       })}
       {layout.pillars.map((p) => <group key={p.id} position={[p.x, 0, p.z]}><Pillar size={p.size} m={m} /></group>)}
       {layout.equipment.filter((e) => !(vehicle && tester && (e.id === vehicle.id || e.id === tester.id))).map((e) => (
-        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} glow={glowIds.includes(e.id)} readout={e.kind === 'panel' ? panelReadout : null} disc={e.id === DISC_BENCH_ID ? discPractice : null} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
-          label={labelFor(e)} onTap={() => onSelectEquipment(e.id)} />
+        <Equipment key={e.id} e={e} m={m} facing={facingOf(e)} lowSpec={lowSpec} raised={raisedLiftIds.includes(e.id)} glow={glowIds.includes(e.id)} readout={e.kind === 'panel' ? panelReadout : null} disc={e.id === DISC_BENCH_ID ? discPractice : null} backlash={e.id === BACKLASH_BENCH_ID ? backlashPractice : null} selected={selectedId === e.id} highlight={highlightIds.includes(e.id)}
+          label={discOpen || blOpen ? null : labelFor(e)} onTap={() => onSelectEquipment(e.id)} />
       ))}
       {tester && (
         <group onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onSelectEquipment(tester.id) } }}>
@@ -877,6 +903,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}
       {discOpen && discGauge && <DiscCamera gaugeWorld={discGauge} />}
+      {blOpen && blGauge && <DiscCamera key="bl" gaugeWorld={blGauge} back={BL_CAM_BACK} xFrac={0.62} />}
       <CameraRig view={viewMode} posRef={posRef} look={look} start={start} face={{ x: (mz.xMin + mz.xMax) / 2, z: (mz.zMin + mz.zMax) / 2 }} />
       {first && !camBusy && <FirstPersonLook posRef={posRef} look={look} />}
       {first && !camBusy && onAim && <AimProbe layout={layout} onAim={onAim} />}

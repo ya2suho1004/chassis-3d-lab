@@ -11,6 +11,8 @@ import { counterAngle, needleAngle } from '../dialGauge'
 export const DIAL_GAUGE_URL = `${import.meta.env.BASE_URL}assets/models/dial-gauge.glb`
 /** 측정축이 옆(+x)을 향한 자세(세워 물린 디스크 면 측정, build_dial_gauge.py pose=h). 노드 이름은 같다 */
 export const DIAL_GAUGE_H_URL = `${import.meta.env.BASE_URL}assets/models/dial-gauge-h.glb`
+/** h 자세 + 긴 접촉자(연장 막대 40 mm) — 링기어 이빨에 접선으로 대는 백래시 측정(pose=b) */
+export const DIAL_GAUGE_B_URL = `${import.meta.env.BASE_URL}assets/models/dial-gauge-b.glb`
 
 /** build_dial_gauge.py 상수와 같아야 한다(m) */
 export const DIAL_GAUGE = {
@@ -55,8 +57,8 @@ function dialFaceTexture(): THREE.Texture {
 }
 
 /** travel: 측정축이 들어간 양(mm). travelRef가 있으면 매 프레임 그 값을 읽는다(디스크를 돌릴 때) */
-export function DialGaugeModel({ travel = 0, travelRef, bezelDeg = 0, pose = 'v' }: { travel?: number; travelRef?: React.MutableRefObject<number>; bezelDeg?: number; pose?: 'v' | 'h' }) {
-  const gltf = useGLTF(pose === 'h' ? DIAL_GAUGE_H_URL : DIAL_GAUGE_URL, false, true)
+export function DialGaugeModel({ travel = 0, travelRef, bezelDeg = 0, pose = 'v' }: { travel?: number; travelRef?: React.MutableRefObject<number>; bezelDeg?: number; pose?: 'v' | 'h' | 'b' }) {
+  const gltf = useGLTF(pose === 'h' ? DIAL_GAUGE_H_URL : pose === 'b' ? DIAL_GAUGE_B_URL : DIAL_GAUGE_URL, false, true)
   const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene])
   const parts = useMemo(() => {
     const get = (n: string) => scene.getObjectByName(n) ?? null
