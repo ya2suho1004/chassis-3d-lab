@@ -1,5 +1,7 @@
 # 다이얼 게이지(0.01 mm, 1회전 1 mm) + 마그네틱 베이스 스탠드 생성 스크립트 — Blender 5.x에서 화면 없이 실행한다.
-#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/blender/build_dial_gauge.py -- <출력.glb> [미리보기.png] [HDRI]
+#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/blender/build_dial_gauge.py -- <출력.glb> [미리보기.png] [HDRI] [pose=h]
+#   pose=v(기본): 측정축이 아래(작업대 위 물체 윗면 측정) → dial-gauge.glb
+#   pose=h: 측정축이 옆(+X, 세워 물린 디스크 면 측정 — 사진 11) → dial-gauge-h.glb. 노드 이름은 같다.
 # 사진 11·29·30(디스크 런아웃·차동기어 백래시 측정)의 일반적인 기계식 다이얼 게이지 모양이다. 상표·글자 없음(눈금·숫자는 앱이 덧그린다).
 # 작동: 측정축(Spindle)이 밀려 들어가면 랙·피니언·기어열이 큰 바늘(Needle)을 돌린다(1 mm = 1바퀴 = 100눈금),
 #       회전계 바늘(CounterNeedle)은 1 mm마다 1칸. 베젤(Bezel)을 돌려 눈금판 0을 바늘에 맞춘다.
@@ -9,6 +11,8 @@ import bpy, bmesh, math, os, sys
 from mathutils import Vector, Matrix
 
 argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+POSE = next((a.split('=', 1)[1] for a in argv if a.startswith('pose=')), 'v')
+argv = [a for a in argv if not a.startswith('pose=')]
 OUT = argv[0] if argv else 'dial-gauge.glb'
 PREVIEW = argv[1] if len(argv) > 1 else None
 HDRI = argv[2] if len(argv) > 2 else None
@@ -27,6 +31,11 @@ COUNTER = (0.0, 0.0105, 0.0058)   # 회전계: 눈금판 위쪽(x, z 위치, 반
 IND_POS = Vector((0.16, 0.0, 0.135))  # 스탠드에 물린 게이지 눈금판 가운데(뿌리 기준)
 BASE = (0.06, 0.05, 0.055)          # 마그네틱 베이스 폭(x)·깊이(y)·높이(z)
 POST_H = 0.26
+# 옆으로 누운 자세: 가로 팔 끝 클램프가 게이지 위 스템을 물고, 측정축은 +X를 향한다
+IND_POS_H = Vector((0.175, 0.0, 0.43))   # 측정축 높이 = 디스크 측정 위치 높이(build_disc_fixture.py AXIS_Z + DISC_R − MEASURE_IN)
+POST_H_H = 0.47
+if POSE == 'h':
+    IND_POS, POST_H = IND_POS_H, POST_H_H
 
 def lin(h):
     h = h.lstrip('#'); c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
@@ -193,6 +202,8 @@ indicator = bpy.data.objects.new('Indicator', None); scene.collection.objects.li
 for o in (case, bezel, needle, counter, crystal, spindle, contact):
     parent(o, indicator)
 indicator.location = IND_POS
+if POSE == 'h':
+    indicator.rotation_euler = (0, -math.pi / 2, 0)   # 측정축(−Z) → +X, 눈금판 앞(+Y)은 그대로
 
 # ---------------- 마그네틱 베이스 스탠드 ----------------
 bw, bd, bh = BASE
@@ -209,19 +220,28 @@ stand_parts = [
     cyl('Knob', 0.007, 0.01, (0.018, 0.012, bh + 0.006), verts=24),                                   # 미세 조정 손잡이
 ]
 # 기둥 위 십자 클램프 + 가로 팔
-arm_z = IND_POS.z + DIAL_R + STEM_L * 0.2 + 0.03
+arm_z = IND_POS.z if POSE == 'h' else IND_POS.z + DIAL_R + STEM_L * 0.2 + 0.03
 clamp1 = box('MagBody', (0.022, 0.024, 0.026), (sx, 0, arm_z), bevel=0.002)
 clamp1_knob = cyl('Black', 0.008, 0.006, (sx, 0.016, arm_z), axis='Y', verts=20, bevel=0.001)
-arm_len = IND_POS.x - sx + 0.01
-arm = cyl('Rod', 0.0045, arm_len + 0.02, (sx + arm_len / 2, 0, arm_z), axis='X', verts=20)
-# 팔 끝 클램프 + 게이지 위 스템을 무는 짧은 막대
-clamp2 = box('MagBody', (0.018, 0.02, 0.02), (IND_POS.x, ind_axis_y, arm_z), bevel=0.002)
-clamp2_knob = cyl('Black', 0.006, 0.005, (IND_POS.x, ind_axis_y + 0.013, arm_z), axis='Y', verts=20, bevel=0.0008)
-holder_top = IND_POS.z + DIAL_R + 0.007 + 0.004
-holder = cyl('Rod', 0.0035, arm_z - holder_top, (IND_POS.x, ind_axis_y, (arm_z + holder_top) / 2), verts=16)
-stand = join(stand_parts + [clamp1, clamp1_knob, arm, clamp2, clamp2_knob], 'Stand')
-# 게이지 위 스템을 무는 막대는 스탠드에 합친다(게이지는 따로 움직이지 않음)
-stand = join([stand, holder], 'Stand')
+if POSE == 'h':
+    # 팔이 게이지 위 스템(지금은 −X쪽 가로)까지 와서 그 끝 클램프가 스템을 문다
+    c2x = IND_POS.x - DIAL_R - 0.006
+    arm_len = c2x - sx
+    arm = cyl('Rod', 0.0045, arm_len, (sx + arm_len / 2, ind_axis_y, arm_z), axis='X', verts=20)
+    clamp2 = box('MagBody', (0.016, 0.02, 0.022), (c2x - 0.004, ind_axis_y, arm_z), bevel=0.002)
+    clamp2_knob = cyl('Black', 0.006, 0.005, (c2x - 0.004, ind_axis_y + 0.013, arm_z), axis='Y', verts=20, bevel=0.0008)
+    stand = join(stand_parts + [clamp1, clamp1_knob, arm, clamp2, clamp2_knob], 'Stand')
+else:
+    arm_len = IND_POS.x - sx + 0.01
+    arm = cyl('Rod', 0.0045, arm_len + 0.02, (sx + arm_len / 2, 0, arm_z), axis='X', verts=20)
+    # 팔 끝 클램프 + 게이지 위 스템을 무는 짧은 막대
+    clamp2 = box('MagBody', (0.018, 0.02, 0.02), (IND_POS.x, ind_axis_y, arm_z), bevel=0.002)
+    clamp2_knob = cyl('Black', 0.006, 0.005, (IND_POS.x, ind_axis_y + 0.013, arm_z), axis='Y', verts=20, bevel=0.0008)
+    holder_top = IND_POS.z + DIAL_R + 0.007 + 0.004
+    holder = cyl('Rod', 0.0035, arm_z - holder_top, (IND_POS.x, ind_axis_y, (arm_z + holder_top) / 2), verts=16)
+    stand = join(stand_parts + [clamp1, clamp1_knob, arm, clamp2, clamp2_knob], 'Stand')
+    # 게이지 위 스템을 무는 막대는 스탠드에 합친다(게이지는 따로 움직이지 않음)
+    stand = join([stand, holder], 'Stand')
 
 root = bpy.data.objects.new('DialGauge', None); scene.collection.objects.link(root)
 parent(stand, root)
@@ -261,7 +281,8 @@ if PREVIEW:
     scene.render.resolution_x, scene.render.resolution_y = 900, 700
     base_, ext = os.path.splitext(PREVIEW)
     c = IND_POS
-    shots = [('stand_34', (0.42, 0.42, 0.30), (0.09, 0.0, 0.12), 0.0),
+    shots_h = [('h_34', (0.35, 0.55, 0.55), (0.12, 0.0, 0.33), 0.0), ('h_face', (IND_POS.x, 0.16, IND_POS.z), (IND_POS.x, 0.0, IND_POS.z), 0.25)]
+    shots = shots_h if POSE == 'h' else [('stand_34', (0.42, 0.42, 0.30), (0.09, 0.0, 0.12), 0.0),
              ('stand_front', (0.10, 0.55, 0.16), (0.09, 0.0, 0.13), 0.0),
              ('face_zero', (c.x, 0.16, c.z), (c.x, 0.0, c.z), 0.0),
              ('face_037', (c.x, 0.16, c.z), (c.x, 0.0, c.z), 0.37),

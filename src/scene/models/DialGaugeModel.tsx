@@ -3,11 +3,14 @@
 // 움직이는 노드: Needle(큰 바늘, 지역 z축 회전), CounterNeedle(회전계), Spindle(측정축, 지역 y로 들어감), Bezel(영점 맞춤 회전).
 // 앞(눈금판) = 지역 -z. 뿌리 원점 = 마그네틱 베이스 바닥 가운데.
 import { useGLTF } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { counterAngle, needleAngle } from '../dialGauge'
 
 export const DIAL_GAUGE_URL = `${import.meta.env.BASE_URL}assets/models/dial-gauge.glb`
+/** 측정축이 옆(+x)을 향한 자세(세워 물린 디스크 면 측정, build_dial_gauge.py pose=h). 노드 이름은 같다 */
+export const DIAL_GAUGE_H_URL = `${import.meta.env.BASE_URL}assets/models/dial-gauge-h.glb`
 
 /** build_dial_gauge.py 상수와 같아야 한다(m) */
 export const DIAL_GAUGE = {
@@ -51,8 +54,9 @@ function dialFaceTexture(): THREE.Texture {
   return t
 }
 
-export function DialGaugeModel({ travel = 0, bezelDeg = 0 }: { travel?: number; bezelDeg?: number }) {
-  const gltf = useGLTF(DIAL_GAUGE_URL, false, true)
+/** travel: 측정축이 들어간 양(mm). travelRef가 있으면 매 프레임 그 값을 읽는다(디스크를 돌릴 때) */
+export function DialGaugeModel({ travel = 0, travelRef, bezelDeg = 0, pose = 'v' }: { travel?: number; travelRef?: React.MutableRefObject<number>; bezelDeg?: number; pose?: 'v' | 'h' }) {
+  const gltf = useGLTF(pose === 'h' ? DIAL_GAUGE_H_URL : DIAL_GAUGE_URL, false, true)
   const scene = useMemo(() => gltf.scene.clone(true), [gltf.scene])
   const parts = useMemo(() => {
     const get = (n: string) => scene.getObjectByName(n) ?? null
@@ -70,11 +74,16 @@ export function DialGaugeModel({ travel = 0, bezelDeg = 0 }: { travel?: number; 
     plane.rotation.y = Math.PI
     b.add(plane)
   }, [scene, parts])
+  const apply = (t: number) => {
+    if (parts.needle) parts.needle.rotation.z = needleAngle(t)
+    if (parts.counter) parts.counter.rotation.z = counterAngle(t)
+    if (parts.spindle) parts.spindle.position.y = parts.spindleRest + t / 1000
+  }
   useLayoutEffect(() => {
-    if (parts.needle) parts.needle.rotation.z = needleAngle(travel)
-    if (parts.counter) parts.counter.rotation.z = counterAngle(travel)
-    if (parts.spindle) parts.spindle.position.y = parts.spindleRest + travel / 1000
+    if (!travelRef) apply(travel)
     if (parts.bezel) parts.bezel.rotation.z = (bezelDeg * Math.PI) / 180
-  }, [parts, travel, bezelDeg])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parts, travel, bezelDeg, travelRef])
+  useFrame(() => { if (travelRef) apply(travelRef.current) })
   return <primitive object={scene} />
 }
