@@ -50,7 +50,7 @@ export function backlashTravel(st: BacklashState, c: BacklashCase): number {
   return c.preload + st.s - c.bl / 2
 }
 
-/** 학생이 적은 백래시가 맞는지(눈금 반 칸 0.005 mm 안) */
+/** 학생이 적은 백래시가 맞는지(±0.01 mm = 눈금 한 칸까지, 교사 확인 0F 3-3) */
 export function checkBacklash(answer: number, c: BacklashCase): boolean {
-  return Number.isFinite(answer) && Math.abs(answer - c.bl) < 0.005 + 1e-9
+  return Number.isFinite(answer) && Math.abs(answer - c.bl) <= 0.01 + 1e-9
 }

@@ -67,11 +67,14 @@ describe('백래시 연습 값', () => {
     expect(backlashTravel(st, c)).toBeGreaterThan(0)
     expect(backlashTravel(st, c)).toBeLessThan(DIAL.range)
   })
-  it('답은 눈금 반 칸(0.005 mm) 안이면 맞음', () => {
+  it('답은 눈금 한 칸(±0.01 mm)까지 맞음(교사 확인 0F 3-3)', () => {
     const c = { bl: 0.12, preload: 1 }
     expect(checkBacklash(0.12, c)).toBe(true)
     expect(checkBacklash(0.124, c)).toBe(true)
-    expect(checkBacklash(0.13, c)).toBe(false)
+    expect(checkBacklash(0.13, c)).toBe(true)
+    expect(checkBacklash(0.11, c)).toBe(true)
+    expect(checkBacklash(0.131, c)).toBe(false)
+    expect(checkBacklash(0.14, c)).toBe(false)
     expect(checkBacklash(Number.NaN, c)).toBe(false)
   })
 })

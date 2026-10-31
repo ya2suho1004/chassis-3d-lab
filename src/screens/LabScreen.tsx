@@ -292,7 +292,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
             {discOpen && (
               <div className="g-practice" role="dialog" aria-label="디스크 런아웃 연습">
                 <div className="g-practice-head"><b>디스크 런아웃 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { discCtl.current.spin = 0; setDiscOpen(false) }}>✕</button></div>
-                <p className="small">디스크를 천천히 한 바퀴 돌리며 바늘이 가장 크게·가장 작게 가는 곳을 읽고, 그 차이(런아웃)를 적습니다. 1눈금 = 0.01 mm.</p>
+                <p className="small">디스크를 천천히 돌려 바늘이 가장 작게 가는 곳에서 영점을 맞추고, 다시 한 바퀴 돌리며 가장 크게 가는 값(런아웃)을 읽어 적습니다. 1눈금 = 0.01 mm.</p>
                 <div className="g-practice-row">
                   <button {...spinHold(1)}>⟳ 누르는 동안 돌리기</button>
                   <button {...spinHold(-1)}>⟲ 반대로</button>

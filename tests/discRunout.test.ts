@@ -33,11 +33,14 @@ describe('디스크 런아웃 연습 값', () => {
       expect(c.preload).toBe(0.5)
     }
   })
-  it('답은 눈금 반 칸(0.005 mm) 안이면 맞음', () => {
+  it('답은 눈금 한 칸(±0.01 mm)까지 맞음(교사 확인 0F 3-3)', () => {
     const c = { tir: 0.04, phase: 0, preload: 0.5 }
     expect(checkRunout(0.04, c)).toBe(true)
     expect(checkRunout(0.044, c)).toBe(true)
-    expect(checkRunout(0.05, c)).toBe(false)
+    expect(checkRunout(0.05, c)).toBe(true)    // 눈금 한 칸(±0.01)까지 맞음(교사 확인 0F 3-3)
+    expect(checkRunout(0.03, c)).toBe(true)
+    expect(checkRunout(0.051, c)).toBe(false)
+    expect(checkRunout(0.06, c)).toBe(false)
     expect(checkRunout(Number.NaN, c)).toBe(false)
   })
 })

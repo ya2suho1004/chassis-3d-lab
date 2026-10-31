@@ -30,9 +30,9 @@ export function randomDiscCase(rand: () => number = Math.random): DiscCase {
   return { tir, phase: rand() * 2 * Math.PI, preload: 0.5 }
 }
 
-/** 학생이 적은 런아웃이 맞는지(눈금 반 칸 0.005 mm 안) */
+/** 학생이 적은 런아웃이 맞는지(±0.01 mm = 눈금 한 칸까지, 교사 확인 0F 3-3) */
 export function checkRunout(answer: number, c: DiscCase): boolean {
-  return Number.isFinite(answer) && Math.abs(answer - c.tir) < 0.005 + 1e-9
+  return Number.isFinite(answer) && Math.abs(answer - c.tir) <= 0.01 + 1e-9
 }
 
 function FixtureModel({ rotorRef }: { rotorRef: React.MutableRefObject<THREE.Object3D | null> }) {
