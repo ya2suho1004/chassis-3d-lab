@@ -31,6 +31,7 @@
 | [layout-draft-v2-brake-local.html](docs/layout-draft-v2-brake-local.html) | 제동력 구역 국소 미터 도면(부분 실측 2026-10-21, 확인 필요 표시) |
 | [layout.surveyed.partial.json](docs/layout.surveyed.partial.json) | 부분 실측 기록(layout.schema 형식 통과, 승인 아님) |
 | [teacher-check-0A-brake.html](docs/teacher-check-0A-brake.html) | 0A 교사 확인지(제동력 조작 순서·단위·기준·절사·축) — 2026-10-21 제출 완료 |
+| [teacher-check-0F-practice.html](docs/teacher-check-0F-practice.html) | 0F 교사 확인지(디스크 런아웃·차동기어 백래시 연습: 측정 상태·값 범위·규정값과 근거·읽는 순서·판정 단계·안내 없음 조건 알림) — 2026-10-31 초안, 결과는 collaboration/teacher-check-0F.json |
 | [task.braking-force.case-lv1.json](docs/task.braking-force.case-lv1.json) / [case-lv2](docs/task.braking-force.case-lv2.json) | 교사 개별 승인 반영 과제1.2.0(U1 보류로 전체 pending) |
 | [12_0D_준비검토.md](docs/12_0D_준비검토.md) | 0D 실행 준비 검토표(구현 시작 가능 범위) |
 | [CLAUDE.md](CLAUDE.md) | 구현 에이전트가 지켜야 할 범위·금지·검증·커밋 원칙 |
