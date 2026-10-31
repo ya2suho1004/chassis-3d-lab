@@ -10,6 +10,7 @@ import { toSummaryCsv } from '../records/csv'
 import type { Repository } from '../records/repository'
 import { ServerAdmin } from './ServerAdmin'
 import { LESSON_LABEL } from '../app/lesson'
+import { DEFAULT_PRACTICE_SPEC, fmtMm, loadPracticeSpec, savePracticeSpec } from '../app/practiceSpec'
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
 const OUTCOME_LABEL: Record<OutboxItemResult['outcome'], string> = { acknowledged: '서버 접수 확인됨', rejected: '거절(제출자료 확인 필요)', conflict: '기록 충돌', pending: '대기(잠시 뒤 재시도)', confirmationPending: '접수 확인 필요(같은 ID로 재전송)', skipped: '건너뜀', saveFailed: '이 기기 저장 실패' }
@@ -30,6 +31,8 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   const [sending, setSending] = useState(false)
   const [sendLog, setSendLog] = useState<OutboxItemResult[] | null>(null)
   const endpoint = getSubmitEndpoint()
+  const [specForm, setSpecForm] = useState(() => { const s = loadPracticeSpec(); return { runout: fmtMm(s.runoutMaxMm), backlash: fmtMm(s.backlashMaxMm) } })
+  const [specMsg, setSpecMsg] = useState<string | null>(null)
 
   if (!unlocked) {
     return (
@@ -49,6 +52,16 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
     const ok = savePreset(p)
     onPresetChange(p)
     setSaveMsg(ok ? (p ? '저장했습니다. 시작 화면에 바로 적용됩니다.' : '설정을 지웠습니다. 학생이 직접 고르는 화면으로 돌아갑니다.') : '이 기기에 저장하지 못했습니다(브라우저 저장 제한). 이번 화면에서만 적용됩니다.')
+  }
+
+  const saveSpec = (reset: boolean) => {
+    if (reset) {
+      setSpecForm({ runout: fmtMm(DEFAULT_PRACTICE_SPEC.runoutMaxMm), backlash: fmtMm(DEFAULT_PRACTICE_SPEC.backlashMaxMm) })
+      return setSpecMsg(savePracticeSpec(null) ? '기본값으로 되돌렸습니다.' : '이 기기에 저장하지 못했습니다(브라우저 저장 제한).')
+    }
+    const r = Number(specForm.runout.replace(',', '.')), b = Number(specForm.backlash.replace(',', '.'))
+    if (![r, b].every((v) => Number.isFinite(v) && v > 0 && v <= 10)) return setSpecMsg('0보다 크고 10 이하인 mm 값으로 적어 주세요.')
+    setSpecMsg(savePracticeSpec({ runoutMaxMm: r, backlashMaxMm: b }) ? '저장했습니다. 다음에 실습장에 들어갈 때부터 적용됩니다.' : '이 기기에 저장하지 못했습니다(브라우저 저장 제한).')
   }
 
   const downloadCsv = async () => {
@@ -110,6 +123,18 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         {preset && <button onClick={() => save(null)}>설정 지우기</button>}
       </div>
       {saveMsg && <p className="small" role="status">{saveMsg}</p>}
+
+      <h3>연습 규정값 (이 기기)</h3>
+      <p className="small">디스크 런아웃·차동기어 백래시 연습의 판정 기준(이 값 이하면 양호). 기본값은 교사 확인지 0F의 실습장 기준 0.10 mm입니다. 연습은 기록이 없습니다.</p>
+      <div className="row">
+        <label>디스크 런아웃 <input inputMode="decimal" value={specForm.runout} onChange={(e) => setSpecForm({ ...specForm, runout: e.target.value })} aria-label="디스크 런아웃 한계(mm)" style={{ width: 80 }} /> mm 이하</label>
+        <label>백래시 <input inputMode="decimal" value={specForm.backlash} onChange={(e) => setSpecForm({ ...specForm, backlash: e.target.value })} aria-label="백래시 한계(mm)" style={{ width: 80 }} /> mm 이하</label>
+      </div>
+      <div className="row">
+        <button className="primary" onClick={() => saveSpec(false)}>규정값 저장</button>
+        <button onClick={() => saveSpec(true)}>기본값으로</button>
+      </div>
+      {specMsg && <p className="small" role="status">{specMsg}</p>}
 
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>

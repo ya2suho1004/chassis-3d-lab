@@ -10,6 +10,7 @@ import { BACKLASH_BENCH_ID, DISC_BENCH_ID, LabScene, type AvatarCue, type Backla
 import { backlashTravel, checkBacklash, initialBacklashState, randomBacklashCase, type BacklashState } from '../scene/backlash'
 import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRunout'
 import { needleAngle } from '../scene/dialGauge'
+import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, verdictFor, type Verdict } from '../app/practiceSpec'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
@@ -134,14 +135,18 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const [discOpen, setDiscOpen] = useState(false)
   const [discAnswer, setDiscAnswer] = useState('')
   const [discMsg, setDiscMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [discVerdict, setDiscVerdict] = useState<Verdict | null>(null)
+  /** 연습 규정값(교사 화면에서 바꿈, 기본 0F) — 실습장에 들어올 때 읽는다 */
+  const [spec] = useState(loadPracticeSpec)
   const discZero = () => { const deg = ((needleAngle(discCtl.current.travel) * 180) / Math.PI) % 360; setDiscBezel(deg) }
-  const discNew = () => { setDiscCase(randomDiscCase()); discCtl.current.angle = 0; setDiscBezel(0); setDiscAnswer(''); setDiscMsg(null) }
+  const discNew = () => { setDiscCase(randomDiscCase()); discCtl.current.angle = 0; setDiscBezel(0); setDiscAnswer(''); setDiscVerdict(null); setDiscMsg(null) }
   const discCheck = () => {
     const v = Number(discAnswer.replace(',', '.'))
     if (!discAnswer.trim() || !Number.isFinite(v)) return setDiscMsg({ ok: false, text: '숫자로 적어 주세요(예: 0.04).' })
-    setDiscMsg(checkRunout(v, discCase)
-      ? { ok: true, text: `맞습니다. 이 디스크의 런아웃은 ${discCase.tir.toFixed(2)} mm입니다.` }
-      : { ok: false, text: '다시 읽어 보세요. 한 바퀴 돌리는 동안 가장 큰 값 − 가장 작은 값입니다.' })
+    if (!checkRunout(v, discCase)) return setDiscMsg({ ok: false, text: '다시 읽어 보세요. 한 바퀴 돌리는 동안 가장 큰 값 − 가장 작은 값입니다.' })
+    if (!discVerdict) return setDiscMsg({ ok: false, text: '측정값은 맞습니다. 판정(양호·불량)도 골라 주세요.' })
+    if (discVerdict !== verdictFor(v, spec.runoutMaxMm)) return setDiscMsg({ ok: false, text: '판정이 기준과 다릅니다. 적은 측정값을 규정값과 다시 비교하세요.' })
+    setDiscMsg({ ok: true, text: `맞습니다. 이 디스크의 런아웃은 ${discCase.tir.toFixed(2)} mm, 규정값 ${fmtMm(spec.runoutMaxMm)} mm 이하와 비교해 ${discVerdict === 'good' ? '양호' : '불량'}입니다.` })
   }
   /** 차동기어 백래시 연습(기록 없음, 값은 연습용) — 차동기어 작업대 근처에서 연다 */
   const [blCase, setBlCase] = useState(() => randomBacklashCase())
@@ -152,15 +157,17 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const [blHeld, setBlHeld] = useState(false)
   const [blAnswer, setBlAnswer] = useState('')
   const [blMsg, setBlMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [blVerdict, setBlVerdict] = useState<Verdict | null>(null)
   const blZero = () => { const deg = ((needleAngle(backlashTravel(blSt.current, blCase)) * 180) / Math.PI) % 360; setBlBezel(deg) }
-  const blNew = () => { const c = randomBacklashCase(); setBlCase(c); blSt.current = { ...initialBacklashState(c), held: blHeld }; setBlBezel(0); setBlAnswer(''); setBlMsg(null) }
+  const blNew = () => { const c = randomBacklashCase(); setBlCase(c); blSt.current = { ...initialBacklashState(c), held: blHeld }; setBlBezel(0); setBlAnswer(''); setBlVerdict(null); setBlMsg(null) }
   const blToggleHeld = () => { const h = !blHeld; setBlHeld(h); blSt.current.held = h; setBlMsg(null) }
   const blCheck = () => {
     const v = Number(blAnswer.replace(',', '.'))
     if (!blAnswer.trim() || !Number.isFinite(v)) return setBlMsg({ ok: false, text: '숫자로 적어 주세요(예: 0.12).' })
-    setBlMsg(checkBacklash(v, blCase)
-      ? { ok: true, text: `맞습니다. 이 기어의 백래시는 ${blCase.bl.toFixed(2)} mm입니다.` }
-      : { ok: false, text: '다시 읽어 보세요. 한쪽 끝까지 민 자리와 반대쪽 끝까지 민 자리의 차이입니다.' })
+    if (!checkBacklash(v, blCase)) return setBlMsg({ ok: false, text: '다시 읽어 보세요. 한쪽 끝까지 민 자리와 반대쪽 끝까지 민 자리의 차이입니다.' })
+    if (!blVerdict) return setBlMsg({ ok: false, text: '측정값은 맞습니다. 판정(양호·불량)도 골라 주세요.' })
+    if (blVerdict !== verdictFor(v, spec.backlashMaxMm)) return setBlMsg({ ok: false, text: '판정이 기준과 다릅니다. 적은 측정값을 규정값과 다시 비교하세요.' })
+    setBlMsg({ ok: true, text: `맞습니다. 이 기어의 백래시는 ${blCase.bl.toFixed(2)} mm, 규정값 ${fmtMm(spec.backlashMaxMm)} mm 이하와 비교해 ${blVerdict === 'good' ? '양호' : '불량'}입니다.` })
   }
   const blStop = () => {
     const st = blSt.current
@@ -293,6 +300,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               <div className="g-practice" role="dialog" aria-label="디스크 런아웃 연습">
                 <div className="g-practice-head"><b>디스크 런아웃 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { discCtl.current.spin = 0; setDiscOpen(false) }}>✕</button></div>
                 <p className="small">디스크를 천천히 돌려 바늘이 가장 작게 가는 곳에서 영점을 맞추고, 다시 한 바퀴 돌리며 가장 크게 가는 값(런아웃)을 읽어 적습니다. 1눈금 = 0.01 mm.</p>
+                <p className="g-spec">규정값(정비 한계): 런아웃 {fmtMm(spec.runoutMaxMm)} mm 이하 · {PRACTICE_SPEC_SOURCE}</p>
                 <div className="g-practice-row">
                   <button {...spinHold(1)}>⟳ 누르는 동안 돌리기</button>
                   <button {...spinHold(-1)}>⟲ 반대로</button>
@@ -300,6 +308,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
                 </div>
                 <div className="g-practice-row">
                   <label>런아웃 <input inputMode="decimal" value={discAnswer} onChange={(e) => setDiscAnswer(e.target.value)} placeholder="0.00" aria-label="런아웃(mm)" /> mm</label>
+                  <VerdictPick value={discVerdict} onPick={(v) => { setDiscVerdict(v); setDiscMsg(null) }} />
                   <button className="primary" onClick={discCheck}>확인</button>
                   <button onClick={discNew}>새 디스크</button>
                 </div>
@@ -311,6 +320,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               <div className="g-practice" role="dialog" aria-label="차동기어 백래시 연습">
                 <div className="g-practice-head"><b>차동기어 백래시 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { blSt.current.push = 0; setBlOpen(false) }}>✕</button></div>
                 <p className="small">게이지는 링기어 이빨 면에 직각으로 대 두었습니다. 링기어를 한쪽 끝까지 밀었다가 반대쪽 끝까지 밀어, 바늘이 오간 폭(백래시)을 적습니다. 1눈금 = 0.01 mm.</p>
+                <p className="g-spec">규정값(정비 한계): 백래시 {fmtMm(spec.backlashMaxMm)} mm 이하 · {PRACTICE_SPEC_SOURCE}</p>
                 <div className="g-practice-row">
                   <button {...pushHold(-1)}>◀ 누르는 동안 밀기</button>
                   <button {...pushHold(1)}>밀기 ▶</button>
@@ -319,6 +329,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
                 </div>
                 <div className="g-practice-row">
                   <label>백래시 <input inputMode="decimal" value={blAnswer} onChange={(e) => setBlAnswer(e.target.value)} placeholder="0.00" aria-label="백래시(mm)" /> mm</label>
+                  <VerdictPick value={blVerdict} onPick={(v) => { setBlVerdict(v); setBlMsg(null) }} />
                   <button className="primary" onClick={blCheck}>확인</button>
                   <button onClick={blNew}>새 기어</button>
                 </div>
@@ -483,5 +494,16 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
       </div>
       <p className="small">임시 배치 근거: 제동력 구역 일부 실측(2026-10-21), 나머지는 손 스케치 비례·가정. 실측 뒤 교사 재대조 전까지 실제 학교 재현이 아닙니다.</p>
     </main>
+  )
+}
+
+/** 연습 판정 고르기(양호·불량) — 답안지의 판정 칸 */
+function VerdictPick({ value, onPick }: { value: Verdict | null; onPick: (v: Verdict) => void }) {
+  return (
+    <span className="g-verdict" role="group" aria-label="판정">
+      {(['good', 'bad'] as const).map((v) => (
+        <button key={v} aria-pressed={value === v} className={value === v ? 'on' : ''} onClick={() => onPick(v)}>{v === 'good' ? '양호' : '불량'}</button>
+      ))}
+    </span>
   )
 }
