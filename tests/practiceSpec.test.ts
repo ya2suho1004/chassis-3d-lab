@@ -1,6 +1,6 @@
 // 연습 규정값: 기본값(교사 확인 0F), 저장값 검사, 판정(경계 포함)
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_PRACTICE_SPEC, parsePracticeSpec, verdictFor } from '../src/app/practiceSpec'
+import { DEFAULT_PRACTICE_SPEC, parsePracticeSpec, practiceOkText, verdictFor } from '../src/app/practiceSpec'
 
 describe('연습 규정값', () => {
   it('기본값은 0F 실습장 기준: 둘 다 0.10 mm 이하 양호', () => {
@@ -18,5 +18,11 @@ describe('연습 규정값', () => {
     expect(verdictFor(0.08, 0.1)).toBe('good')
     expect(verdictFor(0.11, 0.1)).toBe('bad')
     expect(verdictFor(0.07 + 0.03, 0.1)).toBe('good')   // 0.09999999999999999 같은 소수 오차는 경계로
+  })
+  it('맞음 문구는 학생이 적은 값으로 판정을 말하고, 실제 값과 다르면 따로 덧붙인다', () => {
+    expect(practiceOkText('백래시', 0.1, 0.1, 0.1, 'good')).toBe('맞습니다. 측정값 0.10 mm는 규정값 0.10 mm 이하와 비교해 양호입니다.')
+    const t = practiceOkText('백래시', 0.11, 0.1, 0.1, 'bad')
+    expect(t).toContain('측정값 0.11 mm는 규정값 0.10 mm 이하와 비교해 불량')
+    expect(t).toContain('백래시 값은 0.10 mm')
   })
 })

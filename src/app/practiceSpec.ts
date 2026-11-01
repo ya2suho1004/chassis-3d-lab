@@ -47,3 +47,14 @@ export function verdictFor(measuredMm: number, maxMm: number): Verdict {
 }
 
 export const fmtMm = (v: number) => v.toFixed(2)
+
+/**
+ * 측정값·판정이 모두 맞았을 때 문구. 판정은 학생이 적은 값으로 했으므로 문장도 그 값으로 쓴다
+ * (눈금 한 칸 안에서 실제 값과 다르면 실제 값을 따로 덧붙인다 — 경계에서 ‘0.10 mm … 불량’ 같은 모순 방지)
+ */
+export function practiceOkText(item: string, answerMm: number, trueMm: number, maxMm: number, verdict: Verdict): string {
+  const same = Math.abs(answerMm - trueMm) < 0.005
+  return `맞습니다. 측정값 ${fmtMm(answerMm)} mm는 규정값 ${fmtMm(maxMm)} mm 이하와 비교해 ${verdict === 'good' ? '양호' : '불량'}입니다.` +
+    (same ? '' : ` (이 연습의 ${item} 값은 ${fmtMm(trueMm)} mm — 눈금 한 칸 안이라 맞음)`)
+}
+

@@ -10,7 +10,7 @@ import { BACKLASH_BENCH_ID, DISC_BENCH_ID, LabScene, type AvatarCue, type Backla
 import { backlashTravel, checkBacklash, initialBacklashState, randomBacklashCase, type BacklashState } from '../scene/backlash'
 import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRunout'
 import { needleAngle } from '../scene/dialGauge'
-import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, verdictFor, type Verdict } from '../app/practiceSpec'
+import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
@@ -146,7 +146,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
     if (!checkRunout(v, discCase)) return setDiscMsg({ ok: false, text: '다시 읽어 보세요. 한 바퀴 돌리는 동안 가장 큰 값 − 가장 작은 값입니다.' })
     if (!discVerdict) return setDiscMsg({ ok: false, text: '측정값은 맞습니다. 판정(양호·불량)도 골라 주세요.' })
     if (discVerdict !== verdictFor(v, spec.runoutMaxMm)) return setDiscMsg({ ok: false, text: '판정이 기준과 다릅니다. 적은 측정값을 규정값과 다시 비교하세요.' })
-    setDiscMsg({ ok: true, text: `맞습니다. 이 디스크의 런아웃은 ${discCase.tir.toFixed(2)} mm, 규정값 ${fmtMm(spec.runoutMaxMm)} mm 이하와 비교해 ${discVerdict === 'good' ? '양호' : '불량'}입니다.` })
+    setDiscMsg({ ok: true, text: practiceOkText('런아웃', v, discCase.tir, spec.runoutMaxMm, discVerdict) })
   }
   /** 차동기어 백래시 연습(기록 없음, 값은 연습용) — 차동기어 작업대 근처에서 연다 */
   const [blCase, setBlCase] = useState(() => randomBacklashCase())
@@ -167,7 +167,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
     if (!checkBacklash(v, blCase)) return setBlMsg({ ok: false, text: '다시 읽어 보세요. 한쪽 끝까지 민 자리와 반대쪽 끝까지 민 자리의 차이입니다.' })
     if (!blVerdict) return setBlMsg({ ok: false, text: '측정값은 맞습니다. 판정(양호·불량)도 골라 주세요.' })
     if (blVerdict !== verdictFor(v, spec.backlashMaxMm)) return setBlMsg({ ok: false, text: '판정이 기준과 다릅니다. 적은 측정값을 규정값과 다시 비교하세요.' })
-    setBlMsg({ ok: true, text: `맞습니다. 이 기어의 백래시는 ${blCase.bl.toFixed(2)} mm, 규정값 ${fmtMm(spec.backlashMaxMm)} mm 이하와 비교해 ${blVerdict === 'good' ? '양호' : '불량'}입니다.` })
+    setBlMsg({ ok: true, text: practiceOkText('백래시', v, blCase.bl, spec.backlashMaxMm, blVerdict) })
   }
   const blStop = () => {
     const st = blSt.current
