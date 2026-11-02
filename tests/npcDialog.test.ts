@@ -16,4 +16,13 @@ describe('NPC 교관 대화 대본', () => {
     const l = npcLines({ near: true, running: true, taskTitle: 'T' })
     expect(l.join(' ')).not.toMatch(/보호구|타이어|롤러|MOTOR/)
   })
+  it('닉네임이 있으면 첫 인사에서 부른다(캐릭터 만들기)', () => {
+    expect(npcLines({ near: true, running: false, taskTitle: 'T', nickname: '꼼꼼한 토크렌치' })[0]).toMatch(/^어서 와, 꼼꼼한 토크렌치\. /)
+    expect(npcLines({ near: true, running: false, taskTitle: 'T', taskId: 'min-turning-radius', nickname: '든든한 스패너' })[0]).toMatch(/^어서 와, 든든한 스패너\. /)
+    expect(npcLines({ near: true, running: false, taskTitle: 'T' })[0]).toMatch(/^어서 와\. /)
+  })
+  it('비기록 모드(AI 교관 없음)에서는 AI 교관을 권하지 않는다', () => {
+    expect(npcLines({ near: true, running: true, taskTitle: 'T', aiAvailable: false }).join(' ')).not.toContain('AI 교관')
+    expect(npcLines({ near: true, running: true, taskTitle: 'T' }).join(' ')).toContain('AI 교관')
+  })
 })

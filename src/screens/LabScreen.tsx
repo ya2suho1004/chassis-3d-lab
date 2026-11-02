@@ -25,6 +25,8 @@ import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '..
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
 import { ChatPanel } from '../chat/ChatPanel'
+import { AvatarScreen } from './AvatarScreen'
+import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
 import type { DifficultyMode } from '../domain/taskEngine'
 
 const NEAR_RADIUS = 1.3
@@ -37,10 +39,13 @@ function layoutFor(dir: 'north' | 'south' | null): SceneLayout {
 }
 const BASIS_LABEL: Record<string, string> = { measured: '실측', 'measured-partial': '부분 실측', sketch: '스케치 비례', assumption: '가정', teacher: '교사 답' }
 
-export function LabScreen({ repo, noRecord = false, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
+export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
   repo: Repository
   /** 비기록 모드(설계 2026-11-02): repo는 메모리 저장소, AI 교관을 숨기고 "기록 안 됨"을 표시한다 */
   noRecord?: boolean
+  /** 캐릭터 외모·닉네임(설계 2026-11-03). 화면 표시만 — 기록·서버·AI에는 없음 */
+  profile?: AvatarProfile
+  onProfileChange?: (p: AvatarProfile) => void
   /** 시작 화면에서 고른 도움 방식(과제 수령 전 챗봇 규칙에도 쓴다) */
   mode: DifficultyMode
   session: SessionContext
@@ -100,6 +105,9 @@ export function LabScreen({ repo, noRecord = false, session, task, mode, run, on
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [avatarEdit, setAvatarEdit] = useState(false)
+  const nickname = nicknameOf(profile)
+  const studentLook = useMemo(() => ({ body: profile.body, hairStyle: profile.hairStyle, skin: profile.skin, hairColor: profile.hairColor, eye: profile.eye }), [profile])
   /** 멀리서 교관을 눌렀으면 걸어가서 도착하는 순간 대화를 연다 */
   const [talkOnArrive, setTalkOnArrive] = useState(false)
   /** 시점: 내려다보기 · 따라가기(기본, 잠정) · 내 눈으로(1인칭). 안내 있음·없음 조건에 똑같이 제공 */
@@ -239,19 +247,20 @@ export function LabScreen({ repo, noRecord = false, session, task, mode, run, on
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
-            avatarCue={avatarCue} ppe={ppe} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
+            avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
         {!talking && (
           <>
             <div className="g-status">
-              <div className="g-badge">{noRecord ? <b className="g-norec">기록 안 됨</b> : <b>{session.anonymousStudentCode}</b>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
+              <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
               <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}>🎥 {VIEW_LABEL[viewMode]}</button>
               <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}>{soundOn ? '🔊' : '🔇'}</button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
               {menuOpen && (
                 <div className="g-menu" role="menu">
+                  <button onClick={() => { setAvatarEdit(true); setMenuOpen(false) }}>캐릭터 다시 꾸미기</button>
                   <button onClick={() => setLabelChoice(labelMode === 'all' ? 'near' : 'all')}>{labelMode === 'all' ? '이름표 가까운 것만' : '이름표 모두 보기'}</button>
                   <label className="g-check"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
                   {run && <button onClick={toggleDisplay}>도식 모드로</button>}
@@ -403,12 +412,19 @@ export function LabScreen({ repo, noRecord = false, session, task, mode, run, on
         )}
 
         {npcOpen && (
-          <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError}
+          <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
             onGoToNpc={() => { setNpcOpen(false); setTalkOnArrive(true); goTo(npcSpot) }}
             onOpenTasks={() => { setNpcOpen(false); setDrawerOpen(true) }}
             onInspect={() => { setNpcOpen(false); ctx?.inspect(); setDrawerOpen(true) }}
             onClose={() => setNpcOpen(false)} />
+        )}
+
+        {avatarEdit && (
+          <div className="av-overlay" role="dialog" aria-modal="true" aria-label="캐릭터 다시 꾸미기">
+            <AvatarScreen initial={profile} editing saveNote={noRecord ? '기록 없이 하기라서 캐릭터도 저장하지 않습니다.' : '이 기기에만 저장되고 연구 기록·서버에는 보내지 않습니다.'}
+              onDone={(p) => { onProfileChange?.(p); setAvatarEdit(false) }} onCancel={() => setAvatarEdit(false)} />
+          </div>
         )}
       </main>
     )

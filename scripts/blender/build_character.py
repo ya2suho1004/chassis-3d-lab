@@ -1,5 +1,7 @@
 # 실습장 사람(학생 아바타·NPC 교관 공용) 3D 캐릭터 생성 스크립트 — Blender 5.x에서 화면 없이 실행한다.
-#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/blender/build_character.py -- <출력.glb> [미리보기.png] [HDRI]
+#   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python scripts/blender/build_character.py -- <출력.glb> [미리보기.png] [HDRI] [--body=a|b]
+#   체형 a(기본, 키 1.72 m) → public/assets/models/character.glb, 체형 b(어깨 좁음·허리 잘록, 키 1.62 m) → character-b.glb (캐릭터 만들기 설계 2026-11-03).
+#   머리 모양 4개(Hair_Short·Hair_Fringe·Hair_Bob·Hair_Tied)는 따로 된 물체로 Head 뼈에 붙이고 앱이 하나만 보이게 한다.
 # 특정 인물을 닮지 않은 일반 얼굴·체형(키 1.72 m)이다. 옷은 재질 이름으로만 나눠 둔다(Top·Bottom·Shoes) — 실습복 색·모양은 사진을 받은 뒤 정한다.
 # 뼈대 15개(Hips·Spine·Chest·Neck·Head, 팔·다리 좌우 3개씩)에 몸을 자동 가중치로 붙이고, 동작 6개를 넣는다:
 #   Idle·Walk·Gesture(손짓) + 과제 연출 Crouch(쪼그려 살펴보기)·Press(조작부 버튼 누르기)·Equip(보호구 쓰기).
@@ -8,10 +10,14 @@
 import bpy, bmesh, math, os, sys
 from mathutils import Vector
 
-argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+argv_all = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+BODY = next((a.split('=', 1)[1] for a in argv_all if a.startswith('--body=')), 'a')
+argv = [a for a in argv_all if not a.startswith('--body=')]
 OUT = argv[0] if argv else 'character.glb'
 PREVIEW = argv[1] if len(argv) > 1 else None
 HDRI = argv[2] if len(argv) > 2 else None
+# 체형 b는 a 치수로 만든 뒤 뿌리(Character)를 통째로 줄여 키를 맞춘다(동작·보안경·머리 부품이 같이 줄어든다)
+BODY_SCALE = {'a': 1.0, 'b': 1.62 / 1.72}[BODY]
 FPS = 24
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -59,6 +65,16 @@ for s, sx in (('L', 1), ('R', -1)):
 R = {'pelvis': (0.16, 0.115), 'spine': (0.145, 0.10), 'chest': (0.175, 0.112), 'neck': (0.055, 0.055),
      'shoulder': (0.068, 0.066), 'elbow': (0.052, 0.05), 'wrist': (0.038, 0.032), 'hand': (0.04, 0.02),
      'hip': (0.098, 0.098), 'knee': (0.068, 0.07), 'ankle': (0.05, 0.05), 'toe': (0.04, 0.03)}
+if BODY == 'b':
+    # 어깨·팔을 안으로, 가슴·허리를 가늘게, 골반을 조금 넓게(특정 인물을 닮지 않은 일반 체형)
+    for s, sx in (('L', 1), ('R', -1)):
+        J['shoulder' + s] = (sx * 0.178, -0.01, 1.42)
+        J['elbow' + s] = (sx * 0.222, -0.03, 1.15)
+        J['wrist' + s] = (sx * 0.245, 0.0, 0.90)
+        J['hand' + s] = (sx * 0.25, 0.01, 0.80)
+        J['hip' + s] = (sx * 0.098, 0, 0.93)
+    R.update({'chest': (0.158, 0.112), 'spine': (0.126, 0.096), 'pelvis': (0.166, 0.118), 'neck': (0.05, 0.05),
+              'shoulder': (0.06, 0.06), 'elbow': (0.046, 0.045), 'wrist': (0.034, 0.03), 'hip': (0.1, 0.1)})
 names = ['pelvis', 'spine', 'chest', 'neck'] + [k + s for s in ('L', 'R') for k in ('shoulder', 'elbow', 'wrist', 'hand', 'hip', 'knee', 'ankle', 'toe')]
 edges = [('pelvis', 'spine'), ('spine', 'chest'), ('chest', 'neck')]
 for s in ('L', 'R'):
@@ -150,13 +166,15 @@ def ring(z, rx, ry, h, group, mat, cx=0.0, cy=0.0):
 extra.append(ring(WAIST_Z, 0.168, 0.122, 0.045, 'Hips', 'Shoes'))          # 벨트(신발과 같은 짙은 색)
 extra.append(ring(NECK_Z + 0.005, 0.07, 0.068, 0.035, 'Chest', 'Top', cy=-0.004))  # 옷깃
 extra.append(rigid(sphere((0, 0.008, 1.605), (0.092, 0.104, 0.118)), 'Head', 'Skin'))
-hair = sphere((0, -0.006, 1.63), (0.098, 0.11, 0.105))
-bm = bmesh.new(); bm.from_mesh(hair.data)
-bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < 1.625 - 0.035 * (1 if v.co.y > 0.04 else 0) - (0.06 if v.co.y < -0.02 else 0)], context='VERTS')
-bm.to_mesh(hair.data); bm.free()
-sol = hair.modifiers.new('sol', 'SOLIDIFY'); sol.thickness = 0.012
-bpy.context.view_layer.objects.active = hair; bpy.ops.object.modifier_apply(modifier='sol')
-extra.append(rigid(hair, 'Head', 'Hair'))
+# 머리카락: 구를 잘라 두께를 준 모자 모양. drop(v)가 참인 점을 지운다. 머리 모양마다 따로 된 물체(아래 '머리 모양')
+def hair_cap(center, scale, drop):
+    ob = sphere(center, scale, 32, 18)
+    bm = bmesh.new(); bm.from_mesh(ob.data)
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if drop(v.co)], context='VERTS')
+    bm.to_mesh(ob.data); bm.free()
+    sol = ob.modifiers.new('sol', 'SOLIDIFY'); sol.thickness = 0.012
+    bpy.context.view_layer.objects.active = ob; bpy.ops.object.modifier_apply(modifier='sol')
+    return rigid(ob, 'Head', 'Hair')
 for sx in (1, -1):
     extra.append(rigid(sphere((sx * 0.035, 0.097, 1.615), (0.011, 0.006, 0.013), 12, 8), 'Head', 'Eye'))
     extra.append(rigid(sphere((sx * 0.094, 0.0, 1.605), (0.014, 0.026, 0.032), 12, 8), 'Head', 'Skin'))   # 귀
@@ -173,6 +191,35 @@ for o in extra: o.select_set(True)
 body.select_set(True); bpy.context.view_layer.objects.active = body
 bpy.ops.object.join()
 body = bpy.context.active_object; body.name = 'Body'
+
+# ---------------- 머리 모양 4개(따로 된 물체, Head 뼈에 통째로 — 앱이 하나만 보인다) ----------------
+def attach_head_part(ob, name):
+    ob.name = name
+    ob.parent = arm
+    am_ = ob.modifiers.new('arm', 'ARMATURE'); am_.object = arm
+    return ob
+HAIRS = {
+    # 짧은 머리(교관·기본, 2026-10-29 모양 그대로)
+    'Hair_Short': lambda: hair_cap((0, -0.006, 1.63), (0.098, 0.11, 0.105),
+                                   lambda c: c.z < 1.625 - 0.035 * (1 if c.y > 0.04 else 0) - (0.06 if c.y < -0.02 else 0)),
+    # 앞머리 내린 머리: 이마를 덮고 눈썹 위(보안경 위 테)에서 끝남
+    'Hair_Fringe': lambda: hair_cap((0, 0.0, 1.632), (0.1, 0.116, 0.106),
+                                    lambda c: c.z < (1.648 if c.y > 0.05 else 1.565 if c.y < -0.02 else 1.585)),
+    # 단발: 옆·뒤가 턱 높이까지, 얼굴 앞은 이마 위에서 자름
+    'Hair_Bob': lambda: hair_cap((0, -0.01, 1.60), (0.108, 0.12, 0.145),
+                                 lambda c: c.z < 1.50 or (c.y > 0.03 and c.z < 1.648)),
+}
+for nm, mk in HAIRS.items():
+    attach_head_part(mk(), nm)
+# 묶은 머리: 짧은 머리보다 조금 풍성한 모자 + 뒤로 묶은 꼬리·끈
+tied = [hair_cap((0, -0.006, 1.632), (0.1, 0.112, 0.107), lambda c: c.z < 1.62 - 0.03 * (1 if c.y > 0.04 else 0) - (0.05 if c.y < -0.02 else 0)),
+        rigid(sphere((0, -0.128, 1.585), (0.032, 0.034, 0.085), 16, 10), 'Head', 'Hair'),
+        rigid(sphere((0, -0.113, 1.642), (0.026, 0.022, 0.022), 16, 10), 'Head', 'Hair')]
+bpy.ops.object.select_all(action='DESELECT')
+for o in tied: o.select_set(True)
+bpy.context.view_layer.objects.active = tied[0]
+bpy.ops.object.join()
+attach_head_part(bpy.context.active_object, 'Hair_Tied')
 
 # ---------------- 보안경(따로 된 물체, Head 뼈에 통째로) ----------------
 EYE_Z = 1.615
@@ -304,6 +351,7 @@ arm.animation_data.action = None
 
 root = bpy.data.objects.new('Character', None); scene.collection.objects.link(root)
 arm.parent = root
+root.scale = (BODY_SCALE,) * 3
 
 # ---------------- 점검 · 내보내기 ----------------
 body.data.calc_loop_triangles()

@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { CHARACTER_CLIPS, headingFor } from '../src/scene/models/CharacterModel'
+import { HAIR_STYLES } from '../src/app/avatar'
 
 const buf = readFileSync(new URL('../public/assets/models/character.glb', import.meta.url))
 const len = buf.readUInt32LE(12)
@@ -40,3 +41,33 @@ describe('사람 캐릭터 모델(character.glb)', () => {
     expect(headingFor(-1, 0)).toBeCloseTo(Math.PI / 2, 6)
   })
 })
+
+// 캐릭터 만들기(설계 2026-11-03): 체형 2 모델과 머리 모양 4개
+type Glb = { nodes: Array<{ name?: string; scale?: number[] }>; skins?: unknown[]; animations?: Array<{ name?: string }>; materials: Array<{ name?: string }> }
+const read = (f: string) => {
+  const b = readFileSync(new URL(`../public/assets/models/${f}`, import.meta.url))
+  return { size: b.length, j: JSON.parse(b.toString('utf8', 20, 20 + b.readUInt32LE(12))) as Glb }
+}
+describe.each(['character.glb', 'character-b.glb'])('캐릭터 만들기 — %s', (f) => {
+  const { size, j: g } = read(f)
+  it('머리 모양 부품 4개가 따로 있다(앱이 하나만 보임)', () => {
+    const names = g.nodes.map((n) => n.name)
+    for (const h of HAIR_STYLES) expect(names).toContain(h.node)
+  })
+  it('같은 동작 6개·뼈대 1개·피부·머리·눈 재질', () => {
+    expect(g.skins ?? []).toHaveLength(1)
+    const clips = (g.animations ?? []).map((a) => a.name)
+    for (const c of CHARACTER_CLIPS) expect(clips).toContain(c)
+    const mats = g.materials.map((m) => m.name)
+    for (const m of ['Skin', 'Hair', 'Eye', 'Top', 'Bottom', 'Shoes']) expect(mats).toContain(m)
+    expect(size).toBeLessThan(400_000)
+  })
+})
+describe('체형 키', () => {
+  it('체형 2는 뿌리(Character)를 1.62/1.72로 줄이고 체형 1은 그대로', () => {
+    const root = (f: string) => read(f).j.nodes.find((n) => n.name === 'Character')!
+    expect(root('character.glb').scale ?? [1, 1, 1]).toEqual([1, 1, 1])
+    for (const s of root('character-b.glb').scale!) expect(s).toBeCloseTo(1.62 / 1.72, 4)
+  })
+})
+

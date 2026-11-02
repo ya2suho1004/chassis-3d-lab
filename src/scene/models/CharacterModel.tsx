@@ -5,8 +5,16 @@ import { useAnimations, useGLTF } from '@react-three/drei'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
+import { HAIR_STYLES, type BodyType, type HairStyle } from '../../app/avatar'
 
 export const CHARACTER_URL = `${import.meta.env.BASE_URL}assets/models/character.glb`
+/** 체형 2(키 1.62 m) — 캐릭터 만들기(설계 2026-11-03) */
+export const CHARACTER_B_URL = `${import.meta.env.BASE_URL}assets/models/character-b.glb`
+export const characterUrl = (b: BodyType) => (b === 'b' ? CHARACTER_B_URL : CHARACTER_URL)
+
+/** 외모(체형·머리 모양·피부·머리·눈 색). 없으면 기본(체형 1, 짧은 머리, 모델 색 그대로) — NPC 교관 */
+export interface CharacterLook { body: BodyType; hairStyle: HairStyle; skin?: string; hairColor?: string; eye?: string }
+export const DEFAULT_LOOK: CharacterLook = { body: 'a', hairStyle: 'short' }
 export const CHARACTER_CLIPS = ['Idle', 'Walk', 'Gesture', 'Crouch', 'Press', 'Equip'] as const
 /** 한 번만 재생하고 끝 자세에서 멈추는 동작(앱이 길이를 재고 Idle로 돌린다) */
 const ONE_SHOT = new Set<string>(['Crouch', 'Press', 'Equip'])
@@ -32,8 +40,8 @@ export function headingFor(dx: number, dz: number): number {
   return Math.atan2(-dx, -dz)
 }
 
-export function CharacterModel({ action, outfit, speed = 1, goggles = false }: { action: CharacterAction; outfit: Outfit; speed?: number; goggles?: boolean }) {
-  const { scene, animations } = useGLTF(CHARACTER_URL, false, true)
+export function CharacterModel({ action, outfit, speed = 1, goggles = false, look = DEFAULT_LOOK }: { action: CharacterAction; outfit: Outfit; speed?: number; goggles?: boolean; look?: CharacterLook }) {
+  const { scene, animations } = useGLTF(characterUrl(look.body), false, true)
   // 뼈대가 있는 모델은 SkeletonUtils로 복제해야 학생·교관이 따로 움직인다
   const clone = useMemo(() => SkeletonUtils.clone(scene) as THREE.Group, [scene])
   const root = useRef<THREE.Group>(null)
@@ -47,11 +55,21 @@ export function CharacterModel({ action, outfit, speed = 1, goggles = false }: {
       mesh.castShadow = true
       mesh.frustumCulled = false // 뼈로 움직인 몸이 원래 경계 상자를 벗어나도 사라지지 않게
       const mat = (mesh.material as THREE.MeshStandardMaterial).clone()
-      const color = mat.name === 'Top' ? outfit.top : mat.name === 'Bottom' ? outfit.bottom : mat.name === 'Shoes' ? outfit.shoes : undefined
+      const color = mat.name === 'Top' ? outfit.top : mat.name === 'Bottom' ? outfit.bottom : mat.name === 'Shoes' ? outfit.shoes
+        : mat.name === 'Skin' ? look.skin : mat.name === 'Hair' ? look.hairColor : mat.name === 'Eye' ? look.eye : undefined
       if (color) mat.color.set(color)
       mesh.material = mat
     })
-  }, [clone, outfit])
+  }, [clone, outfit, look.skin, look.hairColor, look.eye])
+
+  // 머리 모양: 모델 안 부품 4개 중 고른 것만 보인다
+  useLayoutEffect(() => {
+    const want = HAIR_STYLES.find((h) => h.id === look.hairStyle)?.node ?? 'Hair_Short'
+    for (const h of HAIR_STYLES) {
+      const n = clone.getObjectByName(h.node)
+      if (n) n.visible = h.node === want
+    }
+  }, [clone, look.hairStyle])
 
   // 보안경(보호구 착용 단계 뒤에만 보임)
   useLayoutEffect(() => {

@@ -26,7 +26,8 @@ import type { BacklashCase, BacklashState } from './backlash'
 import { ShockStandModel, TransmissionSimulatorModel, fitsShockStand, fitsTransmissionSimulator } from './models/TrainersModel'
 import { STEP_STRIDE, stepsCrossed } from './sound'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
-import { CHARACTER_LAYER, CharacterModel, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction } from './models/CharacterModel'
+import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction, type CharacterLook } from './models/CharacterModel'
+import { bodyScale } from '../app/avatar'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 
 const Effects = lazy(() => import('./Effects'))
@@ -73,6 +74,8 @@ export interface LabSceneProps {
   avatarCue?: AvatarCue | null
   /** 보호구 착용 단계를 마쳤으면 학생에게 보안경·안전화 */
   ppe?: boolean
+  /** 학생 캐릭터 외모(캐릭터 만들기, 설계 2026-11-03). 없으면 기본 */
+  studentLook?: CharacterLook
   /** 디스크 런아웃 연습 */
   discPractice?: DiscPractice | null
   backlashPractice?: BacklashPractice | null
@@ -117,7 +120,7 @@ function BlobShadow() {
   return <mesh rotation-x={-Math.PI / 2} position-y={0.008} material={mat} renderOrder={1}><planeGeometry args={[0.9, 0.9]} /></mesh>
 }
 
-function Avatar({ pos, heading, moving, oneShot, ppe }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; oneShot: AvatarAction | null; ppe: boolean }) {
+function Avatar({ pos, heading, moving, oneShot, ppe, look }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; oneShot: AvatarAction | null; ppe: boolean; look: CharacterLook }) {
   const outfit = useMemo(() => (ppe ? { ...STUDENT_OUTFIT, shoes: SAFETY_SHOES } : STUDENT_OUTFIT), [ppe])
   const turn = useRef<THREE.Group>(null)
   useFrame((_, dt) => {
@@ -133,7 +136,7 @@ function Avatar({ pos, heading, moving, oneShot, ppe }: { pos: Pt; heading: Reac
     <group position={[pos.x, 0, pos.z]}>
       <BlobShadow />
       <group ref={turn}>
-        <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : oneShot ?? 'Idle'} outfit={outfit} goggles={ppe} speed={moving ? WALK_SPEED / WALK_CYCLE_DISTANCE : 1} /></Suspense>
+        <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : oneShot ?? 'Idle'} outfit={outfit} goggles={ppe} look={look} speed={moving ? WALK_SPEED / (WALK_CYCLE_DISTANCE * bodyScale(look.body)) : 1} /></Suspense>
       </group>
     </group>
   )
@@ -682,7 +685,7 @@ function AimProbe({ layout, onAim }: { layout: SceneLayout; onAim: (id: string |
   return null
 }
 
-function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view, onStep, cue, ppe }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void; cue: AvatarCue | null; ppe: boolean }) {
+function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view, onStep, cue, ppe, look }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void; cue: AvatarCue | null; ppe: boolean; look: CharacterLook }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
   // 1인칭은 카메라를 FirstPersonLook이 눈높이에 직접 둔다. 궤도 시점만 이동량만큼 카메라를 함께 옮긴다
@@ -789,10 +792,10 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
   // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼). 1인칭은 내 몸을 숨긴다
-  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} /></group>
+  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} look={look} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -936,7 +939,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}
       {discOpen && discGauge && <DiscCamera gaugeWorld={discGauge} />}

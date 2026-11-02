@@ -2,27 +2,29 @@
 // 대사는 대본형이며 판정·채점과 무관하다. 과제 받기는 기존 onReceiveTask(수행 번호 발급·초안 저장)를 그대로 부른다.
 import { useState } from 'react'
 
-export function npcLines(opts: { near: boolean; running: boolean; taskTitle: string; taskId?: string }): string[] {
+/** nickname: 캐릭터 만들기 닉네임(설계 2026-11-03) — 첫 인사에서 부른다. aiAvailable=false(비기록 모드)면 AI 교관을 권하지 않는다 */
+export function npcLines(opts: { near: boolean; running: boolean; taskTitle: string; taskId?: string; nickname?: string; aiAvailable?: boolean }): string[] {
+  const hi = opts.nickname ? `어서 와, ${opts.nickname}.` : '어서 와.'
   if (!opts.near) return ['여기야! 가까이 와서 이야기하자.']
-  if (opts.running) return ['작업 순서대로 차근차근 해. 안전 수칙은 꼭 지키고.', '궁금한 건 AI 교관에게 물어봐도 돼. 다 끝나면 나한테 검사를 받아.']
+  if (opts.running) return ['작업 순서대로 차근차근 해. 안전 수칙은 꼭 지키고.', opts.aiAvailable === false ? '막히면 힌트를 눌러 봐. 다 끝나면 나한테 검사를 받아.' : '궁금한 건 AI 교관에게 물어봐도 돼. 다 끝나면 나한테 검사를 받아.']
   if (opts.taskId === 'min-turning-radius') return [
-    '어서 와. 오늘은 회전반경 측정판으로 최소회전반경을 측정해 볼 거야.',
+    `${hi} 오늘은 회전반경 측정판으로 최소회전반경을 측정해 볼 거야.`,
     '손님 차량이 좁은 길에서 잘 안 돈다고 했어. 앞바퀴 최대 조향각을 읽어 최소회전반경을 산출하고, 차량 상태를 판정해 줘.',
     `오늘 과제는 「${opts.taskTitle}」야. 준비됐으면 과제를 받아.`,
   ]
   return [
-    '어서 와. 오늘은 제동력 시험기로 뒤축 제동력을 측정해 볼 거야.',
+    `${hi} 오늘은 제동력 시험기로 뒤축 제동력을 측정해 볼 거야.`,
     '손님 차량이 제동할 때 한쪽으로 쏠린다고 했어. 좌·우 제동력을 재서 편차와 합을 계산하고, 차량 상태를 판정해 줘.',
     `오늘 과제는 「${opts.taskTitle}」야. 준비됐으면 과제를 받아.`,
   ]
 }
 
-export function NpcDialog({ near, running, taskTitle, taskId, error, onReceive, onGoToNpc, onOpenTasks, onInspect, onClose }: {
-  near: boolean; running: boolean; taskTitle: string; taskId?: string; error: string | null
+export function NpcDialog({ near, running, taskTitle, taskId, nickname, aiAvailable = true, error, onReceive, onGoToNpc, onOpenTasks, onInspect, onClose }: {
+  near: boolean; running: boolean; taskTitle: string; taskId?: string; nickname?: string; aiAvailable?: boolean; error: string | null
   onReceive: () => Promise<string | null>
   onGoToNpc: () => void; onOpenTasks: () => void; onInspect: () => void; onClose: () => void
 }) {
-  const lines = npcLines({ near, running, taskTitle, taskId })
+  const lines = npcLines({ near, running, taskTitle, taskId, nickname, aiAvailable })
   const [page, setPage] = useState(0)
   const [after, setAfter] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)

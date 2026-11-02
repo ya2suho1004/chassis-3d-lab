@@ -10,6 +10,8 @@ import { ResultScreen } from './screens/ResultScreen'
 import { ResumeScreen } from './screens/ResumeScreen'
 import { LabScreen } from './screens/LabScreen'
 import { listTasks } from './app/session'
+import { AvatarScreen } from './screens/AvatarScreen'
+import { DEFAULT_PROFILE, loadAvatar, nicknameOf, randomNickname, saveAvatar, type AvatarProfile } from './app/avatar'
 
 type Screen =
   | { name: 'loading' }
@@ -17,8 +19,10 @@ type Screen =
   | { name: 'resume'; draft: Draft }
   | { name: 'start' }
   // noRecord: 비기록 모드(설계 2026-11-02) — runRepo는 메모리 저장소이고 AI 교관·기록 표시를 끈다
-  | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository }
-  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean }
+  // avatar: 캐릭터 만들기(설계 2026-11-03) — 그 코드의 캐릭터가 이 기기에 없을 때만(비기록은 매번)
+  | { name: 'avatar'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; noRecord: boolean; runRepo: Repository; initial: AvatarProfile }
+  | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository; profile: AvatarProfile }
+  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile }
 
 export function App() {
   const [repo, setRepo] = useState<Repository | null>(null)
@@ -51,7 +55,8 @@ export function App() {
         onResume={() => {
           const run = rehydrateRun(screen.draft.snapshot)
           const task = listTasks().find((t) => t.measurement.caseId === run.task.measurement.caseId) ?? run.task
-          setScreen({ name: 'lab', session: screen.draft.session, task, mode: run.difficultyMode, run, noRecord: false, runRepo: repo! })
+          const code = screen.draft.session.anonymousStudentCode
+          setScreen({ name: 'lab', session: screen.draft.session, task, mode: run.difficultyMode, run, noRecord: false, runRepo: repo!, profile: loadAvatar(code) ?? DEFAULT_PROFILE })
         }}
         onDiscard={async () => {
           await repo?.deleteDraft(screen.draft.recordId)
@@ -64,14 +69,29 @@ export function App() {
 
   // 시작 화면에서는 세션만 만든다. 수행 번호(recordId)와 초안은 NPC에게 과제를 받을 때 발급·저장한다(설계 02 §3 S4).
   // 비기록이면 이 수행만 쓰는 메모리 저장소를 새로 만든다(실제 저장소·포인터는 건드리지 않음)
-  if (screen.name === 'start') return <StartScreen repo={repo!} onStart={async (session, task, mode, noRecord = false) => { setScreen({ name: 'lab', session, task, mode, run: null, noRecord, runRepo: noRecord ? openMemoryRepository() : repo! }); return null }} />
+  if (screen.name === 'start') return <StartScreen repo={repo!} onStart={async (session, task, mode, noRecord = false) => {
+    const runRepo = noRecord ? openMemoryRepository() : repo!
+    const saved = noRecord ? null : loadAvatar(session.anonymousStudentCode)
+    setScreen(saved
+      ? { name: 'lab', session, task, mode, run: null, noRecord, runRepo, profile: saved }
+      : { name: 'avatar', session, task, mode, noRecord, runRepo, initial: { ...DEFAULT_PROFILE, ...randomNickname() } })
+    return null
+  }} />
+
+  if (screen.name === 'avatar') {
+    const { session, task, mode, noRecord, runRepo } = screen
+    return <AvatarScreen initial={screen.initial} saveNote={noRecord ? '기록 없이 하기라서 캐릭터도 저장하지 않습니다.' : `이 기기에 코드 ${session.anonymousStudentCode}의 캐릭터로 저장되고, 연구 기록·서버에는 보내지 않습니다.`}
+      onDone={(profile) => { if (!noRecord) saveAvatar(session.anonymousStudentCode, profile); setScreen({ name: 'lab', session, task, mode, run: null, noRecord, runRepo, profile }) }} />
+  }
 
   if (screen.name === 'lab') {
-    const { session, task, mode, noRecord, runRepo } = screen
+    const { session, task, mode, noRecord, runRepo, profile } = screen
     return (
       <LabScreen
         repo={runRepo}
         noRecord={noRecord}
+        profile={profile}
+        onProfileChange={(p) => { if (!noRecord) saveAvatar(session.anonymousStudentCode, p); setScreen((s) => (s.name === 'lab' ? { ...s, profile: p } : s)) }}
         session={session}
         task={task}
         mode={mode}
@@ -85,13 +105,13 @@ export function App() {
           return null
         }}
         onRunChange={(run) => setScreen((s) => (s.name === 'lab' ? { ...s, run } : s))}
-        onFinish={(run, completionStatus, envelope, saveError) => setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord })}
+        onFinish={(run, completionStatus, envelope, saveError) => setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile })}
       />
     )
   }
 
   return (
-    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} noRecord={screen.noRecord}
+    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
       onNextStudent={() => { if (!screen.noRecord) repo?.clearCurrent(); setScreen({ name: 'start' }) }} />
   )
 }
