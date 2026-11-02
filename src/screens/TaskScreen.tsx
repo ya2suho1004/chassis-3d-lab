@@ -60,7 +60,9 @@ function useCountUp(active: boolean, ms = 1500): number {
 
 export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
 
-export function TaskScreen({ repo, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext }: {
+export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext }: {
+  /** 비기록 모드: 저장 상태 대신 "기록 안 됨"을 보인다 */
+  noRecord?: boolean
   repo: Repository; session: SessionContext; initialRun: TaskRun
   onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
   /** 실습장 화면 안에 끼워 넣을 때 true(머리글 생략) */
@@ -264,7 +266,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
     <main className={embedded ? 'embedded task' : 'screen task'}>
       <header className="topbar">
         <div><b>{task.title}</b> · {embedded ? '' : `코드 ${session.anonymousStudentCode} · `}{run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</div>
-        <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>{run.paused && ' · 일시중지'}</div>
+        <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · {noRecord ? <span>기록 안 됨</span> : <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>}{run.paused && ' · 일시중지'}</div>
       </header>
 
       <section className="npc card">

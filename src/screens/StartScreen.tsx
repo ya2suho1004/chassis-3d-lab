@@ -7,10 +7,11 @@ import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
 import type { Repository } from '../records/repository'
 import { SUBMIT_IS_FAKE } from '../delivery/config'
+import { NO_RECORD_CODE } from '../records/memoryRepository'
 import { TeacherPanel } from './TeacherPanel'
 import { LESSON_LABEL, lessonAttemptRole, lessonMode } from '../app/lesson'
 
-export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: SessionContext, t: ApprovedTask, m: DifficultyMode) => Promise<string | null> }) {
+export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: SessionContext, t: ApprovedTask, m: DifficultyMode, noRecord?: boolean) => Promise<string | null> }) {
   const tasks = listTasks()
   const caseIds = tasks.map(caseKey).filter((k) => k !== '')
   const [preset, setPreset] = useState<TeacherPreset | null>(() => loadPreset(caseIds))
@@ -44,15 +45,16 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
   }
 
   // 실패하면 버튼 옆에 이유를 보이고 버튼을 다시 쓸 수 있게 한다(구형 태블릿에서 조용히 멈추던 문제, 2026-10-28)
-  const start = async () => {
-    const v = validateStudentCode(code)
+  // noRecord: 비기록 모드(설계 2026-11-02) — 익명 코드 없이 시작하고 기록·전송·AI 교관을 끈다
+  const start = async (noRecord = false) => {
+    const v = noRecord ? { ok: true as const, code: NO_RECORD_CODE } : validateStudentCode(code)
     if (!v.ok) return setError(v.reason)
     setError(null)
     setBusy(true)
     try {
       const task = tasks[taskIdx]!
       const m = lessonMode(phase, mode)
-      const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: lessonAttemptRole(phase), usagePhase: phase, vehicleEntryDirection: entryDir, task, difficultyMode: m }), task, m)
+      const err = await onStart(createDemoSession({ studentCode: v.code, sessionCode, attemptRole: lessonAttemptRole(phase), usagePhase: phase, vehicleEntryDirection: entryDir, task, difficultyMode: m }), task, m, noRecord)
       if (err) setError(err)
     } catch (e) {
       setError(`시작하지 못했습니다: ${(e as Error).message || String(e)} — 이 문구를 교사에게 알려 주세요.`)
@@ -63,7 +65,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
 
   return (
     <main className="screen start">
-      <h1>섀시 가상 실습장 — 제동력 측정 과제</h1>
+      <h1>섀시 가상 실습장 — 제동력·최소회전반경 측정 과제</h1>
       <p className="banner">시연용(demo) · 이 기기에 먼저 저장 · 전송은 교사 조작으로만{SUBMIT_IS_FAKE ? '(개발용 가짜 수신점)' : ''} · 연구 기록으로 쓰이지 않음 · 앱 {APP_VERSION}</p>
       <section className="card">
         <label>
@@ -115,7 +117,11 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
         </>
       )}
       {error && <p className="error" role="alert">{error}</p>}
-      <button className="primary" onClick={start} disabled={busy}>{busy ? '준비 중…' : '과제 수령하러 가기'}</button>
+      <button className="primary" onClick={() => start()} disabled={busy}>{busy ? '준비 중…' : '과제 수령하러 가기'}</button>
+      <section className="card norecord">
+        <button onClick={() => start(true)} disabled={busy}>기록 없이 하기</button>
+        <span className="small">익명 코드 없이 같은 과제를 합니다. 수행 기록을 이 기기에 저장하거나 보내지 않고, AI 교관도 쓰지 않습니다. 새로고침하면 처음부터 다시 합니다.</span>
+      </section>
       {teacherOpen ? (
         <TeacherPanel repo={repo} tasks={tasks} preset={preset} counts={counts} onPresetChange={applyPreset} onCountsChange={refreshCounts} onClose={() => setTeacherOpen(false)} />
       ) : (

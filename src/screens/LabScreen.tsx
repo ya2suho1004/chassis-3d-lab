@@ -37,8 +37,10 @@ function layoutFor(dir: 'north' | 'south' | null): SceneLayout {
 }
 const BASIS_LABEL: Record<string, string> = { measured: '실측', 'measured-partial': '부분 실측', sketch: '스케치 비례', assumption: '가정', teacher: '교사 답' }
 
-export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
+export function LabScreen({ repo, noRecord = false, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
   repo: Repository
+  /** 비기록 모드(설계 2026-11-02): repo는 메모리 저장소, AI 교관을 숨기고 "기록 안 됨"을 표시한다 */
+  noRecord?: boolean
   /** 시작 화면에서 고른 도움 방식(과제 수령 전 챗봇 규칙에도 쓴다) */
   mode: DifficultyMode
   session: SessionContext
@@ -244,7 +246,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
         {!talking && (
           <>
             <div className="g-status">
-              <div className="g-badge"><b>{session.anonymousStudentCode}</b><span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
+              <div className="g-badge">{noRecord ? <b className="g-norec">기록 안 됨</b> : <b>{session.anonymousStudentCode}</b>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
               <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}>🎥 {VIEW_LABEL[viewMode]}</button>
               <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}>{soundOn ? '🔊' : '🔇'}</button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
@@ -353,7 +355,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
                 <button onClick={() => setTtSide(null)}>✕ 닫기</button>
               </div>
             )}
-            {!practicing && !ttSide && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
+            {!practicing && !ttSide && !noRecord && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
 
             {!ttSide && <div className="g-actions">
               {run && ctx?.nextActions.map((a) => <button key={a.key} className={`g-act ${a.cls ?? ''}`} onClick={a.onClick}>{a.label}</button>)}
@@ -387,16 +389,18 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
         {run && (
           <aside className={`g-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>
             <button className="g-x" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>
-            <TaskScreen repo={repo} session={session} initialRun={run} embedded onRunChange={onRunChange} onContext={onContext}
+            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded onRunChange={onRunChange} onContext={onContext}
               proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
               onFinish={onFinish} />
           </aside>
         )}
-        <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
-          <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
-          <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
-            stepId={run?.nextStepId ?? null} taskId={run?.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : null} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
-        </aside>
+        {!noRecord && (
+          <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
+            <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
+            <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
+              stepId={run?.nextStepId ?? null} taskId={run?.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : null} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
+          </aside>
+        )}
 
         {npcOpen && (
           <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError}
@@ -413,7 +417,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   return (
     <main className="screen lab">
       <header className="topbar">
-        <div><b>섀시정비 실습실 (개발용 임시 배치)</b> · 코드 {session.anonymousStudentCode} · 도감 {codex.length}/{layout.equipment.length}</div>
+        <div><b>섀시정비 실습실 (개발용 임시 배치)</b> · {noRecord ? '기록 안 됨' : `코드 ${session.anonymousStudentCode}`} · 도감 {codex.length}/{layout.equipment.length}</div>
         <div className="small">
           <span className="warnchip">실제 배치 아님 · layoutConfirmed=false</span>
           {run && <button className="link" onClick={toggleDisplay}>{displayMode === 'threeD' ? '도식 모드로' : '3D 모드로'}</button>}
@@ -497,12 +501,12 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
           )}
 
           {run && (
-            <TaskScreen repo={repo} session={session} initialRun={run} embedded onRunChange={onRunChange}
+            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded onRunChange={onRunChange}
               proximity={displayMode === 'threeD' ? { nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id } : null}
               onFinish={onFinish} />
           )}
 
-          {!reviewOpen && (
+          {!reviewOpen && !noRecord && (
             <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
               stepId={run?.nextStepId ?? null} taskId={run?.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : null} difficultyMode={run?.difficultyMode ?? mode} />
           )}
