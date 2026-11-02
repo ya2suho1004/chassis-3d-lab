@@ -12,9 +12,10 @@ export const CHARACTER_CLIPS = ['Idle', 'Walk', 'Gesture', 'Crouch', 'Press', 'E
 const ONE_SHOT = new Set<string>(['Crouch', 'Press', 'Equip'])
 export type CharacterAction = (typeof CHARACTER_CLIPS)[number]
 
-/** 옷 색(재질 이름 Top·Bottom·Shoes). 실습복 사진을 받으면 여기 값만 바꾼다 */
+/** 옷 색(재질 이름 Top·Bottom·Shoes). 모델 상의는 한 색이라 실습복의 남색 판은 하의 색으로만 살린다 */
 export interface Outfit { top: string; bottom: string; shoes?: string }
-export const STUDENT_OUTFIT: Outfit = { top: '#2f5fb3', bottom: '#2b3a55', shoes: '#cfd3d6' }
+/** 학생: 친환경자동차과 실습복(주황 + 남색 판). 학교 홍보 포스터의 옷 부분에서 색만 뽑음(2026-11-02, docs/20 D34). 하의는 사진에 안 보여 남색 판 색으로 가정 */
+export const STUDENT_OUTFIT: Outfit = { top: '#ea4b2a', bottom: '#2b2d64', shoes: '#cfd3d6' }
 export const INSTRUCTOR_OUTFIT: Outfit = { top: '#24324a', bottom: '#1f2733', shoes: '#3b2a1e' }
 /** 보호구 착용 뒤 학생 신발(안전화 — 짙은 갈색) */
 export const SAFETY_SHOES = '#3b2a1e'

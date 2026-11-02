@@ -128,7 +128,7 @@ function Avatar({ pos, heading, moving, oneShot, ppe }: { pos: Pt; heading: Reac
     d = Math.atan2(Math.sin(d), Math.cos(d))
     g.rotation.y += d * (prefersReducedMotion ? 1 : 1 - Math.exp(-10 * Math.min(dt, 0.1)))
   })
-  const code = <Person suit="#2f5fb3" helmet="#ffd600" />
+  const code = <Person suit={STUDENT_OUTFIT.top} helmet="#ffd600" />
   return (
     <group position={[pos.x, 0, pos.z]}>
       <BlobShadow />
