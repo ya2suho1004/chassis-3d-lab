@@ -33,7 +33,7 @@
 1. **과제 데이터**: `src/data/tasks/task.min-turning-radius.case-lv1.json`·`-lv2.json`. `ApprovedTask.measurement`에 조향 필드(`turnDirection`, `leftAngleDeg`, `rightAngleDeg`, `wheelbaseM`, `kingpinOffsetM`, `sinTable`)와 `ruleset.radiusMaxM`를 선택 필드로 더한다. 제동력 필드는 그대로.
 2. **판정**: `src/domain/turningJudge.ts`(순수 함수) — 바깥쪽 바퀴 고르기, 표 sin, 절사, 12 m 비교, 판정 불가 사유. `grading.createResponseSheet`가 taskId로 계산기를 고른다(제동력 경로는 그대로).
 3. **엔진**: `RESPONSE_REQUIREMENTS`에 `anglesRead`·`radiusSubmitted` 추가, `engineOff` 완료 시 s-engine 충족. 제동력 전용 부수효과(motor·enter·off)는 그대로.
-4. **기록 1.2.0**: `taskId` enum [`braking-force`, `min-turning-radius`], `calculationAnswers.unit` enum [`%`, `m`]. 앱은 제동력도 1.2.0으로 쓴다(1.1.0과 필드 동일). 서버는 1.0.0·1.1.0·1.2.0을 받는다. Supabase Edge Function 재배포 필요.
+4. **기록 1.2.0**: `taskId` enum [`braking-force`, `min-turning-radius`], `calculationAnswers.unit` enum [`%`, `m`]. **제동력 기록은 1.1.0 그대로**(세션 스냅샷·서버 접수 회귀 방지), 최소회전반경 기록만 1.2.0. 서버는 1.0.0·1.1.0·1.2.0을 받는다. Supabase Edge Function 재배포 필요.
 5. **AI 교관 문맥**: `taskContext.generated.json`에 두 번째 과제를 넣는다(정답 값 비노출 검사 유지).
 6. **3D**: K3 모델의 `Wheel_FL`·`Wheel_FR`을 조향 단계에서 돌린다(안쪽 바퀴가 더 큼). 측정판 위에 각도 눈금판(CanvasTexture)과 바늘. 판독 단계에서 “📟 측정판 보기”로 좌·우 측정판을 가까이 본다. 과제 대상 장비 `min-turning-radius-01`을 interactive로.
 7. **화면**: 과제 패널에 제시값(L·r·회전 방향·sin 표)과 응답 칸(좌·우 각도, R, 판정). 시작·교사 화면의 과제 사례 목록에 두 사례 추가.
