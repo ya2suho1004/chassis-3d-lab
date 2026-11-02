@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { loadIntroPrefs, saveIntroPrefs } from '../app/intro'
 import { caseKey, ENTRY_LABEL, MODE_LABEL, PHASE_LABEL, savePreset, type TeacherPreset } from '../app/teacherPreset'
 import { processOutbox, type OutboxItemResult } from '../delivery/outbox'
-import { getSubmitEndpoint } from '../delivery/config'
+import { getSubmitEndpoint, SUBMIT_IS_FAKE } from '../delivery/config'
 import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
 import { toSummaryCsv } from '../records/csv'
@@ -146,6 +146,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
 
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>
+      <p className="small">기록은 이 기기에 먼저 저장되고, 서버 전송은 이 화면의 교사 조작으로만 합니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 전송 시험 중에는 합성 코드 D-01 같은 D-xx만 수신점이 받습니다. 익명 코드 형식 검사는 본인 확인이 아닙니다.</p>
       <div className="row">
         <button onClick={() => void downloadCsv()}>요약 CSV 내려받기</button>
         {endpoint ? (
