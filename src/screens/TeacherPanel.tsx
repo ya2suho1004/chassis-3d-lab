@@ -9,7 +9,7 @@ import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
 import { toSummaryCsv } from '../records/csv'
 import type { Repository } from '../records/repository'
-import { ServerAdmin } from './ServerAdmin'
+import { ServerAfter, ServerLive, useServerAdmin } from './ServerAdmin'
 import { LESSON_LABEL } from '../app/lesson'
 import { DEFAULT_PRACTICE_SPEC, fmtMm, loadPracticeSpec, savePracticeSpec } from '../app/practiceSpec'
 
@@ -26,6 +26,9 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   onClose: () => void
 }) {
   const [pin, setPin] = useState('')
+  // 수업 순서 탭(설계 2026-11-03): 수업 전 설정 · 수업 중 AI 점검 · 수업 후 기록. 서버 로그인은 탭을 옮겨도 유지
+  const [tab, setTab] = useState<'before' | 'during' | 'after'>('before')
+  const server = useServerAdmin()
   const [unlocked, setUnlocked] = useState(false)
   const [form, setForm] = useState<TeacherPreset>(preset ?? { caseId: caseKey(tasks[0]!), usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null, locked: true })
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
@@ -94,6 +97,13 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
     <section className="card teacherpanel">
       <h2>교사 화면</h2>
 
+      <div className="tp-tabs" role="tablist">
+        {([['before', '① 수업 전'], ['during', '② 수업 중'], ['after', '③ 수업 후']] as const).map(([k, label]) => (
+          <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{label}</button>
+        ))}
+      </div>
+      {tab === 'before' && (
+        <div role="tabpanel" aria-label="수업 전">
       <h3>수업 설정 (이 기기)</h3>
       <p className="small">수업 전에 한 번 정해 두면 시작 화면의 기본값이 됩니다. ‘학생이 바꾸지 못하게’를 켜면 학생은 익명 코드만 입력합니다.</p>
       <div className="field-group">
@@ -144,6 +154,16 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
       <label className="radio"><input type="checkbox" checked={introOff} onChange={(e) => toggleIntro(e.target.checked)} /> 앱을 켤 때 로고·셔터 장면을 보이지 않음</label>
       <p className="small">끄면 바로 시작 화면이 나옵니다. 다음에 앱을 열 때부터 적용됩니다.</p>
 
+        </div>
+      )}
+      {tab === 'during' && (
+        <div role="tabpanel" aria-label="수업 중">
+          <p className="small">학생이 AI 교관에게 묻는 질문과 답을 보고, 문제가 있으면 바로 AI를 끕니다. 서버 교사 계정으로 로그인해야 합니다.</p>
+          <ServerLive s={server} />
+        </div>
+      )}
+      {tab === 'after' && (
+        <div role="tabpanel" aria-label="수업 후">
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>
       <p className="small">기록은 이 기기에 먼저 저장되고, 서버 전송은 이 화면의 교사 조작으로만 합니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 전송 시험 중에는 합성 코드 D-01 같은 D-xx만 수신점이 받습니다. 익명 코드 형식 검사는 본인 확인이 아닙니다.</p>
@@ -165,7 +185,9 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         </ul>
       )}
       <p className="small">전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</p>
-      <ServerAdmin />
+          <ServerAfter s={server} />
+        </div>
+      )}
       <button className="link" onClick={onClose}>교사 화면 닫기</button>
     </section>
   )
