@@ -12,18 +12,19 @@ import type { ApprovedTask } from '../src/domain/types'
 import { loadGs, fakeUtilities } from './helpers/gs'
 
 describe('시연 스냅샷 목록', () => {
-  test('모든 스냅샷이 계약을 통과하고 ID가 유일하다(36 = 사례2×모드2×시점3×방향3)', () => {
+  test('모든 스냅샷이 계약을 통과하고 ID가 유일하다(72 = 과제2×사례2×모드2×시점3×방향3)', () => {
     const ajv = new Ajv({ allErrors: true, strict: false }); addFormats(ajv); ajv.addSchema(recordSchema as object)
     const v = ajv.compile(schema as object)
     for (const s of snapshots) expect(v(s), JSON.stringify(v.errors?.slice(0, 2))).toBe(true)
-    expect(snapshots).toHaveLength(36)
-    expect(new Set(snapshots.map((s) => s.sessionSnapshotId)).size).toBe(36)
+    expect(snapshots).toHaveLength(72)
+    expect(new Set(snapshots.map((s) => s.sessionSnapshotId)).size).toBe(72)
+    expect(snapshots.filter((s) => s.taskId === 'min-turning-radius')).toHaveLength(36)
     expect(snapshots.every((s) => s.configurationApproval.taskApproved === false && s.configurationApproval.rulesetApproved === true && s.runPurpose === 'demo')).toBe(true)
   })
-  test('수신점 허용 목록(DemoSnapshots.gs)은 앱 스냅샷 36개와 fixture 1개를 담는다', () => {
+  test('수신점 허용 목록(DemoSnapshots.gs)은 앱 스냅샷 72개와 fixture 1개를 담는다', () => {
     const gs = loadGs(['DemoSnapshots.gs'], { Utilities: fakeUtilities })
     const ids = Object.keys(gs.ALLOWED_SNAPSHOTS)
-    expect(ids).toHaveLength(37)
+    expect(ids).toHaveLength(73)
     for (const s of snapshots) expect(gs.ALLOWED_SNAPSHOTS[s.sessionSnapshotId].snapshot).toEqual(s)
   })
 })

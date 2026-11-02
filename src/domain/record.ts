@@ -38,13 +38,14 @@ export interface FinalizeOptions {
 }
 
 export interface RecordPayload {
-  schemaVersion: '1.1.0'
+  /** 제동력 1.1.0, 최소회전반경 1.2.0(taskId·계산 단위만 넓힌 계약) */
+  schemaVersion: '1.1.0' | '1.2.0'
   recordId: string
   anonymousStudentCode: string
   classConditionCode: string
   sessionCode: string
   sessionSnapshotId: string
-  taskId: 'braking-force'
+  taskId: 'braking-force' | 'min-turning-radius'
   difficultyMode: DifficultyMode
   attemptRole: SessionContext['attemptRole']
   retryOfRecordId: string | null
@@ -108,13 +109,13 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
   const durationSeconds = lastEvent ? Math.round(lastEvent.elapsedMs / 1000) : 0
 
   return {
-    schemaVersion: '1.1.0',
+    schemaVersion: run.task.taskId === 'min-turning-radius' ? '1.2.0' : '1.1.0',
     recordId: session.recordId,
     anonymousStudentCode: session.anonymousStudentCode,
     classConditionCode: session.classConditionCode,
     sessionCode: session.sessionCode,
     sessionSnapshotId: session.sessionSnapshotId,
-    taskId: 'braking-force',
+    taskId: run.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : 'braking-force',
     difficultyMode: run.difficultyMode,
     attemptRole: session.attemptRole,
     retryOfRecordId: session.retryOfRecordId,

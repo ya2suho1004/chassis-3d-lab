@@ -113,6 +113,9 @@ const RESPONSE_REQUIREMENTS: Record<string, string[]> = {
   axleWeightRead: ['axleWeight'],
   readingsSubmitted: ['left', 'right'],
   answersSubmitted: ['deviation', 'sum', 'vehicleCondition'],
+  // 최소회전반경 과제
+  anglesRead: ['leftAngle', 'rightAngle'],
+  radiusSubmitted: ['radius', 'vehicleCondition'],
 }
 
 function defaultDeps(): EngineDeps {
@@ -225,6 +228,8 @@ function attemptStep(run: TaskRun, step: TaskStep, actionId: string): AttemptRes
   let satisfiedSafety = run.satisfiedSafety
   if (step.stepId === 'ppe' && !satisfiedSafety.includes('s-ppe')) satisfiedSafety = [...satisfiedSafety, 's-ppe']
   if (step.stepId === 'enter' && !satisfiedSafety.includes('s-motor')) satisfiedSafety = [...satisfiedSafety, 's-motor']
+  // 최소회전반경: ‘시동 OFF 확인’ 단계가 조향 전 안전 조건(s-engine)을 채운다
+  if (step.stepId === 'engineOff' && !satisfiedSafety.includes('s-engine')) satisfiedSafety = [...satisfiedSafety, 's-engine']
   let motorOn = run.motorOn
   if (step.stepId === 'motor') motorOn = true
   if (step.stepId === 'off') motorOn = false

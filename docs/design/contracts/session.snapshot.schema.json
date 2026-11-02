@@ -17,7 +17,11 @@
       "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/classConditionCode"
     },
     "taskId": {
-      "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/taskId"
+      "enum": [
+        "braking-force",
+        "min-turning-radius"
+      ],
+      "description": "과제 식별자(2026-11-02 최소회전반경 추가). record 1.1.0은 braking-force, 1.2.0은 둘 다."
     },
     "difficultyMode": {
       "$ref": "urn:chassis-3d-lab:record:1.1.0#/properties/difficultyMode"

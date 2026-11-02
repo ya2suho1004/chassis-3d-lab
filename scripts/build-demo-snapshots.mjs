@@ -7,12 +7,12 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { SNAPSHOT_RULE_VERSION, canonical, idOf, mergeLedger } from './snapshotLib.mjs'
 const read = (p) => JSON.parse(readFileSync(new URL(p, import.meta.url), 'utf8'))
-const tasks = [read('../src/data/tasks/task.braking-force.case-lv1.json'), read('../src/data/tasks/task.braking-force.case-lv2.json')]
+const tasks = [read('../src/data/tasks/task.braking-force.case-lv1.json'), read('../src/data/tasks/task.braking-force.case-lv2.json'), read('../src/data/tasks/task.min-turning-radius.case-lv1.json'), read('../src/data/tasks/task.min-turning-radius.case-lv2.json')]
 const fixture = read('../docs/design/examples/submission.demo-request.json').payload
 const LEDGER_URL = new URL('../src/data/session/snapshot-ledger.json', import.meta.url)
 const TODAY = process.env.SNAPSHOT_DATE ?? new Date().toISOString().slice(0, 10)
 
-const COMMON = { schemaVersion: '1.0.0', sessionCode: 'DEMO-ONLY', classConditionCode: 'DEMO', taskId: 'braking-force', runPurpose: 'demo', displayMode: 'threeD' }
+const COMMON = { schemaVersion: '1.0.0', sessionCode: 'DEMO-ONLY', classConditionCode: 'DEMO', runPurpose: 'demo', displayMode: 'threeD' }
 const APPROVAL = { taskApproved: false, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false } // 과제 전체 pending(U1 보류), 규칙 승인(0A)
 const FEEDBACK_POLICY_VERSION = '1.1.0-design-approved-2026-10-26'
 const SESSION_VERSIONS = { layoutVersion: 'dev-provisional-2026-10-26', judgeEngineVersion: '0.1.0', sessionConfigVersion: '1.2.0-design-2026-10-26', researchProtocolVersion: 'unapproved', feedbackPolicyVersion: FEEDBACK_POLICY_VERSION }
@@ -24,13 +24,13 @@ for (const t of tasks) if (t.feedbackPolicy?.version !== FEEDBACK_POLICY_VERSION
 
 const current = new Map() // id → { snapshot, allowedStepIds }
 for (const t of tasks) for (const difficultyMode of ['guided', 'unguided']) for (const usagePhase of ['preview', 'review', 'other']) for (const vehicleEntryDirection of [null, 'north', 'south']) {
-  const body = { ...COMMON, difficultyMode, usagePhase, configurationApproval: APPROVAL, versions: { taskDefinitionVersion: t.taskDefinitionVersion, rulesetVersion: t.ruleset.rulesetVersion, measurementSetVersion: t.measurement.measurementSetVersion, ...SESSION_VERSIONS }, sessionConfiguration: { vehicleEntryDirection } }
+  const body = { ...COMMON, taskId: t.taskId, difficultyMode, usagePhase, configurationApproval: APPROVAL, versions: { taskDefinitionVersion: t.taskDefinitionVersion, rulesetVersion: t.ruleset.rulesetVersion, measurementSetVersion: t.measurement.measurementSetVersion, ...SESSION_VERSIONS }, sessionConfiguration: { vehicleEntryDirection } }
   const { schemaVersion, ...rest } = body
   const id = idOf(body)
   const snapshot = { schemaVersion, sessionSnapshotId: id, ...rest }
   if (current.has(id) && canonical(current.get(id).snapshot) !== canonical(snapshot)) throw new Error(`스냅샷 ID 충돌: ${id}`)
   const stepPrerequisites = {}; for (const st of t.steps) stepPrerequisites[st.stepId] = [...st.prerequisites]
-  current.set(id, { snapshot, allowedStepIds: [...t.steps.map((s) => s.stepId), ...OFF_SUBSTEPS.map((a) => `off:${a}`)], stepPrerequisites })
+  current.set(id, { snapshot, allowedStepIds: [...t.steps.map((s) => s.stepId), ...(t.taskId === 'braking-force' ? OFF_SUBSTEPS.map((a) => `off:${a}`) : [])], stepPrerequisites })
 }
 
 // 원장 병합(append-only, scripts/snapshotLib.mjs)

@@ -4,6 +4,9 @@ import { describe, expect, test } from 'vitest'
 import demo from '../docs/design/examples/submission.demo-request.json'
 import legacyRecord from '../docs/design/examples/legacy/1.0.0/record.demo-aborted.json'
 import lv1 from '../src/data/tasks/task.braking-force.case-lv1.json'
+import turn1 from '../src/data/tasks/task.min-turning-radius.case-lv1.json'
+import { submitResponse } from '../src/domain/taskEngine'
+import { inspectPerformance } from '../src/domain/npcInspection'
 import { createTaskRun, attempt } from '../src/domain/taskEngine'
 import { buildRecordPayload } from '../src/domain/record'
 import { createDemoSession } from '../src/app/session'
@@ -187,4 +190,28 @@ describe('Supabase submit — Apps Script 수신 계약과 같은 결과', () =>
     expect(b.ok).toBe(true); expect(a.receiptId).not.toBe(b.receiptId)
     expect(rows).toHaveLength(2)
   })
+  test('최소회전반경 완료 기록(1.2.0, 합성 코드 D-02)은 끝까지 수행·NPC 통과 뒤 접수된다', async () => {
+    const task = turn1 as unknown as ApprovedTask
+    const session = createDemoSession({ studentCode: 'D-02', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: null, task, difficultyMode: 'unguided' })
+    let run = createTaskRun(task, { difficultyMode: 'unguided', displayMode: 'threeD' })
+    const step = (s: string) => { run = attempt(run, { type: 'step', stepId: s }, aid()).run }
+    const ans = (i: string, v: string) => { run = submitResponse(run, i, v, aid()).run }
+    for (const s of ['ppe', 'engineOff', 'turntable', 'direction', 'steer']) step(s)
+    ans('leftAngle', '35'); ans('rightAngle', '30'); step('read'); step('return')
+    ans('radius', '4.8'); ans('radius', '5.5'); ans('vehicleCondition', 'pass'); step('record')
+    run = inspectPerformance(run).run
+    const payload = buildRecordPayload(run, session, { completedAtIso: new Date(run.startedAtMs + 60000).toISOString(), completionStatus: 'completed' })
+    expect(payload.schemaVersion).toBe('1.2.0')
+    expect(payload.taskId).toBe('min-turning-radius')
+    expect(payload.calculationAnswers[0]).toMatchObject({ itemId: 'radius', unit: 'm', computedReferenceValue: 5.5, firstInput: '4.8', firstCorrect: false, finalInput: '5.5', finalCorrect: true })
+    expect(payload.errorCount).toBe(1)
+    const { rows, post } = server()
+    expect(await post(reqOf(payload))).toMatchObject({ ok: true, recordId: payload.recordId, duplicate: false })
+    expect(rows).toHaveLength(1)
+    // 다른 과제의 세션 스냅샷으로는 접수되지 않는다
+    const brakeSession = createDemoSession({ studentCode: 'D-02', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: null, task: lv1 as ApprovedTask, difficultyMode: 'unguided' })
+    const wrong = { ...payload, recordId: '00000000-0000-4000-8000-0000000000aa', sessionSnapshotId: brakeSession.sessionSnapshotId }
+    expect(await post(reqOf(wrong))).toMatchObject({ ok: false })
+  })
 })
+

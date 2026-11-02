@@ -5,7 +5,7 @@
 // 허용 세션 문맥은 DemoSnapshots.gs(ALLOWED_SNAPSHOTS, 자동 생성)에 고정: 스냅샷 ID별 세션·조건·과제·모드·시점·목적·표시·승인·versions·코드 패턴(Codex 검토 B2).
 // 설정이 비거나 잘못되면 신규 접수를 닫는다(fail-closed, B4). 기존 정본 행은 저장 payload까지 다시 검증한다(B5). record 1.0.0·1.1.0을 버전별 스키마로 검증한다(B8).
 var PROTOCOL_VERSION = '1';
-var SUPPORTED_RECORD_VERSIONS = ['1.0.0', '1.1.0'];
+var SUPPORTED_RECORD_VERSIONS = ['1.0.0', '1.1.0', '1.2.0'];
 var REQUEST_MAX_BYTES = 48 * 1024;
 var CANONICAL_MAX_BYTES = 32 * 1024;
 var MAX_STEP_EVENTS = 200;

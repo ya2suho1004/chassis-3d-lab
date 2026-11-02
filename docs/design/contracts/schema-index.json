@@ -24,6 +24,11 @@
     "sessionSnapshot": {
       "schemaId": "urn:chassis-3d-lab:session-snapshot:1.0.0",
       "path": "session.snapshot.schema.json"
+    },
+    "recordTurning": {
+      "schemaId": "urn:chassis-3d-lab:record:1.2.0",
+      "path": "record.schema.v1.2.0.json",
+      "note": "최소회전반경 과제 기록(2026-11-02). 제동력은 current.record(1.1.0)"
     }
   },
   "legacy": {
