@@ -69,7 +69,7 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
         </div>
       </section>
       <section className="card">
-        <h2>연구 기록 payload (record.schema 1.1.0 형식 · 시연이므로 researchEligible=false)</h2>
+        <h2>연구 기록 payload (record.schema {payload.ok ? payload.value.schemaVersion : ''} 형식 · 시연이므로 researchEligible=false)</h2>
         {payload.ok ? <textarea readOnly value={json} rows={12} aria-label="payload" /> : <p className="error">{payload.error}</p>}
         <div className="row">
           <button onClick={() => dl(json, `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.json`, 'application/json')} disabled={!payload.ok}>JSON 내려받기</button>

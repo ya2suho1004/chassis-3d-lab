@@ -13,6 +13,7 @@ import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
+import { turningRigState } from '../scene/turningRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen, type TaskContext } from './TaskScreen'
 import { Joystick, type MoveInput } from '../scene/Joystick'
@@ -128,6 +129,8 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   const ppe = !!run?.completedSteps.includes('ppe')
   /** 계기 화면 가까이 보기(조작부 근처, 과제 중) */
   const [closeUp, setCloseUp] = useState(false)
+  /** 회전반경 측정판 가까이 보기(최소회전반경 과제, 차량 근처) — 좌·우 앞바퀴 */
+  const [ttSide, setTtSide] = useState<'left' | 'right' | null>(null)
   /** 디스크 런아웃 연습(기록 없음, 값은 연습용) — 디스크 작업대 근처에서 연다 */
   const discCtl = useRef<DiscControl>({ spin: 0, angle: 0, travel: 0.5 })
   const [discCase, setDiscCase] = useState(() => randomDiscCase())
@@ -204,6 +207,10 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
   /** 이름표: 게임 화면 기본은 '가까운 것만'(먼 작동 장비는 ◆), 기본 화면은 둘러보기 전체·과제 중 필요한 것만 */
   const labelMode: LabelMode = labelChoice ?? (uiStyle === 'game' ? 'near' : run ? 'focus' : 'all')
   const rig = useMemo(() => brakeRigState(run, session.vehicleEntryDirection), [run, session.vehicleEntryDirection])
+  const turning = useMemo(() => turningRigState(run), [run])
+  const turningNear = run?.task.taskId === 'min-turning-radius' && nearIds.includes('min-turning-radius-01')
+  /** 계기·측정판 가까이 보기 중이면 걷기·연습 버튼을 숨긴다 */
+  const viewing = closeUp || ttSide !== null
 
   const selectEquipment = (id: string | null) => {
     setSelectedId(id)
@@ -230,7 +237,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
-            avatarCue={avatarCue} ppe={ppe} discPractice={discPractice} backlashPractice={backlashPractice}
+            avatarCue={avatarCue} ppe={ppe} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
             onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
@@ -254,9 +261,10 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               )}
             </div>
 
-            {!practicing && <div className="g-quest">
+            {!practicing && !ttSide && <div className="g-quest">
               <div className="g-quest-title">{run ? task.title : '실습장 둘러보기'}</div>
               {!run && <p>장비를 눌러 도감을 채우고, 교관에게 가서 과제를 받으세요.</p>}
+              {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
               {run && ctx && <p className="g-progress">{ctx.doneCount}/{ctx.total} 단계 완료</p>}
@@ -293,9 +301,10 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               </button>
             )}
 
-            {!closeUp && !practicing && <Joystick input={joystickRef} />}
-            {run && !closeUp && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}>📟 계기 보기</button>}
-            {!practicing && !closeUp && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}>🔍 디스크 런아웃 연습</button>}
+            {!viewing && !practicing && <Joystick input={joystickRef} />}
+            {run && !viewing && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}>📟 계기 보기</button>}
+            {run && !viewing && !practicing && turningNear && <button className="g-gaugebtn" onClick={() => setTtSide('left')}>📟 측정판 보기</button>}
+            {!practicing && !viewing && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}>🔍 디스크 런아웃 연습</button>}
             {discOpen && (
               <div className="g-practice" role="dialog" aria-label="디스크 런아웃 연습">
                 <div className="g-practice-head"><b>디스크 런아웃 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { discCtl.current.spin = 0; setDiscOpen(false) }}>✕</button></div>
@@ -315,7 +324,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
                 {discMsg && <p className={discMsg.ok ? 'ok' : 'bad'}>{discMsg.text}</p>}
               </div>
             )}
-            {!practicing && !closeUp && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}>🔍 차동기어 백래시 연습</button>}
+            {!practicing && !viewing && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}>🔍 차동기어 백래시 연습</button>}
             {blOpen && (
               <div className="g-practice" role="dialog" aria-label="차동기어 백래시 연습">
                 <div className="g-practice-head"><b>차동기어 백래시 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { blSt.current.push = 0; setBlOpen(false) }}>✕</button></div>
@@ -337,12 +346,19 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
               </div>
             )}
             {closeUp && <button className="g-gaugebtn on" onClick={() => setCloseUp(false)}>✕ 계기 닫기</button>}
-            {!practicing && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
+            {ttSide && (
+              <div className="g-ttbar" role="group" aria-label="측정판 보기">
+                <button className={ttSide === 'left' ? 'on' : ''} aria-pressed={ttSide === 'left'} onClick={() => setTtSide('left')}>◀ 좌측 바퀴</button>
+                <button className={ttSide === 'right' ? 'on' : ''} aria-pressed={ttSide === 'right'} onClick={() => setTtSide('right')}>우측 바퀴 ▶</button>
+                <button onClick={() => setTtSide(null)}>✕ 닫기</button>
+              </div>
+            )}
+            {!practicing && !ttSide && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
 
-            <div className="g-actions">
+            {!ttSide && <div className="g-actions">
               {run && ctx?.nextActions.map((a) => <button key={a.key} className={`g-act ${a.cls ?? ''}`} onClick={a.onClick}>{a.label}</button>)}
               {run && <button className="g-act small" onClick={() => ctx?.hint()}>힌트</button>}
-            </div>
+            </div>}
           </>
         )}
 
@@ -383,7 +399,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
         </aside>
 
         {npcOpen && (
-          <NpcDialog near={nearNpc} taskTitle={task.title} running={!!run} error={npcError}
+          <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
             onGoToNpc={() => { setNpcOpen(false); setTalkOnArrive(true); goTo(npcSpot) }}
             onOpenTasks={() => { setNpcOpen(false); setDrawerOpen(true) }}

@@ -1,10 +1,13 @@
 // 세워 둔 실습 차량 블렌더 모델 2종 — 두 품질 모두 쓴다. 불러오는 중·치수가 다를 때는 코드 모델(StaticCar)을 쓴다.
 //  · 최소회전반경 측정 차량: 은색 준중형 세단(1세대 K3 비례, 앞바퀴 아래 빨간 회전반경 측정판 포함) — scripts/blender/build_k3.py → k3.glb
 //  · 캠버·캐스터 측정 차량: 흰색 소형 5도어 해치백(2세대 프라이드 비례) — scripts/blender/build_pride.py → pride.glb
-// 상표·로고·번호 글자는 없다. 압축은 meshopt(외부 다운로드 없음). 움직이는 부분이 없어 노드를 넘기지 않는다.
+// 상표·로고·번호 글자는 없다. 압축은 meshopt(외부 다운로드 없음). K3는 최소회전반경 과제에서 앞바퀴(Wheel_FL·FR)가 돌고 측정판 눈금 바늘이 따라 돈다.
 import { useGLTF } from '@react-three/drei'
-import { useLayoutEffect, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
+import { K3_FRONT_WHEEL, STRAIGHT, type TurningRig } from '../turningRig'
+import { TurntableDial } from './TurntableDial'
 
 export const K3_URL = `${import.meta.env.BASE_URL}assets/models/k3.glb`
 export const PRIDE_URL = `${import.meta.env.BASE_URL}assets/models/pride.glb`
@@ -34,10 +37,36 @@ function useCarScene(url: string): THREE.Object3D {
   return scene
 }
 
-/** 모델 앞은 −z. 배치에서 길이가 x 방향(w > d)이면 alongX로 90° 돌린다(코드 StaticCar와 같은 방향: 앞이 −x) */
-export function K3Model({ alongX = false }: { alongX?: boolean }) {
+const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+/**
+ * 모델 앞은 −z. 배치에서 길이가 x 방향(w > d)이면 alongX로 90° 돌린다(코드 StaticCar와 같은 방향: 앞이 −x).
+ * steer: 최소회전반경 과제의 앞바퀴 조향각(° 부호 있음, + = 왼쪽). 앞바퀴(Wheel_FL·FR)를 천천히 돌리고, 측정판 눈금 바늘이 따라 돈다.
+ */
+export function K3Model({ alongX = false, steer = STRAIGHT }: { alongX?: boolean; steer?: TurningRig }) {
   const scene = useCarScene(K3_URL)
-  return <group rotation-y={alongX ? Math.PI / 2 : 0}><primitive object={scene} /></group>
+  const wheels = useMemo(() => ({ left: scene.getObjectByName('Wheel_FL') ?? null, right: scene.getObjectByName('Wheel_FR') ?? null }), [scene])
+  const ptrL = useRef<THREE.Group>(null), ptrR = useRef<THREE.Group>(null)
+  const cur = useRef({ left: 0, right: 0 })
+  useFrame((_, dt) => {
+    const k = prefersReducedMotion ? 1 : 1 - Math.exp(-2.5 * Math.min(dt, 0.1)) // 핸들을 손으로 돌리는 빠르기
+    const goal = { left: (steer.leftDeg * Math.PI) / 180, right: (steer.rightDeg * Math.PI) / 180 }
+    for (const s of ['left', 'right'] as const) {
+      cur.current[s] += (goal[s] - cur.current[s]) * k
+      if (Math.abs(goal[s] - cur.current[s]) < 1e-4) cur.current[s] = goal[s]
+      const w = wheels[s]
+      if (w) w.rotation.y = cur.current[s]
+    }
+    if (ptrL.current) ptrL.current.rotation.y = cur.current.left
+    if (ptrR.current) ptrR.current.rotation.y = cur.current.right
+  })
+  return (
+    <group rotation-y={alongX ? Math.PI / 2 : 0}>
+      <primitive object={scene} />
+      <TurntableDial x={K3_FRONT_WHEEL.left.x} z={K3_FRONT_WHEEL.left.z} outward={-1} pointerRef={ptrL} />
+      <TurntableDial x={K3_FRONT_WHEEL.right.x} z={K3_FRONT_WHEEL.right.z} outward={1} pointerRef={ptrR} />
+    </group>
+  )
 }
 
 export function PrideModel({ alongX = false }: { alongX?: boolean }) {

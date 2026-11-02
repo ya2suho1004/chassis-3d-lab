@@ -13,6 +13,11 @@ const BY_STEP: Record<string, AvatarAction> = {
   motor: 'Press',
   read: 'Press',
   off: 'Press',
+  // 최소회전반경 과제(측정판 점검은 쪼그려 살펴보기, 시동·핸들 조작은 누르기 몸짓으로 대신)
+  engineOff: 'Press',
+  turntable: 'Crouch',
+  steer: 'Press',
+  return: 'Press',
 }
 
 export function actionForStep(stepId: string): AvatarAction | null {
