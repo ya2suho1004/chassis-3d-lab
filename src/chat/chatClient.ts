@@ -4,6 +4,8 @@ export type ChatMode = 'guided' | 'unguided' | 'timedAssessment'
 export interface ChatTurn { q: string; a: string }
 export interface ChatAsk {
   sessionCode: string; anonymousStudentCode: string; recordId: string | null; stepId: string | null
+  /** 과제(서버가 그 과제 기준·순서로 답한다). 없으면 제동력 */
+  taskId?: string | null
   difficultyMode: ChatMode; question: string; history: ChatTurn[]; turnIndex: number
 }
 export type ChatResult =
@@ -19,7 +21,9 @@ export function getChatEndpoint(): string | null {
 }
 
 export function buildChatBody(a: ChatAsk): string {
-  return JSON.stringify({ protocolVersion: 'chat-1', ...a, question: a.question.trim(), history: a.history.slice(-CHAT_HISTORY_TURNS) })
+  // taskId는 최소회전반경일 때만 보낸다(제동력 요청 모양은 그대로 — 이전 서버와도 맞음)
+  const { taskId, ...rest } = a
+  return JSON.stringify({ protocolVersion: 'chat-1', ...rest, ...(taskId ? { taskId } : {}), question: a.question.trim(), history: a.history.slice(-CHAT_HISTORY_TURNS) })
 }
 
 export function parseChatResponse(text: string): ChatResult {

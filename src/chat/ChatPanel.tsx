@@ -9,8 +9,8 @@ function Bold({ text }: { text: string }) {
   return <>{splitBold(text).map((p, i) => (p.bold ? <b key={i}>{p.text}</b> : <span key={i}>{p.text}</span>))}</>
 }
 
-export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId, difficultyMode, initialOpen = false }: {
-  sessionCode: string; anonymousStudentCode: string; recordId: string | null; stepId: string | null; difficultyMode: ChatMode
+export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId, taskId = null, difficultyMode, initialOpen = false }: {
+  sessionCode: string; anonymousStudentCode: string; recordId: string | null; stepId: string | null; taskId?: string | null; difficultyMode: ChatMode
   /** 게임 화면의 질문 서랍처럼 바로 입력 창을 보여 줄 때 */
   initialOpen?: boolean
 }) {
@@ -32,7 +32,7 @@ export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId,
     const idx = lines.length
     setLines((ls) => [...ls, { q: question, a: null, error: null, masked: [] }])
     setText('')
-    const res = await askChat(endpoint, { sessionCode, anonymousStudentCode, recordId, stepId, difficultyMode, question, history, turnIndex })
+    const res = await askChat(endpoint, { sessionCode, anonymousStudentCode, recordId, stepId, taskId, difficultyMode, question, history, turnIndex })
     if (res.ok) {
       setRemaining(res.remaining)
       setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, a: res.answer, masked: res.masked } : l)))

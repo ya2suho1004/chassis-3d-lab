@@ -58,5 +58,49 @@
       "stepId": "calc",
       "instruction": "편차·합을 산출하고 기준과 비교해 양호/불량을 판정하고 조치를 기재한다."
     }
-  ]
+  ],
+  "turning": {
+    "source": "src/data/tasks/task.min-turning-radius.case-lv1.json (사례 2와 기준·순서 동일)",
+    "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+    "ruleset": {
+      "radiusMaxM": 12,
+      "decisionPrecision": {
+        "digits": 1
+      }
+    },
+    "steps": [
+      {
+        "stepId": "ppe",
+        "instruction": "보호구 착용(안전화·보안경)을 확인한다."
+      },
+      {
+        "stepId": "engineOff",
+        "instruction": "시동이 꺼져 있는지 확인한다."
+      },
+      {
+        "stepId": "turntable",
+        "instruction": "앞바퀴가 회전반경 측정판 중앙에 있고 측정판 눈금이 0°인지 점검한다."
+      },
+      {
+        "stepId": "direction",
+        "instruction": "시험위원이 지정한 회전 방향을 확인한다."
+      },
+      {
+        "stepId": "steer",
+        "instruction": "조향 핸들을 지정 방향으로 끝까지 돌린다."
+      },
+      {
+        "stepId": "read",
+        "instruction": "좌·우 바퀴 측정판의 최대 조향각을 읽어 기록한다."
+      },
+      {
+        "stepId": "return",
+        "instruction": "바퀴를 직진 상태로 되돌린다."
+      },
+      {
+        "stepId": "record",
+        "instruction": "바깥쪽 바퀴 조향각으로 최소회전반경을 산출하고 기준값과 비교해 판정한다."
+      }
+    ]
+  }
 }

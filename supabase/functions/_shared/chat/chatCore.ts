@@ -24,6 +24,8 @@ export interface ChatRequest {
   anonymousStudentCode: string
   recordId: string | null
   stepId: string | null
+  /** 과제(없으면 제동력) — 2026-11-02 최소회전반경 추가. 선택 키 */
+  taskId?: 'braking-force' | 'min-turning-radius' | null
   difficultyMode: 'guided' | 'unguided' | 'timedAssessment'
   question: string
   history: ChatTurn[]
@@ -70,7 +72,7 @@ export function parseChatRequest(contentType: string | null, body: string): Chat
   let v: any
   try { v = JSON.parse(body) } catch { return null }
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null
-  const keys = ['protocolVersion', 'sessionCode', 'anonymousStudentCode', 'recordId', 'stepId', 'difficultyMode', 'question', 'history', 'turnIndex']
+  const keys = ['protocolVersion', 'sessionCode', 'anonymousStudentCode', 'recordId', 'stepId', 'taskId', 'difficultyMode', 'question', 'history', 'turnIndex']
   if (Object.keys(v).some((k) => !keys.includes(k))) return null
   if (v.protocolVersion !== CHAT_PROTOCOL) return null
   if (typeof v.sessionCode !== 'string' || !CODE_RE.test(v.sessionCode)) return null
@@ -78,6 +80,7 @@ export function parseChatRequest(contentType: string | null, body: string): Chat
   if (!(v.recordId === null || (typeof v.recordId === 'string' && v.recordId.length > 0 && v.recordId.length <= 64))) return null
   if (!(v.stepId === null || (typeof v.stepId === 'string' && STEP_RE.test(v.stepId)))) return null
   if (typeof v.difficultyMode !== 'string' || !MODES.has(v.difficultyMode)) return null
+  if (!(v.taskId === undefined || v.taskId === null || v.taskId === 'braking-force' || v.taskId === 'min-turning-radius')) return null
   if (typeof v.question !== 'string') return null
   const question = v.question.trim()
   if (question.length < 1 || question.length > QUESTION_MAX_CHARS) return null
@@ -106,7 +109,7 @@ export async function handleChat(contentType: string | null, body: string, deps:
   const q = maskPersonalInfo(req.question)
   const history = req.history.map((t) => ({ q: maskPersonalInfo(t.q).text, a: t.a }))
   const mode = req.difficultyMode === 'guided' ? 'guided' : 'unguided' // 평가(시간제한) 단계도 정답 금지 쪽으로 다룬다
-  const system = buildSystemPrompt(deps.context, { mode, stepId: req.stepId })
+  const system = buildSystemPrompt(deps.context, { mode, stepId: req.stepId, taskId: req.taskId ?? null })
   const m = deps.model()
   const call: ModelCall = { provider: m.provider, model: m.model, apiKey: m.apiKey, system, history, question: q.text, maxOutputTokens: MAX_OUTPUT_TOKENS }
 

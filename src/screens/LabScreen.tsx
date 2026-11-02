@@ -379,7 +379,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
         <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
           <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
           <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
-            stepId={run?.nextStepId ?? null} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
+            stepId={run?.nextStepId ?? null} taskId={run?.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : null} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
         </aside>
 
         {npcOpen && (
@@ -488,7 +488,7 @@ export function LabScreen({ repo, session, task, mode, run, onReceiveTask, onRun
 
           {!reviewOpen && (
             <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
-              stepId={run?.nextStepId ?? null} difficultyMode={run?.difficultyMode ?? mode} />
+              stepId={run?.nextStepId ?? null} taskId={run?.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : null} difficultyMode={run?.difficultyMode ?? mode} />
           )}
         </section>
       </div>
