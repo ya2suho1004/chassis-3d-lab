@@ -10,6 +10,7 @@ import { inspectPerformance, type InspectionIssue } from '../domain/npcInspectio
 import type { FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
 import type { PanelReadout } from '../scene/panelReadout'
+import { TURNING_TASK_ID } from '../domain/grading'
 
 const newId = () => newUuid()
 
@@ -32,7 +33,8 @@ export interface TaskContext {
   panel: PanelReadout
 }
 
-const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정' }
+const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정', leftAngle: '좌측 바퀴 조향각', rightAngle: '우측 바퀴 조향각', radius: '최소회전반경(m)' }
+const DIR_LABEL = { left: '좌회전', right: '우회전' } as const
 const ISSUE_LABEL: Record<string, string> = { STEP_NOT_COMPLETED: '단계 미완료', UNANSWERED: '미응답', FINAL_INCORRECT: '최종 답 오답', NOT_EVALUABLE: '채점 불가', SAFETY_NOT_SATISFIED: '안전 조건 미충족' }
 
 const reduceMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
@@ -130,6 +132,9 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
 
   const task = run.task
   const m = task.measurement
+  /** 최소회전반경 과제(설계 2026-11-02) — 오른쪽 기록표·계기·위험 버튼이 제동력과 다르다 */
+  const isTurning = task.taskId === TURNING_TASK_ID
+  const dirLabel = m.turnDirection ? DIR_LABEL[m.turnDirection] : '-'
   const done = (id: string) => run.completedSteps.includes(id)
   const guidance = guidanceFor(run)
   const showMarks = answerFeedbackAllowed(run)
@@ -182,7 +187,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
     const raw = inputs[itemId] ?? ''
     const res = submitResponse(run, itemId, raw, newId())
     if (res.outcome === 'ignored') return setShown({ kind: 'guidance', title: '값을 입력하세요', text: null, plain: `${ITEM_LABEL[itemId]} 칸이 비어 있습니다.` })
-    if (res.outcome === 'invalid') return show(res.run, { kind: 'explanatory', title: '입력 형식 오류', text: null, plain: res.reasonCode === 'FORMAT_INTEGER_REQUIRED' ? '정수만 입력합니다 (예: 240).' : '숫자만 입력합니다 (예: 6.6).' }, null)
+    if (res.outcome === 'invalid') return show(res.run, { kind: 'explanatory', title: '입력 형식 오류', text: null, plain: res.reasonCode === 'FORMAT_INTEGER_REQUIRED' ? (isTurning ? '정수만 입력합니다 (예: 30).' : '정수만 입력합니다 (예: 240).') : '숫자만 입력합니다 (예: 6.6).' }, null)
     setGraded((g) => ({ ...g, [itemId]: res.grading?.correct ?? null }))
     // 무안내 모드: 필수 응답 6개의 최초 답이 모두 저장되기 전에는 정오를 알려 주지 않는다(feedbackPolicy, 제안 상태)
     if (!answerFeedbackAllowed(res.run)) {
@@ -263,7 +268,9 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
       </header>
 
       <section className="npc card">
-        <b>NPC 교관:</b> 오늘은 뒤축 제동력을 측정해 편차와 합을 계산하고 차량 상태를 판정합니다. 작업지시서: 후륜, 단위 {m.unit}.
+        {isTurning
+          ? <><b>NPC 교관:</b> 오늘은 최소회전반경을 측정해 산출하고 차량 상태를 판정합니다. 작업지시서: {dirLabel}, 축거 L {m.wheelbaseM} m, r {m.kingpinOffsetM} m.</>
+          : <><b>NPC 교관:</b> 오늘은 뒤축 제동력을 측정해 편차와 합을 계산하고 차량 상태를 판정합니다. 작업지시서: 후륜, 단위 {m.unit}.</>}
         {guidance && <div className="guidance">다음 할 일 → <b>{guidance.text}</b></div>}
         {shown && (
           <div className={`feedback ${shown.kind}`} role="alert">
@@ -296,12 +303,46 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
           </ol>
           <div className="row">
             <button onClick={hint}>힌트 요청</button>
-            <button className="danger" onClick={() => hazard('accelerate', '가속 페달 밟기')}>가속 페달 밟기</button>
-            <button className="danger" onClick={() => hazard('exitVehicle', '차량 빼기')}>차량 빼기</button>
+            {!isTurning && <button className="danger" onClick={() => hazard('accelerate', '가속 페달 밟기')}>가속 페달 밟기</button>}
+            {!isTurning && <button className="danger" onClick={() => hazard('exitVehicle', '차량 빼기')}>차량 빼기</button>}
           </div>
-          <p className="small">빨간 버튼은 잘못된 조작을 시험해 보는 용도입니다(실제 실습장에서는 하지 마세요).</p>
+          {!isTurning && <p className="small">빨간 버튼은 잘못된 조작을 시험해 보는 용도입니다(실제 실습장에서는 하지 마세요).</p>}
         </section>
 
+{isTurning ? (
+        <section className="card">
+          <h2>회전반경 측정판 (숫자식)</h2>
+          <div className="gauge">
+            <div><span>좌측 바퀴</span><b>{done('steer') && !done('return') ? `${m.leftAngleDeg}°` : '0°'}</b></div>
+            <div><span>우측 바퀴</span><b>{done('steer') && !done('return') ? `${m.rightAngleDeg}°` : '0°'}</b></div>
+          </div>
+          <h3>판독 입력 (정수, °)</h3>
+          {(['leftAngle', 'rightAngle'] as const).map((id) => (
+            <div className="field" key={id}>
+              <label>{ITEM_LABEL[id]}</label>
+              <input inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={!done('steer')} aria-label={ITEM_LABEL[id]} />
+              <button onClick={() => submit(id)} disabled={!done('steer')}>입력</button>
+              <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
+            </div>
+          ))}
+
+          <h3>시험 결과 기록표 (섀시 5 — 최소회전반경)</h3>
+          <table className="sheet">
+            <tbody>
+              <tr><td>회전 방향</td><td colSpan={3}><b>{dirLabel}</b> <span className="small">(시험위원 지정)</span></td></tr>
+              <tr><td>제시값</td><td colSpan={3}>축거 L = {m.wheelbaseM} m, r = {m.kingpinOffsetM} m</td></tr>
+              <tr><td>최소회전반경 (m)</td><td><input inputMode="decimal" value={inputs.radius ?? ''} onChange={(e) => setInputs({ ...inputs, radius: e.target.value })} disabled={!done('return')} aria-label="최소회전반경" /></td><td>{task.ruleset.radiusMaxM} m 이하</td><td><button onClick={() => submit('radius')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('radius')}`}>{mark('radius')}</span></td></tr>
+              <tr><td>판정</td><td>
+                <label className="radio"><input type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
+                <label className="radio"><input type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
+              </td><td>기준 이하이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
+              <tr><td>산출 근거</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="예: L ÷ sin α + r" aria-label="산출 근거" /> <span className="small">(비채점 설명 칸 — 점수·기록 없음)</span></td></tr>
+            </tbody>
+          </table>
+          <p className="small">산출식: R = L ÷ sin α + r (α = 회전할 때 바깥쪽 앞바퀴의 최대 조향각). 소수 첫째 자리까지 적고 둘째 자리는 버립니다.</p>
+          {m.sinTable && <p className="small sintable">{Object.entries(m.sinTable).map(([a, v]) => `sin ${a}° = ${v}`).join(' · ')}</p>}
+        </section>
+        ) : (
         <section className="card">
           <h2>조작부 계기 화면 (숫자식)</h2>
           <div className="gauge">
@@ -335,6 +376,7 @@ export function TaskScreen({ repo, session, initialRun, onFinish, embedded = fal
           </table>
           <p className="small">산출식: 편차 = (큰 값 − 작은 값) ÷ 축중 × 100, 합 = (좌 + 우) ÷ 축중 × 100. 소수 첫째 자리까지 적고 둘째 자리는 버립니다.</p>
         </section>
+        )}
       </div>
 
       <section className="card">

@@ -2,6 +2,8 @@
 // 2단계 전반부: 저장·전송 없음. 모든 수행은 runPurpose=demo, researchUseApproved=false.
 import lv1 from '../data/tasks/task.braking-force.case-lv1.json'
 import lv2 from '../data/tasks/task.braking-force.case-lv2.json'
+import turn1 from '../data/tasks/task.min-turning-radius.case-lv1.json'
+import turn2 from '../data/tasks/task.min-turning-radius.case-lv2.json'
 import snapshots from '../data/session/demo-snapshots.json'
 import type { SessionContext } from '../domain/record'
 import type { DifficultyMode, TaskRun } from '../domain/taskEngine'
@@ -20,7 +22,7 @@ export function validateStudentCode(raw: string): { ok: true; code: string } | {
 }
 
 export function listTasks(): ApprovedTask[] {
-  return [lv1 as ApprovedTask, lv2 as ApprovedTask]
+  return [lv1 as ApprovedTask, lv2 as ApprovedTask, turn1 as unknown as ApprovedTask, turn2 as unknown as ApprovedTask]
 }
 
 /**

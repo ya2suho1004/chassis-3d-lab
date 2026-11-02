@@ -46,9 +46,10 @@ describe('세션 — 안내와 피드백', () => {
     expect(feedbackFor(task, 'no-such-key')).toBeNull()
   })
 
-  test('과제 목록은 사례 2개를 주고, 규칙은 교사 승인·과제 전체는 pending(동작 매핑 미완료)이다', () => {
+  test('과제 목록은 제동력 사례 2개 + 최소회전반경 사례 2개를 주고, 규칙은 교사 승인·과제 전체는 pending이다', () => {
     const list = listTasks()
-    expect(list.map((t) => t.measurement.caseId)).toEqual(['case-rear-ok-240-200-600', 'case-rear-deviation-250-190-600'])
+    expect(list.map((t) => t.measurement.caseId)).toEqual(['case-rear-ok-240-200-600', 'case-rear-deviation-250-190-600', 'case-left-35-30-2.7', 'case-right-32-36-2.7'])
+    expect(list.map((t) => t.taskId)).toEqual(['braking-force', 'braking-force', 'min-turning-radius', 'min-turning-radius'])
     expect(list.every((t) => t.ruleset.approvalStatus === 'approved')).toBe(true)
     expect(list.every((t) => t.approvalStatus === 'pending')).toBe(true)
   })
