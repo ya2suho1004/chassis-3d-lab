@@ -3,8 +3,11 @@
 // 화면 PIN은 시연용이며 보안 통제가 아니다(설계 03 §7).
 import type { UsagePhase } from '../domain/record'
 import type { DifficultyMode } from '../domain/taskEngine'
+import { DEFAULT_SESSION_CODE, applySessionRules, selectableSession } from './sessions'
 
 export interface TeacherPreset {
+  /** 오늘 수업 세션(설계 2026-11-03-class-sessions). 예전 저장값에 없으면 시연 세션 */
+  sessionCode: string
   caseId: string
   usagePhase: UsagePhase
   difficultyMode: DifficultyMode
@@ -31,7 +34,9 @@ export function parsePreset(raw: string | null, knownCaseIds: string[]): Teacher
   if (!MODES.includes(o.difficultyMode as DifficultyMode)) return null
   if (!(o.vehicleEntryDirection === null || o.vehicleEntryDirection === 'north' || o.vehicleEntryDirection === 'south')) return null
   if (typeof o.locked !== 'boolean') return null
-  return { caseId: o.caseId, usagePhase: o.usagePhase as UsagePhase, difficultyMode: o.difficultyMode as DifficultyMode, vehicleEntryDirection: o.vehicleEntryDirection, locked: o.locked }
+  const sessionCode = o.sessionCode === undefined ? DEFAULT_SESSION_CODE : o.sessionCode
+  if (typeof sessionCode !== 'string' || !selectableSession(sessionCode)) return null
+  return applySessionRules(sessionCode, { sessionCode, caseId: o.caseId, usagePhase: o.usagePhase as UsagePhase, difficultyMode: o.difficultyMode as DifficultyMode, vehicleEntryDirection: o.vehicleEntryDirection as TeacherPreset['vehicleEntryDirection'], locked: o.locked })
 }
 
 export function loadPreset(knownCaseIds: string[]): TeacherPreset | null {

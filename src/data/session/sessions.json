@@ -1,0 +1,12 @@
+{
+  "_comment": "수업 세션 목록(설계 docs/superpowers/specs/2026-11-03-class-sessions-design.md). 앱(교사 세션 고르기)과 스냅샷 생성기(scripts/build-demo-snapshots.mjs)가 같이 읽는다. usagePhase·difficultyMode가 null이면 그 세션 안에서 고를 수 있다. research 세션은 pending=true인 동안 고를 수 없고 스냅샷도 만들지 않는다(IRB 승인 뒤 열기 — 절차는 설계 문서).",
+  "sessions": [
+    { "code": "DEMO-ONLY", "condition": "DEMO", "kind": "demo", "label": "시연", "usagePhase": null, "difficultyMode": null, "pending": false },
+    { "code": "REH-L12", "condition": "REH", "kind": "rehearsal", "label": "리허설 · 1~2차시 연습(안내 있음)", "usagePhase": "preview", "difficultyMode": "guided", "pending": false },
+    { "code": "REH-L5", "condition": "REH", "kind": "rehearsal", "label": "리허설 · 5차시 정리(안내 없음)", "usagePhase": "review", "difficultyMode": "unguided", "pending": false },
+    { "code": "REH-USAB", "condition": "REH-USAB", "kind": "rehearsal", "label": "리허설 · 사용성 평가", "usagePhase": "other", "difficultyMode": null, "pending": false },
+    { "code": "EXP-L12", "condition": "EXP", "kind": "research", "label": "연구 · 실험 학급 1~2차시(안내 있음)", "usagePhase": "preview", "difficultyMode": "guided", "pending": true },
+    { "code": "EXP-L5", "condition": "EXP", "kind": "research", "label": "연구 · 실험 학급 5차시(안내 없음)", "usagePhase": "review", "difficultyMode": "unguided", "pending": true },
+    { "code": "USAB", "condition": "USAB", "kind": "research", "label": "연구 · 사용성 평가", "usagePhase": "other", "difficultyMode": null, "pending": true }
+  ]
+}

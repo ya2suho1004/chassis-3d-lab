@@ -11,7 +11,8 @@ describe('교사 설정(기기별)', () => {
   })
 
   test('올바른 설정은 그대로 읽는다', () => {
-    expect(parsePreset(JSON.stringify(good), known)).toEqual(good)
+    // 세션 칸이 없던 예전 저장값은 시연 세션으로 읽는다(설계 2026-11-03-class-sessions)
+    expect(parsePreset(JSON.stringify(good), known)).toEqual({ ...good, sessionCode: 'DEMO-ONLY' })
     expect(parsePreset(JSON.stringify({ ...good, vehicleEntryDirection: null, locked: false }), known)?.vehicleEntryDirection).toBeNull()
   })
 
@@ -27,6 +28,6 @@ describe('교사 설정(기기별)', () => {
 
   test('추가 칸(예: 이름)은 결과에 옮기지 않는다', () => {
     const r = parsePreset(JSON.stringify({ ...good, teacherName: '홍길동' }), known)
-    expect(r && Object.keys(r).sort()).toEqual(['caseId', 'difficultyMode', 'locked', 'usagePhase', 'vehicleEntryDirection'])
+    expect(r && Object.keys(r).sort()).toEqual(['caseId', 'difficultyMode', 'locked', 'sessionCode', 'usagePhase', 'vehicleEntryDirection'])
   })
 })

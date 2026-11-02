@@ -11,6 +11,7 @@ import { toSummaryCsv } from '../records/csv'
 import type { Repository } from '../records/repository'
 import { ServerAfter, ServerLive, useServerAdmin } from './ServerAdmin'
 import { LESSON_LABEL } from '../app/lesson'
+import { DEFAULT_SESSION_CODE, SESSIONS, applySessionRules, sessionDef } from '../app/sessions'
 import { DEFAULT_PRACTICE_SPEC, fmtMm, loadPracticeSpec, savePracticeSpec } from '../app/practiceSpec'
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
@@ -30,7 +31,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   const [tab, setTab] = useState<'before' | 'during' | 'after'>('before')
   const server = useServerAdmin()
   const [unlocked, setUnlocked] = useState(false)
-  const [form, setForm] = useState<TeacherPreset>(preset ?? { caseId: caseKey(tasks[0]!), usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null, locked: true })
+  const [form, setForm] = useState<TeacherPreset>(preset ?? { sessionCode: DEFAULT_SESSION_CODE, caseId: caseKey(tasks[0]!), usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null, locked: true })
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [sendLog, setSendLog] = useState<OutboxItemResult[] | null>(null)
@@ -107,6 +108,14 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
       <h3>수업 설정 (이 기기)</h3>
       <p className="small">수업 전에 한 번 정해 두면 시작 화면의 기본값이 됩니다. ‘학생이 바꾸지 못하게’를 켜면 학생은 익명 코드만 입력합니다.</p>
       <div className="field-group">
+        <span className="small">오늘 세션 — 학생 기록과 AI 교관 질문이 이 세션으로 갑니다</span>
+        {SESSIONS.map((s) => (
+          <label key={s.code} className="radio"><input type="radio" name="t-session" disabled={s.pending} checked={form.sessionCode === s.code}
+            onChange={() => setForm(applySessionRules(s.code, { ...form, sessionCode: s.code }))} /> <b>{s.code}</b> {s.label}{s.pending ? ' — IRB 승인 후 열림' : ''}</label>
+        ))}
+        {sessionDef(form.sessionCode)?.kind === 'rehearsal' && <span className="small">리허설 세션은 가상 코드(D-01~D-99)만 서버가 받습니다. 연구 기록이 아닙니다.</span>}
+      </div>
+      <div className="field-group">
         <span className="small">과제 사례</span>
         {tasks.map((t) => (
           <label key={t.measurement.caseId} className="radio"><input type="radio" name="t-case" checked={form.caseId === caseKey(t)} onChange={() => setForm({ ...form, caseId: caseKey(t) })} /> {t.title}</label>
@@ -115,13 +124,13 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
       <div className="field-group">
         <span className="small">차시</span>
         {(['preview', 'review', 'other'] as UsagePhase[]).map((p) => (
-          <label key={p} className="radio"><input type="radio" name="t-phase" checked={form.usagePhase === p} onChange={() => setForm({ ...form, usagePhase: p, difficultyMode: p === 'review' ? 'unguided' : form.difficultyMode })} /> {LESSON_LABEL[p]}</label>
+          <label key={p} className="radio"><input type="radio" name="t-phase" checked={form.usagePhase === p} disabled={!!sessionDef(form.sessionCode)?.usagePhase} onChange={() => setForm({ ...form, usagePhase: p, difficultyMode: p === 'review' ? 'unguided' : form.difficultyMode })} /> {LESSON_LABEL[p]}</label>
         ))}
       </div>
       <div className="field-group">
         <span className="small">도움 방식</span>
         {(['guided', 'unguided'] as const).map((m) => (
-          <label key={m} className="radio"><input type="radio" name="t-mode" disabled={form.usagePhase === 'review'} checked={form.difficultyMode === m} onChange={() => setForm({ ...form, difficultyMode: m })} /> {MODE_LABEL[m]}</label>
+          <label key={m} className="radio"><input type="radio" name="t-mode" disabled={form.usagePhase === 'review' || !!sessionDef(form.sessionCode)?.difficultyMode} checked={form.difficultyMode === m} onChange={() => setForm({ ...form, difficultyMode: m })} /> {MODE_LABEL[m]}</label>
         ))}
         {form.usagePhase === 'review' && <span className="small">5차시 정리는 안내 없음으로 고정됩니다.</span>}
       </div>

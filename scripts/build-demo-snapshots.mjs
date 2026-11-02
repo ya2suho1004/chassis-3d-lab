@@ -12,7 +12,9 @@ const fixture = read('../docs/design/examples/submission.demo-request.json').pay
 const LEDGER_URL = new URL('../src/data/session/snapshot-ledger.json', import.meta.url)
 const TODAY = process.env.SNAPSHOT_DATE ?? new Date().toISOString().slice(0, 10)
 
-const COMMON = { schemaVersion: '1.0.0', sessionCode: 'DEMO-ONLY', classConditionCode: 'DEMO', runPurpose: 'demo', displayMode: 'threeD' }
+// 세션 목록(src/data/session/sessions.json): 시연·리허설만 스냅샷을 만든다. 연구 세션(pending)은 IRB 승인 뒤 열 때 만든다(설계 2026-11-03-class-sessions).
+const SESSIONS = read('../src/data/session/sessions.json').sessions.filter((s) => !s.pending && (s.kind === 'demo' || s.kind === 'rehearsal'))
+const COMMON = { schemaVersion: '1.0.0', runPurpose: 'demo', displayMode: 'threeD' }
 const APPROVAL = { taskApproved: false, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false } // 과제 전체 pending(U1 보류), 규칙 승인(0A)
 const FEEDBACK_POLICY_VERSION = '1.1.0-design-approved-2026-10-26'
 const SESSION_VERSIONS = { layoutVersion: 'dev-provisional-2026-10-26', judgeEngineVersion: '0.1.0', sessionConfigVersion: '1.2.0-design-2026-10-26', researchProtocolVersion: 'unapproved', feedbackPolicyVersion: FEEDBACK_POLICY_VERSION }
@@ -23,8 +25,8 @@ const OFF_SUBSTEPS = ['motorOff', 'liftUp', 'exitVehicle']
 for (const t of tasks) if (t.feedbackPolicy?.version !== FEEDBACK_POLICY_VERSION) throw new Error(`feedbackPolicy.version 불일치: ${t.taskDefinitionVersion} has ${t.feedbackPolicy?.version}, generator expects ${FEEDBACK_POLICY_VERSION}`)
 
 const current = new Map() // id → { snapshot, allowedStepIds }
-for (const t of tasks) for (const difficultyMode of ['guided', 'unguided']) for (const usagePhase of ['preview', 'review', 'other']) for (const vehicleEntryDirection of [null, 'north', 'south']) {
-  const body = { ...COMMON, taskId: t.taskId, difficultyMode, usagePhase, configurationApproval: APPROVAL, versions: { taskDefinitionVersion: t.taskDefinitionVersion, rulesetVersion: t.ruleset.rulesetVersion, measurementSetVersion: t.measurement.measurementSetVersion, ...SESSION_VERSIONS }, sessionConfiguration: { vehicleEntryDirection } }
+for (const s of SESSIONS) for (const t of tasks) for (const difficultyMode of (s.difficultyMode ? [s.difficultyMode] : ['guided', 'unguided'])) for (const usagePhase of (s.usagePhase ? [s.usagePhase] : ['preview', 'review', 'other'])) for (const vehicleEntryDirection of [null, 'north', 'south']) {
+  const body = { ...COMMON, sessionCode: s.code, classConditionCode: s.condition, taskId: t.taskId, difficultyMode, usagePhase, configurationApproval: APPROVAL, versions: { taskDefinitionVersion: t.taskDefinitionVersion, rulesetVersion: t.ruleset.rulesetVersion, measurementSetVersion: t.measurement.measurementSetVersion, ...SESSION_VERSIONS }, sessionConfiguration: { vehicleEntryDirection } }
   const { schemaVersion, ...rest } = body
   const id = idOf(body)
   const snapshot = { schemaVersion, sessionSnapshotId: id, ...rest }
