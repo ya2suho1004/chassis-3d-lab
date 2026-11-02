@@ -2,7 +2,10 @@
 // 원칙(docs/design/docs/04 §5~6): 제출된 응답만 기록한다. 미입력은 null이며 0이나 오답으로 바꾸지 않는다.
 // 최초 답은 이후 정정으로 덮어쓰지 않는다. judgmentCorrect는 판정 항목의 최초 답이 모두 정답일 때만 true.
 import { applyPrecision, calculateVehicleVerdict, type DecisionPrecision, type VehicleVerdictResult } from './judge'
+import { calculateTurningVerdict, type TurningVerdictResult } from './turningJudge'
 import type { ApprovedTask, RequiredResponseItem, ResponseKind } from './types'
+
+export const TURNING_TASK_ID = 'min-turning-radius'
 
 export type Verdict = 'pass' | 'fail'
 
@@ -26,7 +29,8 @@ export interface ResponseSheet {
   taskId: string
   /** 승인 정밀도 정책(계산 항목의 학생 값 정리에 사용) */
   precision: DecisionPrecision | null
-  vehicle: VehicleVerdictResult
+  /** 과제별 차량 판정 계산 결과(제동력: 편차·합, 최소회전반경: 바깥쪽 바퀴·R) */
+  vehicle: VehicleVerdictResult | TurningVerdictResult
   vehicleVerdict: Verdict | null
   items: ResponseItemState[]
 }
@@ -41,8 +45,14 @@ export interface SubmitResult {
   reasonCode: SubmitReason | null
 }
 
-function referenceFor(item: RequiredResponseItem, task: ApprovedTask, vehicle: VehicleVerdictResult): number | null {
+function referenceFor(item: RequiredResponseItem, task: ApprovedTask, vehicle: VehicleVerdictResult | TurningVerdictResult): number | null {
   const m = task.measurement
+  if ('radiusM' in vehicle) {
+    if (item.itemId === 'leftAngle') return m.leftAngleDeg ?? null
+    if (item.itemId === 'rightAngle') return m.rightAngleDeg ?? null
+    if (item.itemId === 'radius') return vehicle.radiusM
+    return null
+  }
   if (item.kind === 'measurement') {
     if (item.itemId === 'left') return m.left
     if (item.itemId === 'right') return m.right
@@ -59,10 +69,15 @@ function referenceFor(item: RequiredResponseItem, task: ApprovedTask, vehicle: V
 
 export function createResponseSheet(task: ApprovedTask): ResponseSheet {
   const m = task.measurement
-  const vehicle = calculateVehicleVerdict(
-    { left: m.left, right: m.right, axleWeight: m.axleWeight, axlePosition: m.axlePosition as 'front' | 'rear' },
-    task.ruleset,
-  )
+  const vehicle = task.taskId === TURNING_TASK_ID
+    ? calculateTurningVerdict(
+      { turnDirection: m.turnDirection ?? null, leftAngleDeg: m.leftAngleDeg ?? null, rightAngleDeg: m.rightAngleDeg ?? null, wheelbaseM: m.wheelbaseM ?? null, kingpinOffsetM: m.kingpinOffsetM ?? null, sinTable: m.sinTable ?? null },
+      { radiusMaxM: task.ruleset.radiusMaxM ?? null, decisionPrecision: task.ruleset.decisionPrecision },
+    )
+    : calculateVehicleVerdict(
+      { left: m.left, right: m.right, axleWeight: m.axleWeight, axlePosition: m.axlePosition as 'front' | 'rear' },
+      task.ruleset,
+    )
   return {
     taskId: task.taskId,
     precision: task.ruleset.decisionPrecision,
@@ -147,7 +162,7 @@ export function submitAnswer(sheet: ResponseSheet, itemId: string, rawInput: str
 
 export interface ResponseSummary {
   measurementInputs: Array<{ itemId: string; unit: string | null; presentedValue: number | null; firstInput: string | null; firstCorrect: boolean | null; finalInput: string | null; finalCorrect: boolean | null }>
-  calculationAnswers: Array<{ itemId: string; unit: '%'; computedReferenceValue: number | null; firstInput: string | null; firstCorrect: boolean | null; finalInput: string | null; finalCorrect: boolean | null }>
+  calculationAnswers: Array<{ itemId: string; unit: '%' | 'm'; computedReferenceValue: number | null; firstInput: string | null; firstCorrect: boolean | null; finalInput: string | null; finalCorrect: boolean | null }>
   judgmentAnswers: Array<{ itemId: string; firstAnswer: Verdict | null; firstCorrect: boolean | null; finalAnswer: Verdict | null; finalCorrect: boolean | null }>
   vehicleVerdict: Verdict | null
   judgmentCorrect: boolean | null
@@ -169,7 +184,7 @@ export function summarizeResponses(sheet: ResponseSheet): ResponseSummary {
   const judgments = by('judgment')
   return {
     measurementInputs: by('measurement').map((i) => ({ itemId: i.itemId, unit: i.unit, presentedValue: i.referenceValue, firstInput: i.firstInput, firstCorrect: i.firstCorrect, finalInput: i.finalInput, finalCorrect: i.finalCorrect })),
-    calculationAnswers: by('calculation').map((i) => ({ itemId: i.itemId, unit: '%' as const, computedReferenceValue: i.referenceValue, firstInput: i.firstInput, firstCorrect: i.firstCorrect, finalInput: i.finalInput, finalCorrect: i.finalCorrect })),
+    calculationAnswers: by('calculation').map((i) => ({ itemId: i.itemId, unit: (i.unit === 'm' ? 'm' : '%') as '%' | 'm', computedReferenceValue: i.referenceValue, firstInput: i.firstInput, firstCorrect: i.firstCorrect, finalInput: i.finalInput, finalCorrect: i.finalCorrect })),
     judgmentAnswers: judgments.map((i) => ({ itemId: i.itemId, firstAnswer: i.firstAnswer, firstCorrect: i.firstCorrect, finalAnswer: i.finalAnswer, finalCorrect: i.finalCorrect })),
     vehicleVerdict: sheet.vehicleVerdict,
     judgmentCorrect: allOrNull(judgments.map((i) => i.firstCorrect)),

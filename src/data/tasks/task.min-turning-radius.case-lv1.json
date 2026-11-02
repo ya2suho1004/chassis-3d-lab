@@ -1,0 +1,285 @@
+{
+  "schemaVersion": "1.2.0",
+  "taskId": "min-turning-radius",
+  "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+  "title": "최소회전반경 측정 및 판정 — 사례 1",
+  "approvalStatus": "pending",
+  "measurement": {
+    "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+    "sourceType": "teacherApprovedCase",
+    "unit": "°",
+    "caseId": "case-left-35-30-2.7",
+    "left": null,
+    "right": null,
+    "axleWeight": null,
+    "axlePosition": null,
+    "inputsIntegerOnly": true,
+    "turnDirection": "left",
+    "leftAngleDeg": 35,
+    "rightAngleDeg": 30,
+    "wheelbaseM": 2.7,
+    "kingpinOffsetM": 0.1,
+    "sinTable": {
+      "30": 0.5,
+      "31": 0.515,
+      "32": 0.5299,
+      "33": 0.5446,
+      "34": 0.5592,
+      "35": 0.5736
+    }
+  },
+  "ruleset": {
+    "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+    "approvalStatus": "approved",
+    "deviationMaxPercent": null,
+    "sumMinFrontPercent": null,
+    "sumMinRearPercent": null,
+    "radiusMaxM": 12,
+    "decisionPrecision": {
+      "mode": "rounded",
+      "digits": 1,
+      "rounding": "truncate"
+    },
+    "sourceDocument": "NCS LM1506030326 조향장치 정비 p.73(기준 12 m 이내·식), p.78~79(조작 순서); 학교 답안지 5-짝수(기록 형식·sin 표); 교사 확인 0G(2026-11-02, 소수 첫째 자리 절사·경계 포함 12 m 이하 양호)",
+    "sourcePage": "73, 78~79",
+    "approvedAt": null,
+    "approvedOn": "2026-11-02",
+    "judgmentValueSource": "written"
+  },
+  "requiredResponseItems": [
+    {
+      "itemId": "leftAngle",
+      "kind": "measurement",
+      "unit": "°",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "integer"
+    },
+    {
+      "itemId": "rightAngle",
+      "kind": "measurement",
+      "unit": "°",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "integer"
+    },
+    {
+      "itemId": "radius",
+      "kind": "calculation",
+      "unit": "m",
+      "gradingRuleId": "decimalExact",
+      "answerTolerance": null,
+      "precisionPolicyRef": "truncate1"
+    },
+    {
+      "itemId": "vehicleCondition",
+      "kind": "judgment",
+      "unit": null,
+      "gradingRuleId": "vehicleVerdictMatch",
+      "answerTolerance": null,
+      "precisionPolicyRef": null
+    }
+  ],
+  "steps": [
+    {
+      "stepId": "ppe",
+      "instruction": "보호구 착용(안전화·보안경)을 확인한다.",
+      "equipmentId": null,
+      "prerequisites": [],
+      "requiredSafetyConditions": [],
+      "actionType": "confirm",
+      "completionCondition": "ppeConfirmed",
+      "onBlockedFeedbackKey": "blocked_ppe",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "78",
+        "pdfPage": 90,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "engineOff",
+      "instruction": "시동이 꺼져 있는지 확인한다.",
+      "equipmentId": "min-turning-radius-01",
+      "prerequisites": [
+        "ppe"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "confirm",
+      "completionCondition": "engineOffConfirmed",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "78",
+        "pdfPage": 90,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "turntable",
+      "instruction": "앞바퀴가 회전반경 측정판 중앙에 있고 측정판 눈금이 0°인지 점검한다.",
+      "equipmentId": "min-turning-radius-01",
+      "prerequisites": [
+        "engineOff"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "inspect",
+      "completionCondition": "inspected",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "78",
+        "pdfPage": 90,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "direction",
+      "instruction": "시험위원이 지정한 회전 방향을 확인한다.",
+      "equipmentId": "min-turning-radius-01",
+      "prerequisites": [
+        "turntable"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "confirm",
+      "completionCondition": "directionConfirmed",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "78",
+        "pdfPage": 90,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "steer",
+      "instruction": "조향 핸들을 지정 방향으로 끝까지 돌린다.",
+      "equipmentId": "min-turning-radius-01",
+      "prerequisites": [
+        "direction"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe",
+        "s-engine"
+      ],
+      "actionType": "operate",
+      "completionCondition": "steeredFull",
+      "onBlockedFeedbackKey": "blocked_safety_engine",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "78",
+        "pdfPage": 90,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "read",
+      "instruction": "좌·우 바퀴 측정판의 최대 조향각을 읽어 기록한다.",
+      "equipmentId": "min-turning-radius-01",
+      "prerequisites": [
+        "steer"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "read",
+      "completionCondition": "anglesRead",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "78",
+        "pdfPage": 90,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "return",
+      "instruction": "바퀴를 직진 상태로 되돌린다.",
+      "equipmentId": "min-turning-radius-01",
+      "prerequisites": [
+        "read"
+      ],
+      "requiredSafetyConditions": [
+        "s-ppe"
+      ],
+      "actionType": "operate",
+      "completionCondition": "wheelsStraight",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "79",
+        "pdfPage": 91,
+        "confirmation": "approved"
+      }
+    },
+    {
+      "stepId": "record",
+      "instruction": "바깥쪽 바퀴 조향각으로 최소회전반경을 산출하고 기준값과 비교해 판정한다.",
+      "equipmentId": null,
+      "prerequisites": [
+        "return"
+      ],
+      "requiredSafetyConditions": [],
+      "actionType": "submit",
+      "completionCondition": "radiusSubmitted",
+      "onBlockedFeedbackKey": "blocked_order",
+      "source": {
+        "document": "NCS LM1506030326_23v4 조향장치 정비 + 학교 답안지 5-짝수 + 교사 확인 0G(2026-11-02)",
+        "printedPage": "79",
+        "pdfPage": 91,
+        "confirmation": "approved"
+      }
+    }
+  ],
+  "feedback": {
+    "blocked_ppe": {
+      "what": "보호구 착용 확인이 필요합니다.",
+      "why": "안전한 장비 조작을 위해 보호구 확인이 필요합니다.",
+      "how": "안전화·보안경 착용 상태를 확인한 뒤 다시 진행하세요."
+    },
+    "blocked_order": {
+      "what": "이 조작의 선행 조건이 충족되지 않았습니다.",
+      "why": "앞선 확인을 마쳐야 진행할 수 있습니다.",
+      "how": "이미 확인한 작업 내용과 선행 조건을 점검하세요."
+    },
+    "blocked_safety_engine": {
+      "what": "조향 전 시동 OFF 확인이 필요합니다.",
+      "why": "시동이 걸린 채 바퀴를 돌리면 차량이 움직이거나 회전부에 손이 닿을 수 있어, 최소회전반경 측정은 시동을 끈 상태에서 합니다(교사 확인 0G).",
+      "how": "시동이 꺼져 있는지 확인한 뒤 핸들을 돌리세요."
+    },
+    "wrong_reading": {
+      "what": "입력한 [좌/우] 조향각이 측정판 표시와 다릅니다.",
+      "why": "정확한 판독은 계산과 판정의 근거입니다.",
+      "how": "해당 바퀴 측정판의 눈금과 ° 단위를 다시 확인해 입력하세요."
+    },
+    "wrong_calc": {
+      "what": "최소회전반경 산출값이 계산 기준 답과 다릅니다.",
+      "why": "R = 축거 ÷ sin(바깥쪽 앞바퀴 조향각) + r 입니다. 회전 방향의 바깥쪽 바퀴 각도를 씁니다.",
+      "how": "회전 방향에서 바깥쪽 바퀴가 어느 쪽인지 확인하고, 제시된 sin 값으로 계산한 뒤 소수 첫째 자리까지 절사하세요."
+    },
+    "wrong_verdict": {
+      "what": "판정이 이 과제의 기준과 다릅니다.",
+      "why": "최소회전반경 기재값을 기준(12 m 이하, 경계 포함)과 비교합니다.",
+      "how": "산출한 값과 기준을 다시 비교한 뒤 판정을 제출하세요."
+    }
+  },
+  "vocabularyVersion": "1.2.0",
+  "teacherReviewReference": "collaboration/teacher-check-0G.json",
+  "feedbackPolicy": {
+    "version": "1.1.0-design-approved-2026-10-26",
+    "status": "approved",
+    "unguidedAnswerFeedback": "afterAllFirstResponses",
+    "answerFeedbackKeys": [
+      "wrong_reading",
+      "wrong_calc",
+      "wrong_verdict"
+    ],
+    "safetyFeedback": "immediate"
+  }
+}

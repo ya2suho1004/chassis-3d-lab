@@ -1,6 +1,7 @@
 // 과제 데이터 형식 — docs/design/contracts/task.schema.json (1.2.0) 과 대응
 // 주의: 과제 전체 approvalStatus는 '동작 매핑 미완료'로 pending일 수 있다. 교사 확인값은 ruleset.approvalStatus=approved로 보존된다(docs/design/docs/13).
 import type { AxlePosition, DecisionPrecision } from './judge'
+import type { TurnDirection } from './turningJudge'
 
 export type ActionType = 'confirm' | 'inspect' | 'operate' | 'read' | 'submit'
 export type ResponseKind = 'measurement' | 'calculation' | 'judgment'
@@ -49,6 +50,14 @@ export interface ApprovedTask {
     axlePosition: AxlePosition | null
     /** 판독 입력 정책(계산 답변에는 적용하지 않음) */
     inputsIntegerOnly?: boolean
+    /** 최소회전반경 과제(min-turning-radius) 제시값 — 제동력 과제에는 없다 */
+    turnDirection?: TurnDirection | null
+    leftAngleDeg?: number | null
+    rightAngleDeg?: number | null
+    wheelbaseM?: number | null
+    kingpinOffsetM?: number | null
+    /** 각도(정수 °) → sin 값. 학생에게 제시하는 표 */
+    sinTable?: Record<string, number> | null
   }
   ruleset: {
     rulesetVersion: string
@@ -64,6 +73,8 @@ export interface ApprovedTask {
     approvedOn?: string | null
     /** 판정 비교값 출처: written=기재값(절사값), raw=원값 */
     judgmentValueSource?: 'written' | 'raw'
+    /** 최소회전반경 기준(m 이하 양호) — 최소회전반경 과제만 */
+    radiusMaxM?: number | null
   }
   requiredResponseItems: RequiredResponseItem[]
   steps: TaskStep[]

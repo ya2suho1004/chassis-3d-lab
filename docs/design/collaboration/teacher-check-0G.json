@@ -1,0 +1,16 @@
+{
+  "checkId": "0G-min-turning-radius",
+  "checkedAt": "2026-11-02",
+  "reviewer": "MOON",
+  "note": "교사 확인 0G — 대화로 받은 답(확인지 화면 없이). 최소회전반경 과제 설계 docs/superpowers/specs/2026-11-02-min-turning-radius-task-design.md.",
+  "role": "정식 연구 과제로 추가(두 학급 수행·기록 수집·사전사후 검사 포함)",
+  "givenValues": "축거 L·r은 시험위원처럼 화면에 제시(L 2.7 m, r 0.1 m), sin 30°~35° 표 제시",
+  "radiusPrecision": "소수 첫째 자리, 둘째 자리에서 절사",
+  "engineState": "시동 끈 상태에서 핸들을 돌림(시동 OFF 확인을 필수 단계로)",
+  "cases": [
+    { "caseId": "case-left-35-30-2.7", "turnDirection": "left", "leftAngleDeg": 35, "rightAngleDeg": 30, "expectedRadiusM": 5.5, "verdict": "pass" },
+    { "caseId": "case-right-32-36-2.7", "turnDirection": "right", "leftAngleDeg": 32, "rightAngleDeg": 36, "expectedRadiusM": 5.1, "verdict": "pass" }
+  ],
+  "steps": "ppe → engineOff → turntable → direction → steer → read → return → record (사용자 승인 '이대로 진행해')",
+  "criterion": "12 m 이하 양호(경계 포함), NCS LM1506030326 p.73"
+}
