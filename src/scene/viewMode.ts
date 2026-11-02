@@ -5,7 +5,7 @@ import { footprintOf, type Pt, type SceneEquipment } from './layoutModel'
 export type ViewMode = 'overview' | 'follow' | 'first'
 export const VIEW_MODES: ViewMode[] = ['overview', 'follow', 'first']
 export const VIEW_LABEL: Record<ViewMode, string> = { overview: '내려다보기', follow: '따라가기', first: '내 눈으로' }
-/** 처음 켰을 때 시점(잠정: 따라가기 — 결정기록에서 확정) */
+/** 처음 켰을 때 시점: 따라가기(사용자 결정 2026-11-02, docs/20 D34) */
 export const DEFAULT_VIEW: ViewMode = 'follow'
 
 /** 눈높이(m). 캐릭터 키 1.72 기준 */
