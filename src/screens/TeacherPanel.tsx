@@ -1,6 +1,7 @@
 // 교사 화면 — 수업 설정(기기별 기본값·잠금)과 기록 관리(요약 CSV, 대기 기록 전송)를 한곳에 모은다.
 // PIN은 화면 안 입력칸으로 받는다(시연용 0000, 보안 통제 아님). 설정은 이 기기에만 저장되고 전송하지 않는다.
 import { useState } from 'react'
+import { loadIntroPrefs, saveIntroPrefs } from '../app/intro'
 import { caseKey, ENTRY_LABEL, MODE_LABEL, PHASE_LABEL, savePreset, type TeacherPreset } from '../app/teacherPreset'
 import { processOutbox, type OutboxItemResult } from '../delivery/outbox'
 import { getSubmitEndpoint } from '../delivery/config'
@@ -33,6 +34,9 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   const endpoint = getSubmitEndpoint()
   const [specForm, setSpecForm] = useState(() => { const s = loadPracticeSpec(); return { runout: fmtMm(s.runoutMaxMm), backlash: fmtMm(s.backlashMaxMm) } })
   const [specMsg, setSpecMsg] = useState<string | null>(null)
+  // 시작 영상(인트로, 설계 2026-11-03) 끄기 — 이 기기 화면 설정
+  const [introOff, setIntroOff] = useState(() => loadIntroPrefs().off)
+  const toggleIntro = (off: boolean) => { setIntroOff(off); saveIntroPrefs({ ...loadIntroPrefs(), off }) }
 
   if (!unlocked) {
     return (
@@ -135,6 +139,10 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         <button onClick={() => saveSpec(true)}>기본값으로</button>
       </div>
       {specMsg && <p className="small" role="status">{specMsg}</p>}
+
+      <h3>시작 영상 (이 기기)</h3>
+      <label className="radio"><input type="checkbox" checked={introOff} onChange={(e) => toggleIntro(e.target.checked)} /> 앱을 켤 때 로고·셔터 장면을 보이지 않음</label>
+      <p className="small">끄면 바로 시작 화면이 나옵니다. 다음에 앱을 열 때부터 적용됩니다.</p>
 
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>

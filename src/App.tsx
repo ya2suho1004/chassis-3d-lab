@@ -11,6 +11,9 @@ import { ResumeScreen } from './screens/ResumeScreen'
 import { LabScreen } from './screens/LabScreen'
 import { listTasks } from './app/session'
 import { AvatarScreen } from './screens/AvatarScreen'
+import { IntroScreen } from './screens/IntroScreen'
+import { PRELOAD_MODELS, introPlan, loadIntroPrefs } from './app/intro'
+import { useGLTF } from '@react-three/drei'
 import { DEFAULT_PROFILE, loadAvatar, nicknameOf, randomNickname, saveAvatar, type AvatarProfile } from './app/avatar'
 
 type Screen =
@@ -27,6 +30,13 @@ type Screen =
 export function App() {
   const [repo, setRepo] = useState<Repository | null>(null)
   const [screen, setScreen] = useState<Screen>({ name: 'loading' })
+  // 인트로(설계 2026-11-03): 저장소는 뒤에서 열고, 인트로가 끝나면 원래 첫 화면을 보인다
+  const [intro] = useState(() => introPlan(loadIntroPrefs(), typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))
+  const [introDone, setIntroDone] = useState(intro === 'none')
+  // 실습장 3D 모델을 처음부터 미리 받아 둔다(인트로·코드 입력·캐릭터 만들기 동안). 실습장의 useGLTF가 같은 캐시를 쓴다
+  useEffect(() => {
+    for (const f of PRELOAD_MODELS) useGLTF.preload(`${import.meta.env.BASE_URL}assets/models/${f}`, false, true)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -45,6 +55,7 @@ export function App() {
     return () => { cancelled = true }
   }, [])
 
+  if (!introDone && intro !== 'none') return <IntroScreen plan={intro} onDone={() => setIntroDone(true)} />
   if (screen.name === 'loading') return <main className="screen"><p>저장소를 여는 중…</p></main>
   if (screen.name === 'storageError') return <main className="screen"><p className="error">이 기기의 저장소(IndexedDB)를 열 수 없습니다: {screen.message}</p><p className="small">시크릿 모드이거나 브라우저가 저장을 막고 있을 수 있습니다. 저장 없이 진행하는 기능은 아직 없습니다.</p></main>
 

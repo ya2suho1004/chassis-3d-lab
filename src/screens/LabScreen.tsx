@@ -26,6 +26,8 @@ import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
 import { ChatPanel } from '../chat/ChatPanel'
 import { AvatarScreen } from './AvatarScreen'
+import { IntroArt } from './IntroArt'
+import { tipsFor } from '../app/intro'
 import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
 import type { DifficultyMode } from '../domain/taskEngine'
 
@@ -85,6 +87,10 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const { active: loadingActive, progress } = useProgress()
   const [loadedOnce, setLoadedOnce] = useState(false)
   useEffect(() => { if (!loadingActive && progress >= 100) { const t = setTimeout(() => setLoadedOnce(true), 400); return () => clearTimeout(t) } }, [loadingActive, progress])
+  // 로딩 화면 팁(설계 2026-11-03): 안내 없음이면 순서 팁 없음, 비기록이면 AI 팁 없음. 3초마다 바뀐다
+  const tips = useMemo(() => tipsFor({ guided: mode === 'guided', aiAvailable: !noRecord }), [mode, noRecord])
+  const [tipIdx, setTipIdx] = useState(() => Math.floor(Math.random() * 1000))
+  useEffect(() => { if (loadedOnce) return; const t = setInterval(() => setTipIdx((i) => i + 1), 3000); return () => clearInterval(t) }, [loadedOnce])
   useEffect(() => { const t = setTimeout(() => setLoadedOnce(true), 20000); return () => clearTimeout(t) }, [])
   /** 첫 조작 안내(이 기기에서 한 번만) */
   const [guideOpen, setGuideOpen] = useState(() => { try { return localStorage.getItem('lab.guide.v1') !== 'seen' } catch { return true } })
@@ -375,9 +381,11 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
 
         {!loadedOnce && (
           <div className="g-loading" role="status" aria-live="polite">
-            <b>실습장 불러오는 중…</b>
+            <IntroArt phase="open" dim />
+            <b>실습장 준비 중…</b>
             <div className="g-bar"><span style={{ width: `${Math.round(progress)}%` }} /></div>
             <small>{Math.round(progress)}% · 처음 한 번만 조금 걸립니다</small>
+            <p className="g-tip"><b>TIP</b>{tips[tipIdx % tips.length]}</p>
           </div>
         )}
         {loadedOnce && guideOpen && !talking && (

@@ -271,3 +271,42 @@ button.far { border-color:#9e9e9e; color:#777; }
   .avatar .av-grid { grid-template-columns:1fr; }
   .avatar .av-preview { height:42vh; }
 }
+
+/* 인트로(로고·셔터)·로딩 화면(설계 2026-11-03) */
+.intro { position:fixed; inset:0; z-index:100; background:linear-gradient(#0a0e16 50%, #111418 50%); color:#fff; overflow:hidden; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; }
+.intro:focus { outline:none; }
+.intro .ia { position:absolute; inset:0; width:100%; height:100%; }
+.intro-logo { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; animation:intro-logo 1.7s ease both; }
+.ia-logo { width:min(520px, 80vw); height:auto; }
+@keyframes intro-logo { 0% { opacity:0; transform:scale(.96); } 25%, 75% { opacity:1; transform:scale(1); } 100% { opacity:0; transform:scale(1.02); } }
+.intro-press { position:absolute; left:0; right:0; bottom:9vh; margin:0; text-align:center; font-size:clamp(18px, 2.6vw, 28px); font-weight:700; letter-spacing:.2em; text-shadow:0 2px 8px #000; animation:intro-blink 1.6s ease-in-out infinite; }
+@keyframes intro-blink { 0%, 100% { opacity:.35; } 50% { opacity:1; } }
+.intro-sub { position:absolute; left:0; right:0; top:4vh; margin:0; text-align:center; font-size:clamp(14px, 1.8vw, 18px); color:#9fb0c3; letter-spacing:.4em; }
+.intro-skip { position:absolute; right:16px; bottom:14px; font-size:12px; color:rgba(255,255,255,.55); }
+.intro-flash { position:absolute; inset:0; background:#fff; animation:intro-flash .55s ease-in both; }
+@keyframes intro-flash { from { opacity:0; } to { opacity:1; } }
+/* 셔터: 닫힘 → 열림(위로 말려 올라감). 열리기 시작하면 안쪽 불·헤드라이트가 켜진다 */
+.ia-shutter { transform:translateY(0); }
+.ia-opening .ia-shutter { animation:ia-shutter 2.2s cubic-bezier(.45,.05,.55,.95) .05s both; }
+@keyframes ia-shutter { 0% { transform:translateY(0); } 8% { transform:translateY(-14px); } 12% { transform:translateY(-10px); } 100% { transform:translateY(-530px); } }
+.ia-lights, .ia-glow { opacity:0; }
+.ia-led { opacity:.25; }
+.ia-opening .ia-lights { animation:ia-fade .6s ease 1.6s both; }
+.ia-opening .ia-led { animation:ia-led 1.4s ease 1.55s both; }
+.ia-opening .ia-glow { animation:ia-glow 1.4s ease 1.6s both; }
+.ia-open .ia-shutter { transform:translateY(-530px); }
+.ia-open .ia-lights, .ia-open .ia-glow { opacity:1; }
+.ia-open .ia-led { opacity:1; }
+@keyframes ia-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes ia-led { 0% { opacity:.25; } 10% { opacity:1; } 18% { opacity:.4; } 26%, 100% { opacity:1; } }
+@keyframes ia-glow { 0% { opacity:0; } 12% { opacity:1; } 20% { opacity:.35; } 30%, 100% { opacity:1; } }
+.ia-car { transform-box:fill-box; transform-origin:50% 100%; }
+.ia-opening .ia-car { animation:ia-car 3s ease-out both; }
+@keyframes ia-car { 0% { transform:scale(1); } 100% { transform:scale(1.06); } }
+.ia-dim { filter:brightness(.42) blur(1.5px); }
+/* 실습장 로딩 화면: 열린 셔터 그림 + 진행 막대 + 팁 */
+.g-loading .ia { position:absolute; inset:0; width:100%; height:100%; z-index:-1; }
+.g-loading { isolation:isolate; }
+.g-loading .g-tip { max-width:min(560px, 86vw); margin:6px 0 0; padding:10px 14px; border-radius:10px; background:rgba(0,0,0,.45); color:#f3f6f9; font-size:15px; text-align:center; line-height:1.5; min-height:3em; }
+.g-loading .g-tip b { color:#ffd54a; margin-right:6px; }
+@media (prefers-reduced-motion: reduce) { .intro *, .g-loading * { animation:none !important; } }
