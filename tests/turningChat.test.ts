@@ -38,4 +38,15 @@ describe('최소회전반경 AI 교관 문맥', () => {
     expect(JSON.parse(buildChatBody({ ...a, taskId: null }))).not.toHaveProperty('taskId')
     expect(JSON.parse(buildChatBody({ ...a, taskId: 'min-turning-radius' })).taskId).toBe('min-turning-radius')
   })
+  it('안내 없음에서는 두 과제 모두 다음 단계·작업 순서를 알려 주지 않는다는 규칙이 있고, 안내 있음에는 없다(v0.4)', () => {
+    for (const taskId of ['min-turning-radius', null]) {
+      const u = buildSystemPrompt(context as any, { mode: 'unguided', stepId: 'read', taskId })
+      const g = buildSystemPrompt(context as any, { mode: 'guided', stepId: 'read', taskId })
+      expect(u).toContain('다음에 할 단계나 작업 순서를 알려 주지 않는다')
+      expect(u).toContain('안전 판단 근거로만')
+      expect(g).not.toContain('다음에 할 단계나 작업 순서를 알려 주지 않는다')
+      // 안전 예외는 남아 있다
+      expect(u).toContain('안전에 관한 질문에는 단계와 관계없이 바로 분명하게 답한다')
+    }
+  })
 })

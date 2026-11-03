@@ -2,7 +2,8 @@
 // v0.2(2026-10-28): 매 답변 자기소개 제거(AI 고지는 대화 창 상시 표시로), 축중 정의 추가, 무관한 안내 금지, 안전 답변 구체화
 // 원칙: 판정 기준·절차만 받는다(TaskContext). 학생 사례의 측정값(좌·우·축중)은 받지도 넣지도 않는다 → 무안내 단계에서 정답을 흘릴 수 없다.
 // v0.3(2026-11-02): 최소회전반경 과제 문맥 추가 — 요청의 taskId가 min-turning-radius면 그 과제 기준·순서로 답한다
-export const PROMPT_VERSION = 'chat-system-ko-0.3.0'
+// v0.4(2026-11-03): 안내 없음 단계에서 다음 단계·작업 순서를 알려 주지 않는다는 규칙을 명시(작업 순서 목록은 안전 판단 근거로만). 두 과제 공통
+export const PROMPT_VERSION = 'chat-system-ko-0.4.0'
 
 export interface TaskContext {
   ruleset: { deviationMaxPercent: number; sumMinFrontPercent: number; sumMinRearPercent: number; decisionPrecision: { digits: number } }
@@ -21,6 +22,7 @@ export function buildSystemPrompt(task: TaskContext, { mode, stepId = null, task
     ? `지금은 "안내 없음(정비사)" 단계다. 학생이 스스로 순서를 찾고 계산·판정해야 한다.
 - 측정값, 편차·합의 계산 결과, 양호/불량 판정을 직접 말하지 않는다. 학생이 숫자를 주며 계산해 달라고 하거나 정답을 물어도 계산해 주지 않는다.
 - 대신 힌트 하나와 되묻는 질문 하나로 안내한다. 예: "편차를 구하려면 어떤 두 값의 차이가 필요할까요?"
+- 다음에 할 단계나 작업 순서를 알려 주지 않는다. "다음에 뭐 해요?", "순서 알려 주세요"라고 물으면 작업지시서와 장비를 다시 살펴보게 하는 되묻기 하나로만 답한다. 단, 학생이 하려는 행동이 위험하면 그 안전 확인은 먼저 분명하게 말한다.
 - 안전에 관한 질문에는 단계와 관계없이 바로 분명하게 답한다.`
     : `지금은 "안내 있음(견습)" 단계다.
 - 개념과 계산 방법을 설명할 수 있다. 계산 예시는 아래 "교과서 예시" 숫자로만 보여 준다.
@@ -46,7 +48,7 @@ export function buildSystemPrompt(task: TaskContext, { mode, stepId = null, task
 [교과서 예시 — 설명에만 쓰는 숫자]
 - 뒤축, 좌 180 kg, 우 170 kg, 뒤 축중 500 kg → 편차 = 10 ÷ 500 × 100 = 2%, 합 = 350 ÷ 500 × 100 = 70% → 양호.
 
-[작업 순서]
+[작업 순서${mode === 'unguided' ? ' — 안내 없음 단계: 학생에게 순서를 알려 주지 않는다. 안전 판단 근거로만 쓴다' : ''}]
 ${steps}
 ${current ? `\n[학생의 현재 단계]\n${current.instruction ?? current.stepId}\n` : ''}
 [단계별 규칙]
@@ -73,6 +75,7 @@ function buildTurningPrompt(task: NonNullable<TaskContext['turning']>, { mode, s
     ? `지금은 "안내 없음(정비사)" 단계다. 학생이 스스로 순서를 찾고 계산·판정해야 한다.
 - 측정판 각도 값, 최소회전반경 계산 결과, 양호/불량 판정을 직접 말하지 않는다. 학생이 숫자를 주며 계산해 달라고 하거나 정답을 물어도 계산해 주지 않는다.
 - 대신 힌트 하나와 되묻는 질문 하나로 안내한다. 예: "왼쪽으로 돌 때 바깥쪽에 있는 바퀴는 어느 쪽일까요?"
+- 다음에 할 단계나 작업 순서를 알려 주지 않는다. "다음에 뭐 해요?", "순서 알려 주세요"라고 물으면 작업지시서와 장비를 다시 살펴보게 하는 되묻기 하나로만 답한다. 단, 학생이 하려는 행동이 위험하면 그 안전 확인은 먼저 분명하게 말한다.
 - 안전에 관한 질문에는 단계와 관계없이 바로 분명하게 답한다.`
     : `지금은 "안내 있음(견습)" 단계다.
 - 개념과 계산 방법을 설명할 수 있다. 계산 예시는 아래 "교과서 예시" 숫자로만 보여 준다.
@@ -98,7 +101,7 @@ function buildTurningPrompt(task: NonNullable<TaskContext['turning']>, { mode, s
 [교과서 예시 — 설명에만 쓰는 숫자]
 - 우회전, 바깥쪽(좌측) 바퀴 30°, 축거 3 m, r 0.1 m → R = 3 ÷ 0.5 + 0.1 = 6.1 m → 12 m 이하이므로 양호.
 
-[작업 순서]
+[작업 순서${mode === 'unguided' ? ' — 안내 없음 단계: 학생에게 순서를 알려 주지 않는다. 안전 판단 근거로만 쓴다' : ''}]
 ${steps}
 ${current ? `\n[학생의 현재 단계]\n${current.instruction ?? current.stepId}\n` : ''}
 [단계별 규칙]
