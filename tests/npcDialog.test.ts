@@ -1,6 +1,6 @@
 // NPC 대화 대본: 거리·과제 상태에 따라 대사가 바뀐다(판정·채점과 무관한 대본)
 import { describe, expect, it } from 'vitest'
-import { npcLines } from '../src/screens/NpcDialog'
+import { npcLines, panelWorkOrder } from '../src/screens/NpcDialog'
 
 describe('NPC 교관 대화 대본', () => {
   it('멀리 있으면 가까이 오라는 한 줄만', () => {
@@ -20,6 +20,12 @@ describe('NPC 교관 대화 대본', () => {
     expect(npcLines({ near: true, running: false, taskTitle: 'T', nickname: '꼼꼼한 토크렌치' })[0]).toMatch(/^어서 와, 꼼꼼한 토크렌치\. /)
     expect(npcLines({ near: true, running: false, taskTitle: 'T', taskId: 'min-turning-radius', nickname: '든든한 스패너' })[0]).toMatch(/^어서 와, 든든한 스패너\. /)
     expect(npcLines({ near: true, running: false, taskTitle: 'T' })[0]).toMatch(/^어서 와\. /)
+  })
+  it('기본 화면(패널)의 작업지시도 과제에 맞는다(최소회전반경 과제에 제동력 문구 금지)', () => {
+    const turn = panelWorkOrder('min-turning-radius')
+    expect(turn).toMatch(/최소회전반경/); expect(turn).toMatch(/조향각/); expect(turn).not.toMatch(/제동/)
+    expect(panelWorkOrder('braking-force')).toMatch(/쏠린다/)
+    expect(panelWorkOrder(undefined)).toMatch(/편차와 합/)
   })
   it('비기록 모드(AI 교관 없음)에서는 AI 교관을 권하지 않는다', () => {
     expect(npcLines({ near: true, running: true, taskTitle: 'T', aiAvailable: false }).join(' ')).not.toContain('AI 교관')

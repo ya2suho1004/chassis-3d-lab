@@ -17,7 +17,7 @@ import { turningRigState } from '../scene/turningRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen, type TaskContext } from './TaskScreen'
 import { Joystick, type MoveInput } from '../scene/Joystick'
-import { NpcDialog } from './NpcDialog'
+import { NpcDialog, panelWorkOrder } from './NpcDialog'
 import { LabSound } from '../scene/sound'
 import { useProgress } from '@react-three/drei'
 import { initialQuality, shouldAutoLower } from '../app/quality'
@@ -507,7 +507,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               {npcOpen ? (
                 nearNpc ? (
                   <>
-                    <p>오늘 작업지시서: 손님 차량 입고, 제동 시 한쪽으로 쏠린다는 호소. 뒤축 제동력을 측정해 편차와 합을 계산하고 차량 상태를 판정하세요. 과제: <b>{task.title}</b></p>
+                    <p>오늘 작업지시서: {panelWorkOrder(task.taskId)} 과제: <b>{task.title}</b></p>
                     <p className="small">과제를 받으면 수행 번호가 발급되고 이 기기에 초안이 저장됩니다.</p>
                     {npcError && <p className="error">{npcError}</p>}
                     <button className="primary" onClick={async () => { const err = await onReceiveTask(); setNpcError(err) }}>과제 수령</button>

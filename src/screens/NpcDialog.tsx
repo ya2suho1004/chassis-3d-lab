@@ -19,6 +19,12 @@ export function npcLines(opts: { near: boolean; running: boolean; taskTitle: str
   ]
 }
 
+/** 기본 화면(패널)의 작업지시 한 줄 — 게임 화면 대사와 같은 호소를 과제별로 */
+export function panelWorkOrder(taskId?: string): string {
+  if (taskId === 'min-turning-radius') return '손님 차량 입고, 좁은 길에서 잘 돌지 않는다는 호소. 앞바퀴 최대 조향각을 읽어 최소회전반경을 산출하고 차량 상태를 판정하세요.'
+  return '손님 차량 입고, 제동 시 한쪽으로 쏠린다는 호소. 뒤축 제동력을 측정해 편차와 합을 계산하고 차량 상태를 판정하세요.'
+}
+
 export function NpcDialog({ near, running, taskTitle, taskId, nickname, aiAvailable = true, error, onReceive, onGoToNpc, onOpenTasks, onInspect, onClose }: {
   near: boolean; running: boolean; taskTitle: string; taskId?: string; nickname?: string; aiAvailable?: boolean; error: string | null
   onReceive: () => Promise<string | null>
