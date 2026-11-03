@@ -59,7 +59,7 @@ describe.each(['character.glb', 'character-b.glb'])('캐릭터 만들기 — %s'
     const clips = (g.animations ?? []).map((a) => a.name)
     for (const c of CHARACTER_CLIPS) expect(clips).toContain(c)
     const mats = g.materials.map((m) => m.name)
-    for (const m of ['Skin', 'Hair', 'Eye', 'Top', 'Bottom', 'Shoes']) expect(mats).toContain(m)
+    for (const m of ['Skin', 'Hair', 'Eye', 'Top', 'Bottom', 'Shoes', 'Trim']) expect(mats).toContain(m)
     expect(size).toBeLessThan(400_000)
   })
 })

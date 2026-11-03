@@ -41,11 +41,13 @@ def material(name, color, metal=0.0, rough=0.6):
 # 옷 색은 임시(앱에서 학생·교관별로 바꾼다)
 M = {'Skin': material('Skin', '#e2b796', rough=0.55), 'Hair': material('Hair', '#1e1a17', rough=0.7),
      'Top': material('Top', '#2f5fb3', rough=0.8), 'Bottom': material('Bottom', '#2b3a55', rough=0.85),
-     'Shoes': material('Shoes', '#1c1c1c', rough=0.5), 'Eye': material('Eye', '#121212', rough=0.2)}
+     'Shoes': material('Shoes', '#1c1c1c', rough=0.5), 'Eye': material('Eye', '#121212', rough=0.2),
+     # 실습복 배색 판(어깨 띠·허리 아래 띠) — 앱이 학생은 남색, 교관은 윗옷과 같은 색으로 칠한다(2026-11-03)
+     'Trim': material('Trim', '#2b2d64', rough=0.8)}
 GOG = {'GogglesFrame': material('GogglesFrame', '#22262b', rough=0.5), 'GogglesLens': material('GogglesLens', '#bfe3f2', metal=0.1, rough=0.05)}
 lens = GOG['GogglesLens']; lens.node_tree.nodes['Principled BSDF'].inputs['Alpha'].default_value = 0.35
 if hasattr(lens, 'surface_render_method'): lens.surface_render_method = 'BLENDED'   # 반투명 렌즈(glTF alphaMode BLEND)
-SLOT = ['Skin', 'Hair', 'Top', 'Bottom', 'Shoes', 'Eye']
+SLOT = ['Skin', 'Hair', 'Top', 'Bottom', 'Shoes', 'Eye', 'Trim']
 
 # ---------------- 관절 위치(서 있는 자세, 팔은 몸 옆으로 살짝 벌림) ----------------
 J = {
@@ -67,14 +69,15 @@ R = {'pelvis': (0.16, 0.115), 'spine': (0.145, 0.10), 'chest': (0.175, 0.112), '
      'hip': (0.098, 0.098), 'knee': (0.068, 0.07), 'ankle': (0.05, 0.05), 'toe': (0.04, 0.03)}
 if BODY == 'b':
     # 어깨·팔을 안으로, 가슴·허리를 가늘게, 골반을 조금 넓게(특정 인물을 닮지 않은 일반 체형)
+    # 2026-11-03: 체형 1과 더 구분되게 어깨를 더 좁히고 허리를 가늘게, 골반을 넓게
     for s, sx in (('L', 1), ('R', -1)):
-        J['shoulder' + s] = (sx * 0.178, -0.01, 1.42)
-        J['elbow' + s] = (sx * 0.222, -0.03, 1.15)
-        J['wrist' + s] = (sx * 0.245, 0.0, 0.90)
-        J['hand' + s] = (sx * 0.25, 0.01, 0.80)
-        J['hip' + s] = (sx * 0.098, 0, 0.93)
-    R.update({'chest': (0.158, 0.112), 'spine': (0.126, 0.096), 'pelvis': (0.166, 0.118), 'neck': (0.05, 0.05),
-              'shoulder': (0.06, 0.06), 'elbow': (0.046, 0.045), 'wrist': (0.034, 0.03), 'hip': (0.1, 0.1)})
+        J['shoulder' + s] = (sx * 0.17, -0.01, 1.42)
+        J['elbow' + s] = (sx * 0.212, -0.03, 1.15)
+        J['wrist' + s] = (sx * 0.236, 0.0, 0.90)
+        J['hand' + s] = (sx * 0.24, 0.01, 0.80)
+        J['hip' + s] = (sx * 0.102, 0, 0.93)
+    R.update({'chest': (0.152, 0.114), 'spine': (0.114, 0.09), 'pelvis': (0.174, 0.124), 'neck': (0.048, 0.048),
+              'shoulder': (0.057, 0.057), 'elbow': (0.044, 0.043), 'wrist': (0.032, 0.029), 'hip': (0.106, 0.106)})
 names = ['pelvis', 'spine', 'chest', 'neck'] + [k + s for s in ('L', 'R') for k in ('shoulder', 'elbow', 'wrist', 'hand', 'hip', 'knee', 'ankle', 'toe')]
 edges = [('pelvis', 'spine'), ('spine', 'chest'), ('chest', 'neck')]
 for s in ('L', 'R'):
@@ -96,6 +99,12 @@ def apply_all(ob):
     for o in bpy.context.view_layer.objects: o.select_set(o == ob)
     for m in list(ob.modifiers): bpy.ops.object.modifier_apply(modifier=m.name)
 apply_all(body)
+# 배색 판 경계 높이에서 몸을 가로로 잘라 둔다 → 면마다 재질을 정해도 경계가 계단지지 않고 곧은 선이 된다(2026-11-03)
+TRIM_SHOULDER_Z, TRIM_WAIST_Z = 1.355, 1.09      # 배색 판: 이 높이 위(어깨 띠)·아래(허리 아래 띠)
+_bm = bmesh.new(); _bm.from_mesh(body.data)
+for _z in (TRIM_SHOULDER_Z, TRIM_WAIST_Z):
+    bmesh.ops.bisect_plane(_bm, geom=_bm.verts[:] + _bm.edges[:] + _bm.faces[:], plane_co=(0, 0, _z), plane_no=(0, 0, 1))
+_bm.to_mesh(body.data); _bm.free()
 
 # 면마다 가장 가까운 뼈 구간으로 재질 정하기(목·손 = 피부, 허리 아래·다리 = 아래옷, 발 = 신발, 나머지 = 윗옷)
 def seg_dist(p, a, b):
@@ -108,9 +117,10 @@ for f in body.data.polygons:
     c = f.center
     arm_ = abs(c.x) > 0.19 and c.z > 0.7
     if c.z > NECK_Z and abs(c.x) < 0.12: mat = 'Skin'
-    elif arm_: mat = 'Skin' if c.z < CUFF_Z else 'Top'
+    elif arm_: mat = 'Skin' if c.z < CUFF_Z else 'Trim' if c.z >= TRIM_SHOULDER_Z else 'Top'   # 어깨 띠를 몸통과 같은 높이에서 끊어 경계가 계단지지 않게
     elif c.z < 0.11: mat = 'Shoes'
     elif c.z < WAIST_Z: mat = 'Bottom'
+    elif c.z >= TRIM_SHOULDER_Z or c.z < TRIM_WAIST_Z: mat = 'Trim'   # 어깨 띠·허리 아래 띠(실습복 배색)
     else: mat = 'Top'
     f.material_index = SLOT.index(mat)
 
@@ -163,7 +173,7 @@ def ring(z, rx, ry, h, group, mat, cx=0.0, cy=0.0):
     bv = ob.modifiers.new('bv', 'BEVEL'); bv.width = h * 0.3; bv.segments = 2
     bpy.context.view_layer.objects.active = ob; bpy.ops.object.modifier_apply(modifier='bv'); ob.data.shade_smooth()
     return rigid(ob, group, mat)
-extra.append(ring(WAIST_Z, 0.168, 0.122, 0.045, 'Hips', 'Shoes'))          # 벨트(신발과 같은 짙은 색)
+extra.append(ring(WAIST_Z, 0.168, 0.122, 0.045, 'Hips', 'Trim'))           # 벨트(배색 판과 같은 색 — 학생 운동화가 밝아 신발 색을 따르면 흰 띠로 보였음, 2026-11-03)
 extra.append(ring(NECK_Z + 0.005, 0.07, 0.068, 0.035, 'Chest', 'Top', cy=-0.004))  # 옷깃
 extra.append(rigid(sphere((0, 0.008, 1.605), (0.092, 0.104, 0.118)), 'Head', 'Skin'))
 # 머리카락: 구를 잘라 두께를 준 모자 모양. drop(v)가 참인 점을 지운다. 머리 모양마다 따로 된 물체(아래 '머리 모양')
