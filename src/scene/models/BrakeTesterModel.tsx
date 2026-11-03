@@ -4,8 +4,9 @@
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { assetUrl } from '../../app/assetUrl'
 
-export const BRAKE_TESTER_URL = `${import.meta.env.BASE_URL}assets/models/brake-tester.glb`
+export const BRAKE_TESTER_URL = assetUrl('models/brake-tester.glb')
 
 /** 모델이 맞춘 치수: 시험기 3.0×1.2, 바퀴 중심 x=±0.7(시험 차량 폭 1.6). 롤러·리프트 판 위치는 BrakeRig 상수와 같다. */
 export const BRAKE_TESTER_SPEC = { w: 3.0, d: 1.2, wheelX: 0.7 } as const

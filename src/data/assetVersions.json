@@ -1,0 +1,21 @@
+{
+  "models/abs-panel.glb": "ef94a0184b",
+  "models/avante.glb": "221af3103c",
+  "models/brake-tester.glb": "816a89dd8c",
+  "models/character-b.glb": "c8fdccb32b",
+  "models/character.glb": "2958ca5b96",
+  "models/dial-gauge-b.glb": "98ace19f09",
+  "models/dial-gauge-h.glb": "4f501b19b5",
+  "models/dial-gauge.glb": "ad5eba5cea",
+  "models/diff-carrier.glb": "2e115b27b0",
+  "models/disc-fixture.glb": "8d62aa39c6",
+  "models/k3.glb": "007b839156",
+  "models/pride.glb": "0f36e94f18",
+  "models/scissor-lift.glb": "fe3794ead7",
+  "models/shock-stand.glb": "3d308eb002",
+  "models/test-car.glb": "702a0db4fe",
+  "models/tire-changer.glb": "59d08ad79d",
+  "models/transmission-simulator.glb": "780f962a9b",
+  "models/wheel-balancer.glb": "40590fa489",
+  "hdri/autoshop_01_1k.hdr": "234578c4ab"
+}

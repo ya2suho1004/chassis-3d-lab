@@ -6,8 +6,9 @@ import { useEffect, useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { absTesterLabelTexture, cabinetPlateTexture } from './textures'
 import { readoutLines, type PanelReadout } from '../panelReadout'
+import { assetUrl } from '../../app/assetUrl'
 
-export const ABS_PANEL_URL = `${import.meta.env.BASE_URL}assets/models/abs-panel.glb`
+export const ABS_PANEL_URL = assetUrl('models/abs-panel.glb')
 
 /** build_abs_panel.py 상수와 같아야 한다. 길이 m, 앞면 = 지역 -z */
 export const ABS_PANEL = {

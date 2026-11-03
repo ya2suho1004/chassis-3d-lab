@@ -8,9 +8,10 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { K3_FRONT_WHEEL, STRAIGHT, type TurningRig } from '../turningRig'
 import { TurntableDial } from './TurntableDial'
+import { assetUrl } from '../../app/assetUrl'
 
-export const K3_URL = `${import.meta.env.BASE_URL}assets/models/k3.glb`
-export const PRIDE_URL = `${import.meta.env.BASE_URL}assets/models/pride.glb`
+export const K3_URL = assetUrl('models/k3.glb')
+export const PRIDE_URL = assetUrl('models/pride.glb')
 
 /** 블렌더 스크립트 상수와 같아야 한다(w = 2·HALF_W, d = L, wheelbase = AXLE_F − AXLE_R). 길이 m */
 export const K3_SPEC = { w: 1.78, d: 4.56, h: 1.435, wheelbase: 2.7, wheelR: 0.318 } as const

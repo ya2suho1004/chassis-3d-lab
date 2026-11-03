@@ -15,6 +15,7 @@ import { IntroScreen } from './screens/IntroScreen'
 import { PRELOAD_MODELS, introPlan, loadIntroPrefs } from './app/intro'
 import { useGLTF } from '@react-three/drei'
 import { DEFAULT_PROFILE, loadAvatar, nicknameOf, randomNickname, saveAvatar, type AvatarProfile } from './app/avatar'
+import { assetUrl } from './app/assetUrl'
 
 type Screen =
   | { name: 'loading' }
@@ -35,7 +36,7 @@ export function App() {
   const [introDone, setIntroDone] = useState(intro === 'none')
   // 실습장 3D 모델을 처음부터 미리 받아 둔다(인트로·코드 입력·캐릭터 만들기 동안). 실습장의 useGLTF가 같은 캐시를 쓴다
   useEffect(() => {
-    for (const f of PRELOAD_MODELS) useGLTF.preload(`${import.meta.env.BASE_URL}assets/models/${f}`, false, true)
+    for (const f of PRELOAD_MODELS) useGLTF.preload(assetUrl(`models/${f}`), false, true)
   }, [])
 
   useEffect(() => {

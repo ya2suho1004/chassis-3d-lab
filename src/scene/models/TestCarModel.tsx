@@ -4,8 +4,9 @@
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { assetUrl } from '../../app/assetUrl'
 
-export const TEST_CAR_URL = `${import.meta.env.BASE_URL}assets/models/test-car.glb`
+export const TEST_CAR_URL = assetUrl('models/test-car.glb')
 
 /** 모델이 맞춘 치수. 장면 코드의 바퀴 반지름 0.3, 축간 2.4, 뒤축 = 길이/2 − 0.6, 바퀴 중심 x = 폭/2 − 0.1과 같다. */
 export const TEST_CAR_SPEC = { w: 1.6, d: 3.6, h: 1.5 } as const

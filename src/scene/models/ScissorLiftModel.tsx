@@ -5,9 +5,10 @@
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { assetUrl } from '../../app/assetUrl'
 
-export const SCISSOR_LIFT_URL = `${import.meta.env.BASE_URL}assets/models/scissor-lift.glb`
-export const AVANTE_URL = `${import.meta.env.BASE_URL}assets/models/avante.glb`
+export const SCISSOR_LIFT_URL = assetUrl('models/scissor-lift.glb')
+export const AVANTE_URL = assetUrl('models/avante.glb')
 
 /** 블렌더 스크립트의 상수와 같아야 한다(build_scissor_lift.py). 길이 m. */
 export const SCISSOR = {

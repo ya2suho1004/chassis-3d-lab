@@ -8,8 +8,9 @@ import { Suspense, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { backlashTravel, stepBacklash, type BacklashCase, type BacklashState } from './backlash'
 import { DialGaugeModel, DIAL_GAUGE_B_URL } from './models/DialGaugeModel'
+import { assetUrl } from '../app/assetUrl'
 
-export const DIFF_CARRIER_URL = `${import.meta.env.BASE_URL}assets/models/diff-carrier.glb`
+export const DIFF_CARRIER_URL = assetUrl('models/diff-carrier.glb')
 
 // 그리는 도중 불러오기 상태가 바뀌지 않게 미리 받는다
 useGLTF.preload(DIFF_CARRIER_URL, false, true)

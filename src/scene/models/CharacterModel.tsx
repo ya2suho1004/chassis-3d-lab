@@ -6,10 +6,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 import { HAIR_STYLES, type BodyType, type HairStyle } from '../../app/avatar'
+import { assetUrl } from '../../app/assetUrl'
 
-export const CHARACTER_URL = `${import.meta.env.BASE_URL}assets/models/character.glb`
+export const CHARACTER_URL = assetUrl('models/character.glb')
 /** 체형 2(키 1.62 m) — 캐릭터 만들기(설계 2026-11-03) */
-export const CHARACTER_B_URL = `${import.meta.env.BASE_URL}assets/models/character-b.glb`
+export const CHARACTER_B_URL = assetUrl('models/character-b.glb')
 export const characterUrl = (b: BodyType) => (b === 'b' ? CHARACTER_B_URL : CHARACTER_URL)
 
 /** 외모(체형·머리 모양·피부·머리·눈 색). 없으면 기본(체형 1, 짧은 머리, 모델 색 그대로) — NPC 교관 */

@@ -5,9 +5,10 @@ import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { assetUrl } from '../../app/assetUrl'
 
-export const WHEEL_BALANCER_URL = `${import.meta.env.BASE_URL}assets/models/wheel-balancer.glb`
-export const TIRE_CHANGER_URL = `${import.meta.env.BASE_URL}assets/models/tire-changer.glb`
+export const WHEEL_BALANCER_URL = assetUrl('models/wheel-balancer.glb')
+export const TIRE_CHANGER_URL = assetUrl('models/tire-changer.glb')
 
 /** build_wheel_balancer.py의 W, D, H와 같다(m). 바퀴 노드 Wheel은 지역 x축으로 돈다 */
 export const WHEEL_BALANCER = { w: 1.4, d: 1.4, h: 1.2, spinNode: 'Wheel' } as const

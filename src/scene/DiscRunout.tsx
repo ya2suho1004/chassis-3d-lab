@@ -7,8 +7,9 @@ import { Suspense, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { discTravel } from './dialGauge'
 import { DialGaugeModel, DIAL_GAUGE_H_URL } from './models/DialGaugeModel'
+import { assetUrl } from '../app/assetUrl'
 
-export const DISC_FIXTURE_URL = `${import.meta.env.BASE_URL}assets/models/disc-fixture.glb`
+export const DISC_FIXTURE_URL = assetUrl('models/disc-fixture.glb')
 
 // 연습 장면 모델은 화면을 그리는 도중이 아니라 미리 받기 시작한다(그리는 중 불러오기 진행 상태가 바뀌면 React 경고)
 useGLTF.preload(DISC_FIXTURE_URL, false, true)

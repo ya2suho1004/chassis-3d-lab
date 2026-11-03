@@ -5,9 +5,10 @@
 import { useGLTF } from '@react-three/drei'
 import { useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { assetUrl } from '../../app/assetUrl'
 
-export const TRANSMISSION_SIMULATOR_URL = `${import.meta.env.BASE_URL}assets/models/transmission-simulator.glb`
-export const SHOCK_STAND_URL = `${import.meta.env.BASE_URL}assets/models/shock-stand.glb`
+export const TRANSMISSION_SIMULATOR_URL = assetUrl('models/transmission-simulator.glb')
+export const SHOCK_STAND_URL = assetUrl('models/shock-stand.glb')
 
 /** build_transmission_simulator.py 상수(W, D, H)와 같아야 한다. reach = 변속 레버까지 포함한 바닥 크기(폭·깊이) */
 export const TRANSMISSION_SIMULATOR = { w: 1.8, d: 1.4, h: 1.65, reach: { w: 2.0, d: 1.45 } } as const

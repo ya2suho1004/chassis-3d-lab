@@ -29,6 +29,7 @@ import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aim
 import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction, type CharacterLook } from './models/CharacterModel'
 import { bodyScale } from '../app/avatar'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
+import { assetUrl } from '../app/assetUrl'
 
 const Effects = lazy(() => import('./Effects'))
 const WALK_SPEED = 1.6 // m/s
@@ -865,7 +866,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
     const len = Math.hypot(nx, nz) || 1
     return [(s * nx) / len, (s * nz) / len]
   }
-  const hdri = `${import.meta.env.BASE_URL}assets/hdri/autoshop_01_1k.hdr`
+  const hdri = assetUrl('hdri/autoshop_01_1k.hdr')
   return (
     <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
       <color attach="background" args={['#d9dfe4']} />
