@@ -30,6 +30,7 @@ import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, SAFETY_SHOES, INSTRUCTOR
 import { bodyScale } from '../app/avatar'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 import { assetUrl } from '../app/assetUrl'
+import { LAB_HDRI } from '../app/intro'
 
 const Effects = lazy(() => import('./Effects'))
 const WALK_SPEED = 1.6 // m/s
@@ -866,7 +867,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
     const len = Math.hypot(nx, nz) || 1
     return [(s * nx) / len, (s * nz) / len]
   }
-  const hdri = assetUrl('hdri/autoshop_01_1k.hdr')
+  const hdri = assetUrl(LAB_HDRI)
   return (
     <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
       <color attach="background" args={['#d9dfe4']} />

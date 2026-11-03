@@ -1,7 +1,7 @@
 // 인트로·로딩 화면(설계 docs/superpowers/specs/2026-11-03-intro-loading-design.md)
-import { readdirSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { PRELOAD_MODELS, introPlan, parseIntroPrefs, tipsFor } from '../src/app/intro'
+import { LAB_HDRI, PRELOAD_MODELS, introPlan, parseIntroPrefs, preloadPlan, tipsFor } from '../src/app/intro'
 
 describe('인트로 계획', () => {
   test('교사가 끄거나 움직임 줄이기면 없음', () => {
@@ -24,6 +24,18 @@ describe('미리 받기', () => {
   test('public/assets/models의 glb를 모두 미리 받는다', () => {
     const files = readdirSync(new URL('../public/assets/models', import.meta.url)).filter((f) => f.endsWith('.glb')).sort()
     expect([...PRELOAD_MODELS].sort()).toEqual(files)
+  })
+  test('품질 높음(PC)은 정비소 HDRI·화면 효과 코드도 처음부터 받는다(실습장 진입 대기 줄이기)', () => {
+    const p = preloadPlan(false)
+    expect(p.hdri).toBe(LAB_HDRI); expect(p.effects).toBe(true)
+    expect(existsSync(new URL(`../public/assets/${LAB_HDRI}`, import.meta.url))).toBe(true)
+  })
+  test('품질 낮음(태블릿)은 쓰지 않는 HDRI·효과 코드를 받지 않는다(태블릿 내려받기 보호)', () => {
+    expect(preloadPlan(true)).toMatchObject({ hdri: null, effects: false })
+  })
+  test('모델은 품질과 상관없이 같은 목록', () => {
+    expect(preloadPlan(true).models).toEqual(preloadPlan(false).models)
+    expect(preloadPlan(true).models).toEqual(PRELOAD_MODELS.map((f) => `models/${f}`))
   })
 })
 
