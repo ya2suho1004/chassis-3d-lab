@@ -1,6 +1,6 @@
 // AI 교관 대화 창(설계 07 §4-1) — 대본형 NPC 교관(과제 안내·검사)과 분리된 질의응답 보조. 판정·채점은 하지 않는다.
 import { useRef, useState } from 'react'
-import { askChat, chatErrorMessage, getChatEndpoint, splitBold, CHAT_HISTORY_TURNS, CHAT_QUESTION_MAX, type ChatMode, type ChatTurn } from './chatClient'
+import { askChat, chatErrorMessage, getChatEndpoint, keepQuestionAfter, splitBold, CHAT_HISTORY_TURNS, CHAT_QUESTION_MAX, type ChatMode, type ChatTurn } from './chatClient'
 import { saveChatTurn } from './chatStore'
 
 interface Line { q: string; a: string | null; error: string | null; masked: string[] }
@@ -39,6 +39,8 @@ export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId,
     } else {
       if (res.remaining !== undefined) setRemaining(res.remaining)
       setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, error: chatErrorMessage(res.code) } : l)))
+      // 인터넷이 끊겨 실패했으면 쓴 질문을 되살려 '보내기'만 다시 누르게 한다(그 사이 새로 쓴 글이 있으면 그대로)
+      if (keepQuestionAfter(res)) setText((t) => t || question)
     }
     void saveChatTurn({
       id: `${Date.now()}-${turnIndex}`, createdAt: new Date().toISOString(), sessionCode, anonymousStudentCode, recordId, stepId, difficultyMode, turnIndex,

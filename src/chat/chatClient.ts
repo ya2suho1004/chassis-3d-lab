@@ -50,6 +50,11 @@ export async function askChat(endpoint: string, a: ChatAsk, fetchImpl: typeof fe
   return parseChatResponse(text)
 }
 
+/** 실패한 질문을 입력란에 되살릴지 — 다시 보내면 될 수 있는 실패(인터넷 끊김·몰림)만. AI 꺼짐·횟수 다 씀은 되살리지 않는다 */
+export function keepQuestionAfter(res: ChatResult): boolean {
+  return !res.ok && res.retryable
+}
+
 /** 학생에게 보일 오류 문구 */
 export function chatErrorMessage(code: string): string {
   switch (code) {

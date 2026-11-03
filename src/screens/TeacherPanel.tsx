@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { loadIntroPrefs, saveIntroPrefs } from '../app/intro'
 import { caseKey, ENTRY_LABEL, MODE_LABEL, PHASE_LABEL, savePreset, type TeacherPreset } from '../app/teacherPreset'
 import { processOutbox, type OutboxItemResult } from '../delivery/outbox'
+import { sendResultLabel } from '../delivery/sendLabel'
 import { getSubmitEndpoint, SUBMIT_IS_FAKE } from '../delivery/config'
 import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
@@ -15,7 +16,6 @@ import { DEFAULT_SESSION_CODE, SESSIONS, applySessionRules, sessionDef } from '.
 import { DEFAULT_PRACTICE_SPEC, fmtMm, loadPracticeSpec, savePracticeSpec } from '../app/practiceSpec'
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
-const OUTCOME_LABEL: Record<OutboxItemResult['outcome'], string> = { acknowledged: '서버 접수 확인됨', rejected: '거절(제출자료 확인 필요)', conflict: '기록 충돌', pending: '대기(잠시 뒤 재시도)', confirmationPending: '접수 확인 필요(같은 ID로 재전송)', skipped: '건너뜀', saveFailed: '이 기기 저장 실패' }
 
 export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCountsChange, onClose }: {
   repo: Repository
@@ -190,7 +190,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
       {sendLog && (
         <ul className="sendlog" aria-label="전송 결과">
           {sendLog.length === 0 && <li>보낼 기록이 없습니다.</li>}
-          {sendLog.map((r) => (<li key={r.recordId}>{r.recordId.slice(0, 8)}… — {r.code === 'RATE_LIMITED' ? '신규 접수 상한 도달 — 교사 설정 확인(자동 회복 없음)' : OUTCOME_LABEL[r.outcome]}{r.code && r.outcome !== 'acknowledged' ? ` (${r.code})` : ''}</li>))}
+          {sendLog.map((r) => (<li key={r.recordId}>{r.recordId.slice(0, 8)}… — {sendResultLabel(r)}</li>))}
         </ul>
       )}
       <p className="small">전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</p>
