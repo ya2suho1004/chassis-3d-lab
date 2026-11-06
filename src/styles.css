@@ -368,8 +368,8 @@ button.far { border-color:#9e9e9e; color:#777; }
 .wa .av-chip { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); }
 .wa .av-chip[aria-pressed="true"] { background:var(--wa-navy); border-color:var(--wa-navy); color:#fff; }
 .wa .av-swatch[aria-pressed="true"] { box-shadow:0 0 0 3px var(--wa-navy); }
-.wa.start .start-sub { color:#8a6a4c; }
-.wa input[type=radio], .wa input[type=checkbox] { accent-color:var(--wa-orange); }
+.wa.start .start-sub { color:var(--wa-ink); }
+.wa input[type=radio], .wa input[type=checkbox] { accent-color:var(--wa-orange-d); }
 
 .worklog { position:relative; overflow:hidden; }
 .wl-head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding-right:110px; }
@@ -389,3 +389,12 @@ button.far { border-color:#9e9e9e; color:#777; }
 @keyframes wl-fall { to { transform:translateY(160px) rotate(260deg); opacity:0 } }
 .wl-closing { margin:10px 0 0; }
 @media (prefers-reduced-motion: reduce) { .wl-stamp.anim, .wl-confetti i { animation:none } }
+/* 글자가 노을 바탕 위에 바로 놓이는 곳은 진한 글자(대비) */
+.wa.start footer.small { color:var(--wa-ink); }
+/* 실습장에서 연 '캐릭터 다시 꾸미기' 덮개도 같은 바탕 */
+.av-overlay:has(.wa) { background:linear-gradient(180deg,#ffe0b2,#ffcf96 55%,#f6b27a); }
+/* 교사 화면 탭·색 견본 테두리도 공방 색으로 */
+.wa .tp-tabs button { border-color:var(--wa-line); }
+.wa .tp-tabs button.on { background:var(--wa-navy); border-color:var(--wa-navy); color:#fff; }
+.wa .av-swatch { box-shadow:0 0 0 1px var(--wa-line); }
+.wa .av-swatch[aria-pressed="true"] { box-shadow:0 0 0 3px var(--wa-navy); }
