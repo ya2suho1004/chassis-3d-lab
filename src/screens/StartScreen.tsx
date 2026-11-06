@@ -68,7 +68,7 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
   }
 
   return (
-    <main className="screen start">
+    <main className="screen start wa">
       <h1>섀시 가상 실습장</h1>
       <p className="start-sub">제동력 측정 · 최소회전반경 측정</p>
       <section className="card start-guide" aria-label="사용 안내">

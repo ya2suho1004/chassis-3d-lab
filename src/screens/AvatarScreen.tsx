@@ -44,7 +44,7 @@ export function AvatarScreen({ initial, editing = false, saveNote, onDone, onCan
   const look = { body: p.body, hairStyle: p.hairStyle, skin: p.skin, hairColor: p.hairColor, eye: p.eye }
 
   return (
-    <main className="screen avatar">
+    <main className="screen avatar wa">
       <h1>{editing ? '캐릭터 다시 꾸미기' : '내 캐릭터 만들기'}</h1>
       <div className="av-grid">
         <div>
@@ -52,7 +52,7 @@ export function AvatarScreen({ initial, editing = false, saveNote, onDone, onCan
         <section className="av-preview" aria-label="캐릭터 미리보기(끌어서 돌리기)">
           <Canvas camera={{ position: [0, 1.0, 3.7], fov: 30 }} dpr={[1, 2]}>
             <SeeCharacters />
-            <color attach="background" args={['#dfe7ec']} />
+            <color attach="background" args={['#f6e7d2']} />
             <hemisphereLight args={['#ffffff', '#8aa39a', 1.3]} />
             <directionalLight position={[2, 4, 3]} intensity={1.6} />
             <Suspense fallback={null}>
