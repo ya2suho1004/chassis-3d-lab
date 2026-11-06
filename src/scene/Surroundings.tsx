@@ -87,6 +87,7 @@ export function Surroundings({ layout }: { layout: SceneLayout }) {
     panel: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
   }), [])
   const panels = useMemo(() => lightPanels(b), [b])
+  const decor = useMemo(() => decorSpots(b, layout), [b, layout])
   const panelGeo = useMemo(() => new THREE.PlaneGeometry(1.2, 0.3), [])
   const w = b.xMax - b.xMin, d = b.zMax - b.zMin
   const cx = (b.xMin + b.xMax) / 2, cz = (b.zMin + b.zMax) / 2
@@ -112,7 +113,7 @@ export function Surroundings({ layout }: { layout: SceneLayout }) {
       {/* 천장(아래를 보는 면) + 조명판 */}
       <mesh rotation-x={Math.PI / 2} position={[cx, CEILING_H, cz]} material={mats.ceiling}><planeGeometry args={[w, d]} /></mesh>
       {panels.map(([x, z]) => <mesh key={`${x},${z}`} rotation-x={Math.PI / 2} position={[x, CEILING_H - 0.01, z]} geometry={panelGeo} material={mats.panel} />)}
-      {decorSpots(b, layout).map((d) => <Decor key={d.kind} d={d} />)}
+      {decor.map((d) => <Decor key={d.kind} d={d} />)}
     </group>
   )
 }

@@ -746,6 +746,8 @@ function Decor({ d }: { d: DecorSpot }) {
       ))}
 ```
 
+> 구현 뒤 화면 확인에서 떠 있는 회색 판처럼 보여 제거함(ca30a71).
+
 - [ ] **Step 5: 시험·계측부 색 확인**
 
 Run: `npx vitest run tests/decor.test.ts && npx vitest run 2>&1 | grep -E "Test Files|Tests "`

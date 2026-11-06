@@ -23,4 +23,12 @@ describe('workLogGroups', () => {
     expect(g[0]!.lines[0]).toBe('좌측 바퀴 조향각 —')
     expect(g[2]!.lines[0]).toBe('판정 —')
   })
+  it('제동력 사례 — 측정 묶음에 좌·우·축중 값과 단위', () => {
+    const t = listTasks().find((x) => x.taskId === 'braking-force' && x.measurement.caseId === 'case-rear-ok-240-200-600')!
+    let run = createTaskRun(t, { difficultyMode: 'guided' })
+    for (const [id, v] of [['left', '240'], ['right', '200'], ['axleWeight', '600']] as const)
+      run = submitResponse(run, id, v, `a-${id}`).run
+    const g = workLogGroups(summarizeResponses(run.responses))
+    expect(g[0]!.lines).toEqual(['좌 제동력 240 kg', '우 제동력 200 kg', '축중 600 kg'])
+  })
 })

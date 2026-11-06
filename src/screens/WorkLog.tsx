@@ -23,7 +23,7 @@ export function WorkLog({ run, passed, nickname }: { run: TaskRun; passed: boole
           </div>
         ))}
       </div>
-      {fx.includes('stamp') && <span className={`wl-stamp ${fx.includes('confetti') ? 'anim' : ''}`} role="img" aria-label="의뢰 완료 도장">의뢰 완료</span>}
+      {fx.includes('stamp') && <span className={`wl-stamp ${fx.includes('confetti') ? 'anim' : ''}`}>의뢰 완료</span>}
       {fx.includes('confetti') && <div className="wl-confetti" aria-hidden>{Array.from({ length: 8 }, (_, k) => <i key={k} style={{ left: `${8 + k * 11}%`, animationDelay: `${(k % 4) * 0.08}s` }} />)}</div>}
       {passed && <p className="wl-closing">교관: “{copy.closing}”</p>}
     </section>
