@@ -870,20 +870,26 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
   const hdri = assetUrl(LAB_HDRI)
   return (
     <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
-      <color attach="background" args={['#d9dfe4']} />
-      <fog attach="fog" args={['#d9dfe4', 24, 60]} />
+      <color attach="background" args={['#efe4d6']} />
+      <fog attach="fog" args={['#efe4d6', 24, 60]} />
       <Surroundings layout={layout} />
-      <hemisphereLight args={['#ffffff', '#2f6b4c', lowSpec ? 1.1 : 0.7]} />
-      <directionalLight position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
+      <hemisphereLight args={['#fff1dc', '#4f6b4c', lowSpec ? 1.1 : 0.7]} />
+      <directionalLight color="#ffe9cf" position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
         shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0005} />
       {/* 반사광: 품질 높음은 정비소 HDRI(1.6 MB), 낮음은 내려받기 없이 천장 조명판 모양의 간단한 빛으로 만든다 */}
-      {!lowSpec ? <Suspense fallback={null}><Environment files={hdri} environmentIntensity={0.55} /></Suspense> : (
+      {!lowSpec ? <Suspense fallback={null}><Environment files={hdri} environmentIntensity={0.45} /></Suspense> : (
         <Environment resolution={32} environmentIntensity={0.6}>
           <Lightformer form="rect" intensity={2} position={[0, 5, 0]} rotation-x={Math.PI / 2} scale={[10, 10, 1]} />
           <Lightformer form="rect" intensity={0.6} position={[0, 1, -8]} scale={[20, 3, 1]} />
           <Lightformer form="rect" intensity={0.6} position={[0, 1, 8]} rotation-y={Math.PI} scale={[20, 3, 1]} />
         </Environment>
       )}
+      {!lowSpec && [0, 1].map((i) => (
+        <mesh key={i} position={[mz.xMin - 1.2, 2.2, (mz.zMin + mz.zMax) / 2 - 3 + i * 4]} rotation={[0, Math.PI / 2, -0.5]}>
+          <planeGeometry args={[1.4, 5]} />
+          <meshBasicMaterial color="#fff4d6" transparent opacity={0.18} depthWrite={false} toneMapped={false} />
+        </mesh>
+      ))}
       <LayerSetup />
       {onFps && <FpsProbe onFps={onFps} />}
       <Floor r={mz} />
