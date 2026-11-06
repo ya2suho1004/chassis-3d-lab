@@ -338,3 +338,22 @@ button.far { border-color:#9e9e9e; color:#777; }
 .cr-error { background:#fde0e0; color:#b71c1c; }
 .cr-q, .cr-a { margin:4px 0; white-space:pre-wrap; line-height:1.5; }
 .cr-q b, .cr-a b { display:inline-block; min-width:34px; color:#1f4fa3; }
+
+/* ── 따뜻한 정비 공방(A안, 설계 2026-11-06) — main 에 .wa 를 붙인 화면만 바뀐다 ── */
+:root { --wa-cream:#fff6e5; --wa-paper:#fffaf0; --wa-line:#c98b4f; --wa-brown:#8b5e34; --wa-ink:#5b3a1e; --wa-orange:#f28c28; --wa-orange-d:#b45f12; --wa-navy:#26364a; --wa-stamp:#d2463a; }
+:root:has(main.wa.screen) body { background:linear-gradient(180deg,#ffe0b2 0%,#ffcf96 55%,#f6b27a 100%) fixed; }
+.wa.screen { color:var(--wa-ink); }
+.wa.screen h1 { display:inline-block; background:var(--wa-brown); color:#fff; padding:6px 18px; border-radius:12px 12px 4px 4px; box-shadow:0 3px 0 #5e3c1d; }
+.wa .card { background:var(--wa-cream); border:2px solid var(--wa-line); border-radius:16px; box-shadow:0 3px 0 var(--wa-line); }
+.wa button { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); border-radius:999px; box-shadow:0 2px 0 var(--wa-line); }
+.wa button:active:not(:disabled) { transform:translateY(2px); box-shadow:none; }
+.wa button.primary { background:var(--wa-orange); border-color:var(--wa-orange-d); color:#fff; box-shadow:0 2px 0 var(--wa-orange-d); }
+.wa button.link { border:none; background:none; box-shadow:none; color:var(--wa-brown); }
+.wa .small { color:#8a6a4c; }
+.wa input:not([type=radio]):not([type=checkbox]), .wa select { border:2px solid var(--wa-line); border-radius:10px; background:#fff; }
+/* 계측부는 원래 색(설계 §2-1): 답안 표·계기·입력 칸 */
+.wa table.sheet, .wa .gauge, .wa .field input { color:#17202a; }
+.wa table.sheet { background:#fff; }
+.wa table.sheet th, .wa table.sheet td { border-color:#d4d4d8; }
+/* 숫자 자릿수 고정 */
+.wa table.sheet, .wa .wl-step b { font-variant-numeric:tabular-nums; }
