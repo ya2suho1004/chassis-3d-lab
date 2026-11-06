@@ -136,13 +136,17 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
   const [avatarCue, setAvatarCue] = useState<AvatarCue | null>(null)
   const cuePrev = useRef<{ completed: string[]; off: string[] } | null>(null)
+  const prevDoneRef = useRef(0)
   useEffect(() => {
-    if (!run) { cuePrev.current = null; return }
+    if (!run) { cuePrev.current = null; prevDoneRef.current = 0; setFx((f) => (f.effects.length || f.seq ? { effects: [], seq: 0 } : f)); return }
     const now = { completed: run.completedSteps, off: run.offProgress as string[] }
+    const doneNow = run.completedSteps.length
+    const advanced = doneNow > prevDoneRef.current
+    prevDoneRef.current = doneNow
     const step = newCue(cuePrev.current, now)
     cuePrev.current = now
     if (!step) return
-    const effects = reactionsFor(reactionEventForStep(step), { mode: run.difficultyMode, reducedMotion: prefersReducedMotion(), sound: soundOn })
+    const effects = reactionsFor(reactionEventForStep(step), { mode: run.difficultyMode, reducedMotion: prefersReducedMotion(), sound: soundOn }).filter((e) => e !== 'checkPop' || advanced)
     if (effects.includes('tick')) sound.tick()
     setFx((f) => ({ effects, seq: f.seq + 1 }))
     const action = actionForStep(step)
@@ -270,7 +274,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         {!talking && (
           <>
             <div className="g-status">
-              <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.effects.includes('sparkle') ? fx.seq : 'ppe'} className={`g-ppe ${fx.effects.includes('sparkle') ? 'spark' : ''}`}>보호구 착용</span>}</div>
+              <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.effects.includes('sparkle') ? fx.seq : 'ppe'} className={`g-ppe ${fx.effects.includes('sparkle') ? 'spark' : ''}`} onAnimationEnd={() => setFx((f) => ({ ...f, effects: [] }))}>보호구 착용</span>}</div>
               <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}>🎥 {VIEW_LABEL[viewMode]}</button>
               <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}>{soundOn ? '🔊' : '🔇'}</button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
@@ -295,7 +299,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
-              {run && ctx && <p key={fx.effects.includes('checkPop') ? fx.seq : 'p'} className={`g-progress ${fx.effects.includes('checkPop') ? 'pop' : ''}`}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
+              {run && ctx && <p key={fx.effects.includes('checkPop') ? fx.seq : 'p'} className={`g-progress ${fx.effects.includes('checkPop') ? 'pop' : ''}`} onAnimationEnd={() => setFx((f) => ({ ...f, effects: [] }))}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
               <div className="g-quest-btns">
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
                 <button onClick={() => goTo(npcSpot)}>교관에게</button>

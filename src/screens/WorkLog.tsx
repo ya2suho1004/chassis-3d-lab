@@ -14,7 +14,7 @@ export function WorkLog({ run, passed, nickname }: { run: TaskRun; passed: boole
   const fx = useMemo(() => (passed ? reactionsFor('inspectionPassed', { mode: run.difficultyMode, reducedMotion: prefersReducedMotion(), sound: false }) : []), [passed, run.difficultyMode])
   return (
     <section className="card worklog" aria-label="정비 일지">
-      <div className="wl-head"><span className="wl-tag">정비 일지</span><b>“{copy.complaint}”{nickname ? ` — ${nickname}` : ''}</b></div>
+      <div className="wl-head"><span className="wl-tag">정비 일지</span><b>“{copy.complaint}”</b>{nickname && <span className="wl-who">정비: {nickname}</span>}</div>
       <div className="wl-flow">
         {groups.map((g, i) => (
           <div key={g.title} className="wl-cell">
