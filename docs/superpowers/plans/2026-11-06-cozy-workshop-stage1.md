@@ -299,19 +299,21 @@ git commit -m "feat(공방): 정비 일지 묶음(측정·계산·판정 최종 
 
 ```css
 /* ── 따뜻한 정비 공방(A안, 설계 2026-11-06) — main 에 .wa 를 붙인 화면만 바뀐다 ── */
+/* 공통 규칙은 :where(.wa) 로 우선순위를 낮춰, 기존 부품 규칙(.g-*, .av-swatch 등)이 그대로 이기게 한다 */
 :root { --wa-cream:#fff6e5; --wa-paper:#fffaf0; --wa-line:#c98b4f; --wa-brown:#8b5e34; --wa-ink:#5b3a1e; --wa-orange:#f28c28; --wa-orange-d:#b45f12; --wa-navy:#26364a; --wa-stamp:#d2463a; }
-:root:has(main.wa.screen) body { background:linear-gradient(180deg,#ffe0b2 0%,#ffcf96 55%,#f6b27a 100%) fixed; }
+:root:has(main.wa.screen) body { background-color:#ffcf96; }
+:root:has(main.wa.screen) body::before { content:""; position:fixed; inset:0; z-index:-1; background:linear-gradient(180deg,#ffe0b2 0%,#ffcf96 55%,#f6b27a 100%); }
 .wa.screen { color:var(--wa-ink); }
 .wa.screen h1 { display:inline-block; background:var(--wa-brown); color:#fff; padding:6px 18px; border-radius:12px 12px 4px 4px; box-shadow:0 3px 0 #5e3c1d; }
-.wa .card { background:var(--wa-cream); border:2px solid var(--wa-line); border-radius:16px; box-shadow:0 3px 0 var(--wa-line); }
-.wa button { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); border-radius:999px; box-shadow:0 2px 0 var(--wa-line); }
-.wa button:active:not(:disabled) { transform:translateY(2px); box-shadow:none; }
-.wa button.primary { background:var(--wa-orange); border-color:var(--wa-orange-d); color:#fff; box-shadow:0 2px 0 var(--wa-orange-d); }
-.wa button.link { border:none; background:none; box-shadow:none; color:var(--wa-brown); }
-.wa .small { color:#8a6a4c; }
-.wa input:not([type=radio]):not([type=checkbox]), .wa select { border:2px solid var(--wa-line); border-radius:10px; background:#fff; }
-/* 계측부는 원래 색(설계 §2-1): 답안 표·계기·입력 칸 */
-.wa table.sheet, .wa .gauge, .wa .field input { color:#17202a; }
+:where(.wa) .card { background:var(--wa-cream); border:2px solid var(--wa-line); border-radius:16px; box-shadow:0 3px 0 var(--wa-line); }
+:where(.wa) button { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); border-radius:999px; box-shadow:0 2px 0 var(--wa-line); }
+:where(.wa) button:where(:active:not(:disabled)) { translate:0 2px; box-shadow:none; }
+:where(.wa) button.primary { background:var(--wa-orange); border-color:var(--wa-orange-d); color:#fff; box-shadow:0 2px 0 var(--wa-orange-d); }
+:where(.wa) button.link { border:none; background:none; box-shadow:none; color:var(--wa-brown); }
+.wa.screen .small { color:#8a6a4c; }
+.wa input:not([type=radio],[type=checkbox],[type=range],[type=color],[type=file]):not(table.sheet input, .field input), .wa select { border:2px solid var(--wa-line); border-radius:10px; background:#fff; }
+/* 계측부는 원래 색(설계 §2-1): 답안 표·입력 칸. 계기(.gauge)는 원래 검은 바탕·연두 글자라 건드리지 않는다 */
+.wa table.sheet, .wa .field input { color:#17202a; }
 .wa table.sheet { background:#fff; }
 .wa table.sheet th, .wa table.sheet td { border-color:#d4d4d8; }
 /* 숫자 자릿수 고정 */
@@ -525,9 +527,6 @@ git commit -m "feat(공방): 결과 화면 정비 일지 — 손님 사연·측�
 .game.wa .g-choices button.primary { background:var(--wa-orange); border-color:var(--wa-orange-d); color:#fff; }
 .game.wa .g-menu { background:var(--wa-cream); border:2px solid var(--wa-line); }
 .game.wa .g-gaugebtn { background:var(--wa-navy); }
-/* 측정판 보기 버튼 줄은 계측 조작이라 원래 모양 그대로(.wa button 이 뒤에 와서 덮지 않게 다시 적음) */
-.game.wa .g-ttbar button { border:2px solid #fff; background:rgba(20,30,40,.82); color:#fff; box-shadow:none; }
-.game.wa .g-ttbar button.on { background:#1565c0; }
 ```
 
 - [ ] **Step 3: 화면 확인(품질 높음·낮음)**
