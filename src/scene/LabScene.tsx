@@ -884,12 +884,6 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
           <Lightformer form="rect" intensity={0.6} position={[0, 1, 8]} rotation-y={Math.PI} scale={[20, 3, 1]} />
         </Environment>
       )}
-      {!lowSpec && [0, 1].map((i) => (
-        <mesh key={i} position={[mz.xMin - 1.2, 2.2, (mz.zMin + mz.zMax) / 2 - 3 + i * 4]} rotation={[0, Math.PI / 2, -0.5]}>
-          <planeGeometry args={[1.4, 5]} />
-          <meshBasicMaterial color="#fff4d6" transparent opacity={0.18} depthWrite={false} toneMapped={false} />
-        </mesh>
-      ))}
       <LayerSetup />
       {onFps && <FpsProbe onFps={onFps} />}
       <Floor r={mz} />
