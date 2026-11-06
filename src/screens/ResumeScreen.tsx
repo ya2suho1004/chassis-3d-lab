@@ -3,7 +3,7 @@ import type { Draft } from '../records/repository'
 export function ResumeScreen({ draft, onResume, onDiscard }: { draft: Draft; onResume: () => void; onDiscard: () => void }) {
   const s = draft.snapshot
   return (
-    <main className="screen start">
+    <main className="screen start wa">
       <h1>끝내지 않은 수행이 있습니다</h1>
       <section className="card">
         <p>코드 <b>{draft.session.anonymousStudentCode}</b> · {s.task.title} · {s.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</p>
