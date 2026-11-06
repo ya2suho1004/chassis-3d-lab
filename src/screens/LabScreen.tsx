@@ -28,6 +28,7 @@ import { ChatPanel } from '../chat/ChatPanel'
 import { AvatarScreen } from './AvatarScreen'
 import { IntroArt } from './IntroArt'
 import { tipsFor } from '../app/intro'
+import { requestCopy } from '../app/requests'
 import { chatTaskId, loadBadge, nextHighlightId } from '../app/labGuide'
 import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
 import type { DifficultyMode } from '../domain/taskEngine'
@@ -250,7 +251,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
     const discPractice: DiscPractice = { ctl: discCtl, disc: discCase, bezelDeg: discBezel, open: discOpen && !talking }
     const backlashPractice: BacklashPractice = { st: blSt, bl: blCase, bezelDeg: blBezel, held: blHeld, open: blOpen && !talking }
     return (
-      <main className={`game ${talking ? 'talking' : ''}`}>
+      <main className={`game wa ${talking ? 'talking' : ''}`}>
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
@@ -282,7 +283,8 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             </div>
 
             {!practicing && !ttSide && <div className="g-quest">
-              <div className="g-quest-title">{run ? task.title : '실습장 둘러보기'}</div>
+              <div className="g-quest-title">{run ? '오늘의 의뢰' : '실습장 둘러보기'}</div>
+              {run && <p className="g-req">“{requestCopy(run.task.taskId).complaint}” <span className="g-req-task">{task.title}</span></p>}
               {!run && <p>장비를 눌러 도감을 채우고, 교관에게 가서 과제를 받으세요.</p>}
               {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
