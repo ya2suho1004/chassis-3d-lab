@@ -9,6 +9,7 @@ import type { RecordPayload } from '../domain/record'
 import type { StoredRecord } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
 import { canonicalize, JcsError, sha256Hex, utf8Length } from './jcs'
+import { deadline, SUBMIT_TIMEOUT_MS } from './timeout'
 
 export const PROTOCOL_VERSION = '1'
 export const CANONICAL_MAX_BYTES = 32 * 1024
@@ -23,6 +24,8 @@ export interface SubmitDeps {
   endpointUrl: string
   now: () => Date
   maxAttempts?: number
+  /** 요청·응답 읽기 대기 제한(ms). 기본 SUBMIT_TIMEOUT_MS */
+  timeoutMs?: number
 }
 
 export type SubmitOutcome =
@@ -114,15 +117,21 @@ export async function submitRecord(rec: StoredRecord, deps: SubmitDeps): Promise
   const localHash = await sha256Hex(canonical)
 
   // 2. 전송
+  //    응답이 마감 안에 안 오면 TIMEOUT — 서버가 받았을 수 있으므로 confirmationPending(같은 recordId로 재확인)
   let res: Response
-  try {
-    res = await deps.fetch(deps.endpointUrl, { method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body })
-  } catch {
-    return pendingConfirm('NETWORK_ERROR', true)
-  }
-  if (res.type === 'opaque' || res.type === 'opaqueredirect' || res.status === 0) return pendingConfirm('OPAQUE_RESPONSE', true)
   let text = ''
-  try { text = await res.text() } catch { return pendingConfirm('UNREADABLE_ACK', true) }
+  const d = deadline(deps.timeoutMs ?? SUBMIT_TIMEOUT_MS)
+  try {
+    try {
+      res = await d.run(deps.fetch(deps.endpointUrl, { method: 'POST', mode: 'cors', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body, signal: d.signal }))
+    } catch {
+      return pendingConfirm(d.expired() ? 'TIMEOUT' : 'NETWORK_ERROR', true)
+    }
+    if (res.type === 'opaque' || res.type === 'opaqueredirect' || res.status === 0) return pendingConfirm('OPAQUE_RESPONSE', true)
+    try { text = await d.run(res.text()) } catch { return pendingConfirm(d.expired() ? 'TIMEOUT' : 'UNREADABLE_ACK', true) }
+  } finally {
+    d.clear()
+  }
 
   // 3. ack 검증
   const ack = parseAck(text)

@@ -1,9 +1,9 @@
 // AI 교관 대화 창(설계 07 §4-1) — 대본형 NPC 교관(과제 안내·검사)과 분리된 질의응답 보조. 판정·채점은 하지 않는다.
 import { useRef, useState } from 'react'
-import { askChat, chatErrorMessage, getChatEndpoint, keepQuestionAfter, splitBold, CHAT_HISTORY_TURNS, CHAT_QUESTION_MAX, type ChatMode, type ChatTurn } from './chatClient'
+import { askChat, chatErrorMessage, getChatEndpoint, keepQuestionAfter, serverLogNote, splitBold, CHAT_HISTORY_TURNS, CHAT_QUESTION_MAX, type ChatMode, type ChatTurn } from './chatClient'
 import { saveChatTurn } from './chatStore'
 
-interface Line { q: string; a: string | null; error: string | null; masked: string[] }
+interface Line { q: string; a: string | null; error: string | null; masked: string[]; note?: string | null }
 
 function Bold({ text }: { text: string }) {
   return <>{splitBold(text).map((p, i) => (p.bold ? <b key={i}>{p.text}</b> : <span key={i}>{p.text}</span>))}</>
@@ -35,7 +35,7 @@ export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId,
     const res = await askChat(endpoint, { sessionCode, anonymousStudentCode, recordId, stepId, taskId, difficultyMode, question, history, turnIndex })
     if (res.ok) {
       setRemaining(res.remaining)
-      setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, a: res.answer, masked: res.masked } : l)))
+      setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, a: res.answer, masked: res.masked, note: serverLogNote(res) } : l)))
     } else {
       if (res.remaining !== undefined) setRemaining(res.remaining)
       setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, error: chatErrorMessage(res.code) } : l)))
@@ -66,7 +66,7 @@ export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId,
         <b>AI 교관</b>
         <button className="link" onClick={() => setOpen(false)}>접기</button>
       </div>
-      <p className="chatnotice">AI 교관과 대화합니다(사람이 아님). 이름·전화번호 등 개인정보를 쓰지 마세요.{difficultyMode !== 'guided' ? ' 지금은 안내 없음 단계라 정답 대신 힌트를 줍니다.' : ''}</p>
+      <p className="chatnotice">AI 교관과 대화합니다(사람이 아님). 이름·전화번호 등 개인정보를 쓰지 마세요. 질문과 답은 이 기기와 서버에 저장될 수 있고 선생님이 볼 수 있어요. AI 답은 틀릴 수 있어요.{difficultyMode !== 'guided' ? ' 지금은 안내 없음 단계라 정답 대신 힌트를 줍니다.' : ''}</p>
       <div className="chatlog" ref={listRef} aria-live="polite">
         {lines.length === 0 && <p className="small">예: "편차는 어떻게 계산해요?", "롤러에 차를 올릴 때 뭘 조심해요?"</p>}
         {lines.map((l, i) => (
@@ -76,6 +76,7 @@ export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId,
             {l.a === null && !l.error && <p className="a pending">답을 쓰는 중…</p>}
             {l.error && <p className="a error">{l.error}</p>}
             {l.masked.length > 0 && <p className="small">개인정보로 보이는 부분은 가려서 보냈어요.</p>}
+            {l.note && <p className="small">{l.note}</p>}
           </div>
         ))}
       </div>

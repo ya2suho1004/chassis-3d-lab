@@ -1,5 +1,7 @@
 // AI 교관 챗봇 전송 — 서버 chat 함수(supabase/functions/chat)에 text/plain JSON으로 보낸다(브라우저 사전 확인 요청 없음, 인증·비밀 없음).
 // 응답은 모양을 검사해 읽는다. 읽지 못하면 NETWORK/INVALID_RESPONSE로 돌려준다.
+import { CHAT_TIMEOUT_MS, deadline } from '../delivery/timeout'
+
 export type ChatMode = 'guided' | 'unguided' | 'timedAssessment'
 export interface ChatTurn { q: string; a: string }
 export interface ChatAsk {
@@ -38,21 +40,33 @@ export function parseChatResponse(text: string): ChatResult {
   return { ok: false, code: v.code, retryable: v.retryable === true, ...(Number.isInteger(v.remaining) ? { remaining: v.remaining } : {}) }
 }
 
-export async function askChat(endpoint: string, a: ChatAsk, fetchImpl: typeof fetch = fetch): Promise<ChatResult> {
-  let res: Response
+export async function askChat(endpoint: string, a: ChatAsk, fetchImpl: typeof fetch = fetch, timeoutMs: number = CHAT_TIMEOUT_MS): Promise<ChatResult> {
+  // 연결은 붙어 있는데 답이 안 오는 경우를 끊는다(요청·본문 읽기 모두). 시간 초과는 끊김과 구분해 TIMEOUT
+  const d = deadline(timeoutMs)
+  const fail = (): ChatResult => ({ ok: false, code: d.expired() ? 'TIMEOUT' : 'NETWORK', retryable: true })
   try {
-    res = await fetchImpl(endpoint, { method: 'POST', mode: 'cors', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: buildChatBody(a) })
-  } catch {
-    return { ok: false, code: 'NETWORK', retryable: true }
+    let res: Response
+    try {
+      res = await d.run(fetchImpl(endpoint, { method: 'POST', mode: 'cors', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: buildChatBody(a), signal: d.signal }))
+    } catch {
+      return fail()
+    }
+    let text = ''
+    try { text = await d.run(res.text()) } catch { return fail() }
+    return parseChatResponse(text)
+  } finally {
+    d.clear()
   }
-  let text = ''
-  try { text = await res.text() } catch { return { ok: false, code: 'NETWORK', retryable: true } }
-  return parseChatResponse(text)
 }
 
 /** 실패한 질문을 입력란에 되살릴지 — 다시 보내면 될 수 있는 실패(인터넷 끊김·몰림)만. AI 꺼짐·횟수 다 씀은 되살리지 않는다 */
 export function keepQuestionAfter(res: ChatResult): boolean {
   return !res.ok && res.retryable
+}
+
+/** 답은 왔지만 서버 대화 기록 저장을 확인하지 못했을 때(logged=false) 작은 안내 — 교사 목록에 안 보이는 이유(Codex 검토 A7) */
+export function serverLogNote(res: ChatResult): string | null {
+  return res.ok && !res.logged ? '이 질문은 선생님 대화 목록에 저장되지 않았을 수 있어요.' : null
 }
 
 /** 학생에게 보일 오류 문구 */
@@ -64,6 +78,7 @@ export function chatErrorMessage(code: string): string {
     case 'UPSTREAM_BUSY': return '질문이 몰려 있어요. 잠시 후 다시 물어보세요.'
     case 'INVALID_REQUEST': return '질문을 보낼 수 없어요. 300자 이내로 다시 써 주세요.'
     case 'NETWORK': return '인터넷 연결을 확인한 뒤 다시 물어보세요.'
+    case 'TIMEOUT': return '답이 오래 오지 않았어요. 잠시 뒤 ‘보내기’를 다시 눌러 보세요.'
     default: return '답을 받지 못했어요. 잠시 후 다시 물어보세요.'
   }
 }

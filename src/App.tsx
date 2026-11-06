@@ -64,7 +64,7 @@ export function App() {
 
   if (!introDone && intro !== 'none') return <IntroScreen plan={intro} onDone={() => setIntroDone(true)} />
   if (screen.name === 'loading') return <main className="screen"><p>저장소를 여는 중…</p></main>
-  if (screen.name === 'storageError') return <main className="screen"><p className="error">이 기기의 저장소(IndexedDB)를 열 수 없습니다: {screen.message}</p><p className="small">시크릿 모드이거나 브라우저가 저장을 막고 있을 수 있습니다. 저장 없이 진행하는 기능은 아직 없습니다.</p></main>
+  if (screen.name === 'storageError') return <main className="screen"><p className="error">이 기기의 저장소(IndexedDB)를 열 수 없습니다: {screen.message}</p><p className="small">시크릿 모드이거나 브라우저가 저장을 막고 있을 수 있습니다. 일반 창(시크릿 모드가 아닌 창)이나 다른 기기에서 다시 열어 보세요. 그래도 안 되면 선생님께 알려 주세요.</p></main>
 
   if (screen.name === 'resume') {
     return (

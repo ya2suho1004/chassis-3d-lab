@@ -28,6 +28,7 @@ import { ChatPanel } from '../chat/ChatPanel'
 import { AvatarScreen } from './AvatarScreen'
 import { IntroArt } from './IntroArt'
 import { tipsFor } from '../app/intro'
+import { chatTaskId, loadBadge, nextHighlightId } from '../app/labGuide'
 import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
 import type { DifficultyMode } from '../domain/taskEngine'
 
@@ -84,7 +85,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const lowSpecRef = useRef(lowSpec)
   lowSpecRef.current = lowSpec
   /** 처음 불러오기 화면(모델·빛 파일). 한 번 끝나면 다시 띄우지 않는다. 20초가 지나도 안 끝나면 그냥 닫는다 */
-  const { active: loadingActive, progress } = useProgress()
+  const { active: loadingActive, progress, errors: loadErrors } = useProgress()
   const [loadedOnce, setLoadedOnce] = useState(false)
   useEffect(() => { if (!loadingActive && progress >= 100) { const t = setTimeout(() => setLoadedOnce(true), 400); return () => clearTimeout(t) } }, [loadingActive, progress])
   // 로딩 화면 팁(설계 2026-11-03): 안내 없음이면 순서 팁 없음, 비기록이면 AI 팁 없음. 3초마다 바뀐다
@@ -92,6 +93,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const [tipIdx, setTipIdx] = useState(() => Math.floor(Math.random() * 1000))
   useEffect(() => { if (loadedOnce) return; const t = setInterval(() => setTipIdx((i) => i + 1), 3000); return () => clearInterval(t) }, [loadedOnce])
   useEffect(() => { const t = setTimeout(() => setLoadedOnce(true), 20000); return () => clearTimeout(t) }, [])
+  const loadNote = loadBadge({ loadedOnce, active: loadingActive, progress, errorCount: loadErrors.length })
   /** 첫 조작 안내(이 기기에서 한 번만) */
   const [guideOpen, setGuideOpen] = useState(() => { try { return localStorage.getItem('lab.guide.v1') !== 'seen' } catch { return true } })
   const closeGuide = () => { setGuideOpen(false); try { localStorage.setItem('lab.guide.v1', 'seen') } catch { /* 저장 못 해도 진행 */ } }
@@ -218,7 +220,8 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const panelNear = nearIds.some((id) => layout.equipment.find((e) => e.id === id)?.kind === 'panel')
   const nearNpc = Math.hypot(pos.x - layout.npc.x, pos.z - layout.npc.z) <= NPC_RADIUS
   const selected = layout.equipment.find((e) => e.id === selectedId) ?? null
-  const requiredNow = run?.nextStepId ? (task.steps.find((s) => s.stepId === run.nextStepId)?.equipmentId ?? null) : null
+  /** 다음 단계 장비 강조 — 안내 있음일 때만(app/labGuide) */
+  const requiredNow = nextHighlightId(run)
   const displayMode = run?.displayMode ?? 'threeD'
   /** 이름표: 게임 화면 기본은 '가까운 것만'(먼 작동 장비는 ◆), 기본 화면은 둘러보기 전체·과제 중 필요한 것만 */
   const labelMode: LabelMode = labelChoice ?? (uiStyle === 'game' ? 'near' : run ? 'focus' : 'all')
@@ -401,6 +404,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           </div>
         )}
         {qualityNote && <div className="g-note" role="status">{qualityNote}</div>}
+        {loadNote && <div className="g-loadnote" role="status" aria-live="polite">{loadNote}</div>}
 
         {/* 과제 패널은 늘 붙여 두고(상태·자동 저장 유지) 서랍으로만 열고 닫는다 */}
         {run && (
@@ -415,7 +419,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
             <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
             <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
-              stepId={run?.nextStepId ?? null} taskId={run?.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : null} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
+              stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
           </aside>
         )}
 
@@ -457,7 +461,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
             <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
-              onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
+              onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} />
             <div className="quicknav">
               <button onClick={() => goTo({ x: layout.npc.x - 1.0, z: layout.npc.z })}>교관에게 가기</button>
               {layout.equipment.filter((e) => e.interactive && e.accessPoint).map((e) => (
@@ -532,7 +536,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
 
           {!reviewOpen && !noRecord && (
             <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
-              stepId={run?.nextStepId ?? null} taskId={run?.task.taskId === 'min-turning-radius' ? 'min-turning-radius' : null} difficultyMode={run?.difficultyMode ?? mode} />
+              stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} />
           )}
         </section>
       </div>

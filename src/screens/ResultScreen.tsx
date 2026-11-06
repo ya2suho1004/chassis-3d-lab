@@ -4,9 +4,10 @@ import type { TaskRun } from '../domain/taskEngine'
 import { summarizeResponses } from '../domain/grading'
 import type { DeliveryEnvelope } from '../records/types'
 import { toSummaryCsv } from '../records/csv'
+import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/resultLabels'
 
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
-const ERROR_HINT: Record<string, string> = { NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
+const ERROR_HINT: Record<string, string> = { TIMEOUT: '서버 응답이 오지 않음 — 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
 
 export function ResultScreen({ session, run, completionStatus, envelope, saveError, noRecord = false, nickname, onNextStudent }: {
   session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null
@@ -53,9 +54,9 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
         <div>
           <h2>요약</h2>
           <ul>
-            <li>활성 학습시간: {payload.ok ? payload.value.durationSeconds : '—'} 초 (숨김·새로고침 공백 제외, 품질 {run.timeQuality})</li>
-            <li>학습 오류: {run.errorCount} ({Object.entries(run.errorTypes).map(([k, v]) => `${k} ${v}`).join(', ') || '없음'})</li>
-            <li>안전 위반: {run.safetyViolationCount} ({Object.entries(run.safetyViolationTypes).map(([k, v]) => `${k} ${v}`).join(', ') || '없음'})</li>
+            <li>활성 학습시간: {payload.ok ? payload.value.durationSeconds : '—'} 초 (화면을 가린 시간·새로고침 공백 제외 · {timeQualityLabel(run.timeQuality)})</li>
+            <li>학습 오류: {run.errorCount} ({countsText(run.errorTypes)})</li>
+            <li>안전 위반: {run.safetyViolationCount} ({countsText(run.safetyViolationTypes)})</li>
             <li>힌트 요청: {run.hintCount} · 일시중지 {run.pauseCount} · 재개 {run.resumeCount}</li>
             <li>NPC 검사 횟수: {run.npcInspectionCount}</li>
             <li>수업 시점: {session.usagePhase === 'preview' ? '대기 중 예습' : session.usagePhase === 'review' ? '실습 후 복습' : '기타'} · 도움 방식: {run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</li>
@@ -71,9 +72,9 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
           <table className="sheet small">
             <thead><tr><th>항목</th><th>제시/기준값</th><th>최초 답</th><th>최종 답</th></tr></thead>
             <tbody>
-              {sum.measurementInputs.map((i) => <tr key={i.itemId}><td>{i.itemId}</td><td>{i.presentedValue}</td><td>{i.firstInput ?? '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalInput ?? '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
-              {sum.calculationAnswers.map((i) => <tr key={i.itemId}><td>{i.itemId}</td><td>{i.computedReferenceValue}</td><td>{i.firstInput ?? '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalInput ?? '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
-              {sum.judgmentAnswers.map((i) => <tr key={i.itemId}><td>{i.itemId}</td><td>{sum.vehicleVerdict}</td><td>{i.firstAnswer ?? '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalAnswer ?? '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
+              {sum.measurementInputs.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{i.presentedValue}</td><td>{i.firstInput ?? '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalInput ?? '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
+              {sum.calculationAnswers.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{i.computedReferenceValue}</td><td>{i.firstInput ?? '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalInput ?? '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
+              {sum.judgmentAnswers.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{verdictLabel(sum.vehicleVerdict)}</td><td>{i.firstAnswer ? verdictLabel(i.firstAnswer) : '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalAnswer ? verdictLabel(i.finalAnswer) : '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
             </tbody>
           </table>
         </div>
@@ -85,14 +86,17 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
         </section>
       ) : (
       <section className="card">
-        <h2>연구 기록 payload (record.schema {payload.ok ? payload.value.schemaVersion : ''} 형식 · 시연이므로 researchEligible=false)</h2>
-        {payload.ok ? <textarea readOnly value={json} rows={12} aria-label="payload" /> : <p className="error">{payload.error}</p>}
+        <details>
+          <summary>교사용 상세 기록 보기 (record.schema {payload.ok ? payload.value.schemaVersion : ''} 형식 · 시연이므로 researchEligible=false)</summary>
+          {payload.ok && <textarea readOnly value={json} rows={12} aria-label="payload" />}
+        </details>
+        {!payload.ok && <p className="error">{payload.error}</p>}
         <div className="row">
           <button onClick={() => dl(json, `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.json`, 'application/json')} disabled={!payload.ok}>JSON 내려받기</button>
           <button onClick={() => payload.ok && dl(toSummaryCsv([{ payload: payload.value, envelope: env }]), `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.csv`, 'text/csv;charset=utf-8')} disabled={!payload.ok}>이 수행 CSV 내려받기</button>
           <button className="primary" onClick={onNextStudent}>다음 학생</button>
         </div>
-        <p className="small">‘다음 학생’은 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않으며 전송 기능이 생기면 원래 코드로 보내집니다.</p>
+        <p className="small">‘다음 학생’은 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않고, 교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다.</p>
       </section>
       )}
     </main>

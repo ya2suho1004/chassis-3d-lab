@@ -1,3 +1,4 @@
+import { ITEM_LABEL } from '../app/resultLabels'
 import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
@@ -33,7 +34,7 @@ export interface TaskContext {
   panel: PanelReadout
 }
 
-const ITEM_LABEL: Record<string, string> = { left: '좌 제동력', right: '우 제동력', axleWeight: '축중', deviation: '편차(%)', sum: '합(%)', vehicleCondition: '판정', leftAngle: '좌측 바퀴 조향각', rightAngle: '우측 바퀴 조향각', radius: '최소회전반경(m)' }
+// 항목 표시 이름은 app/resultLabels(결과 화면과 같은 이름)
 const DIR_LABEL = { left: '좌회전', right: '우회전' } as const
 const ISSUE_LABEL: Record<string, string> = { STEP_NOT_COMPLETED: '단계 미완료', UNANSWERED: '미응답', FINAL_INCORRECT: '최종 답 오답', NOT_EVALUABLE: '채점 불가', SAFETY_NOT_SATISFIED: '안전 조건 미충족' }
 

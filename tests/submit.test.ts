@@ -111,6 +111,15 @@ describe('ack 검증과 상태 전이 (설계 15 §5)', () => {
       expect(r.patch.uploadStatus, name).toBe('confirmationPending'); expect(r.patch.lastErrorCode, name).toBe(code); expect(r.patch.receiptId, name).toBeNull()
     }
   })
+  test('응답이 30초(대기 제한) 안에 안 오면 TIMEOUT → confirmationPending, 같은 ID로 재확인(Codex 검토 A3)', async () => {
+    const hang = (() => new Promise<Response>(() => {})) as unknown as typeof fetch
+    const r = await submitRecord(record(), deps(hang, { timeoutMs: 20 }))
+    expect(r.outcome.kind).toBe('confirmationPending'); expect(r.patch.lastErrorCode).toBe('TIMEOUT'); expect(r.patch.receiptId).toBeNull()
+    expect(r.patch.nextRetryAt).not.toBeNull()
+    const bodyHang = { type: 'basic', status: 200, ok: true, headers: new Headers(), text: () => new Promise<string>(() => {}) } as unknown as Response
+    const r2 = await submitRecord(record(), deps(fakeFetch(() => bodyHang).fetch, { timeoutMs: 20 }))
+    expect(r2.patch.lastErrorCode).toBe('TIMEOUT')
+  })
   test('네트워크 오류(fetch 예외)·opaque 응답 → confirmationPending, 원본·ID 유지', async () => {
     const r = await submitRecord(record(), deps((async () => { throw new TypeError('Failed to fetch') }) as unknown as typeof fetch))
     expect(r.patch.uploadStatus).toBe('confirmationPending'); expect(r.patch.lastErrorCode).toBe('NETWORK_ERROR')
