@@ -12,17 +12,18 @@ describe('reactionsFor', () => {
   it('사건별 연출', () => {
     const o = { mode: 'guided' as const, reducedMotion: false, sound: true }
     expect(reactionsFor('stepDone', o)).toEqual(['checkPop'])
-    expect(reactionsFor('steerLimit', o)).toEqual(['tick'])
+    expect(reactionsFor('steerLimit', o)).toEqual(['tick', 'checkPop'])
     expect(reactionsFor('ppeOn', o)).toEqual(['sparkle'])
     expect(reactionsFor('inspectionPassed', o)).toEqual(['stamp', 'confetti'])
   })
   it('소리는 켰을 때만', () => {
-    expect(reactionsFor('steerLimit', { mode: 'guided', reducedMotion: false, sound: false })).toEqual([])
+    expect(reactionsFor('steerLimit', { mode: 'guided', reducedMotion: false, sound: false })).toEqual(['checkPop'])
   })
   it('움직임 줄이기: 움직이는 연출을 빼고 도장은 정지 표시로 남긴다', () => {
     const o = { mode: 'guided' as const, reducedMotion: true, sound: false }
     expect(reactionsFor('stepDone', o)).toEqual([])
     expect(reactionsFor('ppeOn', o)).toEqual([])
+    expect(reactionsFor('steerLimit', { ...o, sound: true })).toEqual(['tick'])
     expect(reactionsFor('inspectionPassed', o)).toEqual(['stamp'])
   })
 })

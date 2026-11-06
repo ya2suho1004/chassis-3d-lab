@@ -10,7 +10,7 @@ export function reactionsFor(ev: ReactionEvent, o: { mode: DifficultyMode; reduc
   void o.mode // 모드는 일부러 쓰지 않는다(시험이 같음을 확인)
   switch (ev) {
     case 'stepDone': return o.reducedMotion ? [] : ['checkPop']
-    case 'steerLimit': return o.sound ? ['tick'] : [] // 핸들이 조작 한계에 닿은 소리 — 정답 각도 신호 아님
+    case 'steerLimit': return [...(o.sound ? ['tick'] : []), ...(o.reducedMotion ? [] : ['checkPop'])] as Effect[] // 핸들이 조작 한계에 닿은 소리 — 정답 각도 신호 아님
     case 'ppeOn': return o.reducedMotion ? [] : ['sparkle']
     case 'inspectionPassed': return o.reducedMotion ? ['stamp'] : ['stamp', 'confetti']
   }
