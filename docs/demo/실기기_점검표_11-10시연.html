@@ -32,36 +32,39 @@ th { width:26%; }
 <p class="sub">섀시 가상 실습장 · 학교 태블릿 + 학교 Wi‑Fi에서 한 번 해 보기 · 약 20~30분</p>
 
 <div class="box prep"><h2>준비</h2><ul>
-<li class="c">Claude Code에 <b>“재배포해”</b>를 해서 최신판이 공개 주소에 올라가 있다(11-03 개발분: PC 로딩 줄이기·끊김 안내 포함).</li>
+<li class="c">Claude Code에 <b>“재배포해”</b>를 해서 최신판이 공개 주소에 올라가 있다(11-06 개발분: Codex 교차 검토 반영 — 안내 없음 강조 끄기·결과 화면 한글·대기 제한 등).</li>
 <li class="c">학교 태블릿 1대 이상(가능하면 시연에 쓸 기기 수만큼), 크롬(Chrome), <b>학교 Wi‑Fi</b>에 연결.</li>
 <li class="c">교사 계정(서버 교사 로그인 이메일·비밀번호) — ②·③ 탭에 필요. 비밀번호는 직접 입력.</li>
+<li class="c">기기마다 <b>합성 코드를 다르게</b> 정한다(D-01, D-02 …). 같은 코드를 여러 대가 쓰면 AI 질문 수 한도를 나눠 쓰고 대화가 섞인다. 기기·코드: <span class="w" style="min-width:260px"></span></li>
+<li class="c">교사 화면 ② 수업 중에서 DEMO-ONLY 세션의 <b>AI 켜짐</b>과 <b>학생 1인 하루 질문 수</b>를 확인했다.</li>
 <li>기기: <span class="w" style="min-width:180px"></span> 크롬 버전: <span class="w"></span> 날짜·장소: <span class="w" style="min-width:150px"></span></li>
 </ul></div>
 
 <div class="box"><h2>1. 열기와 실습장 준비 시간 <small>— 측정용 가상 브라우저로는 잴 수 없어 실제 기기에서 잼</small></h2><ol>
 <li class="c">크롬에서 <b>chassis-3d-lab.vercel.app</b>이 학교망에서 열린다(필터에 막히지 않음).</li>
 <li class="c">인트로(로고·셔터)가 나오고, 화면을 누르면 시작 화면으로 넘어간다. 소리: 남 / 안 남</li>
-<li>시작 화면에서 <b class="ui">기록 없이 하기</b> → <b class="ui">이대로 시작</b>을 누른 순간부터 <b>“실습장 준비 중…”이 사라질 때까지</b>:
+<li>시작 화면에서 <b class="ui">기록 없이 하기</b> → <b class="ui">이대로 시작</b>을 누른 순간부터 <b>“실습장 준비 중…”이 사라지고 차량·측정판이 보이며 걸어서 움직일 수 있을 때까지</b> (준비 화면은 20초에 닫힘 — 그 뒤 화면 아래 “3D 자료를 아직 받는 중… n%”가 보이면 그 표시가 사라질 때까지):
   처음 <span class="w"></span>초 · 두 번째(새로고침 뒤) <span class="w"></span>초</li>
 <li>시작 화면에서 30초쯤 기다렸다가 같은 순서로 들어가면: <span class="w"></span>초 <small>(그동안 3D 자료를 미리 받음)</small></li>
 <li class="c">실습장 메뉴(≡)에서 <b class="ui">품질 낮음(태블릿)</b>이 저절로 켜져 있다.</li>
+<li class="c">태블릿을 가로·세로로 돌려도 화면이 깨지지 않는다. 답을 입력할 때 화면 키보드가 입력칸을 가리지 않는다.</li>
 <li class="c">걷기·시점 돌리기가 끊기지 않는다. 끊김이 심하면 메모. (“화면이 느려 품질을 낮췄습니다” 안내가 나오면 메모)</li>
 <li>여러 대를 <b>동시에</b> 처음 열 때(가능하면): <span class="w"></span>대, 가장 늦은 기기 <span class="w"></span>초</li>
 </ol></div>
 
 <div class="box"><h2>2. 시연 흐름 한 번 <small>— 둘러보기 안내서와 같은 순서</small></h2><ol>
-<li class="c">익명 코드 <b>D-01</b>, <b>최소회전반경 측정 및 판정 — 사례 1</b>, <b>안내 있음</b> → <b class="ui">과제 수령하러 가기</b></li>
+<li class="c">익명 코드 <b>이 기기의 코드(D-01 등)</b>, <b>최소회전반경 측정 및 판정 — 사례 1</b>, <b>안내 있음</b> → <b class="ui">과제 수령하러 가기</b></li>
 <li class="c">캐릭터 만들기(체형·머리·색·닉네임) → <b class="ui">이대로 시작</b></li>
 <li class="c">오른쪽 위 <b class="ui">교관에게</b> → 교관을 눌러 닉네임 인사 → <b class="ui">과제 받기</b> → <b class="ui">시작하기</b></li>
 <li class="c">측정 차량으로 가서 단계 <b class="ui">수행</b>, <b class="ui">📟 측정판 보기</b>로 바퀴 각도 읽기, <b class="ui">작업 목록</b>에서 입력 → <b class="ui">NPC 검사 받기</b></li>
-<li class="c">결과 화면에 “이 기기 저장: 저장됨”이 나온다. <span class="note">(아직 서버로 가지 않음 — 4번에서 전송)</span></li>
+<li class="c">결과 화면에 “이 기기 저장: 저장됨”이 나온다. <span class="note">(아직 서버로 가지 않음 — 5번에서 전송)</span></li>
 </ol></div>
 
 <div class="box"><h2>3. AI 교관과 교사 대화 점검 <small>— 학생 기기 1대 + 교사 기기(또는 같은 기기)</small></h2><ol>
-<li class="c">교사 기기: 시작 화면 맨 아래 <b class="ui">교사 화면(수업 설정·기록 관리)</b> → PIN 0000 → <b class="ui">② 수업 중</b> → 교사 이메일·비밀번호로 로그인된다.</li>
+<li class="c">교사 기기: 시작 화면 맨 아래 <b class="ui">교사 화면(수업 설정·기록 관리)</b> → PIN 0000 → <b class="ui">② 수업 중</b> → 교사 이메일·비밀번호로 로그인 → DEMO-ONLY 줄의 <b class="ui">대화 보기</b>(목록이 10초마다 새로 고쳐짐).</li>
 <li class="c">DEMO-ONLY 줄에 “AI 켜짐”이 보인다(꺼져 있으면 <b class="ui">AI 교관 챗봇 켜기</b>).</li>
 <li class="c">학생 기기: 과제 중 <b class="ui">💬 AI 교관에게 질문</b> → 예: “측정판은 어떻게 읽어요?” → 답이 온다. 걸린 시간 <span class="w"></span>초</li>
-<li class="c">교사 기기: 그 질문과 답이 10초 안에 목록에 나타난다.</li>
+<li class="c">교사 기기: 그 질문과 답이 다음 새로고침(10초마다) 때 목록에 나타난다. 학생 화면에 “선생님 대화 목록에 저장되지 않았을 수 있어요”가 뜨면 메모.</li>
 <li class="c">교사 기기: <b class="ui">AI 지금 끄기</b> → 학생이 다시 물으면 “지금은 AI 교관이 꺼져 있어요” 안내 → 다시 켠다.</li>
 <li class="note">※ 이 질문·답은 시연 세션(DEMO-ONLY)으로 서버에 남습니다. 실제 학생 정보는 쓰지 마세요.</li>
 </ol></div>
@@ -70,14 +73,16 @@ th { width:26%; }
 <li class="c">과제 중 태블릿 Wi‑Fi를 끈다(또는 비행기 모드). 단계 <b class="ui">수행</b>은 계속 된다.</li>
 <li class="c">끊긴 채 AI에게 질문 → “인터넷 연결을 확인한 뒤 다시 물어보세요.” 안내, <b>쓴 질문이 입력란에 남아 있다.</b></li>
 <li class="c">Wi‑Fi를 켜고 <b class="ui">보내기</b>만 다시 누르면 답이 온다.</li>
+<li class="c">(가능하면) 연결은 있는데 답이 안 올 때: 40초쯤 뒤 “답이 오래 오지 않았어요…” 안내가 나오고 질문은 입력란에 남는다.</li>
 <li class="note">※ 끊긴 동안에는 <b>새로고침하지 마세요</b>(페이지가 열리지 않음). 연결이 돌아오면 하던 과제를 이어서 할 수 있습니다.</li>
 </ol></div>
 
-<div class="box"><h2>5. 교사 전송(③ 수업 후)</h2><ol>
+<div class="box"><h2>5. 교사 전송(③ 수업 후) <small>— 기록은 수행한 기기에만 있으므로 <b>2번을 한 학생 태블릿</b>에서</small></h2><ol>
+<li class="c">학생 태블릿: 결과 화면 → <b class="ui">다음 학생</b> → 시작 화면 맨 아래 <b class="ui">교사 화면</b> → PIN → <b class="ui">③ 수업 후</b> → 교사 로그인.</li>
 <li class="c"><b class="ui">③ 수업 후</b>에 “전송 대기 N건”이 보인다.</li>
-<li class="c">교사 기기 Wi‑Fi를 끄고 <b class="ui">대기 기록 지금 전송</b> → “인터넷 연결 안 됨 — 기록은 이 기기에 그대로 있습니다…” → 대기 건수 그대로.</li>
+<li class="c">그 태블릿의 Wi‑Fi를 끄고 <b class="ui">대기 기록 지금 전송</b> → “인터넷 연결 안 됨 — 기록은 이 기기에 그대로 있습니다…” → 대기 건수 그대로.</li>
 <li class="c">Wi‑Fi를 켜고 <b class="ui">강제 재전송</b> → “서버 접수 확인됨”, 대기 0건.</li>
-<li class="note">※ 전송하면 시연 기록(D-01)이 서버에 1건 남습니다. 남기기 싫으면 이 칸은 건너뛰세요.</li>
+<li class="note">※ 전송하면 시연 기록(이 기기 코드)이 서버에 1건 남습니다. 남기기 싫으면 이 칸은 건너뛰세요.</li>
 </ol></div>
 
 <div class="box"><h2>발견한 문제</h2>
