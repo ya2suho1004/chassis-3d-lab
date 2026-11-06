@@ -4,6 +4,7 @@ import type { TaskRun } from '../domain/taskEngine'
 import { summarizeResponses } from '../domain/grading'
 import type { DeliveryEnvelope } from '../records/types'
 import { toSummaryCsv } from '../records/csv'
+import { WorkLog } from './WorkLog'
 import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/resultLabels'
 
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
@@ -36,8 +37,9 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
   const env = envelope ?? fallbackEnvelope
 
   return (
-    <main className="screen result">
+    <main className="screen result wa">
       <h1>{nickname ? `${nickname}의 ` : ''}수행 결과 — {completionStatus === 'completed' ? 'NPC 검사 통과' : '중단'}</h1>
+      <WorkLog run={run} passed={completionStatus === 'completed' && payload.ok && payload.value.npcInspectionResult === 'passed'} nickname={nickname} />
       <div className="status3">
         <span>실습 결과: <b>{payload.ok ? payload.value.npcInspectionResult === 'passed' ? '통과' : payload.value.npcInspectionResult === 'needsCorrection' ? '보완' : '미완료' : '—'}</b></span>
         {noRecord ? (
