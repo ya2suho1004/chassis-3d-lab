@@ -16,3 +16,6 @@ supabase/.branches/
 
 # Vercel CLI 연결 정보
 .vercel/
+
+# 브레인스토밍 화면 시안(로컬 전용)
+.superpowers/
