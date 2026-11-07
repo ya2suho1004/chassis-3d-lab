@@ -7,7 +7,7 @@ import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serialize
 import { buildRecordPayload } from '../domain/record'
 import type { Repository } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
-import { inspectPerformance, type InspectionIssue } from '../domain/npcInspection'
+import { inspectPerformance, visibleInspection, type InspectionIssue } from '../domain/npcInspection'
 import type { FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
 import type { PanelReadout } from '../scene/panelReadout'
@@ -136,7 +136,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const [shown, setShown] = useState<Shown | null>(null)
   const [inputs, setInputs] = useState<Record<string, string>>({})
   const [graded, setGraded] = useState<Record<string, boolean | null>>({})
-  const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[] } | null>(null)
+  const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[]; answersLocked: boolean } | null>(null)
   const [action, setAction] = useState('')
 
   const task = run.task
@@ -225,7 +225,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     const r = inspectPerformance(run)
     setRun(r.run)
     if (!r.recorded) return setShown({ kind: 'guidance', title: '기록 한도', text: null, plain: '이벤트 기록 한도(200개)에 닿아 NPC 검사를 기록할 수 없습니다. ‘중단하고 끝내기’로 저장하고 교사에게 알리세요.' })
-    setInspection({ result: r.result, issues: r.issues })
+    // G1: 무안내·최초 답 미완료면 적은 칸의 정오를 숨긴 목록만 보인다(게임 화면 교관 검사도 이 함수를 거친다)
+    setInspection({ result: r.result, ...visibleInspection(r.run, r.issues) })
     if (r.result === 'passed') void finish(r.run, 'completed')
   }
 
@@ -396,6 +397,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         {inspection && inspection.result !== 'passed' && (
           <div className="feedback explanatory"><b>NPC: 보완이 필요합니다 ({inspection.issues.length}건)</b>
             <ul>{inspection.issues.map((i, k) => (<li key={k}>{i.kind === 'step' ? `${task.steps.findIndex((s) => s.stepId === i.stepId) + 1}번 단계` : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}</li>))}</ul>
+            {inspection.answersLocked && <p className="small">입력한 답이 맞는지는 모든 칸에 처음 답을 적은 뒤 알려 줍니다.</p>}
           </div>
         )}
       </section>
