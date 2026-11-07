@@ -460,3 +460,8 @@ button.far { border-color:#9e9e9e; color:#777; }
   .game.wa .g-quest { padding:4px 10px; }
   .game.wa .g-quest-btns { margin-top:4px; }
 }
+
+/* 직접 그린 선 아이콘(src/screens/Icon.tsx) — 글자 줄에 맞춰 앉힌다. 아이콘만 있는 둥근 버튼은 가운데 */
+.ico { display:inline-block; vertical-align:-0.2em; flex:none; }
+.g-icon { display:inline-flex; align-items:center; justify-content:center; }
+.g-guide li .ico { margin-right:2px; color:var(--wa-brown); }

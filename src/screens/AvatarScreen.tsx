@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { BODIES, EYES, HAIR_COLORS, HAIR_STYLES, NICK_BACK, NICK_FRONT, SKINS, nicknameOf, randomNickname, type AvatarProfile, type Choice } from '../app/avatar'
+import { Icon } from './Icon'
 import { CHARACTER_LAYER, CharacterModel, STUDENT_OUTFIT } from '../scene/models/CharacterModel'
 
 /** 사람은 레이어 2에만 그려진다(CharacterModel) — 미리보기 카메라도 레이어 2를 켠다 */
@@ -75,7 +76,7 @@ export function AvatarScreen({ initial, editing = false, saveNote, onDone, onCan
             <select aria-label="닉네임 뒷말" value={p.nickBack} onChange={(e) => set('nickBack', e.target.value)}>
               {NICK_BACK.map((w) => <option key={w} value={w}>{w}</option>)}
             </select>
-            <button aria-label="닉네임 무작위로 뽑기" onClick={() => setP((cur) => ({ ...cur, ...randomNickname() }))}>🎲 뽑기</button>
+            <button aria-label="닉네임 무작위로 뽑기" onClick={() => setP((cur) => ({ ...cur, ...randomNickname() }))}><Icon name="dice" /> 뽑기</button>
           </div>
           <h2>체형</h2>
           <Chips name="체형" items={BODIES} value={p.body} onPick={(v) => set('body', v)} />

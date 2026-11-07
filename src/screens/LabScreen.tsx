@@ -20,6 +20,7 @@ import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type 
 import { TaskScreen, type TaskContext } from './TaskScreen'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog, panelWorkOrder } from './NpcDialog'
+import { Icon } from './Icon'
 import { LabSound } from '../scene/sound'
 import { useProgress } from '@react-three/drei'
 import { initialQuality, shouldAutoLower } from '../app/quality'
@@ -295,8 +296,8 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           <>
             <div className="g-status">
               <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.effects.includes('sparkle') ? fx.seq : 'ppe'} className={`g-ppe ${fx.effects.includes('sparkle') ? 'spark' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>보호구 착용</span>}</div>
-              <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}>🎥 {VIEW_LABEL[viewMode]}</button>
-              <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}>{soundOn ? '🔊' : '🔇'}</button>
+              <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}><Icon name="camera" /> {VIEW_LABEL[viewMode]}</button>
+              <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}><Icon name={soundOn ? 'soundOn' : 'soundOff'} size={22} /></button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
               {menuOpen && (
                 <div className="g-menu" role="menu">
@@ -349,14 +350,14 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             {viewMode === 'first' && <div className={`g-reticle ${aimId ? 'on' : ''}`} aria-hidden />}
             {viewMode === 'first' && aimId && (
               <button className="g-aim" onClick={() => (aimId === NPC_AIM ? setNpcOpen(true) : selectEquipment(aimId))}>
-                {aimId === NPC_AIM ? '💬 교관과 대화' : `🔍 ${layout.equipment.find((e) => e.id === aimId)?.label.replace(/\(.*\)/, '').trim() ?? ''} 살펴보기`}
+                {aimId === NPC_AIM ? <><Icon name="talk" /> 교관과 대화</> : <><Icon name="look" /> {layout.equipment.find((e) => e.id === aimId)?.label.replace(/\(.*\)/, '').trim() ?? ''} 살펴보기</>}
               </button>
             )}
 
             {!viewing && !practicing && <Joystick input={joystickRef} />}
-            {run && !viewing && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}>📟 계기 보기</button>}
-            {run && !viewing && !practicing && turningNear && <button className="g-gaugebtn" onClick={() => setTtSide('left')}>📟 측정판 보기</button>}
-            {!practicing && !viewing && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}>🔍 디스크 런아웃 연습</button>}
+            {run && !viewing && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}><Icon name="gauge" /> 계기 보기</button>}
+            {run && !viewing && !practicing && turningNear && <button className="g-gaugebtn" onClick={() => setTtSide('left')}><Icon name="gauge" /> 측정판 보기</button>}
+            {!practicing && !viewing && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}><Icon name="look" /> 디스크 런아웃 연습</button>}
             {discOpen && (
               <div className="g-practice" role="dialog" aria-label="디스크 런아웃 연습">
                 <div className="g-practice-head"><b>디스크 런아웃 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { discCtl.current.spin = 0; setDiscOpen(false) }}>✕</button></div>
@@ -376,7 +377,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 {discMsg && <p className={discMsg.ok ? 'ok' : 'bad'}>{discMsg.text}</p>}
               </div>
             )}
-            {!practicing && !viewing && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}>🔍 차동기어 백래시 연습</button>}
+            {!practicing && !viewing && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}><Icon name="look" /> 차동기어 백래시 연습</button>}
             {blOpen && (
               <div className="g-practice" role="dialog" aria-label="차동기어 백래시 연습">
                 <div className="g-practice-head"><b>차동기어 백래시 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { blSt.current.push = 0; setBlOpen(false) }}>✕</button></div>
@@ -385,7 +386,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 <div className="g-practice-row">
                   <button {...pushHold(-1)}>◀ 누르는 동안 밀기</button>
                   <button {...pushHold(1)}>밀기 ▶</button>
-                  <button aria-pressed={blHeld} className={blHeld ? 'on' : ''} onClick={blToggleHeld}>{blHeld ? '🔧 피니언 잡음' : '🔧 피니언 잡기'}</button>
+                  <button aria-pressed={blHeld} className={blHeld ? 'on' : ''} onClick={blToggleHeld}><Icon name="wrench" /> {blHeld ? '피니언 잡음' : '피니언 잡기'}</button>
                   <button onClick={blZero}>영점 맞추기</button>
                 </div>
                 <div className="g-practice-row">
@@ -405,7 +406,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 <button onClick={() => setTtSide(null)}>✕ 닫기</button>
               </div>
             )}
-            {!practicing && !ttSide && !noRecord && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
+            {!practicing && !ttSide && !noRecord && <button className="g-chatbtn" onClick={() => setChatOpen(true)}><Icon name="talk" /> AI 교관에게 질문</button>}
 
             {!ttSide && <div className="g-actions">
               {run && ctx?.nextActions.map((a) => <button key={a.key} className={`g-act ${a.cls ?? ''}`} onClick={a.onClick}>{a.label}</button>)}
@@ -427,10 +428,10 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           <div className="g-guide" role="dialog" aria-label="조작 안내">
             <b>조작 안내</b>
             <ul>
-              <li>🕹️ 왼쪽 조이스틱(키보드 W·A·S·D) 또는 바닥을 눌러 걷기</li>
-              <li>👆 화면을 끌어 둘러보기</li>
-              <li>🎥 왼쪽 위 버튼으로 시점 바꾸기(내 눈으로 보면 가운데 점으로 장비를 살펴봄)</li>
-              <li>🔧 장비를 누르면 설명, 교관에게 가면 과제</li>
+              <li><Icon name="joystick" /> 왼쪽 조이스틱(키보드 W·A·S·D) 또는 바닥을 눌러 걷기</li>
+              <li><Icon name="drag" /> 화면을 끌어 둘러보기</li>
+              <li><Icon name="camera" /> 왼쪽 위 버튼으로 시점 바꾸기(내 눈으로 보면 가운데 점으로 장비를 살펴봄)</li>
+              <li><Icon name="wrench" /> 장비를 누르면 설명, 교관에게 가면 과제</li>
             </ul>
             <button className="primary" onClick={closeGuide}>알겠어요</button>
           </div>
