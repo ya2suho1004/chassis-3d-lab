@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { buildRecordPayload, type SessionContext } from '../domain/record'
+import { buildRecordPayload, type RecordPayload, type SessionContext } from '../domain/record'
+import { resolveResultPayload } from '../app/resultPayload'
 import type { TaskRun } from '../domain/taskEngine'
 import { summarizeResponses } from '../domain/grading'
 import type { DeliveryEnvelope } from '../records/types'
@@ -11,20 +12,19 @@ import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/re
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
 const ERROR_HINT: Record<string, string> = { TIMEOUT: '서버 응답이 오지 않음 — 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
 
-export function ResultScreen({ session, run, completionStatus, envelope, saveError, noRecord = false, nickname, onNextStudent }: {
+export function ResultScreen({ session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onNextStudent }: {
   session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null
+  /** 확정 저장한 원본(G2). 있으면 표시·JSON·CSV 모두 이것을 쓴다 */
+  frozenPayload?: RecordPayload | null
   /** 비기록 모드(설계 2026-11-02): 저장·접수 상태와 payload·내려받기를 숨긴다 */
   noRecord?: boolean
   /** 캐릭터 닉네임(화면 표시만, 기록에는 없음) */
   nickname?: string; onNextStudent: () => void
 }) {
-  const payload = useMemo(() => {
-    try {
-      return { ok: true as const, value: buildRecordPayload(run, session, { completedAtIso: new Date().toISOString(), completionStatus }) }
-    } catch (e) {
-      return { ok: false as const, error: (e as Error).message }
-    }
-  }, [run, session, completionStatus])
+  const payload = useMemo(
+    () => resolveResultPayload(frozenPayload, () => buildRecordPayload(run, session, { completedAtIso: new Date().toISOString(), completionStatus })),
+    [frozenPayload, run, session, completionStatus],
+  )
   const sum = summarizeResponses(run.responses)
   const json = payload.ok ? JSON.stringify(payload.value, null, 2) : ''
 

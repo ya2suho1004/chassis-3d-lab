@@ -1,4 +1,5 @@
 // 실습장 화면 — 3D 장면 + HUD(도감·장비 카드·NPC 대화) + 과제 패널(TaskScreen) 연결
+import type { RecordPayload } from '../domain/record'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import rawLayout from '../data/layout/layout.dev-provisional.json'
 import type { SessionContext } from '../domain/record'
@@ -65,7 +66,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   run: TaskRun | null
   onReceiveTask: () => Promise<string | null>
   onRunChange: (run: TaskRun) => void
-  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
+  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null, payload?: RecordPayload | null) => void
 }) {
   const layout = useMemo(() => layoutFor(session.vehicleEntryDirection), [session.vehicleEntryDirection])
   const [pos, setPos] = useState<Pt>(layout.studentStart)

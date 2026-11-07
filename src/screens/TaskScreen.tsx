@@ -2,7 +2,7 @@ import { ITEM_LABEL } from '../app/resultLabels'
 import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
-import type { SessionContext } from '../domain/record'
+import type { RecordPayload, SessionContext } from '../domain/record'
 import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, OFF_SUBSTEPS, type OffSubStep, type TaskRun } from '../domain/taskEngine'
 import { buildRecordPayload } from '../domain/record'
 import type { Repository } from '../records/repository'
@@ -65,7 +65,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   /** 비기록 모드: 저장 상태 대신 "기록 안 됨"을 보인다 */
   noRecord?: boolean
   repo: Repository; session: SessionContext; initialRun: TaskRun
-  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
+  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null, payload?: RecordPayload | null) => void
   /** 실습장 화면 안에 끼워 넣을 때 true(머리글 생략) */
   embedded?: boolean
   /** 3D 모드에서 장비 근접 여부. null이면 게이팅 없음(도식 모드) */
@@ -123,14 +123,16 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     // 결과 확정: payload + envelope를 같은 트랜잭션으로 저장(초안 삭제). 저장이 끝난 뒤에만 결과 화면으로.
     if (finishingRef.current) return
     finishingRef.current = true
+    // G2: 여기서 만든 원본 하나를 저장·결과 화면·내려받기에 함께 쓴다(결과 화면이 다시 만들지 않게)
+    let payload: RecordPayload | null = null
     try {
-      const payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status })
+      payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status })
       const r = await repo.freezeRecord(payload)
-      if (r.status === 'failed') return onFinish(finalRun, status, null, r.errorCode ?? 'FREEZE_FAILED')
+      if (r.status === 'failed') return onFinish(finalRun, status, null, r.errorCode ?? 'FREEZE_FAILED', payload)
       const stored = await repo.loadRecord(session.recordId)
-      onFinish(finalRun, status, stored?.envelope ?? null, null)
+      onFinish(finalRun, status, stored?.envelope ?? null, null, stored?.payload ?? payload)
     } catch (e) {
-      onFinish(finalRun, status, null, (e as Error).message)
+      onFinish(finalRun, status, null, (e as Error).message, payload)
     }
   }
   const [shown, setShown] = useState<Shown | null>(null)

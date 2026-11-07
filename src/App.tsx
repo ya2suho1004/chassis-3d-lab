@@ -1,3 +1,4 @@
+import type { RecordPayload } from './domain/record'
 import { useEffect, useState } from 'react'
 import type { SessionContext } from './domain/record'
 import { createTaskRun, rehydrateRun, serializeRun, type DifficultyMode, type TaskRun } from './domain/taskEngine'
@@ -27,7 +28,7 @@ type Screen =
   // avatar: 캐릭터 만들기(설계 2026-11-03) — 그 코드의 캐릭터가 이 기기에 없을 때만(비기록은 매번)
   | { name: 'avatar'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; noRecord: boolean; runRepo: Repository; initial: AvatarProfile }
   | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository; profile: AvatarProfile }
-  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile }
+  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile; frozenPayload: RecordPayload | null }
 
 export function App() {
   const [repo, setRepo] = useState<Repository | null>(null)
@@ -123,13 +124,13 @@ export function App() {
           return null
         }}
         onRunChange={(run) => setScreen((s) => (s.name === 'lab' ? { ...s, run } : s))}
-        onFinish={(run, completionStatus, envelope, saveError) => setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile })}
+        onFinish={(run, completionStatus, envelope, saveError, frozenPayload = null) => setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile, frozenPayload })}
       />
     )
   }
 
   return (
-    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
+    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} frozenPayload={screen.frozenPayload} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
       onNextStudent={() => { if (!screen.noRecord) repo?.clearCurrent(); setScreen({ name: 'start' }) }} />
   )
 }
