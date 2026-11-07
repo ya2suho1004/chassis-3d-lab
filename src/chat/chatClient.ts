@@ -89,3 +89,13 @@ export function splitBold(text: string): Array<{ text: string; bold: boolean }> 
   if (parts.length % 2 === 0) return [{ text: text.replace(/\*\*/g, ''), bold: false }] // 짝이 안 맞으면 표시만 지운다
   return parts.map((t, i) => ({ text: t, bold: i % 2 === 1 })).filter((p) => p.text.length > 0)
 }
+
+/**
+ * 질문 창의 예시 질문 — 과제에 맞춘다(2026-11-07 시연 리허설: 최소회전반경 과제에도 제동력 예시가 나오던 것).
+ * 다음 단계·정답을 알려 주지 않는 일반 질문만 쓴다(안내 없음 조건 유지).
+ */
+export function chatExamples(taskId: string | null | undefined): string[] {
+  return taskId === 'min-turning-radius'
+    ? ['측정판 눈금은 어떻게 읽어요?', '최소회전반경은 무엇을 재는 거예요?']
+    : ['편차는 어떻게 계산해요?', '롤러에 차를 올릴 때 뭘 조심해요?']
+}

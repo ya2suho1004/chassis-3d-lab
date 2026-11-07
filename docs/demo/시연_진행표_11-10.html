@@ -28,7 +28,7 @@ td.n { width:28px; text-align:center; font-weight:700; }
 .say { color:var(--muted); }
 .say::before { content:"💬 "; }
 @page { size:A4; margin:11mm 12mm; }
-@media print { body { background:#fff; font-size:12.5px; line-height:1.45; } .box.risk { break-before:page; } main { padding:0 0 0; } .box { padding:8px 12px; margin-bottom:8px; } td, th { font-size:12.5px; padding:4px 6px; } h1 { font-size:21px; } }
+@media print { body { background:#fff; font-size:11.5px; line-height:1.38; } .box.risk { break-before:page; } main { padding:0 0 0; } .box { padding:8px 12px; margin-bottom:8px; } td, th { font-size:11.5px; padding:3px 5px; } h1 { font-size:20px; } }
 </style></head>
 <body><main>
 <h1>11-10 시연 진행표</h1>
@@ -50,17 +50,17 @@ td.n { width:28px; text-align:center; font-weight:700; }
 <td>설치 없이 웹 주소로 열림, 학교 태블릿에서 동작.<div class="say">학생 이름 대신 익명 코드만 씁니다. 과제·사례·안내 수준은 교사가 정합니다.</div></td><td class="t">1분</td></tr>
 <tr><td class="n">2</td><td>캐릭터 만들기(체형·머리·색·닉네임) → <b class="ui">이대로 시작</b></td>
 <td>내 캐릭터로 실습장에 들어감.<div class="say">캐릭터는 이 기기에만 저장되고 연구 자료로 쓰지 않습니다.</div></td><td class="t">1분</td></tr>
-<tr><td class="n">3</td><td>실습장 둘러보기: 왼쪽 조이스틱으로 걷기, 화면 끌어 둘러보기, 🎥 버튼으로 시점 바꾸기, 장비 눌러 설명 보기</td>
-<td>오른쪽 위 <b>도감 n/N</b>이 채워짐.<div class="say">실제 실습장 배치를 옮겼습니다. 과제 전에 장비 이름과 위치에 먼저 익숙해집니다.</div></td><td class="t">2분</td></tr>
-<tr><td class="n">4</td><td><b class="ui">교관에게</b> → 교관 누르기 → <b class="ui">과제 받기</b> → <b class="ui">시작하기</b> → 측정 차량에서 단계 <b class="ui">수행</b>, <b class="ui">📟 측정판 보기</b>로 바퀴 각도 읽기 → <b class="ui">작업 목록</b>에 입력 → <b class="ui">NPC 검사 받기</b></td>
+<tr><td class="n">3</td><td>실습장 둘러보기: 왼쪽 조이스틱으로 걷기, 화면 끌어 둘러보기, 🎥 버튼으로 시점 바꾸기, 장비 눌러 설명 보기<br><span class="note">처음 쓰는 태블릿이면 실습장에 들어갈 때 안내 창이 한 번 뜸 → 닫고 진행.</span></td>
+<td><b>왼쪽 위</b> <b>도감 n/N</b>이 채워짐.<div class="say">실제 실습장 배치를 옮겼습니다. 과제 전에 장비 이름과 위치에 먼저 익숙해집니다.</div></td><td class="t">2분</td></tr>
+<tr><td class="n">4</td><td><b class="ui">교관에게</b> → 교관 누르기 → <b class="ui">과제 받기</b> → <b class="ui">시작하기</b> → 측정 차량에서 1~5단계 <b class="ui">수행</b> → <b class="ui">📟 측정판 보기</b>로 좌·우 바퀴 각도 읽기 → <b class="ui">작업 목록</b>에 각도를 넣고 각각 <b class="ui">입력</b> → 6·7단계 <b class="ui">수행</b> → 최소회전반경·판정을 넣고 그 줄의 <b class="ui">입력</b> → 8단계 <b class="ui">수행</b><br><span class="note">교관 누르기: 따라가기 시점에서는 학생 캐릭터가 교관을 가림. 학생 어깨 위로 보이는 <b>교관 머리</b>를 누르거나 🎥로 ‘내 눈으로’ 바꿔 누르기(주황 이름표는 눌리지 않음).<br>값을 넣기 전에 6·8단계 수행을 누르면 결과의 학습 오류 수가 올라감.</span></td>
 <td>안내 있음: 다음 할 일이 퀘스트 창에 나오고 해당 장비가 강조됨.<div class="say">눈금을 직접 읽고, 공식으로 계산하고, 기준과 비교해 판정합니다.</div></td><td class="t">4분</td></tr>
-<tr><td class="n">5</td><td>(짧게) 시작 화면으로 돌아가 <b class="ui">안내 없음</b>으로 다시 들어가 과제를 받은 화면만 보여 주기</td>
+<tr><td class="n">5</td><td>(<b class="ui">NPC 검사 받기</b> 전, 과제 중에) <b class="ui">💬 AI 교관에게 질문</b> → 미리 정한 질문 1개만<br><span class="note">결과 화면에는 질문 버튼이 없으므로 검사 받기 전에 한다.</span></td>
+<td>예: “측정판 눈금은 어떻게 읽어요?” / “최소회전반경은 무엇을 재는 거예요?”(질문 창의 예시와 같음)<div class="say">교사는 ② 수업 중에서 질문과 답을 보고, 문제가 있으면 <b class="ui">AI 지금 끄기</b>로 바로 끕니다.</div></td><td class="t">2분</td></tr>
+<tr><td class="n">6</td><td><b class="ui">NPC 검사 받기</b> → 결과 화면: “수행 결과 — NPC 검사 통과”, 요약, 판독·계산·판정, <b class="ui">교사용 상세 기록 보기</b></td>
+<td>기록은 먼저 이 기기에 저장(“이 기기 저장: 저장됨”).<div class="say">수업 뒤 교사가 ③ 수업 후에서 서버로 보냅니다. 와이파이가 끊겨도 수행 기록이 사라지지 않습니다.</div></td><td class="t">2분</td></tr>
+<tr><td class="n">7</td><td>(짧게) <b class="ui">다음 학생</b> → 시작 화면에서 코드 <b>D-01</b>, <b>최소회전반경 측정 및 판정 — 사례 1</b>을 <b>다시 고르고</b> <b class="ui">안내 없음</b> → <b class="ui">과제 수령하러 가기</b> → 교관에게 과제를 받은 화면만 보여 주기<br><span class="note">다음 학생 뒤에는 코드가 비고 과제가 ‘제동력 사례 1’로 돌아가 있음. 캐릭터 만들기는 건너뜀.</span></td>
 <td>안내 없음: 다음 할 일·강조가 없고 “작업 순서는 목록에서 직접 고르세요(안내 없음).” 안전 경고는 그대로.<div class="say">연구에서 비교할 두 조건입니다. 5차시 정리는 안내 없음으로 고정됩니다.</div></td><td class="t">1분</td></tr>
-<tr><td class="n">6</td><td>과제 중 <b class="ui">💬 AI 교관에게 질문</b> → 미리 정한 질문 1개만</td>
-<td>예: “측정판은 어떻게 읽어요?” / “최소회전반경은 무엇을 재는 거예요?”<div class="say">교사는 ② 수업 중에서 질문과 답을 보고, 문제가 있으면 <b class="ui">AI 지금 끄기</b>로 바로 끕니다.</div></td><td class="t">2분</td></tr>
-<tr><td class="n">7</td><td>결과 화면: “수행 결과 — NPC 검사 통과”, 요약, 판독·계산·판정, <b class="ui">교사용 상세 기록 보기</b>, <b class="ui">다음 학생</b></td>
-<td>기록은 먼저 이 기기에 저장(“이 기기 저장됨”).<div class="say">수업 뒤 교사가 ③ 수업 후에서 서버로 보냅니다. 와이파이가 끊겨도 수행 기록이 사라지지 않습니다.</div></td><td class="t">2분</td></tr>
-<tr><td class="n">8</td><td>(시간이 되면) 시작 화면 맨 아래 <b class="ui">교사 화면(수업 설정·기록 관리)</b> → <b class="ui">② 수업 중</b> 대화 목록 / <b class="ui">③ 수업 후</b> 전송 대기</td>
+<tr><td class="n">8</td><td>(시간이 되면) 새로고침 → ‘끝내지 않은 수행이 있습니다’에서 <b class="ui">새 수행 시작 (이 초안 버리기)</b> → 시작 화면 맨 아래 <b class="ui">교사 화면(수업 설정·기록 관리)</b> → <b class="ui">② 수업 중</b> 대화 목록 / <b class="ui">③ 수업 후</b> 전송 대기</td>
 <td>교사가 수업 설정, AI 관리, 기록 전송을 한 곳에서 함.<div class="say">③ 전송은 시연 기록이 서버에 남으므로 화면만 보여 줍니다.</div></td><td class="t">2분</td></tr>
 </table></div>
 
@@ -71,7 +71,7 @@ td.n { width:28px; text-align:center; font-weight:700; }
 <tr><td>3D가 느림·끊김</td><td>메뉴(☰)에서 <b class="ui">품질 낮음(태블릿)</b> 켜기. “화면이 느려 … 품질을 낮췄습니다”가 저절로 뜨면 그대로 진행. 아래에 “3D 자료를 아직 받는 중… n%”가 보이면 둘러보기 설명으로 시간을 번다.</td></tr>
 <tr><td>AI 답이 늦음</td><td>40초 뒤 “답이 오래 오지 않았어요. 잠시 뒤 ‘보내기’를 다시 눌러 보세요.”가 나오면 <b>다시 묻지 말고 다음 장면으로</b>. 질문은 입력란에 남아 있음.</td></tr>
 <tr><td>AI가 안 됨(“인터넷 연결을 확인한 뒤 다시 물어보세요.”, 꺼져 있음 안내)</td><td>교사 화면에서 끄고 켜는 기능을 설명하는 것으로 대신하고 넘어감.</td></tr>
-<tr><td>저장 실패·코드 문제</td><td>결과에 “이 기기 저장 실패”가 나오거나 시작이 막히면 시작 화면에서 <b class="ui">기록 없이 하기</b> → <b class="ui">이대로 시작</b>으로 다시 시연(결과는 화면에만 보임).</td></tr>
+<tr><td>저장 실패·코드 문제</td><td>결과에 “이 기기 저장 실패”가 나오거나 시작이 막히면 시작 화면에서 <b class="ui">기록 없이 하기</b> → <b class="ui">이대로 시작</b>으로 다시 시연(결과는 화면에만 보임). <span class="note">기록 없이 하기에서는 AI 교관이 꺼지므로 5장면(AI 질문)은 건너뛰고 교사 화면 설명으로 대신.</span></td></tr>
 <tr><td>태블릿 자체 문제</td><td>노트북 크롬으로 같은 주소를 열거나 예비 영상으로.</td></tr>
 </table></div>
 

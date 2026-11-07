@@ -1,6 +1,6 @@
 // AI 교관 대화 창(설계 07 §4-1) — 대본형 NPC 교관(과제 안내·검사)과 분리된 질의응답 보조. 판정·채점은 하지 않는다.
 import { useRef, useState } from 'react'
-import { askChat, chatErrorMessage, getChatEndpoint, keepQuestionAfter, serverLogNote, splitBold, CHAT_HISTORY_TURNS, CHAT_QUESTION_MAX, type ChatMode, type ChatTurn } from './chatClient'
+import { askChat, chatErrorMessage, chatExamples, getChatEndpoint, keepQuestionAfter, serverLogNote, splitBold, CHAT_HISTORY_TURNS, CHAT_QUESTION_MAX, type ChatMode, type ChatTurn } from './chatClient'
 import { saveChatTurn } from './chatStore'
 
 interface Line { q: string; a: string | null; error: string | null; masked: string[]; note?: string | null }
@@ -68,7 +68,7 @@ export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId,
       </div>
       <p className="chatnotice">AI 교관과 대화합니다(사람이 아님). 이름·전화번호 등 개인정보를 쓰지 마세요. 질문과 답은 이 기기와 서버에 저장될 수 있고 선생님이 볼 수 있어요. AI 답은 틀릴 수 있어요.{difficultyMode !== 'guided' ? ' 지금은 안내 없음 단계라 정답 대신 힌트를 줍니다.' : ''}</p>
       <div className="chatlog" ref={listRef} aria-live="polite">
-        {lines.length === 0 && <p className="small">예: "편차는 어떻게 계산해요?", "롤러에 차를 올릴 때 뭘 조심해요?"</p>}
+        {lines.length === 0 && <p className="small">예: {chatExamples(taskId).map((q) => `"${q}"`).join(', ')}</p>}
         {lines.map((l, i) => (
           <div key={i} className="turn">
             <p className="q">{l.q}</p>
