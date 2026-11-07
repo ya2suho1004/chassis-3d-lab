@@ -86,6 +86,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'failed'>('saved')
   const runRef = useRef(run)
   runRef.current = run
+  /** 결과 확정(finish)을 시작했는지. 그 뒤로는 초안을 다시 저장하지 않고 finish도 한 번만 한다(독립 검토 2번 —
+   *  확정 저장이 지운 초안이 다시 생겨 새로고침 때 '끝내지 않은 수행' 화면이 잘못 뜨던 것) */
+  const finishingRef = useRef(false)
   const needsMove = (stepId: string) => {
     if (!proximity) return null
     const st = task.steps.find((x) => x.stepId === stepId)
@@ -95,7 +98,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
   // 의미 있는 상태 변화마다 초안을 자동 저장한다(네트워크 없음). 실패는 화면에 표시한다.
   useEffect(() => {
-    if (run === initialRun) return
+    if (run === initialRun || finishingRef.current) return
     let cancelled = false
     setSaveStatus('saving')
     repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(run), savedAt: new Date().toISOString() }).then((r) => {
@@ -108,6 +111,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   useEffect(() => {
     const onVis = () => {
       const cur = runRef.current
+      if (finishingRef.current) return
       if (document.visibilityState === 'hidden') { const r = pauseRun(cur, 'hidden'); if (r.outcome === 'confirmed') setRun(r.run) }
       else { const r = resumeRun(cur, 'visible'); if (r.outcome === 'confirmed') setRun(r.run) }
     }
@@ -117,6 +121,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
   const finish = async (finalRun: TaskRun, status: 'completed' | 'aborted') => {
     // 결과 확정: payload + envelope를 같은 트랜잭션으로 저장(초안 삭제). 저장이 끝난 뒤에만 결과 화면으로.
+    if (finishingRef.current) return
+    finishingRef.current = true
     try {
       const payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status })
       const r = await repo.freezeRecord(payload)

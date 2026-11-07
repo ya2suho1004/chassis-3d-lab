@@ -38,3 +38,6 @@ const COPY: Record<CopyTaskId, RequestCopy> = {
 export function requestCopy(taskId?: string): RequestCopy {
   return taskId === 'min-turning-radius' ? COPY['min-turning-radius'] : COPY['braking-force']
 }
+
+/** 검사 통과 끄덕임 때 교관 한마디(과제·모드 무관, 통과일 때만 뜸). 문구를 한 곳에 모은다(독립 검토 6번) */
+export const NOD_LINE = '좋아, 검사 통과야. 수고했어!'

@@ -1,7 +1,7 @@
 // tests/copyGolden.test.ts — 과제별 문구 한 곳 모으기(2026-11-07) 전후로 화면 문구가 한 글자도 바뀌지 않음을 고정한다
 import { describe, expect, it } from 'vitest'
 import { npcLines, panelWorkOrder } from '../src/screens/NpcDialog'
-import { requestCopy } from '../src/app/requests'
+import { NOD_LINE, requestCopy } from '../src/app/requests'
 
 describe('과제별 문구 고정(문구를 바꾸면 MOON 검토 뒤 이 시험도 함께 고친다)', () => {
   it('교관 첫 대사 — 최소회전반경', () => {
@@ -29,5 +29,8 @@ describe('과제별 문구 고정(문구를 바꾸면 MOON 검토 뒤 이 시험
   it('손님 사연·교관 한마디(MOON 검토 완료 2026-11-07)', () => {
     expect(requestCopy('min-turning-radius')).toMatchObject({ complaint: '좁은 길에서 잘 안 돌아요', closing: '앞바퀴 각도를 직접 읽고 판단까지 마쳤구나. 의뢰 끝!' })
     expect(requestCopy('braking-force')).toMatchObject({ complaint: '브레이크를 밟으면 한쪽으로 쏠려요', closing: '제동력을 직접 재고 판단까지 마쳤구나. 의뢰 끝!' })
+  })
+  it('검사 통과 끄덕임 한마디', () => {
+    expect(NOD_LINE).toBe('좋아, 검사 통과야. 수고했어!')
   })
 })

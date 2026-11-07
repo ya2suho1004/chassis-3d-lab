@@ -13,6 +13,8 @@ import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
 import { prefersReducedMotion, reactionEventForStep, reactionsFor } from '../app/reactions'
 import { clearEffects, EMPTY_FX, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
+import { createFinishGate, type FinishGate } from '../app/finishGate'
+import { NOD_LINE } from '../app/requests'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
 import { turningRigState } from '../scene/turningRig'
@@ -261,19 +263,29 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
 
   /** 검사 통과 끄덕임(설계 §4): 기록 저장이 끝난 뒤 결과 화면으로 가기 전 잠깐 교관이 고개를 끄덕인다. 화면 전환만 늦추고 기록과 무관하다 */
   type Finished = Parameters<typeof onFinish>
-  const [nodding, setNodding] = useState<Finished | null>(null)
-  const nodDone = useRef(false)
-  const finishNow = (a: Finished) => { if (nodDone.current) return; nodDone.current = true; onFinish(...a) }
+  // 결과 화면으로는 딱 한 번만 넘긴다(독립 검토 1번): 끄덕임 중 교관을 다시 눌러 검사·중단을 또 해도,
+  // 말풍선과 타이머가 겹쳐도 첫 요청만 간다. onFinish는 최신 것을 쓴다.
+  const onFinishRef = useRef(onFinish)
+  onFinishRef.current = onFinish
+  const gateRef = useRef<FinishGate<Finished> | null>(null)
+  if (!gateRef.current) gateRef.current = createFinishGate<Finished>((...a) => onFinishRef.current(...a))
+  const gate = gateRef.current
+  const [nodding, setNodding] = useState(false)
+  const finishNow = () => { if (gate.complete()) setNodding(false) }
   const onGameFinish = (...a: Finished) => {
-    if (!shouldNodBeforeResult({ status: a[1], saveError: a[3], nearNpc, reducedMotion: prefersReducedMotion() })) return onFinish(...a)
+    const nod = shouldNodBeforeResult({ status: a[1], saveError: a[3], nearNpc, reducedMotion: prefersReducedMotion() })
+    if (gate.request(a, nod) !== 'nod') return
     setNpcOpen(false); setDrawerOpen(false); setChatOpen(false)
-    setNodding(a)
+    setNodding(true)
   }
   useEffect(() => {
     if (!nodding) return
-    const t = setTimeout(() => finishNow(nodding), NOD_SCREEN_MS)
+    const t = setTimeout(finishNow, NOD_SCREEN_MS)
     return () => clearTimeout(t)
   }, [nodding]) // eslint-disable-line react-hooks/exhaustive-deps
+  // 끄덕임 대사가 뜨면 키보드·화면 낭독기 초점을 말풍선으로 옮긴다(독립 검토 6번)
+  const nodBtnRef = useRef<HTMLButtonElement | null>(null)
+  useEffect(() => { if (nodding) nodBtnRef.current?.focus({ preventScroll: true }) }, [nodding])
 
   const gameUi = uiStyle === 'game' && displayMode === 'threeD' && !reviewOpen
   if (gameUi) {
@@ -289,7 +301,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
-            onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
+            onSelectEquipment={selectEquipment} onNpcTap={() => { if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
         {!talking && (
@@ -458,13 +470,13 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
 
         {nodding && (
           <div className="g-dialog" role="dialog" aria-label="교관 검사 결과">
-            <button className="g-bubble g-nod" onClick={() => finishNow(nodding)} aria-label="교관 대사 — 눌러서 결과 보기">
+            <button ref={nodBtnRef} className="g-bubble g-nod" onClick={finishNow} aria-label="교관 대사 — 눌러서 결과 보기">
               <span className="g-name">교관</span>
-              <span className="g-say">좋아, 검사 통과야. 수고했어!</span>
+              <span className="g-say">{NOD_LINE}</span>
             </button>
           </div>
         )}
-        {npcOpen && (
+        {npcOpen && !gate.closed && (
           <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
             onGoToNpc={() => { setNpcOpen(false); setTalkOnArrive(true); goTo(npcSpot) }}
