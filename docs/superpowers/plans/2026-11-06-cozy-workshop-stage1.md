@@ -836,3 +836,10 @@ git commit -m "docs(설계): D44 따뜻한 정비 공방 1단계 기록"
   - 새 문구는 MOON 검토 뒤 `tests/copyGolden.test.ts`·`tests/requests.test.ts`도 함께 고친다. 문구는 `src/app/requests.ts` 한 곳에 있다.
 - 결과 화면 '수업 시점: 대기 중 예습'을 시작 화면 '1~2차시 연습'과 같은 말로, '이어서 하기' 화면 저장 시각을 UTC 원문 대신 한국 시각으로(시연 리허설 발견).
 - cozy-stage1을 main에 합친 뒤 시연 문서(`docs/demo/*.html`)의 🎥 등 이모지 표기를 아이콘에 맞게 고친다.
+
+### 2026-11-08 Codex 회의 반영(브랜치 cozy-stage1, MOON 승인 "브랜치에서 세 건 바로 진행")
+회의 기록: `docs/CODEX_발전과제_토의결과_2026-11-08.md`(main에 있음).
+- **G1 최초 답 보호**: 안내 없음에서 처음 답을 다 적기 전 NPC 검사를 받으면 응답 항목은 '미응답'만 보이고, 적은 칸의 정오(최종 답 오답·채점 불가)는 숨긴다. 건수도 보이는 목록으로 센다. 단계·안전 문제는 그대로. 검사 횟수·npcInspected 사건 기록은 그대로. `visibleInspection`(src/domain/npcInspection.ts), 게임 화면 교관 검사도 같은 경로. 시험 tests/inspectionVisibility.test.ts.
+- **G2 확정 원본 하나**: 결과 화면·JSON·CSV 내려받기가 확정 저장한 원본을 쓴다(src/app/resultPayload.ts). 저장 실패 때는 저장하려던 원본. 시험 tests/frozenPayload.test.ts.
+- **H1 판 번호에 커밋**: clientAppVersion = `0.3.0-demo+<커밋 12자리>`(고친 파일이 있는 로컬 빌드는 `-dirty`, 모르면 `unknown`). Vercel은 VERCEL_GIT_COMMIT_SHA. 기록 형식 그대로, 64자 안. 시험 tests/buildInfo.test.ts.
+- 남은 일(연구판 때): 사용성 평가판·현장 적용판에 git 태그를 달고 **태그–커밋–배포 주소–세션 스냅샷–AI 설정 대응표**를 남긴다. 연구 도중 재배포하지 않는다.
