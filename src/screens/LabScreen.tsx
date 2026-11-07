@@ -486,7 +486,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         )}
 
         {avatarEdit && (
-          <div className="av-overlay" role="dialog" aria-modal="true" aria-label="캐릭터 다시 꾸미기">
+          <div className="av-overlay warm" role="dialog" aria-modal="true" aria-label="캐릭터 다시 꾸미기">
             <AvatarScreen initial={profile} editing saveNote={noRecord ? '기록 없이 하기라서 캐릭터도 저장하지 않습니다.' : '이 기기에만 저장되고 연구 기록·서버에는 보내지 않습니다.'}
               onDone={(p) => { onProfileChange?.(p); setAvatarEdit(false) }} onCancel={() => setAvatarEdit(false)} />
           </div>
