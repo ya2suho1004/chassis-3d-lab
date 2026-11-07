@@ -12,7 +12,7 @@ import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRuno
 import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
 import { prefersReducedMotion, reactionEventForStep, reactionsFor } from '../app/reactions'
-import { clearEffects, EMPTY_FX, resetFxIfIdle, shouldPopOnDone, type Fx } from '../app/cozyState'
+import { clearEffects, EMPTY_FX, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
 import { turningRigState } from '../scene/turningRig'
@@ -44,6 +44,9 @@ function layoutFor(dir: 'north' | 'south' | null): SceneLayout {
   return { ...baseLayout, equipment: baseLayout.equipment.map((e) => (e.id === 'brake-vehicle-01' ? { ...e, x: v.x, z: v.z, rotation: v.rotation, label: v.assumed ? `${e.label} · 진입 방향 미설정(북쪽 가정)` : e.label } : e)) }
 }
 const BASIS_LABEL: Record<string, string> = { measured: '실측', 'measured-partial': '부분 실측', sketch: '스케치 비례', assumption: '가정', teacher: '교사 답' }
+
+/** 끄덕임 화면을 보여 주는 시간(카메라 이동 + 끄덕임 + 여유). 누르면 바로 넘어간다 */
+const NOD_SCREEN_MS = 2300
 
 export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
   repo: Repository
@@ -255,17 +258,33 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const npcSpot = { x: layout.npc.x - 1.0, z: layout.npc.z }
   useEffect(() => { if (talkOnArrive && nearNpc && !moving) { setTalkOnArrive(false); setNpcOpen(true) } }, [talkOnArrive, nearNpc, moving])
 
+  /** 검사 통과 끄덕임(설계 §4): 기록 저장이 끝난 뒤 결과 화면으로 가기 전 잠깐 교관이 고개를 끄덕인다. 화면 전환만 늦추고 기록과 무관하다 */
+  type Finished = Parameters<typeof onFinish>
+  const [nodding, setNodding] = useState<Finished | null>(null)
+  const nodDone = useRef(false)
+  const finishNow = (a: Finished) => { if (nodDone.current) return; nodDone.current = true; onFinish(...a) }
+  const onGameFinish = (...a: Finished) => {
+    if (!shouldNodBeforeResult({ status: a[1], saveError: a[3], nearNpc, reducedMotion: prefersReducedMotion() })) return onFinish(...a)
+    setNpcOpen(false); setDrawerOpen(false); setChatOpen(false)
+    setNodding(a)
+  }
+  useEffect(() => {
+    if (!nodding) return
+    const t = setTimeout(() => finishNow(nodding), NOD_SCREEN_MS)
+    return () => clearTimeout(t)
+  }, [nodding]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const gameUi = uiStyle === 'game' && displayMode === 'threeD' && !reviewOpen
   if (gameUi) {
     const navTargets = layout.equipment.filter((e) => e.interactive && e.accessPoint)
-    const talking = npcOpen && nearNpc
+    const talking = (npcOpen || !!nodding) && nearNpc
     const discPractice: DiscPractice = { ctl: discCtl, disc: discCase, bezelDeg: discBezel, open: discOpen && !talking }
     const backlashPractice: BacklashPractice = { st: blSt, bl: blCase, bezelDeg: blBezel, held: blHeld, open: blOpen && !talking }
     return (
       <main className={`game wa ${talking ? 'talking' : ''}`}>
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
-            joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
+            joystickRef={joystickRef} npcTalking={talking} npcNod={!!nodding} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
@@ -425,7 +444,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             <button className="g-x" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>
             <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded onRunChange={onRunChange} onContext={onContext}
               proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
-              onFinish={onFinish} />
+              onFinish={onGameFinish} />
           </aside>
         )}
         {!noRecord && (
@@ -436,6 +455,14 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           </aside>
         )}
 
+        {nodding && (
+          <div className="g-dialog" role="dialog" aria-label="교관 검사 결과">
+            <button className="g-bubble g-nod" onClick={() => finishNow(nodding)} aria-label="교관 대사 — 눌러서 결과 보기">
+              <span className="g-name">교관</span>
+              <span className="g-say">좋아, 검사 통과야. 수고했어!</span>
+            </button>
+          </div>
+        )}
         {npcOpen && (
           <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}

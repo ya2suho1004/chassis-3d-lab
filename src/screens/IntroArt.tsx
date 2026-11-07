@@ -1,5 +1,6 @@
 // 인트로 그림(설계 docs/superpowers/specs/2026-11-03-intro-loading-design.md)
 // 밤, 실습장 철판 롤셔터(청회색)와 학과 간판, 셔터 안쪽 노란 쿠페(엠블럼·차 이름 없음)와 헤드라이트 빛.
+// 따뜻한 정비 공방 1단계(설계 2026-11-06 §4): 셔터 안쪽 빛을 호박색으로, 간판을 패널(나무·크림) 색으로. 닫힌 셔터 아래 틈으로 불빛이 샌다.
 // 학과 홍보 영상 오프닝의 분위기만 참고해 직접 그린 것이다(영상·사진을 넣지 않음). 움직임은 styles.css의 .ia-* 규칙.
 
 import { useEffect, useState } from 'react'
@@ -31,7 +32,7 @@ export function IntroArt({ phase, dim = false }: { phase: ShutterPhase; dim?: bo
       <defs>
         <linearGradient id="ia-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#04060c" /><stop offset="1" stopColor="#141c2a" /></linearGradient>
         <linearGradient id="ia-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#262b33" /><stop offset="1" stopColor="#1a1e24" /></linearGradient>
-        <linearGradient id="ia-in" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0b0e12" /><stop offset="0.72" stopColor="#0d1310" /><stop offset="1" stopColor="#123826" /></linearGradient>
+        <linearGradient id="ia-in" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#140e09" /><stop offset="0.55" stopColor="#2a1b0e" /><stop offset="0.8" stopColor="#3a2a14" /><stop offset="1" stopColor="#2c3a1e" /></linearGradient>
         <linearGradient id="ia-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffd23f" /><stop offset="0.55" stopColor="#f0b417" /><stop offset="1" stopColor="#b98208" /></linearGradient>
         <linearGradient id="ia-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a3340" /><stop offset="1" stopColor="#0d1117" /></linearGradient>
         <linearGradient id="ia-slats" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#56717d" /><stop offset="1" stopColor="#30454e" /></linearGradient>
@@ -45,7 +46,10 @@ export function IntroArt({ phase, dim = false }: { phase: ShutterPhase; dim?: bo
           <path d="M3 1h8l3 5-3 5H3L0 6z" fill="none" stroke="#2c3238" strokeWidth="1.4" />
         </pattern>
         <radialGradient id="ia-flare"><stop offset="0" stopColor="#ffffff" /><stop offset="0.25" stopColor="#eaf4ff" stopOpacity="0.9" /><stop offset="1" stopColor="#bcd8ff" stopOpacity="0" /></radialGradient>
-        <radialGradient id="ia-spill" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#fff6d8" stopOpacity="0.55" /><stop offset="1" stopColor="#fff6d8" stopOpacity="0" /></radialGradient>
+        <radialGradient id="ia-spill" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#ffe2a8" stopOpacity="0.6" /><stop offset="1" stopColor="#ffd08a" stopOpacity="0" /></radialGradient>
+        <radialGradient id="ia-warm" cx="0.5" cy="0.35" r="0.65"><stop offset="0" stopColor="#ffb85c" stopOpacity="0.55" /><stop offset="0.6" stopColor="#f28c28" stopOpacity="0.16" /><stop offset="1" stopColor="#f28c28" stopOpacity="0" /></radialGradient>
+        <radialGradient id="ia-leak"><stop offset="0" stopColor="#ffc46b" stopOpacity="0.5" /><stop offset="0.7" stopColor="#f2a24a" stopOpacity="0.14" /><stop offset="1" stopColor="#f2a24a" stopOpacity="0" /></radialGradient>
+        <linearGradient id="ia-sign" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#8b5e34" /><stop offset="1" stopColor="#5b3a1e" /></linearGradient>
         <clipPath id="ia-door"><rect x={OX0} y={OY0} width={OX1 - OX0} height={OY1 - OY0} /></clipPath>
       </defs>
 
@@ -59,7 +63,8 @@ export function IntroArt({ phase, dim = false }: { phase: ShutterPhase; dim?: bo
       <g clipPath="url(#ia-door)">
         <rect x={OX0} y={OY0} width={OX1 - OX0} height={OY1 - OY0} fill="url(#ia-in)" />
         <g className="ia-lights">
-          {[300, 360, 420].map((y, i) => <rect key={y} x={560 + i * 30} y={y - 30} width={480 - i * 60} height="6" rx="3" fill="#dfe9f2" opacity={0.8 - i * 0.2} />)}
+          <rect x={OX0} y={OY0} width={OX1 - OX0} height={OY1 - OY0} fill="url(#ia-warm)" />
+          {[300, 360, 420].map((y, i) => <rect key={y} x={560 + i * 30} y={y - 30} width={480 - i * 60} height="6" rx="3" fill="#ffe2a8" opacity={0.85 - i * 0.2} />)}
         </g>
         <g className="ia-car">
           {/* 바퀴 */}
@@ -106,6 +111,12 @@ export function IntroArt({ phase, dim = false }: { phase: ShutterPhase; dim?: bo
         </g>
       </g>
 
+      {/* 닫힌 셔터 아래 틈으로 새는 불빛(열리면 사라짐) */}
+      <g className="ia-leak">
+        <rect x={OX0} y={OY1 - 2} width={OX1 - OX0} height="2" fill="#ffd08a" opacity="0.8" />
+        <ellipse cx={(OX0 + OX1) / 2} cy={OY1 + 4} rx={(OX1 - OX0) / 2 + 30} ry="30" fill="url(#ia-leak)" />
+      </g>
+
       {/* 셔터 통·기둥 */}
       <rect x={OX0 - 18} y={OY0 - 30} width={OX1 - OX0 + 36} height="34" rx="4" fill="#2d343b" />
       <rect x={OX0 - 18} y={OY0} width="18" height={OY1 - OY0} fill="#22272d" />
@@ -113,9 +124,11 @@ export function IntroArt({ phase, dim = false }: { phase: ShutterPhase; dim?: bo
 
       {/* 학과 간판 */}
       <g>
-        <rect x="430" y="110" width="740" height="92" rx="6" fill="#0f2340" stroke="#3e5f8a" strokeWidth="3" />
-        <text x="800" y="150" textAnchor="middle" fill="#cfe0f5" fontSize="26" fontWeight="600" letterSpacing="4">대구공업고등학교</text>
-        <text x="800" y="189" textAnchor="middle" fill="#ffffff" fontSize="36" fontWeight="800" letterSpacing="6">친환경자동차과 실습장</text>
+        <ellipse cx="800" cy="112" rx="300" ry="34" fill="url(#ia-spill)" />
+        <rect x="430" y="110" width="740" height="92" rx="14" fill="url(#ia-sign)" stroke="#c98b4f" strokeWidth="4" />
+        <rect x="440" y="120" width="720" height="72" rx="9" fill="none" stroke="#c98b4f" strokeWidth="1.5" opacity="0.55" />
+        <text x="800" y="150" textAnchor="middle" fill="#ffe2b8" fontSize="26" fontWeight="600" letterSpacing="4">대구공업고등학교</text>
+        <text x="800" y="189" textAnchor="middle" fill="#fff6e5" fontSize="36" fontWeight="800" letterSpacing="6">친환경자동차과 실습장</text>
       </g>
       {/* 벽등 */}
       <circle cx="300" cy="300" r="10" fill="#ffe7a8" /><circle cx="300" cy="300" r="60" fill="url(#ia-spill)" />

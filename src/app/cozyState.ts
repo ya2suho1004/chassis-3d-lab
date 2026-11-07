@@ -23,3 +23,19 @@ export function clearEffects(f: Fx): Fx {
 export function resetFxIfIdle(f: Fx): Fx {
   return f.effects.length || f.seq ? EMPTY_FX : f
 }
+
+/** 검사 통과 뒤 결과 화면 전에 교관이 고개를 끄덕일지(설계 §4 대화창).
+ *  기록 저장이 끝난 완료 + 교관 곁(대화에서 검사 받음) + 움직임 줄이기 아님일 때만. 저장 실패·중단은 바로 결과 화면 */
+export function shouldNodBeforeResult(o: { status: 'completed' | 'aborted'; saveError: string | null; nearNpc: boolean; reducedMotion: boolean }): boolean {
+  return o.status === 'completed' && o.saveError === null && o.nearNpc && !o.reducedMotion
+}
+
+/** 끄덕임 길이(초) — 두 번 숙였다 든다 */
+export const NOD_SECONDS = 1.1
+const NOD_MAX_RAD = 0.3
+
+/** t초째 머리 숙임 각도(rad, 양수 = 숙임). 0~NOD_SECONDS 밖은 0 */
+export function nodAngle(t: number): number {
+  if (t <= 0 || t >= NOD_SECONDS) return 0
+  return NOD_MAX_RAD * Math.sin((2 * Math.PI * t) / NOD_SECONDS) ** 2
+}

@@ -2,7 +2,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { clearEffects, EMPTY_FX, isRequestPassed, resetFxIfIdle, shouldPopOnDone } from '../src/app/cozyState'
+import { clearEffects, EMPTY_FX, isRequestPassed, NOD_SECONDS, nodAngle, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone } from '../src/app/cozyState'
 import { listTasks } from '../src/app/session'
 import { requestCopy } from '../src/app/requests'
 import { createTaskRun } from '../src/domain/taskEngine'
@@ -52,5 +52,26 @@ describe('WorkLog 렌더', () => {
     const h = html(false)
     expect(h).not.toContain('wl-stamp')
     expect(h).not.toContain('wl-closing')
+  })
+})
+
+describe('shouldNodBeforeResult (검사 통과 끄덕임은 저장된 완료 + 교관 곁 + 움직임 허용일 때만)', () => {
+  const ok = { status: 'completed' as const, saveError: null, nearNpc: true, reducedMotion: false }
+  it('모두 맞으면 끄덕임', () => { expect(shouldNodBeforeResult(ok)).toBe(true) })
+  it('중단하고 끝내기는 끄덕이지 않음', () => { expect(shouldNodBeforeResult({ ...ok, status: 'aborted' })).toBe(false) })
+  it('저장 실패면 바로 결과 화면(오류를 늦추지 않음)', () => { expect(shouldNodBeforeResult({ ...ok, saveError: 'FREEZE_FAILED' })).toBe(false) })
+  it('교관에게서 멀면(서랍에서 검사) 바로 결과 화면', () => { expect(shouldNodBeforeResult({ ...ok, nearNpc: false })).toBe(false) })
+  it('움직임 줄이기면 바로 결과 화면', () => { expect(shouldNodBeforeResult({ ...ok, reducedMotion: true })).toBe(false) })
+})
+
+describe('nodAngle (두 번 숙였다 드는 머리 각도)', () => {
+  it('시작 전·끝난 뒤는 0', () => { expect(nodAngle(-0.1)).toBe(0); expect(nodAngle(0)).toBe(0); expect(nodAngle(NOD_SECONDS)).toBe(0); expect(nodAngle(NOD_SECONDS + 1)).toBe(0) })
+  it('숙이는 방향(양수)만, 최대 0.3 rad 이하', () => {
+    for (let t = 0; t <= NOD_SECONDS; t += 0.01) { const a = nodAngle(t); expect(a).toBeGreaterThanOrEqual(0); expect(a).toBeLessThanOrEqual(0.3 + 1e-9) }
+  })
+  it('두 번 숙임: 각 절반의 가운데가 꼭대기, 절반 경계에서 고개를 듦', () => {
+    expect(nodAngle(NOD_SECONDS / 4)).toBeCloseTo(0.3, 5)
+    expect(nodAngle((NOD_SECONDS * 3) / 4)).toBeCloseTo(0.3, 5)
+    expect(nodAngle(NOD_SECONDS / 2)).toBeCloseTo(0, 5)
   })
 })
