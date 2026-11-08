@@ -472,3 +472,14 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .ico { display:inline-block; vertical-align:-0.2em; flex:none; }
 .g-icon { display:inline-flex; align-items:center; justify-content:center; }
 .g-guide li .ico { margin-right:2px; color:var(--wa-brown); }
+
+/* C1 교사 화면 '오늘 수업 설정' 요약 */
+.today-summary { border:1px solid #c9d3db; border-radius:12px; padding:10px 14px; margin:8px 0 12px; background:#f7fafc; }
+.today-summary h3 { margin:0 0 6px; font-size:1rem; }
+.today-summary dl { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:4px 16px; margin:0; }
+.today-summary dl > div { display:flex; gap:8px; align-items:baseline; min-width:0; }
+.today-summary dt { flex:0 0 auto; color:#4a5a66; font-size:.88rem; }
+.today-summary dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
+.today-summary dl > div.warn dd { color:#9a4a00; }
+.today-summary dl > div.warn dd::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#d97a00; margin-right:6px; vertical-align:middle; }
+.today-warn { margin:8px 0 0; padding:6px 10px; border-radius:8px; background:#fff4e0; color:#7a3d00; font-size:.9rem; }

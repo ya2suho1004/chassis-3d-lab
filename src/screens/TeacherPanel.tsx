@@ -13,6 +13,7 @@ import type { Repository } from '../records/repository'
 import { ServerAfter, ServerLive, useServerAdmin } from './ServerAdmin'
 import { LESSON_LABEL } from '../app/lesson'
 import { DEFAULT_SESSION_CODE, SESSIONS, applySessionRules, sessionDef } from '../app/sessions'
+import { todaySummary } from '../app/todaySummary'
 import { DEFAULT_PRACTICE_SPEC, fmtMm, loadPracticeSpec, savePracticeSpec } from '../app/practiceSpec'
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
@@ -97,6 +98,10 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   return (
     <section className="card teacherpanel">
       <h2>교사 화면</h2>
+      <TodaySummary summary={todaySummary({
+        preset, form, tasks, counts,
+        server: { configured: !!server.cfg, loggedIn: !!server.auth, session: server.sessions ? (server.sessions.find((x) => x.session_code === (preset?.sessionCode ?? DEFAULT_SESSION_CODE)) ?? null) : undefined },
+      })} />
 
       <div className="tp-tabs" role="tablist">
         {([['before', '① 수업 전'], ['during', '② 수업 중'], ['after', '③ 수업 후']] as const).map(([k, label]) => (
@@ -198,6 +203,21 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         </div>
       )}
       <button className="link" onClick={onClose}>교사 화면 닫기</button>
+    </section>
+  )
+}
+
+/** C1: 오늘 수업 설정 한 장 요약(표시만 — 설정 바꾸기는 아래 탭에서) */
+export function TodaySummary({ summary }: { summary: ReturnType<typeof todaySummary> }) {
+  return (
+    <section className="today-summary" aria-label="오늘 수업 설정 요약">
+      <h3>오늘 수업 설정</h3>
+      <dl>
+        {summary.rows.map((r) => (
+          <div key={r.label} className={r.tone === 'warn' ? 'warn' : undefined}><dt>{r.label}</dt><dd>{r.value}</dd></div>
+        ))}
+      </dl>
+      {summary.warnings.map((w) => <p key={w} className="today-warn" role="status">{w}</p>)}
     </section>
   )
 }
