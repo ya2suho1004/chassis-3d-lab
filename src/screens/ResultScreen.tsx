@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { buildRecordPayload, type RecordPayload, type SessionContext } from '../domain/record'
 import { resolveResultPayload } from '../app/resultPayload'
 import type { TaskRun } from '../domain/taskEngine'
@@ -12,7 +12,7 @@ import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/re
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
 const ERROR_HINT: Record<string, string> = { TIMEOUT: '서버 응답이 오지 않음 — 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
 
-export function ResultScreen({ session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onNextStudent }: {
+export function ResultScreen({ session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onNextStudent, onRetrySave }: {
   session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null
   /** 확정 저장한 원본(G2). 있으면 표시·JSON·CSV 모두 이것을 쓴다 */
   frozenPayload?: RecordPayload | null
@@ -20,7 +20,26 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
   noRecord?: boolean
   /** 캐릭터 닉네임(화면 표시만, 기록에는 없음) */
   nickname?: string; onNextStudent: () => void
+  /** 확정 저장 실패 뒤 같은 원본으로 다시 저장(D4). 성공하면 null, 실패하면 오류 코드 */
+  onRetrySave?: () => Promise<string | null>
 }) {
+  const [retrying, setRetrying] = useState(false)
+  const [retryError, setRetryError] = useState<string | null>(null)
+  /** 확정 기록이 저장되지 않은 채 '다음 학생'을 처음 누르면 한 번 더 확인한다(D4) */
+  const [confirmLeave, setConfirmLeave] = useState(false)
+  const unsaved = !noRecord && !!saveError
+  const retry = async () => {
+    if (!onRetrySave || retrying) return
+    setRetrying(true)
+    setRetryError(null)
+    const err = await onRetrySave()
+    setRetrying(false)
+    if (err) setRetryError(err)
+  }
+  const next = () => {
+    if (unsaved && !confirmLeave) return setConfirmLeave(true)
+    onNextStudent()
+  }
   const payload = useMemo(
     () => resolveResultPayload(frozenPayload, () => buildRecordPayload(run, session, { completedAtIso: new Date().toISOString(), completionStatus })),
     [frozenPayload, run, session, completionStatus],
@@ -52,7 +71,13 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
           </>
         )}
       </div>
-      {!noRecord && saveError && <p className="error" role="alert">이 기기에 확정 기록을 저장하지 못했습니다 ({saveError}). 아래 JSON·CSV를 내려받아 교사에게 전달하세요. 손실 방지를 보장하지는 않습니다.</p>}
+      {unsaved && (
+        <div className="card" role="alert">
+          <p className="error">이 기기에 확정 기록을 저장하지 못했습니다 ({retryError ?? saveError}). 먼저 ‘다시 저장’을 눌러 보세요. 같은 수행 번호·같은 내용으로 다시 저장합니다.</p>
+          {onRetrySave && <div className="row"><button className="primary" onClick={() => void retry()} disabled={retrying}>{retrying ? '저장 중…' : '다시 저장'}</button></div>}
+          <p className="small">계속 안 되면 아래 JSON·CSV를 내려받아 교사에게 전달하세요. 손실 방지를 보장하지는 않습니다.</p>
+        </div>
+      )}
       <section className="card grid2">
         <div>
           <h2>요약</h2>
@@ -97,8 +122,9 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
         <div className="row">
           <button onClick={() => dl(json, `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.json`, 'application/json')} disabled={!payload.ok}>JSON 내려받기</button>
           <button onClick={() => payload.ok && dl(toSummaryCsv([{ payload: payload.value, envelope: env }]), `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.csv`, 'text/csv;charset=utf-8')} disabled={!payload.ok}>이 수행 CSV 내려받기</button>
-          <button className="primary" onClick={onNextStudent}>다음 학생</button>
+          <button className="primary" onClick={next}>{unsaved && confirmLeave ? '저장 안 된 채로 다음 학생' : '다음 학생'}</button>
         </div>
+        {unsaved && confirmLeave && <p className="error" role="alert">이 수행은 아직 이 기기에 확정 저장되지 않았습니다. ‘다시 저장’을 하거나 JSON을 내려받은 뒤 넘어가세요. 그래도 넘어가려면 버튼을 한 번 더 누르세요.</p>}
         <p className="small">‘다음 학생’은 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않고, 교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다.</p>
       </section>
       )}

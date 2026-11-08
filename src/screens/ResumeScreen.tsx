@@ -1,6 +1,6 @@
 import type { Draft } from '../records/repository'
 
-export function ResumeScreen({ draft, onResume, onDiscard }: { draft: Draft; onResume: () => void; onDiscard: () => void }) {
+export function ResumeScreen({ draft, keepDraft = false, onResume, onDiscard }: { draft: Draft; keepDraft?: boolean; onResume: () => void; onDiscard: () => void }) {
   const s = draft.snapshot
   return (
     <main className="screen start wa">
@@ -12,7 +12,7 @@ export function ResumeScreen({ draft, onResume, onDiscard }: { draft: Draft; onR
       </section>
       <div className="row">
         <button className="primary" onClick={onResume}>이어서 하기</button>
-        <button onClick={onDiscard}>새 수행 시작 (이 초안 버리기)</button>
+        <button onClick={onDiscard}>{keepDraft ? '새 수행 시작 (이 초안은 그대로 둠)' : '새 수행 시작 (이 초안 버리기)'}</button>
       </div>
     </main>
   )

@@ -6,6 +6,7 @@ import type { RecordPayload, SessionContext } from '../domain/record'
 import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, OFF_SUBSTEPS, type OffSubStep, type TaskRun } from '../domain/taskEngine'
 import { buildRecordPayload } from '../domain/record'
 import type { Repository } from '../records/repository'
+import type { SaveState } from '../app/saveRecovery'
 import type { DeliveryEnvelope } from '../records/types'
 import { inspectPerformance, visibleInspection, type InspectionIssue } from '../domain/npcInspection'
 import type { FeedbackText } from '../domain/types'
@@ -32,6 +33,10 @@ export interface TaskContext {
   inspect: () => void
   /** 3D 조작부 계기 화면에 보일 값(숫자식 계기와 같음) */
   panel: PanelReadout
+  /** 이 기기 초안 저장 상태(D4) — 게임 화면 배지에 늘 보인다 */
+  saveStatus: SaveState
+  /** 지금 상태로 초안을 다시 저장(D4) */
+  retrySave: () => void
 }
 
 // 항목 표시 이름은 app/resultLabels(결과 화면과 같은 이름)
@@ -61,7 +66,7 @@ function useCountUp(active: boolean, ms = 1500): number {
 
 export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
 
-export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext }: {
+export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext, initialSaveStatus = 'saved', onSaveStatus }: {
   /** 비기록 모드: 저장 상태 대신 "기록 안 됨"을 보인다 */
   noRecord?: boolean
   repo: Repository; session: SessionContext; initialRun: TaskRun
@@ -73,6 +78,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   onRunChange?: (run: TaskRun) => void
   /** 게임 화면용 상태 알림 */
   onContext?: (c: TaskContext) => void
+  /** 화면 전환으로 패널이 새로 붙을 때 이어받을 저장 상태(D4) */
+  initialSaveStatus?: SaveState
+  onSaveStatus?: (s: SaveState) => void
 }) {
   const [run, setRun] = useState(initialRun)
   // 부모와 마지막으로 주고받은 run. 부모→패널 갱신과 패널→부모 알림이 서로 되돌리지 않게 한다.
@@ -83,7 +91,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   useEffect(() => {
     if (run !== externalRef.current) { externalRef.current = run; onRunChange?.(run) }
   }, [run, onRunChange])
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'failed'>('saved')
+  const [saveStatus, setSaveStatus] = useState<SaveState>(initialSaveStatus)
+  useEffect(() => { onSaveStatus?.(saveStatus) }, [saveStatus, onSaveStatus])
   const runRef = useRef(run)
   runRef.current = run
   /** 결과 확정(finish)을 시작했는지. 그 뒤로는 초안을 다시 저장하지 않고 finish도 한 번만 한다(독립 검토 2번 —
@@ -106,6 +115,14 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     })
     return () => { cancelled = true }
   }, [run, repo, session, initialRun])
+  /** 저장 실패 뒤 지금 상태로 다시 저장(D4). 확정을 시작한 뒤에는 하지 않는다(지운 초안이 다시 생기지 않게) */
+  const retrySave = () => {
+    if (finishingRef.current) return
+    setSaveStatus('saving')
+    void repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(runRef.current), savedAt: new Date().toISOString() }).then((r) => {
+      if (!finishingRef.current) setSaveStatus(r.status === 'saved' ? 'saved' : 'failed')
+    })
+  }
 
   // 화면 숨김 → 일시중지, 복귀 → 재개 (학습시간에서 숨김 구간 제외)
   useEffect(() => {
@@ -267,16 +284,17 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       shown, clearShown: () => setShown(null),
       doneCount: run.completedSteps.length, total: task.steps.length,
       hint, inspect,
+      saveStatus, retrySave,
       panel: { axle: done('enter') ? m.axleWeight : null, left: done('press') ? shownL : run.motorOn ? 0 : null, right: done('press') ? shownR : run.motorOn ? 0 : null, hold: gauge.hold, unit: m.unit ?? '' },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold])
+  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold, saveStatus])
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>
       <header className="topbar">
         <div><b>{task.title}</b> · {embedded ? '' : `코드 ${session.anonymousStudentCode} · `}{run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</div>
-        <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · {noRecord ? <span>기록 안 됨</span> : <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>}{run.paused && ' · 일시중지'}</div>
+        <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · {noRecord ? <span>기록 안 됨</span> : <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>}{!noRecord && saveStatus === 'failed' && <> <button className="link" onClick={retrySave}>다시 저장</button></>}{run.paused && ' · 일시중지'}</div>
       </header>
 
       <section className="npc card">

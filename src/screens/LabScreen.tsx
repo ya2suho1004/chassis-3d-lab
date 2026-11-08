@@ -21,6 +21,7 @@ import { brakeRigState } from '../scene/brakeRig'
 import { turningRigState } from '../scene/turningRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen, type TaskContext } from './TaskScreen'
+import { saveBadge, type SaveState } from '../app/saveRecovery'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog, panelWorkOrder } from './NpcDialog'
 import { Icon } from './Icon'
@@ -119,6 +120,9 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const [uiStyle, setUiStyle] = useState<'game' | 'classic'>('game')
   const joystickRef = useRef<MoveInput>({ x: 0, y: 0 })
   const [ctx, setCtx] = useState<TaskContext | null>(null)
+  /** 저장 상태(D4) — 게임 화면·기본 화면을 오가며 과제 패널이 새로 붙어도 '저장 실패'가 '저장됨'으로 되돌아가지 않게 여기 둔다 */
+  const saveStatusRef = useRef<SaveState>('saved')
+  const onSaveStatus = useCallback((s: SaveState) => { saveStatusRef.current = s }, [])
   const onContext = useCallback((c: TaskContext) => setCtx(c), [])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
@@ -308,7 +312,14 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         {!talking && (
           <>
             <div className="g-status">
-              <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.effects.includes('sparkle') ? fx.seq : 'ppe'} className={`g-ppe ${fx.effects.includes('sparkle') ? 'spark' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>보호구 착용</span>}</div>
+              <div className="g-badgecol">
+              <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}{run && ctx && (() => {
+                const sb = saveBadge(ctx.saveStatus, noRecord)
+                return sb && sb.tone !== 'bad' ? <span className={`g-save ${sb.tone}`}>{sb.text}</span> : null
+              })()}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.effects.includes('sparkle') ? fx.seq : 'ppe'} className={`g-ppe ${fx.effects.includes('sparkle') ? 'spark' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>보호구 착용</span>}</div>
+              {/* 저장 실패(D4)는 배지 아래 줄에 따로 — 배지가 길어져 오른쪽 의뢰 카드와 겹치지 않게 */}
+              {run && ctx && saveBadge(ctx.saveStatus, noRecord)?.tone === 'bad' && <button className="g-save bad" role="alert" onClick={ctx.retrySave}>저장 실패 · 다시 저장</button>}
+              </div>
               <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}><Icon name="camera" /> {VIEW_LABEL[viewMode]}</button>
               <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}><Icon name={soundOn ? 'soundOn' : 'soundOff'} size={22} /></button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
@@ -456,7 +467,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         {run && (
           <aside className={`g-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>
             <button className="g-x" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>
-            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded onRunChange={onRunChange} onContext={onContext}
+            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded initialSaveStatus={saveStatusRef.current} onSaveStatus={onSaveStatus} onRunChange={onRunChange} onContext={onContext}
               proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
               onFinish={onGameFinish} />
           </aside>
@@ -583,7 +594,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           )}
 
           {run && (
-            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded onRunChange={onRunChange}
+            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded initialSaveStatus={saveStatusRef.current} onSaveStatus={onSaveStatus} onRunChange={onRunChange}
               proximity={displayMode === 'threeD' ? { nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id } : null}
               onFinish={onFinish} />
           )}

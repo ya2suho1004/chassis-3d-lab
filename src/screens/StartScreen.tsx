@@ -5,13 +5,16 @@ import type { SessionContext } from '../domain/record'
 import type { DifficultyMode } from '../domain/taskEngine'
 import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
-import type { Repository } from '../records/repository'
+import type { Draft, Repository } from '../records/repository'
+import { findDraftForCode } from '../app/saveRecovery'
 import { NO_RECORD_CODE } from '../records/memoryRepository'
 import { TeacherPanel } from './TeacherPanel'
 import { LESSON_LABEL, lessonAttemptRole, lessonMode } from '../app/lesson'
 import { DEFAULT_SESSION_CODE, applySessionRules, sessionDef } from '../app/sessions'
 
-export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: SessionContext, t: ApprovedTask, m: DifficultyMode, noRecord?: boolean) => Promise<string | null> }) {
+export function StartScreen({ repo, onStart, onFoundDraft }: { repo: Repository; onStart: (s: SessionContext, t: ApprovedTask, m: DifficultyMode, noRecord?: boolean) => Promise<string | null>
+  /** 같은 코드·세션의 끝내지 않은 초안을 찾았을 때(D4) — 이어서 하기 화면으로 */
+  onFoundDraft?: (d: Draft) => void }) {
   const tasks = listTasks()
   const caseIds = tasks.map(caseKey).filter((k) => k !== '')
   const [preset, setPreset] = useState<TeacherPreset | null>(() => loadPreset(caseIds))
@@ -55,6 +58,11 @@ export function StartScreen({ repo, onStart }: { repo: Repository; onStart: (s: 
     setError(null)
     setBusy(true)
     try {
+      // D4: 현재 수행 포인터가 사라져도 같은 코드·같은 세션의 끝내지 않은 초안이 이 기기에 있으면 이어서 하기로 보낸다
+      if (!noRecord && onFoundDraft) {
+        const found = findDraftForCode(await repo.listDrafts(), v.code, sessionCode)
+        if (found) return onFoundDraft(found)
+      }
       const task = tasks[taskIdx]!
       const fixed = applySessionRules(sessionCode, { usagePhase: phase, difficultyMode: mode })
       const m = lessonMode(fixed.usagePhase, fixed.difficultyMode)
