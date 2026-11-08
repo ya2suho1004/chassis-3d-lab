@@ -326,6 +326,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               {menuOpen && (
                 <div className="g-menu" role="menu">
                   <button onClick={() => { setAvatarEdit(true); setMenuOpen(false) }}>캐릭터 다시 꾸미기</button>
+                  <button onClick={() => { setGuideOpen(true); setMenuOpen(false) }}>조작 안내 다시 보기</button>
                   <button onClick={() => setLabelChoice(labelMode === 'all' ? 'near' : 'all')}>{labelMode === 'all' ? '이름표 가까운 것만' : '이름표 모두 보기'}</button>
                   <label className="g-check"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
                   {run && <button onClick={toggleDisplay}>도식 모드로</button>}
