@@ -13,6 +13,32 @@ export const REQUEST_MAX_BYTES = 16 * 1024
 export const MAX_OUTPUT_TOKENS = 400
 export const RETRY_MAX_WAIT_MS = 3000
 export const REFUSAL_FALLBACK = '그 질문에는 답할 수 없어요. 제동력 측정 방법이나 안전수칙에 대해 물어봐 주세요.'
+export const TRUNCATED_NOTE = '\n\n(답이 길어서 여기서 끊겼어요. 궁금한 부분을 좁혀서 다시 물어봐 주세요.)'
+/** 끊긴 답을 마지막 완성 문장에서 자를 때, 남는 글이 이보다 짧으면 자르지 않는다 */
+const TRUNCATE_MIN_KEEP = 15
+
+/** 과제에 맞는 거절 대체 문구(E2, 2026-11-09) — 최소회전반경 과제에 제동력 이야기를 하지 않게 */
+export function refusalFallback(taskId: string | null | undefined): string {
+  return taskId === 'min-turning-radius' ? '그 질문에는 답할 수 없어요. 최소회전반경 측정 방법이나 안전수칙에 대해 물어봐 주세요.' : REFUSAL_FALLBACK
+}
+
+/**
+ * 모델이 답을 끝낸 이유를 셋으로 나눈다(E2). gemini finishReason·anthropic stop_reason 모두.
+ * complete: 정상 끝(이유를 모르면 정상으로 본다) / truncated: 길이 제한으로 잘림 / blocked: 안전 필터·거절 등으로 막힘
+ */
+export function classifyFinish(reason: string | null | undefined): 'complete' | 'truncated' | 'blocked' {
+  if (reason === null || reason === undefined || ['STOP', 'end_turn', 'stop_sequence', 'FINISH_REASON_UNSPECIFIED'].includes(reason)) return 'complete'
+  if (['MAX_TOKENS', 'max_tokens', 'model_context_window_exceeded'].includes(reason)) return 'truncated'
+  return 'blocked'
+}
+
+/** 끊긴 답: 마지막 완성 문장까지 남기고(너무 짧아지면 그대로) 끊겼다는 알림을 붙인다 */
+function closeTruncated(text: string): string {
+  let cut = -1
+  for (const m of text.matchAll(/[.!?。](?=\s|$)/g)) cut = m.index! + 1
+  const kept = cut >= TRUNCATE_MIN_KEEP ? text.slice(0, cut) : text
+  return `${kept.trimEnd()}${TRUNCATED_NOTE}`
+}
 
 const CODE_RE = /^[A-Za-z0-9_-]{1,32}$/
 const STEP_RE = /^[A-Za-z][A-Za-z0-9_:-]{0,63}$/
@@ -128,8 +154,14 @@ export async function handleChat(contentType: string | null, body: string, deps:
     await deps.insertLog({ ...base, answer: null, model_version: null, status: 'error' }).catch(() => null)
     return fail(res.status === 429 ? 'UPSTREAM_BUSY' : 'UPSTREAM_ERROR', true, Math.max(0, s.capPerStudent - mine))
   }
-  const refused = !res.text
-  const answer = res.text || REFUSAL_FALLBACK
+  // E2: 끝난 이유에 따라 — 막힌 답은 남은 글을 버리고 거절 문구, 끊긴 답은 완성 문장까지 + 알림, 글 없이 끊기면 다시 물어보게(한도에 세지 않음)
+  const finish = classifyFinish(res.finishReason)
+  if (finish === 'truncated' && !res.text) {
+    await deps.insertLog({ ...base, answer: null, model_version: res.modelVersion ?? null, status: 'error' }).catch(() => null)
+    return fail('UPSTREAM_ERROR', true, Math.max(0, s.capPerStudent - mine))
+  }
+  const refused = !res.text || finish === 'blocked'
+  const answer = refused ? refusalFallback(req.taskId) : finish === 'truncated' ? closeTruncated(res.text!) : res.text!
   const chatId = await deps.insertLog({ ...base, answer, model_version: res.modelVersion ?? null, status: refused ? 'refused' : 'answered' }).catch(() => null)
   return { protocolVersion: CHAT_PROTOCOL, ok: true, answer, remaining: Math.max(0, s.capPerStudent - mine - 1), logged: chatId !== null, chatId, masked: q.masked, refused }
 }
