@@ -8,6 +8,7 @@ import { toSummaryCsv } from '../records/csv'
 import { WorkLog } from './WorkLog'
 import { isRequestPassed } from '../app/cozyState'
 import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/resultLabels'
+import { LESSON_SHORT } from '../app/lesson'
 
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
 const ERROR_HINT: Record<string, string> = { TIMEOUT: '서버 응답이 오지 않음 — 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
@@ -87,7 +88,7 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
             <li>안전 위반: {run.safetyViolationCount} ({countsText(run.safetyViolationTypes)})</li>
             <li>힌트 요청: {run.hintCount} · 일시중지 {run.pauseCount} · 재개 {run.resumeCount}</li>
             <li>NPC 검사 횟수: {run.npcInspectionCount}</li>
-            <li>수업 시점: {session.usagePhase === 'preview' ? '대기 중 예습' : session.usagePhase === 'review' ? '실습 후 복습' : '기타'} · 도움 방식: {run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</li>
+            <li>수업 시점: {LESSON_SHORT[session.usagePhase] ?? '그 밖의 사용'} · 도움 방식: {run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</li>
           </ul>
         </div>
         <div>
