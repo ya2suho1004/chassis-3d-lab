@@ -36,6 +36,19 @@ export function canonicalize(value: unknown): string {
   }
 }
 
+/**
+ * 객체에서 값이 undefined인 칸을 뺀 사본을 만든다. 원본은 건드리지 않는다.
+ * JSON 본문에는 이 칸이 실리지 않으므로, 서버가 받는 것과 같은 모양으로 해시하기 위해 쓴다.
+ * 배열 안의 undefined와 NaN 등은 그대로 두어 canonicalize가 계속 거절하게 한다(JSON 왕복으로 null이 되면 안 됨).
+ */
+export function stripUndefinedKeys<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((v) => stripUndefinedKeys(v)) as T
+  if (value === null || typeof value !== 'object') return value
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(value)) if (v !== undefined) out[k] = stripUndefinedKeys(v)
+  return out as T
+}
+
 export async function sha256Hex(text: string): Promise<string> {
   const bytes = new TextEncoder().encode(text)
   const digest = await crypto.subtle.digest('SHA-256', bytes)

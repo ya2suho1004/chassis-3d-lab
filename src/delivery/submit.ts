@@ -8,7 +8,7 @@
 import type { RecordPayload } from '../domain/record'
 import type { StoredRecord } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
-import { canonicalize, JcsError, sha256Hex, utf8Length } from './jcs'
+import { canonicalize, sha256Hex, stripUndefinedKeys, utf8Length } from './jcs'
 import { deadline, SUBMIT_TIMEOUT_MS } from './timeout'
 
 export const PROTOCOL_VERSION = '1'
@@ -91,6 +91,18 @@ export function backoffAt(now: Date, attemptCountAfter: number): string {
 const REJECT_CODES = new Set(['INVALID_PAYLOAD', 'UNSUPPORTED_SCHEMA', 'PAYLOAD_TOO_LARGE', 'SESSION_NOT_ALLOWED'])
 const PENDING_CODES = new Set(['LOCK_BUSY', 'RATE_LIMITED'])
 
+/**
+ * 이전 판의 전송 거절 버그(2026-11-09 수정)로 거절된 기록인가.
+ * 원본 그대로는 canonicalize가 실패하고 undefined 칸을 빼면 통과하는 기록은, 이전 판에서 fetch 전에 멈췄으므로 서버에 간 적이 없다.
+ * 그래서 다시 보내도 서버의 거절을 무시하는 것이 아니다. 서버가 거절한 기록과 진짜 잘못이 있는 기록은 여기에 걸리지 않는다.
+ * 되살린 뒤 서버가 INVALID_PAYLOAD로 거절하면 교사가 전송을 누를 때마다 같은 번호로 다시 물어본다(자동 재전송 아님, 서버 저장 없음).
+ */
+export function rejectedOnlyByUndefinedKeys(rec: StoredRecord): boolean {
+  if (rec.envelope.uploadStatus !== 'rejected' || rec.envelope.lastErrorCode !== 'INVALID_PAYLOAD') return false
+  try { canonicalize(rec.payload); return false } catch { /* 아래에서 원인을 가린다 */ }
+  try { canonicalize(stripUndefinedKeys(rec.payload)); return true } catch { return false }
+}
+
 export async function submitRecord(rec: StoredRecord, deps: SubmitDeps): Promise<SubmitResult> {
   const env = rec.envelope
   if (env.localSaveStatus !== 'saved') return { outcome: { kind: 'skipped', reason: 'NOT_SAVED_LOCALLY' }, patch: {} }
@@ -105,12 +117,14 @@ export async function submitRecord(rec: StoredRecord, deps: SubmitDeps): Promise
   }
 
   // 1. 로컬 독립 계산: canonical·hash·크기
+  //    서버는 JSON 본문을 받아 해시하므로 본문에 실리지 않는 undefined 칸을 뺀 모양으로 계산한다. 저장된 원본은 고치지 않는다.
+  const wire = stripUndefinedKeys(rec.payload)
   let canonical: string
-  try { canonical = canonicalize(rec.payload) } catch (e) {
-    const code = e instanceof JcsError ? `INVALID_PAYLOAD` : 'INVALID_PAYLOAD'
+  try { canonical = canonicalize(wire) } catch {
+    const code = 'INVALID_PAYLOAD'
     return { outcome: { kind: 'rejected', code }, patch: { ...base, ...keep, uploadStatus: 'rejected', lastErrorCode: code, nextRetryAt: null } }
   }
-  const body = buildRequestBody(rec.payload)
+  const body = buildRequestBody(wire)
   if (utf8Length(canonical) > CANONICAL_MAX_BYTES || utf8Length(body) > REQUEST_MAX_BYTES) {
     return { outcome: { kind: 'rejected', code: 'PAYLOAD_TOO_LARGE' }, patch: { ...base, ...keep, uploadStatus: 'rejected', lastErrorCode: 'PAYLOAD_TOO_LARGE', nextRetryAt: null } }
   }

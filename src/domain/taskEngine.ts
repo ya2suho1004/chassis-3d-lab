@@ -140,7 +140,9 @@ function nextStepOf(task: ApprovedTask, completed: string[]): string | null {
 export function appendEvent(run: TaskRun, ev: Omit<StepEvent, 'eventId' | 'sequence' | 'elapsedMs'>): { run: TaskRun; ok: boolean } {
   if (run.events.length >= EVENT_LIMIT) return { run: carry(run, { ...run, eventLimitReached: true }), ok: false }
   const d = depsOf(run)
-  const e: StepEvent = { eventId: d.newId(), sequence: run.events.length + 1, elapsedMs: Math.max(0, d.now() - run.startedAtMs), ...ev }
+  // 값이 없는 칸은 만들지 않는다. IndexedDB가 undefined 칸을 그대로 보존해 기록 모양이 JSON 본문과 달라진다.
+  const given = Object.fromEntries(Object.entries(ev).filter(([, v]) => v !== undefined)) as typeof ev
+  const e: StepEvent = { eventId: d.newId(), sequence: run.events.length + 1, elapsedMs: Math.max(0, d.now() - run.startedAtMs), ...given }
   return { run: carry(run, { ...run, events: [...run.events, e] }), ok: true }
 }
 
