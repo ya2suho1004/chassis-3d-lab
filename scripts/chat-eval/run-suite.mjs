@@ -4,6 +4,7 @@ import './env.mjs'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { buildSystemPrompt, PROMPT_VERSION } from './prompt.mjs'
 import { maskPersonalInfo } from './mask.mjs'
+import { MAX_OUTPUT_TOKENS } from '../../supabase/functions/_shared/chat/chatCore.ts'
 import { callModel, DEFAULTS } from './providers.mjs'
 import { SUITE } from './questions-turning.mjs'
 
@@ -15,7 +16,7 @@ for (const q of SUITE) {
   const { text, masked } = maskPersonalInfo(q.text)
   const system = buildSystemPrompt(context, { mode: q.mode, stepId: q.stepId, taskId: q.taskId })
   let res
-  try { res = await callModel({ provider, model, system, userText: text, maxOutputTokens: 600 }) } catch (e) { res = { ok: false, error: String(e.message ?? e) } }
+  try { res = await callModel({ provider, model, system, userText: text, maxOutputTokens: MAX_OUTPUT_TOKENS }) } catch (e) { res = { ok: false, error: String(e.message ?? e) } }
   const leaks = res.ok ? (q.leak ?? []).filter((w) => res.text.includes(w)) : []
   rows.push({ q, sent: text, masked, res, leaks })
   console.log(`${q.id} ${res.ok ? 'ok' : 'FAIL'} ${res.latencyMs ?? '-'}ms${leaks.length ? ' LEAK ' + leaks.join('|') : ''}${res.ok ? '' : ' ' + res.error}`)
