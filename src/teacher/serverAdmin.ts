@@ -41,6 +41,15 @@ export const listChatLogs = (cfg: ServerConfig, auth: TeacherAuth, code: string,
   rest<ChatLogRecord[]>(cfg, auth, `chat_logs?select=*&session_code=eq.${encodeURIComponent(code)}&order=created_at.asc&limit=5000`, {}, f)
 export const listServerRecords = (cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch) =>
   rest<ServerRecordRow[]>(cfg, auth, `records?select=record_id,receipt_id,accepted_at,payload_hash,payload_json,session_code,anonymous_student_code,run_purpose,schema_version&session_code=eq.${encodeURIComponent(code)}&order=accepted_at.asc&limit=5000`, {}, f)
+/** 세션의 서버 기록 전부(B1). 서버가 한 번에 주는 줄 수(max_rows)에 기대지 않고 빈 응답이 올 때까지 이어 읽는다. */
+export async function listAllServerRecords(cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch): Promise<ServerRecordRow[]> {
+  const all: ServerRecordRow[] = []
+  for (;;) {
+    const page = await rest<ServerRecordRow[]>(cfg, auth, `records?select=record_id,receipt_id,accepted_at,payload_hash,payload_json,session_code,anonymous_student_code,run_purpose,schema_version&session_code=eq.${encodeURIComponent(code)}&order=accepted_at.asc,record_id.asc&limit=1000&offset=${all.length}`, {}, f)
+    if (page.length === 0) return all
+    all.push(...page)
+  }
+}
 /** 수업 중 대화 점검(설계 2026-11-03): sinceIso 이후 대화만(없으면 처음부터) 시간순으로 */
 export const listChatLogsSince = (cfg: ServerConfig, auth: TeacherAuth, code: string, sinceIso: string | null, f?: typeof fetch) =>
   rest<ChatLogRecord[]>(cfg, auth, `chat_logs?select=*&session_code=eq.${encodeURIComponent(code)}${sinceIso ? `&created_at=gt.${encodeURIComponent(sinceIso)}` : ''}&order=created_at.asc&limit=1000`, {}, f)

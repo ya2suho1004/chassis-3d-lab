@@ -3,7 +3,9 @@
 // 2026-11-03: 교사 화면 탭(수업 중·수업 후)에 나눠 쓰도록 훅과 화면 조각으로 나눔(설계 2026-11-03-teacher-chat-review-design.md).
 import { useState } from 'react'
 import { serverRecordsToSummaryCsv, toChatCsv } from '../records/csv'
-import { createSession, getServerConfig, isTeacher, listChatLogs, listServerRecords, listSessions, ServerError, signIn, updateSession, type ServerConfig, type SessionRow, type TeacherAuth } from '../teacher/serverAdmin'
+import { serverRows } from '../records/researchBundle'
+import { downloadResearchBundle } from '../teacher/downloadBundle'
+import { createSession, getServerConfig, isTeacher, listAllServerRecords, listChatLogs, listServerRecords, listSessions, ServerError, signIn, updateSession, type ServerConfig, type SessionRow, type TeacherAuth } from '../teacher/serverAdmin'
 import { ChatReview } from './ChatReview'
 
 export const FLOW_LABEL: Record<SessionRow['lesson_flow'], string> = { 'lesson1-2': '1~2차시 연습', lesson5: '5차시 정리' }
@@ -123,6 +125,7 @@ export function ServerAfter({ s }: { s: ServerAdminState }) {
   const [newCode, setNewCode] = useState('')
   const [newCond, setNewCond] = useState('')
   const [newFlow, setNewFlow] = useState<SessionRow['lesson_flow']>('lesson1-2')
+  const [bundleNote, setBundleNote] = useState<string | null>(null)
   if (!s.cfg || !s.auth) return <ServerLogin s={s} />
   const { cfg, auth } = s
   const today = new Date().toISOString().slice(0, 10)
@@ -137,9 +140,12 @@ export function ServerAfter({ s }: { s: ServerAdminState }) {
           <div className="row">
             <button disabled={s.busy} onClick={() => void s.run(async () => download(`chat-logs-${x.session_code}-${today}.csv`, toChatCsv(await listChatLogs(cfg, auth, x.session_code) as any)))}>대화 기록 CSV</button>
             <button disabled={s.busy} onClick={() => void s.run(async () => download(`server-records-${x.session_code}-${today}.csv`, serverRecordsToSummaryCsv(await listServerRecords(cfg, auth, x.session_code))))}>서버 수행 기록 CSV</button>
+            <button disabled={s.busy} onClick={() => void s.run(async () => setBundleNote(await downloadResearchBundle('server', x.session_code, serverRows(await listAllServerRecords(cfg, auth, x.session_code)))))}>연구용 묶음(ZIP)</button>
           </div>
         </div>
       ))}
+      {bundleNote && <p className="small" role="status">{bundleNote}</p>}
+      <p className="small">연구용 묶음은 원본·수행 요약·항목별 최초·최종 답·사건 표·설명서를 담습니다. AI 대화는 들어 있지 않습니다. 가명 코드가 있는 연구자 전용 파일이니 대응표와 따로 보관하세요.</p>
       <details>
         <summary>새 수업 세션 만들기</summary>
         <label>세션 코드(영문·숫자·-·_)<input value={newCode} onChange={(e) => setNewCode(e.target.value)} aria-label="새 세션 코드" /></label>
