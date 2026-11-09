@@ -1,5 +1,7 @@
 // 교사용 Supabase 연결(설계 07 §5) — 로그인(이메일+비밀번호)은 Supabase Auth, 조회·수정은 REST(RLS: 교사 명단에 있을 때만).
 // 토큰은 메모리에만 둔다(공용 기기에 남기지 않음). 공개 키(anon)만 쓰고 비밀 키는 쓰지 않는다.
+import type { ServerReceipt } from '../records/reconcile'
+
 export interface ServerConfig { url: string; anonKey: string }
 export interface TeacherAuth { accessToken: string; expiresAt: number; email: string }
 export interface SessionRow { session_code: string; class_condition_code: string; lesson_flow: 'lesson1-2' | 'lesson5'; chatbot_enabled: boolean; chat_cap_per_student: number; chat_daily_cap: number; active: boolean }
@@ -37,19 +39,24 @@ export const updateSession = (cfg: ServerConfig, auth: TeacherAuth, code: string
   rest<SessionRow[]>(cfg, auth, `sessions?session_code=eq.${encodeURIComponent(code)}`, { method: 'PATCH', body: JSON.stringify({ ...patch, updated_at: new Date().toISOString() }) }, f)
 export const createSession = (cfg: ServerConfig, auth: TeacherAuth, row: Pick<SessionRow, 'session_code' | 'class_condition_code' | 'lesson_flow'>, f?: typeof fetch) =>
   rest<SessionRow[]>(cfg, auth, 'sessions', { method: 'POST', body: JSON.stringify({ ...row, chatbot_enabled: false }) }, f)
-export const listChatLogs = (cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch) =>
-  rest<ChatLogRecord[]>(cfg, auth, `chat_logs?select=*&session_code=eq.${encodeURIComponent(code)}&order=created_at.asc&limit=5000`, {}, f)
-export const listServerRecords = (cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch) =>
-  rest<ServerRecordRow[]>(cfg, auth, `records?select=record_id,receipt_id,accepted_at,payload_hash,payload_json,session_code,anonymous_student_code,run_purpose,schema_version&session_code=eq.${encodeURIComponent(code)}&order=accepted_at.asc&limit=5000`, {}, f)
-/** 세션의 서버 기록 전부(B1). 서버가 한 번에 주는 줄 수(max_rows)에 기대지 않고 빈 응답이 올 때까지 이어 읽는다. */
-export async function listAllServerRecords(cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch): Promise<ServerRecordRow[]> {
-  const all: ServerRecordRow[] = []
+/** 서버가 한 번에 주는 줄 수(max_rows 1000)에 기대지 않고 빈 응답이 올 때까지 이어 읽는다. 중간에 실패하면 일부만 돌려주지 않고 오류를 낸다. path의 정렬은 고유해야 한다. */
+async function readAll<T>(cfg: ServerConfig, auth: TeacherAuth, path: string, f?: typeof fetch): Promise<T[]> {
+  const all: T[] = []
   for (;;) {
-    const page = await rest<ServerRecordRow[]>(cfg, auth, `records?select=record_id,receipt_id,accepted_at,payload_hash,payload_json,session_code,anonymous_student_code,run_purpose,schema_version&session_code=eq.${encodeURIComponent(code)}&order=accepted_at.asc,record_id.asc&limit=1000&offset=${all.length}`, {}, f)
+    const page = await rest<T[]>(cfg, auth, `${path}&limit=1000&offset=${all.length}`, {}, f)
     if (page.length === 0) return all
     all.push(...page)
   }
 }
+const sessionEq = (code: string) => `session_code=eq.${encodeURIComponent(code)}`
+export const listChatLogs = (cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch) =>
+  readAll<ChatLogRecord>(cfg, auth, `chat_logs?select=*&${sessionEq(code)}&order=created_at.asc,chat_id.asc`, f)
+/** 세션의 서버 기록 전부(B1·요약 CSV) */
+export const listAllServerRecords = (cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch) =>
+  readAll<ServerRecordRow>(cfg, auth, `records?select=record_id,receipt_id,accepted_at,payload_hash,payload_json,session_code,anonymous_student_code,run_purpose,schema_version&${sessionEq(code)}&order=accepted_at.asc,record_id.asc`, f)
+/** 대조용 접수 정보(C2). 원본 내용은 받지 않는다 */
+export const listServerReceipts = (cfg: ServerConfig, auth: TeacherAuth, code: string, f?: typeof fetch) =>
+  readAll<ServerReceipt>(cfg, auth, `records?select=record_id,receipt_id,accepted_at,payload_hash,anonymous_student_code&${sessionEq(code)}&order=accepted_at.asc,record_id.asc`, f)
 /** 수업 중 대화 점검(설계 2026-11-03): sinceIso 이후 대화만(없으면 처음부터) 시간순으로 */
 export const listChatLogsSince = (cfg: ServerConfig, auth: TeacherAuth, code: string, sinceIso: string | null, f?: typeof fetch) =>
   rest<ChatLogRecord[]>(cfg, auth, `chat_logs?select=*&session_code=eq.${encodeURIComponent(code)}${sinceIso ? `&created_at=gt.${encodeURIComponent(sinceIso)}` : ''}&order=created_at.asc&limit=1000`, {}, f)

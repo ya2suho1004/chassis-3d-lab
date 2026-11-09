@@ -12,6 +12,7 @@ import { toSummaryCsv } from '../records/csv'
 import { deviceRows } from '../records/researchBundle'
 import { downloadResearchBundle } from '../teacher/downloadBundle'
 import type { Repository } from '../records/repository'
+import { DeviceRecordCheck } from './RecordCheck'
 import { ServerAfter, ServerLive, useServerAdmin } from './ServerAdmin'
 import { LESSON_LABEL } from '../app/lesson'
 import { DEFAULT_SESSION_CODE, SESSIONS, applySessionRules, sessionDef } from '../app/sessions'
@@ -211,8 +212,9 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
           {sendLog.map((r) => (<li key={r.recordId}>{r.recordId.slice(0, 8)}… — {sendResultLabel(r)}</li>))}
         </ul>
       )}
+      <DeviceRecordCheck repo={repo} refreshKey={sendLog} />
       <p className="small">전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</p>
-          <ServerAfter s={server} />
+          <ServerAfter s={server} repo={repo} />
         </div>
       )}
       <button className="link" onClick={onClose}>교사 화면 닫기</button>

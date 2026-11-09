@@ -485,3 +485,10 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .today-summary dl > div.warn dd { color:#9a4a00; }
 .today-summary dl > div.warn dd::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#d97a00; margin-right:6px; vertical-align:middle; }
 .today-warn { margin:8px 0 0; padding:6px 10px; border-radius:8px; background:#fff4e0; color:#7a3d00; font-size:.9rem; }
+
+/* C2 접수 대조(교사 화면 수업 후 탭) */
+.record-check { border:1px solid #c9d3db; border-radius:12px; padding:10px 14px; margin:10px 0; background:#f7fafc; }
+.record-check h4 { margin:0 0 6px; font-size:.98rem; }
+.record-check p { margin:4px 0; }
+.record-check-list { margin:6px 0; padding-left:18px; }
+.record-check-list li { margin:6px 0; overflow-wrap:anywhere; }

@@ -1,11 +1,12 @@
 // 연구용 묶음을 ZIP 하나로 내려받고, 화면에 보여 줄 건수 문장을 돌려준다(B1)
 import { buildResearchBundle, type BundleInput } from '../records/researchBundle'
 import { zipStore } from '../records/zip'
+import { kstDate } from './exportName'
 
 export async function downloadResearchBundle(source: BundleInput['source'], scope: string, rows: BundleInput['rows']): Promise<string> {
   const now = new Date()
   const b = await buildResearchBundle({ source, scope, generatedAtIso: now.toISOString(), rows })
-  const dateKst = new Date(now.getTime() + 9 * 3600_000).toISOString().slice(0, 10)
+  const dateKst = kstDate(now)
   const url = URL.createObjectURL(new Blob([zipStore(b.files, now) as BlobPart], { type: 'application/zip' }))
   const a = document.createElement('a')
   a.href = url

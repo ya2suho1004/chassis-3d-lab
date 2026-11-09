@@ -5,8 +5,12 @@ import { useState } from 'react'
 import { serverRecordsToSummaryCsv, toChatCsv } from '../records/csv'
 import { serverRows } from '../records/researchBundle'
 import { downloadResearchBundle } from '../teacher/downloadBundle'
-import { createSession, getServerConfig, isTeacher, listAllServerRecords, listChatLogs, listServerRecords, listSessions, ServerError, signIn, updateSession, type ServerConfig, type SessionRow, type TeacherAuth } from '../teacher/serverAdmin'
+import { reconcileSession, reconcileToCsv, type ReconcileResult } from '../records/reconcile'
+import type { Repository } from '../records/repository'
+import { exportFileName } from '../teacher/exportName'
+import { createSession, getServerConfig, isTeacher, listAllServerRecords, listChatLogs, listServerReceipts, listSessions, ServerError, signIn, updateSession, type ServerConfig, type SessionRow, type TeacherAuth } from '../teacher/serverAdmin'
 import { ChatReview } from './ChatReview'
+import { ReconcileView } from './RecordCheck'
 
 export const FLOW_LABEL: Record<SessionRow['lesson_flow'], string> = { 'lesson1-2': '1~2차시 연습', lesson5: '5차시 정리' }
 
@@ -121,14 +125,18 @@ export function ServerLive({ s }: { s: ServerAdminState }) {
 }
 
 /** 수업 후: 서버 대화 기록·수행 기록 CSV, 새 세션 만들기 */
-export function ServerAfter({ s }: { s: ServerAdminState }) {
+export function ServerAfter({ s, repo }: { s: ServerAdminState; repo: Repository }) {
   const [newCode, setNewCode] = useState('')
   const [newCond, setNewCond] = useState('')
   const [newFlow, setNewFlow] = useState<SessionRow['lesson_flow']>('lesson1-2')
   const [bundleNote, setBundleNote] = useState<string | null>(null)
+  const [recon, setRecon] = useState<ReconcileResult | null>(null)
   if (!s.cfg || !s.auth) return <ServerLogin s={s} />
   const { cfg, auth } = s
-  const today = new Date().toISOString().slice(0, 10)
+  const saveAll = (kind: string, label: string, code: string, rows: unknown[], csv: string) => {
+    download(exportFileName(kind, code, rows.length, new Date()), csv)
+    setBundleNote(`${code} ${label} ${rows.length}건을 끝까지 읽어 내려받았습니다.`)
+  }
   return (
     <section className="card serveradmin">
       <h3>서버 기록 내려받기 (수업 후)</h3>
@@ -138,13 +146,18 @@ export function ServerAfter({ s }: { s: ServerAdminState }) {
         <div key={x.session_code} className="sessionrow">
           <p><b>{x.session_code}</b> · {FLOW_LABEL[x.lesson_flow]} · 조건 {x.class_condition_code}</p>
           <div className="row">
-            <button disabled={s.busy} onClick={() => void s.run(async () => download(`chat-logs-${x.session_code}-${today}.csv`, toChatCsv(await listChatLogs(cfg, auth, x.session_code) as any)))}>대화 기록 CSV</button>
-            <button disabled={s.busy} onClick={() => void s.run(async () => download(`server-records-${x.session_code}-${today}.csv`, serverRecordsToSummaryCsv(await listServerRecords(cfg, auth, x.session_code))))}>서버 수행 기록 CSV</button>
+            <button disabled={s.busy} onClick={() => void s.run(async () => { const rows = await listChatLogs(cfg, auth, x.session_code); saveAll('chat-logs', '대화 기록', x.session_code, rows, toChatCsv(rows as any)) })}>대화 기록 CSV</button>
+            <button disabled={s.busy} onClick={() => void s.run(async () => { const rows = await listAllServerRecords(cfg, auth, x.session_code); saveAll('server-records', '수행 기록', x.session_code, rows, serverRecordsToSummaryCsv(rows)) })}>서버 수행 기록 CSV</button>
             <button disabled={s.busy} onClick={() => void s.run(async () => setBundleNote(await downloadResearchBundle('server', x.session_code, serverRows(await listAllServerRecords(cfg, auth, x.session_code)))))}>연구용 묶음(ZIP)</button>
+            <button disabled={s.busy} onClick={() => void s.run(async () => {
+              const [records, drafts, receipts] = await Promise.all([repo.listRecords(), repo.listDrafts(), listServerReceipts(cfg, auth, x.session_code)])
+              setRecon(await reconcileSession({ sessionCode: x.session_code, records, drafts, receipts }))
+            })}>이 기기와 대조</button>
           </div>
         </div>
       ))}
       {bundleNote && <p className="small" role="status">{bundleNote}</p>}
+      {recon && <ReconcileView result={recon} onDownload={() => download(exportFileName('reconcile', recon.sessionCode, recon.rows.length + recon.serverOnly.length, new Date()), reconcileToCsv(recon))} />}
       <p className="small">연구용 묶음은 원본·수행 요약·항목별 최초·최종 답·사건 표·설명서를 담습니다. AI 대화는 들어 있지 않습니다. 가명 코드가 있는 연구자 전용 파일이니 대응표와 따로 보관하세요.</p>
       <details>
         <summary>새 수업 세션 만들기</summary>
