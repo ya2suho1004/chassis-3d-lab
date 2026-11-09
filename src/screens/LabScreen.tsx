@@ -32,6 +32,7 @@ import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '..
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
 import { ChatPanel } from '../chat/ChatPanel'
+import { createChatConversation } from '../chat/chatConversation'
 import { AvatarScreen } from './AvatarScreen'
 import { IntroArt } from './IntroArt'
 import { tipsFor } from '../app/intro'
@@ -126,6 +127,10 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const onContext = useCallback((c: TaskContext) => setCtx(c), [])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  // AI 대화(E4): 게임·기본 화면이 패널을 따로 만들므로 대화는 여기 둔다. 수행 번호가 바뀌면 새로 시작한다(다음 학생에게 넘어가지 않음)
+  const chatFor = useRef({ recordId: session.recordId, chat: createChatConversation() })
+  if (chatFor.current.recordId !== session.recordId) chatFor.current = { recordId: session.recordId, chat: createChatConversation() }
+  const chat = chatFor.current.chat
   const [menuOpen, setMenuOpen] = useState(false)
   const [avatarEdit, setAvatarEdit] = useState(false)
   const nickname = nicknameOf(profile)
@@ -476,7 +481,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         {!noRecord && (
           <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
             <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
-            <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
+            <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
               stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
           </aside>
         )}
@@ -601,7 +606,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           )}
 
           {!reviewOpen && !noRecord && (
-            <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
+            <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
               stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} />
           )}
         </section>
