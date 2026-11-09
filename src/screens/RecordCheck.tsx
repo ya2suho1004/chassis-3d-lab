@@ -1,11 +1,12 @@
-// 교사 화면 수업 후 탭 — 접수 대조(C2, 설계 05 §12). 기기 상태 요약은 로그인 없이, 서버 대조는 교사 로그인 뒤에 쓴다. 지우는 기능은 두지 않는다.
+// 교사 화면 수업 후 탭 — 접수 대조(C2, 설계 05 §12). 건수는 로그인 없이, 기록별 목록·내려받기·서버 대조는 교사 로그인 뒤에 쓴다(독립 검토 1번, 공통 PIN은 보호 수단이 아니다). 지우는 기능은 두지 않는다.
 import { useEffect, useState } from 'react'
 import { summarizeDevice, UPLOAD_STATUS_LABEL, VERDICT_LABEL, type DeviceSummary, type ReconcileResult } from '../records/reconcile'
 import type { Repository } from '../records/repository'
 
 const shortId = (id: string) => `${id.slice(0, 8)}…`
 
-export function DeviceSummaryView({ summary: s }: { summary: DeviceSummary }) {
+/** showList: 익명 코드·기록 번호가 보이는 목록. 교사 로그인 뒤에만 켠다 */
+export function DeviceSummaryView({ summary: s, showList = false }: { summary: DeviceSummary; showList?: boolean }) {
   return (
     <section className="record-check" aria-label="이 기기 전송 상태">
       <h4>이 기기 전송 상태</h4>
@@ -13,7 +14,7 @@ export function DeviceSummaryView({ summary: s }: { summary: DeviceSummary }) {
       {s.drafts > 0 && <p className="small">끝내지 않은 수행 {s.drafts}건은 확정 전이라 전송되지 않습니다. 같은 익명 코드로 들어가면 이어서 할 수 있습니다.</p>}
       {s.attention.length === 0
         ? <p className="small">보낼 기록이 없습니다.</p>
-        : (
+        : !showList ? null : (
           <ul className="record-check-list">
             {s.attention.map((a) => (
               <li key={a.recordId}><b>{a.code}</b> <span className="small">{shortId(a.recordId)} · {UPLOAD_STATUS_LABEL[a.uploadStatus]}</span><br /><span className="small">{a.action}</span></li>
@@ -24,8 +25,19 @@ export function DeviceSummaryView({ summary: s }: { summary: DeviceSummary }) {
   )
 }
 
+/** 이 기기 학생 기록 내려받기. 원본·가명 코드가 들어 있어 교사 로그인 뒤에만 버튼을 보인다(독립 검토 1번) */
+export function DeviceExports({ open, hasRecords, onCsv, onBundle }: { open: boolean; hasRecords: boolean; onCsv: () => void; onBundle: () => void }) {
+  if (!open) return <p className="small" role="note">요약 CSV·연구용 묶음·기록별 목록에는 학생 기록이 들어 있어, 아래에서 교사 계정으로 로그인해야 열립니다. 인터넷이 끊겨 로그인할 수 없어도 기록은 이 기기에 그대로 있습니다. 연결된 뒤 내려받으세요.</p>
+  return (
+    <div className="row">
+      <button onClick={onCsv}>요약 CSV 내려받기</button>
+      <button onClick={onBundle} disabled={!hasRecords}>연구용 묶음(ZIP) 내려받기</button>
+    </div>
+  )
+}
+
 /** 전송 결과가 바뀌면(refreshKey) 다시 읽는다 */
-export function DeviceRecordCheck({ repo, refreshKey }: { repo: Repository; refreshKey: unknown }) {
+export function DeviceRecordCheck({ repo, refreshKey, showList = false }: { repo: Repository; refreshKey: unknown; showList?: boolean }) {
   const [summary, setSummary] = useState<DeviceSummary | null>(null)
   const [failed, setFailed] = useState(false)
   useEffect(() => {
@@ -36,7 +48,7 @@ export function DeviceRecordCheck({ repo, refreshKey }: { repo: Repository; refr
     return () => { live = false }
   }, [repo, refreshKey])
   if (failed) return <p className="error">이 기기 기록을 읽지 못했습니다. 기록은 그대로 있습니다. 다시 열어 주세요.</p>
-  return summary ? <DeviceSummaryView summary={summary} /> : null
+  return summary ? <DeviceSummaryView summary={summary} showList={showList} /> : null
 }
 
 export function ReconcileView({ result: r, onDownload }: { result: ReconcileResult; onDownload: () => void }) {

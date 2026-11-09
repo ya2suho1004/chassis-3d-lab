@@ -198,7 +198,7 @@ describe('서버 조회를 끝까지 읽기(1000줄 상한 대응)', () => {
 
 describe('화면', () => {
   test('기기 요약: 건수와 할 일이 보이고 지우기 버튼이 없다', () => {
-    const html = renderToStaticMarkup(createElement(DeviceSummaryView, { summary: summarizeDevice([acked(1), record(2)], [draft(id(90), S)]) }))
+    const html = renderToStaticMarkup(createElement(DeviceSummaryView, { summary: summarizeDevice([acked(1), record(2)], [draft(id(90), S)]), showList: true }))
     expect(html).toMatch(/접수 확인/)
     expect(html).toMatch(/D-02/)
     expect(html).toMatch(/대기 기록 지금 전송/)
@@ -207,7 +207,7 @@ describe('화면', () => {
   })
 
   test('기기 요약: 모두 접수 확인이면 할 일이 없다고 말한다', () => {
-    const html = renderToStaticMarkup(createElement(DeviceSummaryView, { summary: summarizeDevice([acked(1)], []) }))
+    const html = renderToStaticMarkup(createElement(DeviceSummaryView, { summary: summarizeDevice([acked(1)], []), showList: true }))
     expect(html).toMatch(/보낼 기록이 없습니다/)
   })
 

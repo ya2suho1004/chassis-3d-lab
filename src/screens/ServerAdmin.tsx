@@ -23,7 +23,7 @@ function download(name: string, text: string) {
 
 export const errText = (e: unknown) => {
   const code = e instanceof ServerError ? e.code : 'NETWORK'
-  return code === 'LOGIN_FAILED' ? '이메일 또는 비밀번호가 맞지 않습니다.' : code === 'NOT_TEACHER' ? '교사 명단에 없는 계정이거나 로그인이 만료됐습니다. 다시 로그인하세요.' : code === 'NETWORK' ? '서버에 연결하지 못했습니다. 인터넷을 확인하세요.' : `서버 오류(${code}).`
+  return code === 'LOGIN_FAILED' ? '이메일 또는 비밀번호가 맞지 않습니다.' : code === 'NOT_TEACHER' ? '교사 명단에 없는 계정이거나 로그인이 만료됐습니다. 다시 로그인하세요.' : code === 'NETWORK' ? '서버에 연결하지 못했습니다. 인터넷을 확인하세요.' : code === 'READ_UNSTABLE' ? '읽는 동안 새 접수가 계속 들어와 전체를 맞춰 읽지 못했습니다. 파일을 만들지 않았습니다. 잠시 뒤 다시 눌러 주세요.' : `서버 오류(${code}).`
 }
 
 export interface ServerAdminState {

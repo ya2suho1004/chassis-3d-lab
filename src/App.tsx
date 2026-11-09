@@ -23,8 +23,8 @@ import { assetUrl } from './app/assetUrl'
 type Screen =
   | { name: 'loading' }
   | { name: 'storageError'; message: string }
-  // keepDraft: 시작 화면에서 코드로 찾은 초안(D4) — '새로 시작'해도 지우지 않고 둔다(다른 학생 것일 수 있음)
-  | { name: 'resume'; draft: Draft; keepDraft?: boolean }
+  // startFresh: 시작 화면에서 코드로 찾은 초안(D4) — '새 수행 시작'은 초안을 지우지 않고(다른 학생 것일 수 있음) 그 자리에서 새로 시작한다
+  | { name: 'resume'; draft: Draft; startFresh?: () => Promise<void> }
   | { name: 'start' }
   // noRecord: 비기록 모드(설계 2026-11-02) — runRepo는 메모리 저장소이고 AI 교관·기록 표시를 끈다
   // avatar: 캐릭터 만들기(설계 2026-11-03) — 그 코드의 캐릭터가 이 기기에 없을 때만(비기록은 매번)
@@ -73,7 +73,7 @@ export function App() {
     return (
       <ResumeScreen
         draft={screen.draft}
-        keepDraft={screen.keepDraft}
+        keepDraft={!!screen.startFresh}
         onResume={() => {
           repo?.setCurrentRecordId(screen.draft.recordId)
           const run = rehydrateRun(screen.draft.snapshot)
@@ -82,7 +82,11 @@ export function App() {
           setScreen({ name: 'lab', session: screen.draft.session, task, mode: run.difficultyMode, run, noRecord: false, runRepo: repo!, profile: loadAvatar(code) ?? DEFAULT_PROFILE })
         }}
         onDiscard={async () => {
-          if (screen.keepDraft) return setScreen({ name: 'start' })
+          if (screen.startFresh) {
+            // 초안은 그대로 둔다. 시작하지 못하면 시작 화면으로 돌아가 다시 고르게 한다
+            try { await screen.startFresh() } catch { setScreen({ name: 'start' }) }
+            return
+          }
           await repo?.deleteDraft(screen.draft.recordId)
           repo?.clearCurrent()
           setScreen({ name: 'start' })
@@ -93,7 +97,7 @@ export function App() {
 
   // 시작 화면에서는 세션만 만든다. 수행 번호(recordId)와 초안은 NPC에게 과제를 받을 때 발급·저장한다(설계 02 §3 S4).
   // 비기록이면 이 수행만 쓰는 메모리 저장소를 새로 만든다(실제 저장소·포인터는 건드리지 않음)
-  if (screen.name === 'start') return <StartScreen repo={repo!} onFoundDraft={(draft) => setScreen({ name: 'resume', draft, keepDraft: true })} onStart={async (session, task, mode, noRecord = false) => {
+  if (screen.name === 'start') return <StartScreen repo={repo!} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
     const runRepo = noRecord ? openMemoryRepository() : repo!
     const saved = noRecord ? null : loadAvatar(session.anonymousStudentCode)
     setScreen(saved

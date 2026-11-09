@@ -40,3 +40,21 @@ export function findDraftForCode(drafts: Draft[], code: string, sessionCode: str
   if (mine.length === 0) return null
   return mine.reduce((a, b) => (b.savedAt > a.savedAt ? b : a))
 }
+
+/**
+ * 시작 버튼의 갈림길. 같은 코드·세션의 남은 초안이 있으면 복구 화면에 넘기고, 없으면 바로 시작한다.
+ * 복구 화면의 '새 수행 시작'은 startFresh로 곧바로 시작한다. 시작 화면으로 돌아가면 같은 초안을 다시 찾아 빠져나오지 못한다(독립 검토 3번).
+ */
+export async function startOrResume(o: {
+  listDrafts: () => Promise<Draft[]>
+  code: string
+  sessionCode: string
+  begin: () => Promise<void>
+  onFound?: (draft: Draft, startFresh: () => Promise<void>) => void
+}): Promise<void> {
+  if (o.onFound) {
+    const found = findDraftForCode(await o.listDrafts(), o.code, o.sessionCode)
+    if (found) return o.onFound(found, o.begin)
+  }
+  await o.begin()
+}

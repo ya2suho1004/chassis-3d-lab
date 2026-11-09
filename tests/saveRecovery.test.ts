@@ -12,7 +12,7 @@ import { createTaskRun, serializeRun } from '../src/domain/taskEngine'
 import { buildRecordPayload } from '../src/domain/record'
 import { createDemoSession } from '../src/app/session'
 import { openRepository, type Draft } from '../src/records/repository'
-import { findDraftForCode, retryFreeze, saveBadge } from '../src/app/saveRecovery'
+import { findDraftForCode, retryFreeze, saveBadge, startOrResume } from '../src/app/saveRecovery'
 import type { ApprovedTask } from '../src/domain/types'
 
 const task = lv1 as ApprovedTask
@@ -77,6 +77,45 @@ describe('포인터 없이 남은 초안 찾기(findDraftForCode)', () => {
   })
 })
 
+describe('시작 버튼 갈림길(startOrResume) — 독립 검토 3번', () => {
+  async function repoWithDraft() {
+    const { session, run } = payloadFor('A-01')
+    const repo = await openRepository()
+    await repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(run), savedAt: '2026-11-08T04:59:00.000Z' })
+    return { repo, session }
+  }
+
+  test('남은 초안이 없으면 바로 새 수행을 시작한다', async () => {
+    const repo = await openRepository()
+    let begun = 0
+    await startOrResume({ listDrafts: () => repo.listDrafts(), code: 'A-01', sessionCode: 'DEMO-ONLY', begin: async () => { begun++ }, onFound: () => { throw new Error('초안이 없는데 복구 화면으로 감') } })
+    expect(begun).toBe(1)
+  })
+
+  test('남은 초안이 있으면 새 수행을 시작하지 않고 복구 화면에 넘긴다', async () => {
+    const { repo, session } = await repoWithDraft()
+    let begun = 0
+    let foundId: string | null = null
+    await startOrResume({ listDrafts: () => repo.listDrafts(), code: 'A-01', sessionCode: 'DEMO-ONLY', begin: async () => { begun++ }, onFound: (d) => { foundId = d.recordId } })
+    expect(foundId).toBe(session.recordId)
+    expect(begun).toBe(0)
+  })
+
+  test('복구 화면의 새 수행 시작은 초안을 다시 찾지 않고 곧바로 시작하며, 초안은 그대로 남는다', async () => {
+    const { repo, session } = await repoWithDraft()
+    let begun = 0
+    let lookups = 0
+    let startFresh: (() => Promise<void>) | null = null
+    const listDrafts = () => { lookups++; return repo.listDrafts() }
+    await startOrResume({ listDrafts, code: 'A-01', sessionCode: 'DEMO-ONLY', begin: async () => { begun++ }, onFound: (_, fresh) => { startFresh = fresh } })
+    expect(lookups).toBe(1)
+    await startFresh!()
+    expect(begun).toBe(1)
+    expect(lookups).toBe(1) // 다시 찾으면 복구 화면으로 되돌아간다(고친 결함)
+    expect((await repo.loadDraft(session.recordId))?.recordId).toBe(session.recordId)
+  })
+})
+
 describe('저장 상태 표시(saveBadge)', () => {
   test('저장됨·저장 중·저장 실패, 기록 없이 하기는 표시하지 않는다', () => {
     expect(saveBadge('saved', false)).toEqual({ text: '저장됨', tone: 'ok' })
@@ -112,10 +151,20 @@ describe('화면 연결', () => {
 
   test('시작 화면은 같은 코드·세션의 남은 초안을 찾아 이어서 하기로 보낸다(초안은 지우지 않고 둘 수 있음)', () => {
     const start = read('src/screens/StartScreen.tsx')
-    expect(start).toMatch(/findDraftForCode\(await repo\.listDrafts\(\), v\.code, sessionCode\)/)
+    expect(start).toMatch(/startOrResume\(\{ listDrafts: \(\) => repo\.listDrafts\(\), code: v\.code, sessionCode,/)
     const app = read('src/App.tsx')
     expect(app).toMatch(/setCurrentRecordId\(screen\.draft\.recordId\)/)
     expect(app).toMatch(/keepDraft/)
+  })
+
+  test('코드로 찾은 초안의 새 수행 시작은 시작 화면으로 돌아가지 않고 그 자리에서 시작한다(독립 검토 3번)', () => {
+    const start = read('src/screens/StartScreen.tsx')
+    expect(start).toMatch(/startOrResume\(/)
+    expect(start).toMatch(/onFound: noRecord \? undefined : onFoundDraft/) // 기록 없이 하기는 초안을 찾지 않는다
+    const app = read('src/App.tsx')
+    expect(app).toMatch(/await screen\.startFresh\(\)/)
+    expect(app).not.toMatch(/if \(screen\.keepDraft\) return setScreen/)
+    expect(app).toMatch(/keepDraft=\{!!screen\.startFresh\}/)
   })
 })
 
@@ -125,5 +174,10 @@ describe('화면 전환 뒤에도 저장 실패 표시 유지', () => {
     expect(src.match(/initialSaveStatus=\{saveStatusRef\.current\} onSaveStatus=\{onSaveStatus\}/g)?.length).toBe(2)
     const task = fs.readFileSync('src/screens/TaskScreen.tsx', 'utf8')
     expect(task).toMatch(/useState<SaveState>\(initialSaveStatus\)/)
+  })
+
+  test('저장 중에 화면이 바뀌면 새 패널이 지금 상태를 다시 저장해 결과를 받는다(독립 검토 4번)', () => {
+    const task = fs.readFileSync('src/screens/TaskScreen.tsx', 'utf8')
+    expect(task).toMatch(/if \(initialSaveStatus === 'saving'\) retrySave\(\)/)
   })
 })

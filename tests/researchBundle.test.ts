@@ -218,7 +218,7 @@ describe('서버 기록 전부 읽기', () => {
     const rows = await listAllServerRecords({ url: 'https://x', anonKey: 'k' }, { accessToken: 't', expiresAt: 0, email: 'e' }, 'DEMO-ONLY', f)
     expect(rows.map((r) => r.record_id)).toEqual(all.map((r) => r.record_id))
     expect(urls[0]).toMatch(/order=accepted_at\.asc,record_id\.asc/)
-    expect(urls.length).toBe(4) // 마지막은 빈 응답으로 끝을 확인
+    expect(urls.filter((u) => u.includes('payload_json')).length).toBe(4) // 마지막은 빈 응답으로 끝을 확인(번호 확인 요청은 따로)
   })
 })
 
@@ -226,7 +226,8 @@ describe('화면 연결', () => {
   test('교사 화면: 이 기기 묶음과 서버 세션별 묶음을 수업 후 탭에서 내려받는다', () => {
     const t = fs.readFileSync('src/screens/TeacherPanel.tsx', 'utf8')
     expect(t).toMatch(/deviceRows\(/)
-    expect(t).toMatch(/연구용 묶음/)
+    expect(t).toMatch(/<DeviceExports /)
+    expect(fs.readFileSync('src/screens/RecordCheck.tsx', 'utf8')).toMatch(/연구용 묶음/)
     const s = fs.readFileSync('src/screens/ServerAdmin.tsx', 'utf8')
     expect(s).toMatch(/serverRows\(await listAllServerRecords\(cfg, auth, x\.session_code\)\)/)
     expect(s).toMatch(/연구용 묶음/)

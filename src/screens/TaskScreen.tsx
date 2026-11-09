@@ -123,6 +123,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       if (!finishingRef.current) setSaveStatus(r.status === 'saved' ? 'saved' : 'failed')
     })
   }
+  // 저장 중에 화면이 바뀌면 앞 패널의 결과를 받을 길이 없어 '저장 중'에 멈춘다. 지금 상태를 다시 저장해 결과를 받는다(같은 수행 초안 덮어쓰기, 독립 검토 4번)
+  useEffect(() => {
+    if (initialSaveStatus === 'saving') retrySave()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- 패널이 붙을 때 한 번만
 
   // 화면 숨김 → 일시중지, 복귀 → 재개 (학습시간에서 숨김 구간 제외)
   useEffect(() => {
