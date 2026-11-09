@@ -6,7 +6,7 @@ import type { RecordPayload, SessionContext } from '../domain/record'
 import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, OFF_SUBSTEPS, type OffSubStep, type TaskRun } from '../domain/taskEngine'
 import { buildRecordPayload } from '../domain/record'
 import type { Repository } from '../records/repository'
-import type { SaveState } from '../app/saveRecovery'
+import { createSaveTracker, type SaveState } from '../app/saveRecovery'
 import type { DeliveryEnvelope } from '../records/types'
 import { inspectPerformance, visibleInspection, type InspectionIssue } from '../domain/npcInspection'
 import type { FeedbackText } from '../domain/types'
@@ -106,22 +106,16 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
 
   // 의미 있는 상태 변화마다 초안을 자동 저장한다(네트워크 없음). 실패는 화면에 표시한다.
+  const [trackSave] = useState(() => createSaveTracker(setSaveStatus, () => finishingRef.current))
+  const saveDraftOf = (r: TaskRun) => trackSave(() => repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(r), savedAt: new Date().toISOString() }))
   useEffect(() => {
     if (run === initialRun || finishingRef.current) return
-    let cancelled = false
-    setSaveStatus('saving')
-    repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(run), savedAt: new Date().toISOString() }).then((r) => {
-      if (!cancelled) setSaveStatus(r.status === 'saved' ? 'saved' : 'failed')
-    })
-    return () => { cancelled = true }
-  }, [run, repo, session, initialRun])
+    saveDraftOf(run)
+  }, [run, repo, session, initialRun]) // eslint-disable-line react-hooks/exhaustive-deps
   /** 저장 실패 뒤 지금 상태로 다시 저장(D4). 확정을 시작한 뒤에는 하지 않는다(지운 초안이 다시 생기지 않게) */
   const retrySave = () => {
     if (finishingRef.current) return
-    setSaveStatus('saving')
-    void repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(runRef.current), savedAt: new Date().toISOString() }).then((r) => {
-      if (!finishingRef.current) setSaveStatus(r.status === 'saved' ? 'saved' : 'failed')
-    })
+    saveDraftOf(runRef.current)
   }
   // 저장 중에 화면이 바뀌면 앞 패널의 결과를 받을 길이 없어 '저장 중'에 멈춘다. 지금 상태를 다시 저장해 결과를 받는다(같은 수행 초안 덮어쓰기, 독립 검토 4번)
   useEffect(() => {

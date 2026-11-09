@@ -5,6 +5,20 @@ import type { DeliveryEnvelope } from '../records/types'
 
 export type SaveState = 'saved' | 'saving' | 'failed'
 
+/**
+ * 저장을 시작하고 결과를 상태로 알린다. 가장 최근 저장의 결과만 반영한다.
+ * 화면 효과의 정리 함수로 취소하면 안 된다. 게임 화면은 패널의 변경을 부모가 곧바로 되돌려 주므로, 저장이 끝나기 전에 취소돼 '저장 중'에 멈춘다.
+ */
+export function createSaveTracker(onStatus: (s: SaveState) => void, stopped: () => boolean) {
+  let latest = 0
+  return (save: () => Promise<{ status: string }>) => {
+    const mine = ++latest
+    onStatus('saving')
+    const report = (s: SaveState) => { if (mine === latest && !stopped()) onStatus(s) }
+    void save().then((r) => report(r.status === 'saved' ? 'saved' : 'failed'), () => report('failed'))
+  }
+}
+
 /** 게임 화면 배지에 늘 보일 저장 상태. 기록 없이 하기는 이미 '기록 안 됨'이 보이므로 null */
 export function saveBadge(state: SaveState, noRecord: boolean): { text: string; tone: 'ok' | 'busy' | 'bad' } | null {
   if (noRecord) return null

@@ -12,7 +12,7 @@ import { createTaskRun, serializeRun } from '../src/domain/taskEngine'
 import { buildRecordPayload } from '../src/domain/record'
 import { createDemoSession } from '../src/app/session'
 import { openRepository, type Draft } from '../src/records/repository'
-import { findDraftForCode, retryFreeze, saveBadge, startOrResume } from '../src/app/saveRecovery'
+import { createSaveTracker, findDraftForCode, retryFreeze, saveBadge, startOrResume, type SaveState } from '../src/app/saveRecovery'
 import type { ApprovedTask } from '../src/domain/types'
 
 const task = lv1 as ApprovedTask
@@ -113,6 +113,75 @@ describe('시작 버튼 갈림길(startOrResume) — 독립 검토 3번', () => 
     expect(begun).toBe(1)
     expect(lookups).toBe(1) // 다시 찾으면 복구 화면으로 되돌아간다(고친 결함)
     expect((await repo.loadDraft(session.recordId))?.recordId).toBe(session.recordId)
+  })
+})
+
+describe('저장 결과 표시(createSaveTracker) — 게임 화면 \'저장 중\' 고착', () => {
+  function deferred() {
+    let resolve!: (r: { status: 'saved' | 'failed' }) => void
+    let reject!: (e: Error) => void
+    const promise = new Promise<{ status: 'saved' | 'failed' }>((a, b) => { resolve = a; reject = b })
+    return { promise, resolve, reject }
+  }
+  const setup = (stopped = () => false) => {
+    const seen: SaveState[] = []
+    return { seen, track: createSaveTracker((s) => seen.push(s), stopped) }
+  }
+  const flush = () => new Promise((r) => setTimeout(r, 0))
+
+  test('저장이 끝나면 결과를 알린다', async () => {
+    const { seen, track } = setup()
+    const d = deferred()
+    track(() => d.promise)
+    expect(seen).toEqual(['saving'])
+    d.resolve({ status: 'saved' })
+    await flush()
+    expect(seen).toEqual(['saving', 'saved'])
+  })
+
+  test('저장 실패도 알린다', async () => {
+    const { seen, track } = setup()
+    track(async () => ({ status: 'failed' }))
+    await flush()
+    expect(seen.at(-1)).toBe('failed')
+  })
+
+  test('저장이 예외로 끝나도 실패로 알린다', async () => {
+    const { seen, track } = setup()
+    const d = deferred()
+    track(() => d.promise)
+    d.reject(new Error('x'))
+    await flush()
+    expect(seen.at(-1)).toBe('failed')
+  })
+
+  test('더 최근 저장이 있으면 앞선 저장 결과가 늦게 와도 덮어쓰지 않는다', async () => {
+    const { seen, track } = setup()
+    const first = deferred(), second = deferred()
+    track(() => first.promise)
+    track(() => second.promise)
+    second.resolve({ status: 'saved' })
+    await flush()
+    first.resolve({ status: 'failed' })
+    await flush()
+    expect(seen.at(-1)).toBe('saved')
+  })
+
+  test('확정을 시작한 뒤에는 결과를 알리지 않는다', async () => {
+    let stopped = false
+    const { seen, track } = setup(() => stopped)
+    const d = deferred()
+    track(() => d.promise)
+    stopped = true
+    d.resolve({ status: 'saved' })
+    await flush()
+    expect(seen).toEqual(['saving'])
+  })
+
+  test('화면 연결: 부모가 같은 상태를 돌려줘도 저장 결과를 버리지 않는다(정리 함수로 취소하지 않음)', () => {
+    const src = fs.readFileSync('src/screens/TaskScreen.tsx', 'utf8')
+    expect(src).toMatch(/createSaveTracker\(setSaveStatus, \(\) => finishingRef\.current\)/)
+    expect(src).not.toMatch(/let cancelled = false\s+setSaveStatus\('saving'\)/)
   })
 })
 
