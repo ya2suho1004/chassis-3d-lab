@@ -55,6 +55,8 @@ export interface LabSceneProps {
   joystickRef?: React.MutableRefObject<MoveInput>
   /** NPC 대화 중: 카메라가 교관 상반신을 비추고 교관이 손짓한다 */
   npcTalking?: boolean
+  /** 검사 통과: 교관이 고개를 끄덕인다(npcTalking과 함께 켠다) */
+  npcNod?: boolean
   labelMode: LabelMode
   /** 시점(게임 화면). 없으면 내려다보기 */
   viewMode?: ViewMode
@@ -146,18 +148,18 @@ function Avatar({ pos, heading, moving, oneShot, ppe, look }: { pos: Pt; heading
 
 const NPC_FACING: Record<string, number> = { west: headingFor(-1, 0), east: headingFor(1, 0), north: headingFor(0, -1), south: headingFor(0, 1) }
 
-/** NPC 교관: 서 있다가 가끔 설명 손짓(6초 서 있기 → 2초 손짓) */
-function Instructor({ facing, talking = false }: { facing: number; talking?: boolean }) {
+/** NPC 교관: 서 있다가 가끔 설명 손짓(6초 서 있기 → 2초 손짓). nod = 검사 통과 끄덕임(손짓 없이 서서) */
+function Instructor({ facing, talking = false, nod = false }: { facing: number; talking?: boolean; nod?: boolean }) {
   const [action, setAction] = useState<CharacterAction>('Idle')
   const t = useRef(0)
   useFrame((_, dt) => {
     t.current = (t.current + Math.min(dt, 0.1)) % 8
     // 대화 중에는 손짓을 더 자주(2초 손짓 · 1초 쉼)
-    const next: CharacterAction = talking ? (t.current % 3 < 2 ? 'Gesture' : 'Idle') : t.current > 6 ? 'Gesture' : 'Idle'
+    const next: CharacterAction = nod ? 'Idle' : talking ? (t.current % 3 < 2 ? 'Gesture' : 'Idle') : t.current > 6 ? 'Gesture' : 'Idle'
     if (next !== action) setAction(next)
   })
   const code = <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
-  return <group rotation-y={facing}><BlobShadow /><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} goggles /></Suspense></group>
+  return <group rotation-y={facing}><BlobShadow /><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} goggles nod={nod} /></Suspense></group>
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
@@ -797,7 +799,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} look={look} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -870,14 +872,14 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
   const hdri = assetUrl(LAB_HDRI)
   return (
     <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
-      <color attach="background" args={['#d9dfe4']} />
-      <fog attach="fog" args={['#d9dfe4', 24, 60]} />
+      <color attach="background" args={['#efe4d6']} />
+      <fog attach="fog" args={['#efe4d6', 24, 60]} />
       <Surroundings layout={layout} />
-      <hemisphereLight args={['#ffffff', '#2f6b4c', lowSpec ? 1.1 : 0.7]} />
-      <directionalLight position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
+      <hemisphereLight args={['#fff1dc', '#4f6b4c', lowSpec ? 1.1 : 0.7]} />
+      <directionalLight color="#ffe9cf" position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
         shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0005} />
       {/* 반사광: 품질 높음은 정비소 HDRI(1.6 MB), 낮음은 내려받기 없이 천장 조명판 모양의 간단한 빛으로 만든다 */}
-      {!lowSpec ? <Suspense fallback={null}><Environment files={hdri} environmentIntensity={0.55} /></Suspense> : (
+      {!lowSpec ? <Suspense fallback={null}><Environment files={hdri} environmentIntensity={0.45} /></Suspense> : (
         <Environment resolution={32} environmentIntensity={0.6}>
           <Lightformer form="rect" intensity={2} position={[0, 5, 0]} rotation-x={Math.PI / 2} scale={[10, 10, 1]} />
           <Lightformer form="rect" intensity={0.6} position={[0, 1, -8]} scale={[20, 3, 1]} />
@@ -936,7 +938,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         vehicleLabel={labelFor(vehicle)} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
-        <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} talking={npcTalking} />
+        <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} talking={npcTalking} nod={npcNod} />
         {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">{npcLabel === 'full' ? 'NPC 교관 — 탭하여 대화' : '교관'}</div></Html>}
       </group>
       {/* 시작점 표시 */}

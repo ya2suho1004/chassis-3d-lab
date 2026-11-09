@@ -1,3 +1,4 @@
+import type { RecordPayload } from './domain/record'
 import { useEffect, useState } from 'react'
 import type { SessionContext } from './domain/record'
 import { createTaskRun, rehydrateRun, serializeRun, type DifficultyMode, type TaskRun } from './domain/taskEngine'
@@ -10,6 +11,7 @@ import { ResultScreen } from './screens/ResultScreen'
 import { ResumeScreen } from './screens/ResumeScreen'
 import { LabScreen } from './screens/LabScreen'
 import { listTasks } from './app/session'
+import { retryFreeze } from './app/saveRecovery'
 import { AvatarScreen } from './screens/AvatarScreen'
 import { IntroScreen } from './screens/IntroScreen'
 import { introPlan, loadIntroPrefs, preloadPlan } from './app/intro'
@@ -21,13 +23,14 @@ import { assetUrl } from './app/assetUrl'
 type Screen =
   | { name: 'loading' }
   | { name: 'storageError'; message: string }
-  | { name: 'resume'; draft: Draft }
+  // startFresh: 시작 화면에서 코드로 찾은 초안(D4) — '새 수행 시작'은 초안을 지우지 않고(다른 학생 것일 수 있음) 그 자리에서 새로 시작한다
+  | { name: 'resume'; draft: Draft; startFresh?: () => Promise<void> }
   | { name: 'start' }
   // noRecord: 비기록 모드(설계 2026-11-02) — runRepo는 메모리 저장소이고 AI 교관·기록 표시를 끈다
   // avatar: 캐릭터 만들기(설계 2026-11-03) — 그 코드의 캐릭터가 이 기기에 없을 때만(비기록은 매번)
   | { name: 'avatar'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; noRecord: boolean; runRepo: Repository; initial: AvatarProfile }
   | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository; profile: AvatarProfile }
-  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile }
+  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile; frozenPayload: RecordPayload | null }
 
 export function App() {
   const [repo, setRepo] = useState<Repository | null>(null)
@@ -70,13 +73,20 @@ export function App() {
     return (
       <ResumeScreen
         draft={screen.draft}
+        keepDraft={!!screen.startFresh}
         onResume={() => {
+          repo?.setCurrentRecordId(screen.draft.recordId)
           const run = rehydrateRun(screen.draft.snapshot)
           const task = listTasks().find((t) => t.measurement.caseId === run.task.measurement.caseId) ?? run.task
           const code = screen.draft.session.anonymousStudentCode
           setScreen({ name: 'lab', session: screen.draft.session, task, mode: run.difficultyMode, run, noRecord: false, runRepo: repo!, profile: loadAvatar(code) ?? DEFAULT_PROFILE })
         }}
         onDiscard={async () => {
+          if (screen.startFresh) {
+            // 초안은 그대로 둔다. 시작하지 못하면 시작 화면으로 돌아가 다시 고르게 한다
+            try { await screen.startFresh() } catch { setScreen({ name: 'start' }) }
+            return
+          }
           await repo?.deleteDraft(screen.draft.recordId)
           repo?.clearCurrent()
           setScreen({ name: 'start' })
@@ -87,7 +97,7 @@ export function App() {
 
   // 시작 화면에서는 세션만 만든다. 수행 번호(recordId)와 초안은 NPC에게 과제를 받을 때 발급·저장한다(설계 02 §3 S4).
   // 비기록이면 이 수행만 쓰는 메모리 저장소를 새로 만든다(실제 저장소·포인터는 건드리지 않음)
-  if (screen.name === 'start') return <StartScreen repo={repo!} onStart={async (session, task, mode, noRecord = false) => {
+  if (screen.name === 'start') return <StartScreen repo={repo!} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
     const runRepo = noRecord ? openMemoryRepository() : repo!
     const saved = noRecord ? null : loadAvatar(session.anonymousStudentCode)
     setScreen(saved
@@ -123,13 +133,20 @@ export function App() {
           return null
         }}
         onRunChange={(run) => setScreen((s) => (s.name === 'lab' ? { ...s, run } : s))}
-        onFinish={(run, completionStatus, envelope, saveError) => setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile })}
+        onFinish={(run, completionStatus, envelope, saveError, frozenPayload = null) => setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile, frozenPayload })}
       />
     )
   }
 
   return (
-    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
+    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} frozenPayload={screen.frozenPayload} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
+      onRetrySave={!screen.noRecord && screen.saveError && screen.frozenPayload ? async () => {
+        // D4: 처음 만든 원본 그대로 다시 확정 저장(수행 번호·완료 시각 유지)
+        const r = await retryFreeze(repo!, screen.frozenPayload!)
+        if (!r.ok) return r.errorCode
+        setScreen((s) => (s.name === 'result' ? { ...s, envelope: r.envelope, saveError: null, frozenPayload: r.payload } : s))
+        return null
+      } : undefined}
       onNextStudent={() => { if (!screen.noRecord) repo?.clearCurrent(); setScreen({ name: 'start' }) }} />
   )
 }

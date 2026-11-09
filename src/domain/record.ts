@@ -17,7 +17,7 @@ export interface SessionContext {
   retryOfRecordId: string | null
   retryCount: number
   runPurpose: 'demo' | 'research'
-  /** 수업 시점: 대기 중 예습 / 실습 후 복습 / 기타. 안내 방식·수행 목적과 별개 축 */
+  /** 수업 시점: 1~2차시 연습(preview) / 5차시 정리(review) / 그 밖의 사용(other). 안내 방식·수행 목적과 별개 축 */
   usagePhase: UsagePhase
   configurationApproval: { taskApproved: boolean; rulesetApproved: boolean; layoutConfirmed: boolean; researchUseApproved: boolean }
   displayMode: 'threeD' | 'diagram'

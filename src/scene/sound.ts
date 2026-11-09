@@ -55,6 +55,25 @@ export class LabSound {
     thump.stop(t + 0.08)
   }
 
+  /** 핸들이 조작 한계에 닿는 '딸깍'(짧은 고음 두 번). 정답 신호가 아니다 */
+  tick(): void {
+    const ctx = this.ctx
+    if (!this.enabled || !ctx) return
+    const t = ctx.currentTime
+    for (const [dt, f] of [[0, 2400], [0.045, 1800]] as const) {
+      const o = ctx.createOscillator()
+      o.type = 'square'
+      o.frequency.value = f
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, t + dt)
+      g.gain.exponentialRampToValueAtTime(0.05, t + dt + 0.003)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.035)
+      o.connect(g).connect(ctx.destination)
+      o.start(t + dt)
+      o.stop(t + dt + 0.04)
+    }
+  }
+
   private start(): void {
     if (typeof window === 'undefined') return
     const AC: typeof AudioContext | undefined = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext

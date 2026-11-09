@@ -116,8 +116,10 @@ button.far { border-color:#9e9e9e; color:#777; }
 .serveradmin label { display:block; margin:4px 0; }
 
 /* ---------- 게임 화면(3D 꽉 찬 화면 + 겹친 정보, 2026-10-29) ---------- */
-.game { position:fixed; inset:0; overflow:hidden; background:#cfd8df; color:#1d1d1f; -webkit-user-select:none; user-select:none; }
+/* clip: 닫힌 서랍(화면 밖)이 늘린 넓이로 화면이 옆으로 밀리지 않게 스크롤 자체를 없앤다. clip을 모르는 옛 브라우저는 앞의 hidden을 쓴다 */
+.game { position:fixed; inset:0; overflow:hidden; overflow:clip; background:#cfd8df; color:#1d1d1f; -webkit-user-select:none; user-select:none; }
 .game .g-canvas { position:absolute; inset:0; z-index:0; isolation:isolate; } /* 3D 이름표(Html)가 안내·서랍·불러오기 화면 위로 올라오지 않게 캔버스 안에 가둔다 */
+.game .g-canvas > div { overflow:clip !important; } /* 넘치는 3D 이름표로 캔버스가 밀리지 않게. R3F 인라인 overflow:hidden을 이기려고 !important */
 .game .g-canvas canvas { display:block; }
 .game button { min-height:44px; }
 .game .g-x { position:absolute; top:6px; right:6px; min-height:36px; width:36px; padding:0; border-radius:50%; border:none; background:rgba(0,0,0,.08); color:#333; font-size:16px; }
@@ -127,6 +129,10 @@ button.far { border-color:#9e9e9e; color:#777; }
 .g-badge b { font-size:15px; }
 /* 비기록 모드 표시(설계 2026-11-02) */
 .g-badge b.g-norec { color:#ffd166; }
+.g-badgecol { display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+.g-save { white-space:nowrap; }
+.g-save.busy { opacity:.75; }
+button.g-save.bad { font:inherit; font-weight:700; color:#fff; background:#b3261e; border:0; border-radius:14px; padding:6px 14px; min-height:40px; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,.25); }
 .start .norecord { display:flex; flex-direction:column; gap:6px; }
 .start .norecord button { align-self:flex-start; }
 .g-icon { width:44px; padding:0; border-radius:50%; border:none; background:rgba(20,24,32,.72); color:#fff; font-size:20px; }
@@ -149,7 +155,7 @@ button.far { border-color:#9e9e9e; color:#777; }
 /* 왼쪽 아래: 조이스틱 + 질문 */
 .joystick { position:absolute; left:28px; bottom:28px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,.22); border:2px solid rgba(255,255,255,.55); touch-action:none; z-index:4; display:flex; align-items:center; justify-content:center; }
 .joystick .knob { width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,.85); box-shadow:0 2px 8px rgba(0,0,0,.25); pointer-events:none; }
-.g-chatbtn { position:absolute; left:196px; bottom:30px; border-radius:22px; border:none; background:rgba(20,24,32,.72); color:#fff; padding:8px 16px; z-index:4; }
+.g-chatbtn { position:absolute; left:196px; bottom:60px; border-radius:22px; border:none; background:rgba(20,24,32,.72); color:#fff; padding:8px 16px; z-index:4; }
 /* 오른쪽 아래: 행동 버튼 */
 .g-actions { position:absolute; right:18px; bottom:22px; display:flex; flex-direction:column; align-items:flex-end; gap:10px; z-index:4; }
 .g-act { min-width:150px; min-height:64px !important; border-radius:32px; border:3px solid #fff; background:linear-gradient(180deg,#3a7bf0,#2456c2); color:#fff; font-size:18px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.25); }
@@ -305,6 +311,9 @@ button.far { border-color:#9e9e9e; color:#777; }
 .ia-open .ia-shutter { transform:translateY(-530px); }
 .ia-open .ia-lights, .ia-open .ia-glow { opacity:1; }
 .ia-open .ia-led { opacity:1; }
+.ia-leak { opacity:1; }
+.ia-opening .ia-leak { animation:ia-fade .5s ease .1s reverse both; }
+.ia-open .ia-leak { opacity:0; }
 @keyframes ia-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes ia-led { 0% { opacity:.25; } 10% { opacity:1; } 18% { opacity:.4; } 26%, 100% { opacity:1; } }
 @keyframes ia-glow { 0% { opacity:0; } 12% { opacity:1; } 20% { opacity:.35; } 30%, 100% { opacity:1; } }
@@ -345,3 +354,147 @@ button.far { border-color:#9e9e9e; color:#777; }
 .cr-error { background:#fde0e0; color:#b71c1c; }
 .cr-q, .cr-a { margin:4px 0; white-space:pre-wrap; line-height:1.5; }
 .cr-q b, .cr-a b { display:inline-block; min-width:34px; color:#1f4fa3; }
+
+/* ── 따뜻한 정비 공방(A안, 설계 2026-11-06) — main 에 .wa 를 붙인 화면만 바뀐다 ── */
+/* 공통 규칙은 :where(.wa) 로 우선순위를 낮춰, 기존 부품 규칙(.g-*, .av-swatch 등)이 그대로 이기게 한다 */
+:root { --wa-cream:#fff6e5; --wa-paper:#fffaf0; --wa-line:#c98b4f; --wa-brown:#8b5e34; --wa-ink:#5b3a1e; --wa-orange:#f28c28; --wa-orange-d:#b45f12; --wa-orange-btn:#b45f12; --wa-navy:#26364a; --wa-stamp:#d2463a; }
+/* 노을 바탕: 화면(main) 자신이 화면 전체 뒤에 깐다. 부모 선택자(has)를 쓰지 않아 오래된 크롬(105 미만)에서도 같다(2026-11-07) */
+main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; background:linear-gradient(180deg,#ffe0b2 0%,#ffcf96 55%,#f6b27a 100%); pointer-events:none; }
+.wa.screen { color:var(--wa-ink); }
+.wa.screen h1 { display:inline-block; background:var(--wa-brown); color:#fff; padding:6px 18px; border-radius:12px 12px 4px 4px; box-shadow:0 3px 0 #5e3c1d; }
+:where(.wa) .card { background:var(--wa-cream); border:2px solid var(--wa-line); border-radius:16px; box-shadow:0 3px 0 var(--wa-line); }
+:where(.wa) button { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); border-radius:999px; box-shadow:0 2px 0 var(--wa-line); }
+:where(.wa) button:where(:active:not(:disabled)) { translate:0 2px; box-shadow:none; }
+:where(.wa) button.primary { background:var(--wa-orange-btn); border-color:var(--wa-orange-d); color:#fff; box-shadow:0 2px 0 var(--wa-orange-d); }
+:where(.wa) button.link { border:none; background:none; box-shadow:none; color:var(--wa-brown); }
+.wa.screen .small { color:#8a6a4c; }
+.wa input:where(:not([type=radio],[type=checkbox],[type=range],[type=color],[type=file]):not(table.sheet input, .field input, .g-practice-row input)), .wa select { border:2px solid var(--wa-line); border-radius:10px; background:#fff; }
+/* 계측부는 원래 색(설계 §2-1): 답안 표·입력 칸. 계기(.gauge)는 원래 검은 바탕·연두 글자라 건드리지 않는다 */
+.wa table.sheet, .wa .field input { color:#17202a; }
+.wa table.sheet { background:#fff; }
+.wa table.sheet th, .wa table.sheet td { border-color:#d4d4d8; }
+/* 숫자 자릿수 고정 */
+.wa table.sheet, .wa .wl-step b { font-variant-numeric:tabular-nums; }
+
+/* 눌린 주 버튼도 그림자 없이(코드 검토 Task 4) */
+:where(.wa) button.primary:where(:active:not(:disabled)) { box-shadow:none; }
+/* 캐릭터 만들기 — 실습복 준비 공간 */
+.wa.avatar .av-preview { background:#f6e7d2; border:2px solid var(--wa-line); box-shadow:0 3px 0 var(--wa-line); }
+.wa.avatar .av-nick { color:var(--wa-ink); }
+.wa .av-chip { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); }
+.wa .av-chip[aria-pressed="true"] { background:var(--wa-navy); border-color:var(--wa-navy); color:#fff; }
+.wa.start .start-sub { color:var(--wa-ink); }
+.wa input:is([type=radio],[type=checkbox]):not(table.sheet input) { accent-color:var(--wa-orange-d); }
+
+.worklog { position:relative; overflow:hidden; }
+.wl-head { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.worklog.stamped .wl-head { padding-right:110px; }
+.wl-who { font-size:13px; color:#8a6a4c; }
+.wl-tag { background:var(--wa-brown); color:#fff; font-size:13px; font-weight:700; padding:2px 10px; border-radius:8px; }
+.wl-flow { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.wl-cell { display:flex; align-items:center; gap:6px; flex:1 1 180px; }
+.wl-step { flex:1; background:#fff; border:2px solid #d8dde3; border-radius:10px; padding:8px; text-align:center; color:#17202a; display:flex; flex-direction:column; gap:2px; }
+.wl-step small { color:#56616c; }
+.wl-step b { font-size:17px; }
+.wl-arrow { color:var(--wa-brown); font-weight:800; }
+.wl-stamp { position:absolute; top:10px; right:14px; transform:rotate(-10deg); border:3px solid var(--wa-stamp); color:var(--wa-stamp); background:var(--wa-cream); font-weight:800; font-size:16px; padding:2px 10px; border-radius:8px; letter-spacing:1px; }
+.wl-stamp.anim { animation:wl-stamp .35s ease-out both; }
+@keyframes wl-stamp { from { transform:rotate(-10deg) scale(2.2); opacity:0 } to { transform:rotate(-10deg) scale(1); opacity:1 } }
+.wl-confetti { position:absolute; inset:0; pointer-events:none; }
+.wl-confetti i { position:absolute; top:-10px; width:8px; height:12px; border-radius:2px; background:var(--wa-orange); animation:wl-fall 1.1s ease-in forwards; }
+.wl-confetti i:nth-child(3n) { background:var(--wa-navy); } .wl-confetti i:nth-child(3n+1) { background:#8fbf7a; }
+@keyframes wl-fall { to { transform:translateY(160px) rotate(260deg); opacity:0 } }
+.wl-closing { margin:10px 0 0; }
+@media (prefers-reduced-motion: reduce) { .wl-stamp.anim, .wl-confetti i { animation:none } }
+/* 글자가 노을 바탕 위에 바로 놓이는 곳은 진한 글자(대비) */
+.wa.start footer.small { color:var(--wa-ink); }
+/* 노을 바탕 아래쪽(#f6b27a)에서도 4.5:1 이상 — 원래 --bad #b42318은 3.62(독립 검토 4번). #8a1a10: #f6b27a 5.17, 크림 8.75 */
+.wa .error { color:#8a1a10; }
+/* 실습장에서 연 '캐릭터 다시 꾸미기' 덮개도 같은 바탕 */
+.av-overlay.warm { background:linear-gradient(180deg,#ffe0b2,#ffcf96 55%,#f6b27a); }
+/* 교사 화면 탭·색 견본 테두리도 공방 색으로 */
+.wa .tp-tabs button { border-color:var(--wa-line); }
+.wa .tp-tabs button.on { background:var(--wa-navy); border-color:var(--wa-navy); color:#fff; }
+.wa .av-swatch { box-shadow:0 0 0 1px var(--wa-line); }
+.wa .av-swatch[aria-pressed="true"] { box-shadow:0 0 0 3px var(--wa-navy); }
+
+/* 실습장 HUD — 공방 재질(설계 §4). 3D 이름표·계기는 건드리지 않는다 */
+.game.wa .g-badge, .game.wa .g-icon, .game.wa .g-view, .game.wa .g-chatbtn, .game.wa .g-hud, .game.wa .g-act.small { background:var(--wa-cream); color:var(--wa-ink); border:2px solid var(--wa-line); box-shadow:0 2px 0 var(--wa-line); backdrop-filter:none; }
+.game.wa .g-badge b.g-norec { color:#b3261e; }
+.game.wa .g-quest { background:var(--wa-cream); color:var(--wa-ink); border:2px solid var(--wa-line); box-shadow:0 3px 0 var(--wa-line); backdrop-filter:none; }
+.game.wa .g-quest-title { color:#fff; background:var(--wa-brown); display:inline-block; padding:1px 10px; border-radius:8px; }
+.game.wa .g-quest .g-next { color:var(--wa-ink); }
+.game.wa .g-quest .g-progress { color:#8a6a4c; }
+.game.wa .g-req { font-weight:700; }
+.game.wa .g-req-task { display:block; font-weight:400; font-size:12px; color:#8a6a4c; }
+.game.wa .g-quest-btns button { background:var(--wa-paper); color:var(--wa-ink); border:2px solid var(--wa-line); }
+/* 흰 글자 대비 4.5:1 이상(독립 검토 4번 — 폰에서 16px라 큰 글자 기준 적용 안 됨): #a9520f 5.38, #8f4a10 6.66, #7d6d5c 4.98, #6a5c4d 6.46 */
+.game.wa .g-act { background:linear-gradient(180deg,#a9520f,#8f4a10); border-color:#fff; }
+.game.wa .g-act.far { background:linear-gradient(180deg,#7d6d5c,#6a5c4d); }
+.game.wa .g-bubble { background:var(--wa-cream); border:2px solid var(--wa-line); box-shadow:0 4px 0 var(--wa-line); color:var(--wa-ink); }
+.game.wa .g-bubble::after { border-top-color:var(--wa-cream); }
+.game.wa .g-name { background:var(--wa-brown); }
+.game.wa .g-more { color:var(--wa-orange-d); }
+.game.wa .g-choices button { background:var(--wa-paper); border:2px solid var(--wa-line); color:var(--wa-ink); }
+.game.wa .g-choices button.primary { background:var(--wa-orange-btn); border-color:var(--wa-orange-d); color:#fff; }
+.game.wa .g-menu { background:var(--wa-cream); border:2px solid var(--wa-line); }
+.game.wa .g-gaugebtn { background:var(--wa-navy); }
+.game.wa .g-badge b.g-nick { color:var(--wa-brown); }
+.game.wa .g-quest .g-order b { color:var(--wa-orange-d); }
+.g-ppe { background:#fff; color:var(--wa-navy); border-radius:10px; padding:1px 8px; font-size:12px; font-weight:700; }
+.g-ppe.spark { animation:g-spark .6s ease-out; }
+@keyframes g-spark { 0% { box-shadow:0 0 0 0 rgba(255,213,74,.9) } 100% { box-shadow:0 0 0 12px rgba(255,213,74,0) } }
+.g-progress.pop { display:inline-block; transform-origin:left center; animation:g-pop .3s ease-out; }
+@keyframes g-pop { 0% { transform:scale(1.25) } 100% { transform:scale(1) } }
+@media (prefers-reduced-motion: reduce) { .g-ppe.spark, .g-progress.pop { animation:none } }
+.game.wa .g-gaugebtn.on { background:#c62828; }
+@media (max-width:420px) { .wl-arrow { display:none } }
+
+/* 최종 검토 반영 */
+.wa .steps li.next { background:#ffe2b0; box-shadow:inset 4px 0 0 var(--wa-orange-d); }
+.wa.avatar .small, .wa.start footer button.link { color:var(--wa-ink); }
+.wa table.sheet.small { color:var(--mut); }
+
+/* 폰 세로: 상태 배지가 세 줄이 되어 퀘스트 제목을 가리지 않게(가로 폰은 제외 — 조이스틱과 겹침) */
+@media (max-width: 760px) and (min-height: 501px) {
+  .game.wa .g-quest { top:112px; }
+  .game.wa .g-ppe { display:none; }
+  /* 오른쪽 아래 수행 버튼과 겹치지 않게 조이스틱 위로 */
+  .g-chatbtn { left:16px; bottom:146px; }
+}
+/* 태블릿 폭: 위쪽 버튼 줄과 의뢰 카드가 한 줄에 들어가지 않으므로 카드를 버튼 줄 아래로 */
+@media (min-width: 761px) and (max-width: 1100px) and (min-height: 501px) {
+  .game.wa .g-quest { top:66px; }
+}
+/* 폰 가로(높이 500 이하): '오늘의 의뢰' 제목과 손님 사연을 한 줄로, 과제 이름 줄은 숨김(작업 목록·교관 대화에 있음).
+   두 줄이 늘어난 퀘스트 창이 오른쪽 아래 수행 버튼·조이스틱을 덮던 문제 */
+@media (max-height: 500px) {
+  .game.wa .g-quest-title { margin:0 6px 0 0; padding:0 8px; font-size:13px; vertical-align:1px; }
+  .game.wa .g-req { display:inline; }
+  .game.wa .g-req-task { display:none; }
+  .game.wa .g-quest { padding:4px 10px; }
+  .game.wa .g-quest-btns { margin-top:4px; }
+}
+
+/* 직접 그린 선 아이콘(src/screens/Icon.tsx) — 글자 줄에 맞춰 앉힌다. 아이콘만 있는 둥근 버튼은 가운데 */
+.ico { display:inline-block; vertical-align:-0.2em; flex:none; }
+.g-icon { display:inline-flex; align-items:center; justify-content:center; }
+.g-guide li .ico { margin-right:2px; color:var(--wa-brown); }
+
+/* C1 교사 화면 '오늘 수업 설정' 요약 */
+.today-summary { border:1px solid #c9d3db; border-radius:12px; padding:10px 14px; margin:8px 0 12px; background:#f7fafc; }
+.today-summary h3 { margin:0 0 6px; font-size:1rem; }
+.today-summary dl { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:4px 16px; margin:0; }
+.today-summary dl > div { display:flex; gap:8px; align-items:baseline; min-width:0; }
+.today-summary dt { flex:0 0 auto; color:#4a5a66; font-size:.88rem; }
+.today-summary dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
+.today-summary dl > div.warn dd { color:#9a4a00; }
+.today-summary dl > div.warn dd::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#d97a00; margin-right:6px; vertical-align:middle; }
+.today-warn { margin:8px 0 0; padding:6px 10px; border-radius:8px; background:#fff4e0; color:#7a3d00; font-size:.9rem; }
+
+/* C2 접수 대조(교사 화면 수업 후 탭) */
+.record-check { border:1px solid #c9d3db; border-radius:12px; padding:10px 14px; margin:10px 0; background:#f7fafc; }
+.record-check h4 { margin:0 0 6px; font-size:.98rem; }
+.record-check p { margin:4px 0; }
+.record-check-list { margin:6px 0; padding-left:18px; }
+.record-check-list li { margin:6px 0; overflow-wrap:anywhere; }

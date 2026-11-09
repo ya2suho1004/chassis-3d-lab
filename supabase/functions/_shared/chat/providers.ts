@@ -27,7 +27,7 @@ export async function callModel(c: ModelCall, fetchImpl: typeof fetch = fetch): 
     const body: any = await r.json().catch(() => ({}))
     if (!r.ok) return { ok: false, status: r.status, error: `HTTP ${r.status}`, retryAfterMs: retryAfterMs(r.headers.get('retry-after')) }
     const cand = body.candidates?.[0]
-    return { ok: true, status: r.status, text: (cand?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim(), finishReason: cand?.finishReason ?? null, modelVersion: body.modelVersion ?? null }
+    return { ok: true, status: r.status, text: (cand?.content?.parts ?? []).map((p: any) => p.text ?? '').join('').trim(), finishReason: cand?.finishReason ?? (body.promptFeedback?.blockReason ? 'PROMPT_BLOCKED' : null), modelVersion: body.modelVersion ?? null }
   }
   if (c.provider === 'anthropic') {
     const messages = [...c.history.flatMap((t) => [{ role: 'user', content: t.q }, { role: 'assistant', content: t.a }]), { role: 'user', content: c.question }]

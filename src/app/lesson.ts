@@ -9,6 +9,13 @@ export const LESSON_LABEL: Record<UsagePhase, string> = {
   other: '그 밖의 사용 — 3~4차시 보조·시연',
 }
 
+/** 결과 화면 등 한 줄 표시용 짧은 이름(LESSON_LABEL 앞부분과 같음) */
+export const LESSON_SHORT: Record<UsagePhase, string> = {
+  preview: '1~2차시 연습',
+  review: '5차시 정리',
+  other: '그 밖의 사용',
+}
+
 /** 5차시는 무안내로 고정한다. 나머지는 고른 도움 방식을 쓴다(시간제한 평가는 1차 비활성). */
 export function lessonMode(phase: UsagePhase, chosen: DifficultyMode): DifficultyMode {
   if (phase === 'review') return 'unguided'

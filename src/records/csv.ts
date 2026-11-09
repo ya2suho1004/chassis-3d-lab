@@ -49,10 +49,12 @@ export function toChatCsv(rows: Array<Record<(typeof CHAT_CSV_HEADER)[number], u
   return '\ufeff' + lines.join('\r\n') + '\r\n'
 }
 
-/** 서버 정본 기록을 기기 요약 CSV와 같은 열로 만든다(접수번호·시각은 서버 값). */
+/** 서버 줄의 접수 정보를 기기 저장 상태와 같은 모양으로(접수번호·시각은 서버 값) */
+export function serverRowEnvelope(r: { record_id: string; receipt_id: string; accepted_at: string; payload_hash: string }): DeliveryEnvelope {
+  return { recordId: r.record_id, localSaveStatus: 'saved', uploadStatus: 'acknowledged', uploadedAt: r.accepted_at, receiptId: r.receipt_id, payloadHash: r.payload_hash, uploadAttemptCount: 0, lastErrorCode: null, nextRetryAt: null }
+}
+
+/** 서버 정본 기록을 기기 요약 CSV와 같은 열로 만든다. */
 export function serverRecordsToSummaryCsv(rows: Array<{ record_id: string; receipt_id: string; accepted_at: string; payload_hash: string; payload_json: string }>): string {
-  return toSummaryCsv(rows.map((r) => ({
-    payload: JSON.parse(r.payload_json) as RecordPayload,
-    envelope: { recordId: r.record_id, localSaveStatus: 'saved', uploadStatus: 'acknowledged', uploadedAt: r.accepted_at, receiptId: r.receipt_id, payloadHash: r.payload_hash, uploadAttemptCount: 0, lastErrorCode: null, nextRetryAt: null } as DeliveryEnvelope,
-  })))
+  return toSummaryCsv(rows.map((r) => ({ payload: JSON.parse(r.payload_json) as RecordPayload, envelope: serverRowEnvelope(r) })))
 }

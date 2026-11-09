@@ -1,54 +1,26 @@
 // AI 교관 대화 창(설계 07 §4-1) — 대본형 NPC 교관(과제 안내·검사)과 분리된 질의응답 보조. 판정·채점은 하지 않는다.
-import { useRef, useState } from 'react'
-import { askChat, chatErrorMessage, chatExamples, getChatEndpoint, keepQuestionAfter, serverLogNote, splitBold, CHAT_HISTORY_TURNS, CHAT_QUESTION_MAX, type ChatMode, type ChatTurn } from './chatClient'
-import { saveChatTurn } from './chatStore'
-
-interface Line { q: string; a: string | null; error: string | null; masked: string[]; note?: string | null }
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { chatExamples, getChatEndpoint, splitBold, CHAT_QUESTION_MAX, type ChatMode } from './chatClient'
+import type { ChatConversation } from './chatConversation'
 
 function Bold({ text }: { text: string }) {
   return <>{splitBold(text).map((p, i) => (p.bold ? <b key={i}>{p.text}</b> : <span key={i}>{p.text}</span>))}</>
 }
 
-export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId, taskId = null, difficultyMode, initialOpen = false }: {
+export function ChatPanel({ conversation, sessionCode, anonymousStudentCode, recordId, stepId, taskId = null, difficultyMode, initialOpen = false }: {
+  /** 화면을 바꿔도 이어지도록 대화는 패널 밖(LabScreen)에 있다(E4) */
+  conversation: ChatConversation
   sessionCode: string; anonymousStudentCode: string; recordId: string | null; stepId: string | null; taskId?: string | null; difficultyMode: ChatMode
   /** 게임 화면의 질문 서랍처럼 바로 입력 창을 보여 줄 때 */
   initialOpen?: boolean
 }) {
   const endpoint = getChatEndpoint()
-  const [open, setOpen] = useState(initialOpen)
-  const [lines, setLines] = useState<Line[]>([])
-  const [text, setText] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [remaining, setRemaining] = useState<number | null>(null)
-  const turnRef = useRef(0)
+  const { lines, draft: text, busy, remaining } = useSyncExternalStore(conversation.subscribe, conversation.getState, conversation.getState)
+  const [open, setOpen] = useState(initialOpen || lines.length > 0)
   const listRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight }) }, [lines, open])
 
-  const send = async () => {
-    const question = text.trim()
-    if (!endpoint || !question || busy) return
-    setBusy(true)
-    const history: ChatTurn[] = lines.filter((l) => l.a !== null).slice(-CHAT_HISTORY_TURNS).map((l) => ({ q: l.q, a: l.a! }))
-    const turnIndex = turnRef.current++
-    const idx = lines.length
-    setLines((ls) => [...ls, { q: question, a: null, error: null, masked: [] }])
-    setText('')
-    const res = await askChat(endpoint, { sessionCode, anonymousStudentCode, recordId, stepId, taskId, difficultyMode, question, history, turnIndex })
-    if (res.ok) {
-      setRemaining(res.remaining)
-      setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, a: res.answer, masked: res.masked, note: serverLogNote(res) } : l)))
-    } else {
-      if (res.remaining !== undefined) setRemaining(res.remaining)
-      setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, error: chatErrorMessage(res.code) } : l)))
-      // 인터넷이 끊겨 실패했으면 쓴 질문을 되살려 '보내기'만 다시 누르게 한다(그 사이 새로 쓴 글이 있으면 그대로)
-      if (keepQuestionAfter(res)) setText((t) => t || question)
-    }
-    void saveChatTurn({
-      id: `${Date.now()}-${turnIndex}`, createdAt: new Date().toISOString(), sessionCode, anonymousStudentCode, recordId, stepId, difficultyMode, turnIndex,
-      question, answer: res.ok ? res.answer : null, serverLogged: res.ok ? res.logged : false, chatId: res.ok ? res.chatId : null, errorCode: res.ok ? null : res.code,
-    })
-    setBusy(false)
-    requestAnimationFrame(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight }))
-  }
+  const send = () => conversation.send({ endpoint, sessionCode, anonymousStudentCode, recordId, stepId, taskId, difficultyMode })
 
   if (!open) {
     return (
@@ -81,7 +53,7 @@ export function ChatPanel({ sessionCode, anonymousStudentCode, recordId, stepId,
         ))}
       </div>
       <div className="chatinput">
-        <textarea value={text} maxLength={CHAT_QUESTION_MAX} rows={2} placeholder="질문을 쓰세요(300자 이내)" onChange={(e) => setText(e.target.value)}
+        <textarea value={text} maxLength={CHAT_QUESTION_MAX} rows={2} placeholder="질문을 쓰세요(300자 이내)" onChange={(e) => conversation.setDraft(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send() } }} />
         <button className="primary" onClick={() => void send()} disabled={busy || !text.trim()}>{busy ? '보내는 중' : '보내기'}</button>
       </div>

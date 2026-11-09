@@ -1,5 +1,6 @@
 // 교사 화면 — 수업 설정(기기별 기본값·잠금)과 기록 관리(요약 CSV, 대기 기록 전송)를 한곳에 모은다.
 // PIN은 화면 안 입력칸으로 받는다(시연용 0000, 보안 통제 아님). 설정은 이 기기에만 저장되고 전송하지 않는다.
+// 학생 기록 내려받기와 기록별 목록은 PIN이 아니라 교사 서버 로그인 뒤에 연다(독립 검토 1번, 설계 03 §7·05 §12).
 import { useState } from 'react'
 import { loadIntroPrefs, saveIntroPrefs } from '../app/intro'
 import { caseKey, ENTRY_LABEL, MODE_LABEL, PHASE_LABEL, savePreset, type TeacherPreset } from '../app/teacherPreset'
@@ -9,10 +10,15 @@ import { getSubmitEndpoint, SUBMIT_IS_FAKE } from '../delivery/config'
 import type { UsagePhase } from '../domain/record'
 import type { ApprovedTask } from '../domain/types'
 import { toSummaryCsv } from '../records/csv'
+import { deviceRows } from '../records/researchBundle'
+import { downloadResearchBundle } from '../teacher/downloadBundle'
 import type { Repository } from '../records/repository'
+import { DeviceExports, DeviceRecordCheck } from './RecordCheck'
 import { ServerAfter, ServerLive, useServerAdmin } from './ServerAdmin'
+import { loginValid } from '../teacher/serverAdmin'
 import { LESSON_LABEL } from '../app/lesson'
 import { DEFAULT_SESSION_CODE, SESSIONS, applySessionRules, sessionDef } from '../app/sessions'
+import { todaySummary } from '../app/todaySummary'
 import { DEFAULT_PRACTICE_SPEC, fmtMm, loadPracticeSpec, savePracticeSpec } from '../app/practiceSpec'
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
@@ -33,6 +39,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   const [unlocked, setUnlocked] = useState(false)
   const [form, setForm] = useState<TeacherPreset>(preset ?? { sessionCode: DEFAULT_SESSION_CODE, caseId: caseKey(tasks[0]!), usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null, locked: true })
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
+  const [bundleNote, setBundleNote] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [sendLog, setSendLog] = useState<OutboxItemResult[] | null>(null)
   const endpoint = getSubmitEndpoint()
@@ -81,6 +88,21 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
     a.click()
   }
 
+  const downloadBundle = async () => {
+    try {
+      setBundleNote(await downloadResearchBundle('device', '이 기기', deviceRows(await repo.listRecords())))
+    } catch {
+      setBundleNote('묶음을 만들지 못했습니다. 기록은 그대로 있습니다. 다시 시도해 주세요.')
+    }
+  }
+
+  const deviceOpen = loginValid(server.auth, Date.now())
+  // 화면을 띄워 둔 사이 로그인이 만료될 수 있어 누르는 순간 다시 본다(이 기기 읽기는 서버가 막아 주지 않는다)
+  const whileLoggedIn = (f: () => Promise<void>) => () => {
+    if (!loginValid(server.auth, Date.now())) return server.expire()
+    void f()
+  }
+
   // 교사 조작으로만 전송한다(설계 05 §6). 대기열의 같은 ID·같은 원본을 보내고, 서버 ack를 검증한 뒤에만 '접수 확인됨'으로 저장한다.
   const send = async (force: boolean) => {
     if (!endpoint) return
@@ -97,6 +119,10 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   return (
     <section className="card teacherpanel">
       <h2>교사 화면</h2>
+      <TodaySummary summary={todaySummary({
+        preset, form, tasks, counts,
+        server: { configured: !!server.cfg, loggedIn: !!server.auth, session: server.sessions ? (server.sessions.find((x) => x.session_code === (preset?.sessionCode ?? DEFAULT_SESSION_CODE)) ?? null) : undefined },
+      })} />
 
       <div className="tp-tabs" role="tablist">
         {([['before', '① 수업 전'], ['during', '② 수업 중'], ['after', '③ 수업 후']] as const).map(([k, label]) => (
@@ -176,8 +202,8 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>
       <p className="small">기록은 이 기기에 먼저 저장되고, 서버 전송은 이 화면의 교사 조작으로만 합니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 전송 시험 중에는 합성 코드 D-01 같은 D-xx만 수신점이 받습니다. 익명 코드 형식 검사는 본인 확인이 아닙니다.</p>
+      <DeviceExports open={deviceOpen} hasRecords={!!counts?.records} onCsv={whileLoggedIn(downloadCsv)} onBundle={whileLoggedIn(downloadBundle)} />
       <div className="row">
-        <button onClick={() => void downloadCsv()}>요약 CSV 내려받기</button>
         {endpoint ? (
           <>
             <button onClick={() => void send(false)} disabled={sending || !counts?.outbox}>{sending ? '전송 중…' : '대기 기록 지금 전송'}</button>
@@ -187,17 +213,34 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
           <span className="small">전송 주소 미설정(VITE_SUBMIT_ENDPOINT)</span>
         )}
       </div>
+      {bundleNote && <p className="small" role="status">{bundleNote}</p>}
       {sendLog && (
         <ul className="sendlog" aria-label="전송 결과">
           {sendLog.length === 0 && <li>보낼 기록이 없습니다.</li>}
           {sendLog.map((r) => (<li key={r.recordId}>{r.recordId.slice(0, 8)}… — {sendResultLabel(r)}</li>))}
         </ul>
       )}
+      <DeviceRecordCheck repo={repo} refreshKey={sendLog} showList={deviceOpen} />
       <p className="small">전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</p>
-          <ServerAfter s={server} />
+          <ServerAfter s={server} repo={repo} />
         </div>
       )}
       <button className="link" onClick={onClose}>교사 화면 닫기</button>
+    </section>
+  )
+}
+
+/** C1: 오늘 수업 설정 한 장 요약(표시만 — 설정 바꾸기는 아래 탭에서) */
+export function TodaySummary({ summary }: { summary: ReturnType<typeof todaySummary> }) {
+  return (
+    <section className="today-summary" aria-label="오늘 수업 설정 요약">
+      <h3>오늘 수업 설정</h3>
+      <dl>
+        {summary.rows.map((r) => (
+          <div key={r.label} className={r.tone === 'warn' ? 'warn' : undefined}><dt>{r.label}</dt><dd>{r.value}</dd></div>
+        ))}
+      </dl>
+      {summary.warnings.map((w) => <p key={w} className="today-warn" role="status">{w}</p>)}
     </section>
   )
 }

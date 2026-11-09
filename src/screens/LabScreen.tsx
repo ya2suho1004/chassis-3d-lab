@@ -1,4 +1,5 @@
 // 실습장 화면 — 3D 장면 + HUD(도감·장비 카드·NPC 대화) + 과제 패널(TaskScreen) 연결
+import type { RecordPayload } from '../domain/record'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import rawLayout from '../data/layout/layout.dev-provisional.json'
 import type { SessionContext } from '../domain/record'
@@ -11,13 +12,19 @@ import { backlashTravel, checkBacklash, initialBacklashState, randomBacklashCase
 import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRunout'
 import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
+import { prefersReducedMotion, reactionEventForStep, reactionsFor } from '../app/reactions'
+import { clearEffects, EMPTY_FX, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
+import { createFinishGate, type FinishGate } from '../app/finishGate'
+import { NOD_LINE } from '../app/requests'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
 import { turningRigState } from '../scene/turningRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen, type TaskContext } from './TaskScreen'
+import { saveBadge, type SaveState } from '../app/saveRecovery'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog, panelWorkOrder } from './NpcDialog'
+import { Icon } from './Icon'
 import { LabSound } from '../scene/sound'
 import { useProgress } from '@react-three/drei'
 import { initialQuality, shouldAutoLower } from '../app/quality'
@@ -25,9 +32,11 @@ import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '..
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
 import { ChatPanel } from '../chat/ChatPanel'
+import { createChatConversation } from '../chat/chatConversation'
 import { AvatarScreen } from './AvatarScreen'
 import { IntroArt } from './IntroArt'
 import { tipsFor } from '../app/intro'
+import { requestCopy } from '../app/requests'
 import { chatTaskId, loadBadge, nextHighlightId } from '../app/labGuide'
 import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
 import type { DifficultyMode } from '../domain/taskEngine'
@@ -41,6 +50,9 @@ function layoutFor(dir: 'north' | 'south' | null): SceneLayout {
   return { ...baseLayout, equipment: baseLayout.equipment.map((e) => (e.id === 'brake-vehicle-01' ? { ...e, x: v.x, z: v.z, rotation: v.rotation, label: v.assumed ? `${e.label} · 진입 방향 미설정(북쪽 가정)` : e.label } : e)) }
 }
 const BASIS_LABEL: Record<string, string> = { measured: '실측', 'measured-partial': '부분 실측', sketch: '스케치 비례', assumption: '가정', teacher: '교사 답' }
+
+/** 끄덕임 화면을 보여 주는 시간(카메라 이동 + 끄덕임 + 여유). 누르면 바로 넘어간다 */
+const NOD_SCREEN_MS = 2300
 
 export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
   repo: Repository
@@ -56,7 +68,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   run: TaskRun | null
   onReceiveTask: () => Promise<string | null>
   onRunChange: (run: TaskRun) => void
-  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
+  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null, payload?: RecordPayload | null) => void
 }) {
   const layout = useMemo(() => layoutFor(session.vehicleEntryDirection), [session.vehicleEntryDirection])
   const [pos, setPos] = useState<Pt>(layout.studentStart)
@@ -109,9 +121,16 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const [uiStyle, setUiStyle] = useState<'game' | 'classic'>('game')
   const joystickRef = useRef<MoveInput>({ x: 0, y: 0 })
   const [ctx, setCtx] = useState<TaskContext | null>(null)
+  /** 저장 상태(D4) — 게임 화면·기본 화면을 오가며 과제 패널이 새로 붙어도 '저장 실패'가 '저장됨'으로 되돌아가지 않게 여기 둔다 */
+  const saveStatusRef = useRef<SaveState>('saved')
+  const onSaveStatus = useCallback((s: SaveState) => { saveStatusRef.current = s }, [])
   const onContext = useCallback((c: TaskContext) => setCtx(c), [])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  // AI 대화(E4): 게임·기본 화면이 패널을 따로 만들므로 대화는 여기 둔다. 수행 번호가 바뀌면 새로 시작한다(다음 학생에게 넘어가지 않음)
+  const chatFor = useRef({ recordId: session.recordId, chat: createChatConversation() })
+  if (chatFor.current.recordId !== session.recordId) chatFor.current = { recordId: session.recordId, chat: createChatConversation() }
+  const chat = chatFor.current.chat
   const [menuOpen, setMenuOpen] = useState(false)
   const [avatarEdit, setAvatarEdit] = useState(false)
   const nickname = nicknameOf(profile)
@@ -129,21 +148,30 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   useEffect(() => () => sound.setEnabled(false), [sound])
   const toggleSound = () => { const on = !soundOn; sound.setEnabled(on); setSoundOn(on) }
   const onStep = useCallback(() => sound.step(), [sound])
+  /** 손맛 반응(설계 2026-11-06 §5): 방금 끝난 단계에 대한 연출만. seq가 바뀌면 CSS 애니메이션을 다시 건다 */
+  const [fx, setFx] = useState<Fx>(EMPTY_FX)
   /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
   const [avatarCue, setAvatarCue] = useState<AvatarCue | null>(null)
   const cuePrev = useRef<{ completed: string[]; off: string[] } | null>(null)
+  const prevDoneRef = useRef(0)
   useEffect(() => {
-    if (!run) { cuePrev.current = null; return }
+    if (!run) { cuePrev.current = null; prevDoneRef.current = 0; setFx(resetFxIfIdle); return }
     const now = { completed: run.completedSteps, off: run.offProgress as string[] }
+    const doneNow = run.completedSteps.length
+    const advanced = shouldPopOnDone(prevDoneRef.current, doneNow)
+    prevDoneRef.current = doneNow
     const step = newCue(cuePrev.current, now)
     cuePrev.current = now
     if (!step) return
+    const effects = reactionsFor(reactionEventForStep(step), { mode: run.difficultyMode, reducedMotion: prefersReducedMotion(), sound: soundOn }).filter((e) => e !== 'checkPop' || advanced)
+    if (effects.includes('tick')) sound.tick()
+    setFx((f) => ({ effects, seq: f.seq + 1 }))
     const action = actionForStep(step)
     if (!action) return
     const eqId = actionTarget(step, task.steps.find((st) => st.stepId === step)?.equipmentId ?? null)
     const eq = eqId ? layout.equipment.find((e) => e.id === eqId) : null
     setAvatarCue((c) => ({ action, seq: (c?.seq ?? 0) + 1, target: eq ? { x: eq.x, z: eq.z } : null }))
-  }, [run, task, layout])
+  }, [run, task, layout, sound, soundOn])
   const ppe = !!run?.completedSteps.includes('ppe')
   /** 계기 화면 가까이 보기(조작부 근처, 과제 중) */
   const [closeUp, setCloseUp] = useState(false)
@@ -243,33 +271,67 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const npcSpot = { x: layout.npc.x - 1.0, z: layout.npc.z }
   useEffect(() => { if (talkOnArrive && nearNpc && !moving) { setTalkOnArrive(false); setNpcOpen(true) } }, [talkOnArrive, nearNpc, moving])
 
+  /** 검사 통과 끄덕임(설계 §4): 기록 저장이 끝난 뒤 결과 화면으로 가기 전 잠깐 교관이 고개를 끄덕인다. 화면 전환만 늦추고 기록과 무관하다 */
+  type Finished = Parameters<typeof onFinish>
+  // 결과 화면으로는 딱 한 번만 넘긴다(독립 검토 1번): 끄덕임 중 교관을 다시 눌러 검사·중단을 또 해도,
+  // 말풍선과 타이머가 겹쳐도 첫 요청만 간다. onFinish는 최신 것을 쓴다.
+  const onFinishRef = useRef(onFinish)
+  onFinishRef.current = onFinish
+  const gateRef = useRef<FinishGate<Finished> | null>(null)
+  if (!gateRef.current) gateRef.current = createFinishGate<Finished>((...a) => onFinishRef.current(...a))
+  const gate = gateRef.current
+  const [nodding, setNodding] = useState(false)
+  const finishNow = () => { if (gate.complete()) setNodding(false) }
+  const onGameFinish = (...a: Finished) => {
+    const nod = shouldNodBeforeResult({ status: a[1], saveError: a[3], nearNpc, reducedMotion: prefersReducedMotion() })
+    if (gate.request(a, nod) !== 'nod') return
+    setNpcOpen(false); setDrawerOpen(false); setChatOpen(false)
+    setNodding(true)
+  }
+  useEffect(() => {
+    if (!nodding) return
+    const t = setTimeout(finishNow, NOD_SCREEN_MS)
+    return () => clearTimeout(t)
+  }, [nodding]) // eslint-disable-line react-hooks/exhaustive-deps
+  // 끄덕임 대사가 뜨면 키보드·화면 낭독기 초점을 말풍선으로 옮긴다(독립 검토 6번)
+  const nodBtnRef = useRef<HTMLButtonElement | null>(null)
+  useEffect(() => { if (nodding) nodBtnRef.current?.focus({ preventScroll: true }) }, [nodding])
+
   const gameUi = uiStyle === 'game' && displayMode === 'threeD' && !reviewOpen
   if (gameUi) {
     const navTargets = layout.equipment.filter((e) => e.interactive && e.accessPoint)
-    const talking = npcOpen && nearNpc
+    const talking = (npcOpen || !!nodding) && nearNpc
     const discPractice: DiscPractice = { ctl: discCtl, disc: discCase, bezelDeg: discBezel, open: discOpen && !talking }
     const backlashPractice: BacklashPractice = { st: blSt, bl: blCase, bezelDeg: blBezel, held: blHeld, open: blOpen && !talking }
     return (
-      <main className={`game ${talking ? 'talking' : ''}`}>
+      <main className={`game wa ${talking ? 'talking' : ''}`}>
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
-            joystickRef={joystickRef} npcTalking={talking} viewMode={viewMode} playerPos={pos} onAim={setAimId}
+            joystickRef={joystickRef} npcTalking={talking} npcNod={!!nodding} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
-            onSelectEquipment={selectEquipment} onNpcTap={() => { setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
+            onSelectEquipment={selectEquipment} onNpcTap={() => { if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
         </div>
 
         {!talking && (
           <>
             <div className="g-status">
-              <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}</div>
-              <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}>🎥 {VIEW_LABEL[viewMode]}</button>
-              <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}>{soundOn ? '🔊' : '🔇'}</button>
+              <div className="g-badgecol">
+              <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}{run && ctx && (() => {
+                const sb = saveBadge(ctx.saveStatus, noRecord)
+                return sb && sb.tone !== 'bad' ? <span className={`g-save ${sb.tone}`}>{sb.text}</span> : null
+              })()}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.effects.includes('sparkle') ? fx.seq : 'ppe'} className={`g-ppe ${fx.effects.includes('sparkle') ? 'spark' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>보호구 착용</span>}</div>
+              {/* 저장 실패(D4)는 배지 아래 줄에 따로 — 배지가 길어져 오른쪽 의뢰 카드와 겹치지 않게 */}
+              {run && ctx && saveBadge(ctx.saveStatus, noRecord)?.tone === 'bad' && <button className="g-save bad" role="alert" onClick={ctx.retrySave}>저장 실패 · 다시 저장</button>}
+              </div>
+              <button className="g-view" onClick={nextView} aria-label={`시점 바꾸기(지금 ${VIEW_LABEL[viewMode]})`}><Icon name="camera" /> {VIEW_LABEL[viewMode]}</button>
+              <button className="g-icon" aria-label={soundOn ? '소리 끄기' : '소리 켜기'} aria-pressed={soundOn} onClick={toggleSound}><Icon name={soundOn ? 'soundOn' : 'soundOff'} size={22} /></button>
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
               {menuOpen && (
                 <div className="g-menu" role="menu">
                   <button onClick={() => { setAvatarEdit(true); setMenuOpen(false) }}>캐릭터 다시 꾸미기</button>
+                  <button onClick={() => { setGuideOpen(true); setMenuOpen(false) }}>조작 안내 다시 보기</button>
                   <button onClick={() => setLabelChoice(labelMode === 'all' ? 'near' : 'all')}>{labelMode === 'all' ? '이름표 가까운 것만' : '이름표 모두 보기'}</button>
                   <label className="g-check"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
                   {run && <button onClick={toggleDisplay}>도식 모드로</button>}
@@ -282,12 +344,13 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             </div>
 
             {!practicing && !ttSide && <div className="g-quest">
-              <div className="g-quest-title">{run ? task.title : '실습장 둘러보기'}</div>
+              <div className="g-quest-title">{run ? '오늘의 의뢰' : '실습장 둘러보기'}</div>
+              {run && <p className="g-req">“{requestCopy(run.task.taskId).complaint}” <span className="g-req-task">{task.title}</span></p>}
               {!run && <p>장비를 눌러 도감을 채우고, 교관에게 가서 과제를 받으세요.</p>}
               {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
-              {run && ctx && <p className="g-progress">{ctx.doneCount}/{ctx.total} 단계 완료</p>}
+              {run && ctx && <p key={fx.effects.includes('checkPop') ? fx.seq : 'p'} className={`g-progress ${fx.effects.includes('checkPop') ? 'pop' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
               <div className="g-quest-btns">
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
                 <button onClick={() => goTo(npcSpot)}>교관에게</button>
@@ -317,14 +380,14 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             {viewMode === 'first' && <div className={`g-reticle ${aimId ? 'on' : ''}`} aria-hidden />}
             {viewMode === 'first' && aimId && (
               <button className="g-aim" onClick={() => (aimId === NPC_AIM ? setNpcOpen(true) : selectEquipment(aimId))}>
-                {aimId === NPC_AIM ? '💬 교관과 대화' : `🔍 ${layout.equipment.find((e) => e.id === aimId)?.label.replace(/\(.*\)/, '').trim() ?? ''} 살펴보기`}
+                {aimId === NPC_AIM ? <><Icon name="talk" /> 교관과 대화</> : <><Icon name="look" /> {layout.equipment.find((e) => e.id === aimId)?.label.replace(/\(.*\)/, '').trim() ?? ''} 살펴보기</>}
               </button>
             )}
 
             {!viewing && !practicing && <Joystick input={joystickRef} />}
-            {run && !viewing && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}>📟 계기 보기</button>}
-            {run && !viewing && !practicing && turningNear && <button className="g-gaugebtn" onClick={() => setTtSide('left')}>📟 측정판 보기</button>}
-            {!practicing && !viewing && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}>🔍 디스크 런아웃 연습</button>}
+            {run && !viewing && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}><Icon name="gauge" /> 계기 보기</button>}
+            {run && !viewing && !practicing && turningNear && <button className="g-gaugebtn" onClick={() => setTtSide('left')}><Icon name="gauge" /> 측정판 보기</button>}
+            {!practicing && !viewing && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}><Icon name="look" /> 디스크 런아웃 연습</button>}
             {discOpen && (
               <div className="g-practice" role="dialog" aria-label="디스크 런아웃 연습">
                 <div className="g-practice-head"><b>디스크 런아웃 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { discCtl.current.spin = 0; setDiscOpen(false) }}>✕</button></div>
@@ -344,7 +407,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 {discMsg && <p className={discMsg.ok ? 'ok' : 'bad'}>{discMsg.text}</p>}
               </div>
             )}
-            {!practicing && !viewing && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}>🔍 차동기어 백래시 연습</button>}
+            {!practicing && !viewing && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}><Icon name="look" /> 차동기어 백래시 연습</button>}
             {blOpen && (
               <div className="g-practice" role="dialog" aria-label="차동기어 백래시 연습">
                 <div className="g-practice-head"><b>차동기어 백래시 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { blSt.current.push = 0; setBlOpen(false) }}>✕</button></div>
@@ -353,7 +416,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 <div className="g-practice-row">
                   <button {...pushHold(-1)}>◀ 누르는 동안 밀기</button>
                   <button {...pushHold(1)}>밀기 ▶</button>
-                  <button aria-pressed={blHeld} className={blHeld ? 'on' : ''} onClick={blToggleHeld}>{blHeld ? '🔧 피니언 잡음' : '🔧 피니언 잡기'}</button>
+                  <button aria-pressed={blHeld} className={blHeld ? 'on' : ''} onClick={blToggleHeld}><Icon name="wrench" /> {blHeld ? '피니언 잡음' : '피니언 잡기'}</button>
                   <button onClick={blZero}>영점 맞추기</button>
                 </div>
                 <div className="g-practice-row">
@@ -373,7 +436,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 <button onClick={() => setTtSide(null)}>✕ 닫기</button>
               </div>
             )}
-            {!practicing && !ttSide && !noRecord && <button className="g-chatbtn" onClick={() => setChatOpen(true)}>💬 AI 교관에게 질문</button>}
+            {!practicing && !ttSide && !noRecord && <button className="g-chatbtn" onClick={() => setChatOpen(true)}><Icon name="talk" /> AI 교관에게 질문</button>}
 
             {!ttSide && <div className="g-actions">
               {run && ctx?.nextActions.map((a) => <button key={a.key} className={`g-act ${a.cls ?? ''}`} onClick={a.onClick}>{a.label}</button>)}
@@ -395,10 +458,10 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           <div className="g-guide" role="dialog" aria-label="조작 안내">
             <b>조작 안내</b>
             <ul>
-              <li>🕹️ 왼쪽 조이스틱(키보드 W·A·S·D) 또는 바닥을 눌러 걷기</li>
-              <li>👆 화면을 끌어 둘러보기</li>
-              <li>🎥 왼쪽 위 버튼으로 시점 바꾸기(내 눈으로 보면 가운데 점으로 장비를 살펴봄)</li>
-              <li>🔧 장비를 누르면 설명, 교관에게 가면 과제</li>
+              <li><Icon name="joystick" /> 왼쪽 조이스틱(키보드 W·A·S·D) 또는 바닥을 눌러 걷기</li>
+              <li><Icon name="drag" /> 화면을 끌어 둘러보기</li>
+              <li><Icon name="camera" /> 왼쪽 위 버튼으로 시점 바꾸기(내 눈으로 보면 가운데 점으로 장비를 살펴봄)</li>
+              <li><Icon name="wrench" /> 장비를 누르면 설명, 교관에게 가면 과제</li>
             </ul>
             <button className="primary" onClick={closeGuide}>알겠어요</button>
           </div>
@@ -410,20 +473,28 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         {run && (
           <aside className={`g-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>
             <button className="g-x" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>
-            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded onRunChange={onRunChange} onContext={onContext}
+            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded initialSaveStatus={saveStatusRef.current} onSaveStatus={onSaveStatus} onRunChange={onRunChange} onContext={onContext}
               proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
-              onFinish={onFinish} />
+              onFinish={onGameFinish} />
           </aside>
         )}
         {!noRecord && (
           <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
             <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
-            <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
+            <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
               stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
           </aside>
         )}
 
-        {npcOpen && (
+        {nodding && (
+          <div className="g-dialog" role="dialog" aria-label="교관 검사 결과">
+            <button ref={nodBtnRef} className="g-bubble g-nod" onClick={finishNow} aria-label="교관 대사 — 눌러서 결과 보기">
+              <span className="g-name">교관</span>
+              <span className="g-say">{NOD_LINE}</span>
+            </button>
+          </div>
+        )}
+        {npcOpen && !gate.closed && (
           <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
             onGoToNpc={() => { setNpcOpen(false); setTalkOnArrive(true); goTo(npcSpot) }}
@@ -433,7 +504,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         )}
 
         {avatarEdit && (
-          <div className="av-overlay" role="dialog" aria-modal="true" aria-label="캐릭터 다시 꾸미기">
+          <div className="av-overlay warm" role="dialog" aria-modal="true" aria-label="캐릭터 다시 꾸미기">
             <AvatarScreen initial={profile} editing saveNote={noRecord ? '기록 없이 하기라서 캐릭터도 저장하지 않습니다.' : '이 기기에만 저장되고 연구 기록·서버에는 보내지 않습니다.'}
               onDone={(p) => { onProfileChange?.(p); setAvatarEdit(false) }} onCancel={() => setAvatarEdit(false)} />
           </div>
@@ -529,13 +600,13 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           )}
 
           {run && (
-            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded onRunChange={onRunChange}
+            <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded initialSaveStatus={saveStatusRef.current} onSaveStatus={onSaveStatus} onRunChange={onRunChange}
               proximity={displayMode === 'threeD' ? { nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id } : null}
               onFinish={onFinish} />
           )}
 
           {!reviewOpen && !noRecord && (
-            <ChatPanel sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
+            <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
               stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} />
           )}
         </section>

@@ -2,12 +2,13 @@ import { ITEM_LABEL } from '../app/resultLabels'
 import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
-import type { SessionContext } from '../domain/record'
+import type { RecordPayload, SessionContext } from '../domain/record'
 import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, OFF_SUBSTEPS, type OffSubStep, type TaskRun } from '../domain/taskEngine'
 import { buildRecordPayload } from '../domain/record'
 import type { Repository } from '../records/repository'
+import { createSaveTracker, type SaveState } from '../app/saveRecovery'
 import type { DeliveryEnvelope } from '../records/types'
-import { inspectPerformance, type InspectionIssue } from '../domain/npcInspection'
+import { inspectPerformance, visibleInspection, type InspectionIssue } from '../domain/npcInspection'
 import type { FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
 import type { PanelReadout } from '../scene/panelReadout'
@@ -32,6 +33,10 @@ export interface TaskContext {
   inspect: () => void
   /** 3D 조작부 계기 화면에 보일 값(숫자식 계기와 같음) */
   panel: PanelReadout
+  /** 이 기기 초안 저장 상태(D4) — 게임 화면 배지에 늘 보인다 */
+  saveStatus: SaveState
+  /** 지금 상태로 초안을 다시 저장(D4) */
+  retrySave: () => void
 }
 
 // 항목 표시 이름은 app/resultLabels(결과 화면과 같은 이름)
@@ -61,11 +66,11 @@ function useCountUp(active: boolean, ms = 1500): number {
 
 export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
 
-export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext }: {
+export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext, initialSaveStatus = 'saved', onSaveStatus }: {
   /** 비기록 모드: 저장 상태 대신 "기록 안 됨"을 보인다 */
   noRecord?: boolean
   repo: Repository; session: SessionContext; initialRun: TaskRun
-  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null) => void
+  onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null, payload?: RecordPayload | null) => void
   /** 실습장 화면 안에 끼워 넣을 때 true(머리글 생략) */
   embedded?: boolean
   /** 3D 모드에서 장비 근접 여부. null이면 게이팅 없음(도식 모드) */
@@ -73,6 +78,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   onRunChange?: (run: TaskRun) => void
   /** 게임 화면용 상태 알림 */
   onContext?: (c: TaskContext) => void
+  /** 화면 전환으로 패널이 새로 붙을 때 이어받을 저장 상태(D4) */
+  initialSaveStatus?: SaveState
+  onSaveStatus?: (s: SaveState) => void
 }) {
   const [run, setRun] = useState(initialRun)
   // 부모와 마지막으로 주고받은 run. 부모→패널 갱신과 패널→부모 알림이 서로 되돌리지 않게 한다.
@@ -83,9 +91,13 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   useEffect(() => {
     if (run !== externalRef.current) { externalRef.current = run; onRunChange?.(run) }
   }, [run, onRunChange])
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'failed'>('saved')
+  const [saveStatus, setSaveStatus] = useState<SaveState>(initialSaveStatus)
+  useEffect(() => { onSaveStatus?.(saveStatus) }, [saveStatus, onSaveStatus])
   const runRef = useRef(run)
   runRef.current = run
+  /** 결과 확정(finish)을 시작했는지. 그 뒤로는 초안을 다시 저장하지 않고 finish도 한 번만 한다(독립 검토 2번 —
+   *  확정 저장이 지운 초안이 다시 생겨 새로고침 때 '끝내지 않은 수행' 화면이 잘못 뜨던 것) */
+  const finishingRef = useRef(false)
   const needsMove = (stepId: string) => {
     if (!proximity) return null
     const st = task.steps.find((x) => x.stepId === stepId)
@@ -94,20 +106,27 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
 
   // 의미 있는 상태 변화마다 초안을 자동 저장한다(네트워크 없음). 실패는 화면에 표시한다.
+  const [trackSave] = useState(() => createSaveTracker(setSaveStatus, () => finishingRef.current))
+  const saveDraftOf = (r: TaskRun) => trackSave(() => repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(r), savedAt: new Date().toISOString() }))
   useEffect(() => {
-    if (run === initialRun) return
-    let cancelled = false
-    setSaveStatus('saving')
-    repo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(run), savedAt: new Date().toISOString() }).then((r) => {
-      if (!cancelled) setSaveStatus(r.status === 'saved' ? 'saved' : 'failed')
-    })
-    return () => { cancelled = true }
-  }, [run, repo, session, initialRun])
+    if (run === initialRun || finishingRef.current) return
+    saveDraftOf(run)
+  }, [run, repo, session, initialRun]) // eslint-disable-line react-hooks/exhaustive-deps
+  /** 저장 실패 뒤 지금 상태로 다시 저장(D4). 확정을 시작한 뒤에는 하지 않는다(지운 초안이 다시 생기지 않게) */
+  const retrySave = () => {
+    if (finishingRef.current) return
+    saveDraftOf(runRef.current)
+  }
+  // 저장 중에 화면이 바뀌면 앞 패널의 결과를 받을 길이 없어 '저장 중'에 멈춘다. 지금 상태를 다시 저장해 결과를 받는다(같은 수행 초안 덮어쓰기, 독립 검토 4번)
+  useEffect(() => {
+    if (initialSaveStatus === 'saving') retrySave()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- 패널이 붙을 때 한 번만
 
   // 화면 숨김 → 일시중지, 복귀 → 재개 (학습시간에서 숨김 구간 제외)
   useEffect(() => {
     const onVis = () => {
       const cur = runRef.current
+      if (finishingRef.current) return
       if (document.visibilityState === 'hidden') { const r = pauseRun(cur, 'hidden'); if (r.outcome === 'confirmed') setRun(r.run) }
       else { const r = resumeRun(cur, 'visible'); if (r.outcome === 'confirmed') setRun(r.run) }
     }
@@ -117,20 +136,24 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
   const finish = async (finalRun: TaskRun, status: 'completed' | 'aborted') => {
     // 결과 확정: payload + envelope를 같은 트랜잭션으로 저장(초안 삭제). 저장이 끝난 뒤에만 결과 화면으로.
+    if (finishingRef.current) return
+    finishingRef.current = true
+    // G2: 여기서 만든 원본 하나를 저장·결과 화면·내려받기에 함께 쓴다(결과 화면이 다시 만들지 않게)
+    let payload: RecordPayload | null = null
     try {
-      const payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status })
+      payload = buildRecordPayload(finalRun, session, { completedAtIso: new Date().toISOString(), completionStatus: status })
       const r = await repo.freezeRecord(payload)
-      if (r.status === 'failed') return onFinish(finalRun, status, null, r.errorCode ?? 'FREEZE_FAILED')
+      if (r.status === 'failed') return onFinish(finalRun, status, null, r.errorCode ?? 'FREEZE_FAILED', payload)
       const stored = await repo.loadRecord(session.recordId)
-      onFinish(finalRun, status, stored?.envelope ?? null, null)
+      onFinish(finalRun, status, stored?.envelope ?? null, null, stored?.payload ?? payload)
     } catch (e) {
-      onFinish(finalRun, status, null, (e as Error).message)
+      onFinish(finalRun, status, null, (e as Error).message, payload)
     }
   }
   const [shown, setShown] = useState<Shown | null>(null)
   const [inputs, setInputs] = useState<Record<string, string>>({})
   const [graded, setGraded] = useState<Record<string, boolean | null>>({})
-  const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[] } | null>(null)
+  const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[]; answersLocked: boolean } | null>(null)
   const [action, setAction] = useState('')
 
   const task = run.task
@@ -219,7 +242,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     const r = inspectPerformance(run)
     setRun(r.run)
     if (!r.recorded) return setShown({ kind: 'guidance', title: '기록 한도', text: null, plain: '이벤트 기록 한도(200개)에 닿아 NPC 검사를 기록할 수 없습니다. ‘중단하고 끝내기’로 저장하고 교사에게 알리세요.' })
-    setInspection({ result: r.result, issues: r.issues })
+    // G1: 무안내·최초 답 미완료면 적은 칸의 정오를 숨긴 목록만 보인다(게임 화면 교관 검사도 이 함수를 거친다)
+    setInspection({ result: r.result, ...visibleInspection(r.run, r.issues) })
     if (r.result === 'passed') void finish(r.run, 'completed')
   }
 
@@ -258,16 +282,17 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       shown, clearShown: () => setShown(null),
       doneCount: run.completedSteps.length, total: task.steps.length,
       hint, inspect,
+      saveStatus, retrySave,
       panel: { axle: done('enter') ? m.axleWeight : null, left: done('press') ? shownL : run.motorOn ? 0 : null, right: done('press') ? shownR : run.motorOn ? 0 : null, hold: gauge.hold, unit: m.unit ?? '' },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold])
+  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold, saveStatus])
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>
       <header className="topbar">
         <div><b>{task.title}</b> · {embedded ? '' : `코드 ${session.anonymousStudentCode} · `}{run.difficultyMode === 'guided' ? '안내 있음' : '안내 없음'}</div>
-        <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · {noRecord ? <span>기록 안 됨</span> : <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>}{run.paused && ' · 일시중지'}</div>
+        <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · {noRecord ? <span>기록 안 됨</span> : <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>}{!noRecord && saveStatus === 'failed' && <> <button className="link" onClick={retrySave}>다시 저장</button></>}{run.paused && ' · 일시중지'}</div>
       </header>
 
       <section className="npc card">
@@ -390,6 +415,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         {inspection && inspection.result !== 'passed' && (
           <div className="feedback explanatory"><b>NPC: 보완이 필요합니다 ({inspection.issues.length}건)</b>
             <ul>{inspection.issues.map((i, k) => (<li key={k}>{i.kind === 'step' ? `${task.steps.findIndex((s) => s.stepId === i.stepId) + 1}번 단계` : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}</li>))}</ul>
+            {inspection.answersLocked && <p className="small">입력한 답이 맞는지는 모든 칸에 처음 답을 적은 뒤 알려 줍니다.</p>}
           </div>
         )}
       </section>

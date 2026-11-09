@@ -2,11 +2,13 @@
 // 학생 아바타와 NPC 교관이 같은 모델을 쓰고 옷 색만 바꾼다. 동작: Idle(서 있기)·Walk(걷기)·Gesture(설명 손짓).
 // 두 품질 모두 쓴다(2026-10-29부터). 불러오는 중은 코드 모델(Person)을 쓴다. 특정 인물을 닮지 않은 일반 캐릭터다.
 import { useAnimations, useGLTF } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { SkeletonUtils } from 'three-stdlib'
 import { HAIR_STYLES, type BodyType, type HairStyle } from '../../app/avatar'
 import { assetUrl } from '../../app/assetUrl'
+import { nodAngle } from '../../app/cozyState'
 
 export const CHARACTER_URL = assetUrl('models/character.glb')
 /** 체형 2(키 1.62 m) — 캐릭터 만들기(설계 2026-11-03) */
@@ -41,12 +43,27 @@ export function headingFor(dx: number, dz: number): number {
   return Math.atan2(-dx, -dz)
 }
 
-export function CharacterModel({ action, outfit, speed = 1, goggles = false, look = DEFAULT_LOOK }: { action: CharacterAction; outfit: Outfit; speed?: number; goggles?: boolean; look?: CharacterLook }) {
+/** 끄덕임은 카메라가 교관 앞에 자리 잡은 뒤 시작(초) */
+const NOD_DELAY = 0.45
+
+/** nod: 켜지는 순간부터 고개를 두 번 끄덕인다(검사 통과 — 교관 전용). 모든 동작 클립이 Head 회전을 매 프레임 덮어쓰므로 그 위에 더한다 */
+export function CharacterModel({ action, outfit, speed = 1, goggles = false, look = DEFAULT_LOOK, nod = false }: { action: CharacterAction; outfit: Outfit; speed?: number; goggles?: boolean; look?: CharacterLook; nod?: boolean }) {
   const { scene, animations } = useGLTF(characterUrl(look.body), false, true)
   // 뼈대가 있는 모델은 SkeletonUtils로 복제해야 학생·교관이 따로 움직인다
   const clone = useMemo(() => SkeletonUtils.clone(scene) as THREE.Group, [scene])
   const root = useRef<THREE.Group>(null)
   const { actions } = useAnimations(animations, root)
+  const head = useMemo(() => clone.getObjectByName('Head') ?? null, [clone])
+  const nodT = useRef(-1)
+  useEffect(() => { nodT.current = nod ? -NOD_DELAY : -1 }, [nod])
+  // useAnimations의 mixer.update 뒤에 돈다(같은 컴포넌트에서 먼저 등록됨)
+  useFrame((_, dt) => {
+    if (!nod || !head) return
+    nodT.current += Math.min(dt, 0.1)
+    const a = nodAngle(nodT.current)
+    // 모델 앞이 -z라서 +x 회전은 고개를 뒤로 젖힌다 → 숙이려면 -x
+    if (a) head.rotateX(-a)
+  })
 
   useLayoutEffect(() => {
     clone.traverse((o) => {

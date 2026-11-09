@@ -3,6 +3,7 @@
 // 차량 판정(vehicleVerdict)이나 학생 최초 정오(judgmentCorrect)와 다른 결과이며, 이전 오류·안전 위반을 지우지 않는다.
 // 불량 차량을 정확히 판정하거나 최초 오답을 보완해 최종 정답이면 통과할 수 있다.
 import { EVENT_LIMIT, appendEvent, type TaskRun } from './taskEngine'
+import { answerFeedbackAllowed } from './feedbackPolicy'
 
 export type InspectionIssue =
   | { kind: 'step'; stepId: string; reasonCode: 'STEP_NOT_COMPLETED' }
@@ -36,4 +37,15 @@ export function inspectPerformance(run: TaskRun): InspectionResult {
   const counted = { ...run, npcInspectionCount: run.npcInspectionCount + 1 }
   const withEvent = appendEvent(counted, { type: 'npcInspected', reasonCode: result === 'passed' ? 'PASSED' : 'NEEDS_CORRECTION' })
   return { run: withEvent.run, result, issues, recorded: withEvent.ok }
+}
+
+/**
+ * 학생에게 보여 줄 검사 결과(G1, 2026-11-08 Codex 회의).
+ * 승인 정책(무안내는 필수 응답의 최초 답이 모두 저장된 뒤에만 정답 관련 피드백)을 NPC 검사 표시에도 적용한다.
+ * 잠긴 동안 응답 항목은 '미응답'만 남기고 적은 칸의 정오(FINAL_INCORRECT·NOT_EVALUABLE)는 숨긴다 — 건수도 이 목록으로 센다.
+ * 단계·안전 문제는 그대로 보인다. 내부 검사 결과·횟수·사건 기록은 바꾸지 않는다.
+ */
+export function visibleInspection(run: TaskRun, issues: InspectionIssue[]): { answersLocked: boolean; issues: InspectionIssue[] } {
+  if (answerFeedbackAllowed(run)) return { answersLocked: false, issues }
+  return { answersLocked: true, issues: issues.filter((i) => i.kind !== 'response' || i.reasonCode === 'UNANSWERED') }
 }

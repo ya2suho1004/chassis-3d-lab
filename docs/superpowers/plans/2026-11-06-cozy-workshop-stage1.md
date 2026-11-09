@@ -299,19 +299,21 @@ git commit -m "feat(공방): 정비 일지 묶음(측정·계산·판정 최종 
 
 ```css
 /* ── 따뜻한 정비 공방(A안, 설계 2026-11-06) — main 에 .wa 를 붙인 화면만 바뀐다 ── */
+/* 공통 규칙은 :where(.wa) 로 우선순위를 낮춰, 기존 부품 규칙(.g-*, .av-swatch 등)이 그대로 이기게 한다 */
 :root { --wa-cream:#fff6e5; --wa-paper:#fffaf0; --wa-line:#c98b4f; --wa-brown:#8b5e34; --wa-ink:#5b3a1e; --wa-orange:#f28c28; --wa-orange-d:#b45f12; --wa-navy:#26364a; --wa-stamp:#d2463a; }
-:root:has(main.wa.screen) body { background:linear-gradient(180deg,#ffe0b2 0%,#ffcf96 55%,#f6b27a 100%) fixed; }
+:root:has(main.wa.screen) body { background-color:#ffcf96; }
+:root:has(main.wa.screen) body::before { content:""; position:fixed; inset:0; z-index:-1; background:linear-gradient(180deg,#ffe0b2 0%,#ffcf96 55%,#f6b27a 100%); }
 .wa.screen { color:var(--wa-ink); }
 .wa.screen h1 { display:inline-block; background:var(--wa-brown); color:#fff; padding:6px 18px; border-radius:12px 12px 4px 4px; box-shadow:0 3px 0 #5e3c1d; }
-.wa .card { background:var(--wa-cream); border:2px solid var(--wa-line); border-radius:16px; box-shadow:0 3px 0 var(--wa-line); }
-.wa button { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); border-radius:999px; box-shadow:0 2px 0 var(--wa-line); }
-.wa button:active:not(:disabled) { transform:translateY(2px); box-shadow:none; }
-.wa button.primary { background:var(--wa-orange); border-color:var(--wa-orange-d); color:#fff; box-shadow:0 2px 0 var(--wa-orange-d); }
-.wa button.link { border:none; background:none; box-shadow:none; color:var(--wa-brown); }
-.wa .small { color:#8a6a4c; }
-.wa input:not([type=radio]):not([type=checkbox]), .wa select { border:2px solid var(--wa-line); border-radius:10px; background:#fff; }
-/* 계측부는 원래 색(설계 §2-1): 답안 표·계기·입력 칸 */
-.wa table.sheet, .wa .gauge, .wa .field input { color:#17202a; }
+:where(.wa) .card { background:var(--wa-cream); border:2px solid var(--wa-line); border-radius:16px; box-shadow:0 3px 0 var(--wa-line); }
+:where(.wa) button { border:2px solid var(--wa-line); background:var(--wa-paper); color:var(--wa-ink); border-radius:999px; box-shadow:0 2px 0 var(--wa-line); }
+:where(.wa) button:where(:active:not(:disabled)) { translate:0 2px; box-shadow:none; }
+:where(.wa) button.primary { background:var(--wa-orange); border-color:var(--wa-orange-d); color:#fff; box-shadow:0 2px 0 var(--wa-orange-d); }
+:where(.wa) button.link { border:none; background:none; box-shadow:none; color:var(--wa-brown); }
+.wa.screen .small { color:#8a6a4c; }
+.wa input:not([type=radio],[type=checkbox],[type=range],[type=color],[type=file]):not(table.sheet input, .field input), .wa select { border:2px solid var(--wa-line); border-radius:10px; background:#fff; }
+/* 계측부는 원래 색(설계 §2-1): 답안 표·입력 칸. 계기(.gauge)는 원래 검은 바탕·연두 글자라 건드리지 않는다 */
+.wa table.sheet, .wa .field input { color:#17202a; }
 .wa table.sheet { background:#fff; }
 .wa table.sheet th, .wa table.sheet td { border-color:#d4d4d8; }
 /* 숫자 자릿수 고정 */
@@ -525,9 +527,6 @@ git commit -m "feat(공방): 결과 화면 정비 일지 — 손님 사연·측�
 .game.wa .g-choices button.primary { background:var(--wa-orange); border-color:var(--wa-orange-d); color:#fff; }
 .game.wa .g-menu { background:var(--wa-cream); border:2px solid var(--wa-line); }
 .game.wa .g-gaugebtn { background:var(--wa-navy); }
-/* 측정판 보기 버튼 줄은 계측 조작이라 원래 모양 그대로(.wa button 이 뒤에 와서 덮지 않게 다시 적음) */
-.game.wa .g-ttbar button { border:2px solid #fff; background:rgba(20,30,40,.82); color:#fff; box-shadow:none; }
-.game.wa .g-ttbar button.on { background:#1565c0; }
 ```
 
 - [ ] **Step 3: 화면 확인(품질 높음·낮음)**
@@ -747,6 +746,8 @@ function Decor({ d }: { d: DecorSpot }) {
       ))}
 ```
 
+> 구현 뒤 화면 확인에서 떠 있는 회색 판처럼 보여 제거함(ca30a71).
+
 - [ ] **Step 5: 시험·계측부 색 확인**
 
 Run: `npx vitest run tests/decor.test.ts && npx vitest run 2>&1 | grep -E "Test Files|Tests "`
@@ -807,8 +808,52 @@ git commit -m "docs(설계): D44 따뜻한 정비 공방 1단계 기록"
 ## 이 계획에 없는 것(다음 계획)
 
 - 교관의 고개 끄덕임·시선 다듬기(설계 §4 대화창): 캐릭터 동작 추가가 필요해 1단계 범위에서 뺀다(다음 계획 후보).
+  - 2026-11-07 후속(브랜치 cozy-stage1): **검사 통과 끄덕임만** 넣음. 게임 화면에서 교관 곁에서 검사를 통과하면, 기록 저장이 끝난 뒤 결과 화면으로 가기 전 약 2.3초 동안 교관이 고개를 두 번 끄덕이고 "좋아, 검사 통과야. 수고했어!"라고 말한다(누르면 바로 넘어감). 모델 클립을 새로 만들지 않고 Head 뼈를 코드로 돌린다. 저장 실패·중단·교관에게서 먼 곳(서랍)·움직임 줄이기에서는 바로 결과 화면. 시선(다음 장비 보기)은 하지 않는다.
 - 직접 그린 SVG 아이콘 세트(설계 §3): 1단계 화면에는 새 아이콘 자리가 없어 2단계(정비 수첩 도장 그림)와 함께 만든다.
+  - 2026-11-07 후속(브랜치 cozy-stage1): 새 자리는 만들지 않고, 게임 화면·캐릭터 만들기의 **컬러 이모지 10종**(🎥🔊🔇💬🔍📟🔧🎲🕹️👆)을 직접 그린 선 아이콘(`src/screens/Icon.tsx`, 10개)으로 바꿈. 버튼 글자·aria-label은 그대로. 단색 기호(✕ ✓ ▶ ◀ ▼ ☰ ◆)는 그대로. 2단계 도장 그림은 그때 이 세트에 더한다.
+- 과제별 문구 한 곳 모으기(2026-11-07 브랜치): 손님 사연·교관 첫 대사·기본 화면 작업지시를 `src/app/requests.ts` 하나로. 화면 문구는 그대로(`tests/copyGolden.test.ts`).
 
 - 2단계: 정비 수첩·숨은 것 3개·오늘의 의뢰판·교사 설정 확장. Hermes의 IRB 확인 결과를 받은 뒤, 사용성 평가 전에 따로 계획한다(설계 §6·§10-3).
 - 측정판 확대 구도 조정: 실기기 점검에서 눈금 가림이 재현될 때만 한다(설계 §4).
 - 인트로 셔터 빛·간판 색: 인트로 그림(`src/screens/IntroArt.tsx`)은 SVG라서 Task 4의 토큰만으로는 바뀌지 않는다. 1단계를 마친 뒤 MOON이 화면을 보고 원하면 작은 후속 작업으로 한다.
+  - 2026-11-07 후속(브랜치 cozy-stage1): 셔터 안쪽 천장등·벽 빛을 호박색으로, 간판을 나무(갈색)+크림 글자+테두리로, 닫힌 셔터 아래 틈으로 따뜻한 불빛이 새고 열리면 사라지게 함. 셔터 철판(청회색)·노란 쿠페·로고는 그대로.
+
+### 2026-11-07 독립 검토 반영(브랜치 cozy-stage1)
+
+- 1번 끄덕임 중 재검사: 끄덕임(2.3초) 동안 교관을 다시 눌러 검사·중단을 또 하면 두 번째 확정 저장이 ALREADY_FROZEN으로 실패해 결과 화면이 '저장 실패'로 덮였다. `src/app/finishGate.ts`로 결과 요청을 한 번만 받고, 끄덕임이 시작되면 교관 누르기·대화창을 막는다(LabScreen).
+- 2번 확정 뒤 초안 부활: TaskScreen이 finish를 시작하면 초안 자동 저장·숨김 일시중지를 멈추고 finish도 한 번만 한다(`finishingRef`).
+- 3번 시험: `tests/finishGate.test.ts`(관문 동작 5개 + 화면 배선 2개). 브라우저에서 끄덕임 중 교관 몸을 실제로 눌러도 대화창이 안 열리고 결과 화면이 한 번 뜸을 확인.
+- 4번 대비: `.game.wa .g-act` 흰 글자 바탕 #a9520f→#8f4a10(5.38:1 이상), 멀 때 #7d6d5c→#6a5c4d(4.98:1 이상), 노을 바탕 오류 글자 `.wa .error` #8a1a10(가장 밝은 #f6b27a 위 5.17:1).
+- 6번: 끄덕임 대사를 `requests.ts`의 `NOD_LINE`으로 옮기고 copyGolden에 고정, 대사가 뜨면 말풍선으로 초점 이동.
+- 5번(손님 사연이 판정을 암시할 수 있음)은 연구 판단이라 MOON 결정 대기.
+- 5번(2026-11-07 MOON 결정): 제동력 손님 사연(퀘스트 창·정비 일지 머리)을 '브레이크를 밟으면 한쪽으로 쏠려요' → '브레이크 점검 받으러 왔어요'로 — 늘 보이는 문구가 '불량'을 암시하지 않게. 교관 대사(npcAsk)·작업지시(workOrder)의 '한쪽으로 쏠린다' 호소는 main과 같은 문구라 그대로 둠.
+
+### 시연(11-10) 뒤 할 일 — MOON 결정 2026-11-07
+
+- 손님 호소 문구에서 판정 암시 빼기(같은 이유, 5번 후속):
+  - 제동력 교관 첫 대사 `npcAsk` "손님 차량이 제동할 때 한쪽으로 쏠린다고 했어." · 기본 화면 작업지시 `workOrder` "제동 시 한쪽으로 쏠린다는 호소" → 점검 의뢰 말투로.
+  - 최소회전반경 손님 사연 `complaint` "좁은 길에서 잘 안 돌아요"(+ 같은 호소가 든 `npcAsk`·`workOrder`) → "핸들 점검 받으러 왔어요"처럼.
+  - 새 문구는 MOON 검토 뒤 `tests/copyGolden.test.ts`·`tests/requests.test.ts`도 함께 고친다. 문구는 `src/app/requests.ts` 한 곳에 있다.
+- 결과 화면 '수업 시점: 대기 중 예습'을 시작 화면 '1~2차시 연습'과 같은 말로, '이어서 하기' 화면 저장 시각을 UTC 원문 대신 한국 시각으로(시연 리허설 발견).
+- cozy-stage1을 main에 합친 뒤 시연 문서(`docs/demo/*.html`)의 🎥 등 이모지 표기를 아이콘에 맞게 고친다.
+
+### 2026-11-08 Codex 회의 반영(브랜치 cozy-stage1, MOON 승인 "브랜치에서 세 건 바로 진행")
+회의 기록: `docs/CODEX_발전과제_토의결과_2026-11-08.md`(main에 있음).
+- **G1 최초 답 보호**: 안내 없음에서 처음 답을 다 적기 전 NPC 검사를 받으면 응답 항목은 '미응답'만 보이고, 적은 칸의 정오(최종 답 오답·채점 불가)는 숨긴다. 건수도 보이는 목록으로 센다. 단계·안전 문제는 그대로. 검사 횟수·npcInspected 사건 기록은 그대로. `visibleInspection`(src/domain/npcInspection.ts), 게임 화면 교관 검사도 같은 경로. 시험 tests/inspectionVisibility.test.ts.
+- **G2 확정 원본 하나**: 결과 화면·JSON·CSV 내려받기가 확정 저장한 원본을 쓴다(src/app/resultPayload.ts). 저장 실패 때는 저장하려던 원본. 시험 tests/frozenPayload.test.ts.
+- **H1 판 번호에 커밋**: clientAppVersion = `0.3.0-demo+<커밋 12자리>`(고친 파일이 있는 로컬 빌드는 `-dirty`, 모르면 `unknown`). Vercel은 VERCEL_GIT_COMMIT_SHA. 기록 형식 그대로, 64자 안. 시험 tests/buildInfo.test.ts.
+- **D4 저장 실패 뒤 같은 수행 복구**(MOON 승인 "브랜치에서 D4 진행"): ① 게임 화면 배지에 저장 상태(저장됨·저장 중…)가 늘 보이고, 실패하면 배지 아래 빨간 '저장 실패 · 다시 저장' 버튼(기본 화면 패널에도 '다시 저장'). 게임↔기본 화면을 오가도 실패 표시 유지(LabScreen이 상태 보관). ② 확정 저장 실패 시 결과 화면 '다시 저장' — 처음 만든 원본 그대로(수행 번호·완료 시각 유지), 이미 확정돼 있으면 두 번 저장하지 않음. 저장 안 된 채 '다음 학생'은 한 번 더 확인. ③ 현재 수행 포인터가 없어도 같은 익명 코드·같은 세션으로 시작하면 남은 초안을 찾아 '이어서 하기'로(이때 '새 수행'은 초안을 지우지 않음). 새로 모으는 자료 없음. `src/app/saveRecovery.ts`, 시험 tests/saveRecovery.test.ts. 브라우저에서 IndexedDB 쓰기를 일부러 실패시켜 세 경로 모두 확인.
+- **2026-11-09 문구 수정**(MOON 승인): 손님 호소에서 판정 암시 빼기 — A안 "조향 장치·브레이크 점검 의뢰"(후보·결정 docs/copy/2026-11-09_손님문구_후보.md, requests.ts·copyGolden 수정). 결과 화면 수업 시점을 차시 이름(1~2차시 연습 등)으로, 이어서 하기 저장 시각을 한국 시각으로.
+- **C1 교사 화면 '오늘 수업 설정' 요약**(MOON 승인): 교사 화면 맨 위(탭 위)에 세션·과제 사례·차시·도움 방식·차량 진입·학생 변경 잠금·AI 교관(로그인 때 받은 세션 정보만, 새 조회 없음)·이 기기 기록 수를 한 장으로. 저장 안 한 변경, 서버 세션 차시와 기기 차시 불일치, 세션 없음·비활성, 전송 대기를 경고. 표시만, 새 수집 없음. `src/app/todaySummary.ts`, 시험 tests/todaySummary.test.ts.
+- **E2 AI 교관 답 끊김·막힘 처리**(MOON 승인, 서버 코드 `supabase/functions/_shared/chat/`): 끝난 이유(gemini finishReason·anthropic stop_reason)를 정상·끊김·막힘으로 나눔. 막힘(안전 필터·거절·질문 자체 차단 PROMPT_BLOCKED)은 남은 글을 버리고 과제에 맞는 거절 문구(최소회전반경 과제에 제동력 문구 쓰던 것 수정)·refused. 길이로 끊김은 마지막 완성 문장까지 + '끊겼어요, 좁혀서 다시 물어봐 주세요' 알림·answered. 글 없이 끊김은 UPSTREAM_ERROR(다시 묻기, 한도에 안 셈). 끝난 이유는 저장하지 않음(새 수집 없음). 시험 tests/chatFinish.test.ts. **반영하려면 Vercel 재배포와 별도로 Supabase chat 함수 배포가 필요(MOON 허락 뒤).**
+- **F1 조작 안내 다시 보기**(MOON 승인): 게임 화면 메뉴 두 번째 줄 '조작 안내 다시 보기' → 첫 조작 안내 창(이동·둘러보기·시점·장비 누르기)을 다시 연다. 안내 확인이 기기 공통 저장이라 공유 태블릿의 다음 학생이 볼 길이 없던 것. 조작만 안내(정답·작업 순서 없음), 안내 있음·없음·과제 전후 똑같이. 시험 tests/guideReopen.test.ts, 브라우저 확인.
+- **게임 화면 옆 밀림 방지**(2026-11-09): 닫힌 작업 서랍이 main.game의 스크롤 넓이를 늘림(767→1355) → `overflow:clip`으로 스크롤 자체를 없앰(옛 브라우저는 hidden 유지). 캔버스 감싸개도 같게. 시험 3개. 실제 터치·Tab으로는 재현되지 않았고 화면 키보드·보조 기능은 태블릿에서 미확인.
+- **E1 실제 조건 AI 시험 묶음·판독표**(2026-11-09): 서버 `handleChat`을 그대로 거치는 합성 대화 12개(52번)+기존 20번, 판독 항목 5개 표. `--run` 없이는 호출 안 함. 실제 호출은 아직 안 함(MOON 허락 뒤), 시험은 가짜 모델로만.
+- **B1 연구용 내려받기 묶음**(2026-11-09): 교사 화면 수업 후 탭, 이 기기·서버 세션별 ZIP(README·원본 records.jsonl·summary·answers·events·problems). 해시·구조·중복 검사 뒤 문제 줄은 분리해 건수에 표시. 서버는 max_rows에 기대지 않고 끝까지 이어 읽음. 대표 수행 미선택, AI 대화 미포함. 새 패키지 없음. 버튼 화면은 교사 PIN이 필요해 브라우저 미확인.
+- **전송 거절 버그 수정**(2026-11-09, main·공개판에는 아직 없음): 사건의 값 없는 칸(정답의 reasonCode, 형식 오류의 stepId, 도움 요청·피드백 표시 등) 때문에 전송 전 해시 계산이 멈춰 INVALID_PAYLOAD로 거절되고 서버로 가지 않던 문제. 빈 칸을 뺀 사본으로 해시·전송(저장 원본은 그대로), 엔진은 빈 칸을 만들지 않음, 이 버그로만 거절된 기록은 보통 전송으로 되살림. 서버 코드 변경 없음. 합칠 때 실기기 점검표 5번을 실제 서버로 확인.
+- **C2 접수 대조**(2026-11-09): 교사 화면 수업 후 탭. 이 기기 전송 상태 요약(로그인 없이, 할 일 안내), 서버 세션별 '이 기기와 대조'(일치·서버에 같은 내용 있음·미접수·서버 내용과 다름·서버에 없음, 서버에만 있는 건은 문제로 세지 않음), 접수된 익명 코드별 건수, 대조표 CSV. 서버 CSV는 1000줄 상한과 무관하게 끝까지 읽고 파일 이름에 건수를 넣음. 지우는 기능 없음, 새 자료 없음. 이 기기 기록만 대조하므로 학생 기기마다 따로 확인. 회수·보관·삭제 책임은 연구자·기관 절차로 미정(Hermes·MOON).
+- **E4 화면 전환 시 대화 유지**(2026-11-09): 게임·기본 화면과 도식 전환, 검토 화면을 오가도 대화·쓰던 글·기다리던 답·남은 질문 수가 이어짐(대화 상태를 패널 밖 chatConversation으로 옮김, 수행 번호가 바뀌면 새로 시작). 서버 코드·저장 칸 변경 없음. 바뀐 값: 화면을 바꿔도 turn_index가 0으로 돌아가지 않고, 전환 뒤 AI가 앞 대화를 받음. turn_index 해석: 이 대화에서 보낸 차례(실패한 질문도 번호를 쓰고, 과제 수령 전 질문도 포함, 새로고침하면 0부터)이므로 수행 전체의 정확한 순번으로 쓰지 말고 순서는 created_at으로 본다(Hermes 참고). 새로고침 뒤 대화 복원은 하지 않음.
+- 남은 일(연구판 때): 사용성 평가판·현장 적용판에 git 태그를 달고 **태그–커밋–배포 주소–세션 스냅샷–AI 설정 대응표**를 남긴다. 연구 도중 재배포하지 않는다.
+- **합치기 전 독립 검토 결함 4건 수정**(2026-11-09, Codex a1bc6e0..d845ef8, MOON A안): ① 이 기기 요약 CSV·연구용 묶음·기록별 목록은 공통 PIN이 아니라 교사 서버 로그인 뒤에만 열림(건수는 그대로 보임, 누르는 순간 만료 재확인. 전송 버튼은 원본을 보이지 않아 PIN 뒤 유지). ② 서버 이어 읽기: 줄 겹침을 즉시 잡고, 다 읽은 뒤 번호 목록과 맞춰 다르면 최대 3회 다시 읽고, 그래도 안 맞으면 파일을 만들지 않고 오류. ③ 코드로 찾은 초안의 '새 수행 시작'이 시작 화면으로 돌아가지 않고 지금 고른 과제로 바로 시작(초안 유지). ④ 저장 중 화면 전환 시 새 패널이 지금 상태를 다시 저장해 결과를 받음. 한계: 로그인 문은 화면 통제이고 기기 저장소는 암호화하지 않음(브라우저 개발자 도구로는 읽을 수 있음). PIN을 거치는 실제 교사 화면과 실제 서버 조회는 미확인 — 합친 뒤 MOON 확인.
+- **H2 참여 철회 절차 초안**(2026-11-09): `docs/research/withdrawal/`(절차서, 미리보기 SQL, 서버 삭제 SQL), 재유입 합성 시험 `tests/withdrawalReentry.test.ts`. 앱 코드 변경 없음. 접수 확인 기록은 서버 삭제 뒤 다시 가지 않지만, 미접수 기록은 전송 버튼으로 다시 들어오므로 기기를 먼저 처리한다. SQL은 실제 데이터베이스에서 미실행, 합성 리허설은 합친 뒤 MOON 허락 후.
+- **게임 화면 겹침·저장 표시**(2026-11-09, MOON 화면 지적): 폭 761~1100에서 의뢰 카드를 버튼 줄 아래로, 질문 버튼을 안내 줄 위로, 폰 세로에서 조이스틱 위로. 측정(390·767·800·1024·1101·1280·가로 844, 과제 수행 중)에서 패널 겹침 0. 측정 중 발견: 게임 화면의 '저장 중…' 고착(저장은 되지만 결과를 버림, 실패도 안 보임). 패널 변경을 부모가 되돌려 주면 효과 정리 함수가 결과를 취소하던 것으로 main에도 같은 코드. createSaveTracker로 수정. 3D 이름표끼리·캐릭터와의 겹침은 그대로(메뉴 '이름표 가까운 것만'), 실제 태블릿 미확인.
