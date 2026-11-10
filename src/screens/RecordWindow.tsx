@@ -45,7 +45,7 @@ export function restoreFocus(opener: HTMLElement | null, doc: Pick<Document, 'qu
     if (el.getClientRects().length === 0) return false
     return typeof getComputedStyle !== 'function' || getComputedStyle(el).visibility !== 'hidden'
   }
-  const candidates = [opener, doc.querySelector<HTMLElement>('.g-drawer.open > .g-x'), ...(all ? [doc.querySelector<HTMLElement>('.g-actions > .g-act'), doc.querySelector<HTMLElement>('.g-quest-btns > button')] : [])]
+  const candidates = [opener, doc.querySelector<HTMLElement>('.g-drawer.open > .g-x'), ...(all ? [doc.querySelector<HTMLElement>('.g-actions > .g-act:not(.small)'), doc.querySelector<HTMLElement>('.g-quest-btns > button')] : [])]
   const target = candidates.find(usable) ?? null
   target?.focus({ preventScroll: true })
   return target

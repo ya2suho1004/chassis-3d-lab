@@ -523,7 +523,7 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 /* 기록 창(설계 2026-11-10, docs/superpowers/specs/2026-11-10-record-window-design.md).
    어두운 바탕이 게임 화면을 덮고 창은 보이는 화면 위쪽에 붙는다(top·max-height는 RecordWindow가 visualViewport로 넣는다).
    층: 게임 부품(4~6) 위, 작업 목록·질문 창(8) 아래. 오래된 태블릿 크롬 때문에 새 화면 높이 단위와 has 선택자를 쓰지 않는다 */
-.g-recordwrap { position:absolute; inset:0; z-index:7; background:rgba(10,14,20,.45); }
+.g-recordwrap { position:absolute; inset:0; z-index:7; background:rgba(10,14,20,.45); -webkit-tap-highlight-color:transparent; }
 .g-recordwrap:focus { outline:none; } /* 바탕은 초점을 받아 Esc·Tab을 창 안에 두지만 테두리는 그리지 않는다 */
 .g-record { position:absolute; left:50%; transform:translateX(-50%); width:min(600px, calc(100vw - 32px)); display:flex; flex-direction:column; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.3); overflow:hidden; -webkit-user-select:text; user-select:text; }
 .rec-head { display:flex; align-items:center; gap:8px; padding:6px 6px 6px 16px; border-bottom:1px solid var(--line); }
@@ -541,3 +541,7 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .rec-feedback { position:relative; margin:10px 0 0; padding-right:44px; }
 .game.wa .g-record { background:var(--wa-paper); border:2px solid var(--wa-line); }
 .game.wa .rec-head { background:var(--wa-cream); }
+
+.rec-row.led .gauge div { flex-wrap:wrap; column-gap:12px; } /* 창 안 표시창: 이름과 값이 각각 통째로 줄바꿈(옮겨 적을 값이 쪼개지지 않게) */
+.g-record label.radio { min-height:44px; display:flex; align-items:center; gap:6px; margin:0; } /* 창 안 판정 줄도 누르기 크기 44px */
+.rec-note input { font-weight:400; }

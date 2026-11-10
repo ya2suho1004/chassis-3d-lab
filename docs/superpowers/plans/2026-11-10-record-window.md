@@ -1567,8 +1567,8 @@ describe('닫은 뒤 초점', () => {
   })
   test('연 버튼이 사라졌으면 다시 열린 목록의 닫기, 없으면 행동 버튼, 없으면 작업 목록 버튼', () => {
     const gone = el({ isConnected: false }).node, x = el().node, act = el().node, list = el().node
-    expect(restoreFocus(gone, doc({ '.g-drawer.open > .g-x': x, '.g-actions > .g-act': act, '.g-quest-btns > button': list }))).toBe(x)
-    expect(restoreFocus(gone, doc({ '.g-actions > .g-act': act, '.g-quest-btns > button': list }))).toBe(act)
+    expect(restoreFocus(gone, doc({ '.g-drawer.open > .g-x': x, '.g-actions > .g-act:not(.small)': act, '.g-quest-btns > button': list }))).toBe(x)
+    expect(restoreFocus(gone, doc({ '.g-actions > .g-act:not(.small)': act, '.g-quest-btns > button': list }))).toBe(act)
     expect(restoreFocus(el({ rects: 0 }).node, doc({ '.g-quest-btns > button': list }))).toBe(list)
     expect(restoreFocus(null, doc({}))).toBeNull()
   })
@@ -1584,7 +1584,7 @@ describe('닫은 뒤 초점', () => {
   })
   test('all=false면 연 버튼·목록 닫기만 본다', () => {
     const gone = el({ isConnected: false }).node, act = el().node, list = el().node
-    expect(restoreFocus(gone, doc({ '.g-actions > .g-act': act, '.g-quest-btns > button': list }), false)).toBeNull()
+    expect(restoreFocus(gone, doc({ '.g-actions > .g-act:not(.small)': act, '.g-quest-btns > button': list }), false)).toBeNull()
   })
 })
 
@@ -1676,7 +1676,7 @@ export function restoreFocus(opener: HTMLElement | null, doc: Pick<Document, 'qu
     if (el.getClientRects().length === 0) return false
     return typeof getComputedStyle !== 'function' || getComputedStyle(el).visibility !== 'hidden'
   }
-  const candidates = [opener, doc.querySelector<HTMLElement>('.g-drawer.open > .g-x'), ...(all ? [doc.querySelector<HTMLElement>('.g-actions > .g-act'), doc.querySelector<HTMLElement>('.g-quest-btns > button')] : [])]
+  const candidates = [opener, doc.querySelector<HTMLElement>('.g-drawer.open > .g-x'), ...(all ? [doc.querySelector<HTMLElement>('.g-actions > .g-act:not(.small)'), doc.querySelector<HTMLElement>('.g-quest-btns > button')] : [])]
   const target = candidates.find(usable) ?? null
   target?.focus({ preventScroll: true })
   return target
@@ -2232,7 +2232,8 @@ describe('게임 화면 연결(§3.3·§6)', () => {
   const lab = read('src/screens/LabScreen.tsx')
   test('기록 창 자리를 작업 목록 밖에 두고 과제 패널에 넘긴다(AI 질문은 비기록 모드 제외)', () => {
     expect(lab).toMatch(/<div className="g-recordhost" ref=\{setRecordHost\} \/>/)
-    expect(lab).toMatch(/recordHost=\{recordHost\} onAskAi=\{noRecord \? undefined : \(\) => setChatOpen\(true\)\}/)
+    expect(lab).toMatch(/recordHost=\{recordHost\} onAskAi=\{noRecord \? undefined : askAiFromRecord\}/)
+    expect(lab.match(/recordHost=\{recordHost\}/g)?.length).toBe(1)
   })
   test('창이 열린 동안 조이스틱·행동 버튼·가운데 버튼·바깥 질문 버튼을 숨기고 3D 장면에 멈춤을 알린다', () => {
     expect(lab).toMatch(/const recording = !!ctx\?\.recordOpen/)
@@ -2244,6 +2245,12 @@ describe('게임 화면 연결(§3.3·§6)', () => {
     const all = lab.match(/className="g-gaugebtn/g)?.length ?? 0
     expect(all).toBeGreaterThan(0)
     expect(lab.match(/!recording && [^\n]*className="g-gaugebtn/g)?.length).toBe(all)
+  })
+  test('창이 열리면 교관에게 걷던 걸음·조작 안내가 창 위로 뜨지 않고, 질문 창은 창 위에서 열고 닫으면 창으로 초점이 돌아온다', () => {
+    expect(lab).toMatch(/joystickRef\.current = \{ x: 0, y: 0 \}\n\s+setTalkOnArrive\(false\)/)
+    expect(lab).toMatch(/guideOpen && !talking && !recording && \(/)
+    expect(lab).toMatch(/onClick=\{closeChat\}/)
+    expect(lab).toMatch(/if \(recording\) setTimeout\(\(\) => document\.querySelector<HTMLElement>\('\.g-record \.rec-ai'\)/)
   })
   test('목록에서 열었으면 창을 닫을 때 목록을 다시 연다', () => {
     expect(lab).toMatch(/if \(drawerOpen\) \{ reopenDrawer\.current = true; setDrawerOpen\(false\) \}/)
@@ -2259,6 +2266,8 @@ describe('창 모양·오래된 크롬(§8)', () => {
   })
   test('누르기 크기: 닫기 버튼 폭 44px', () => {
     expect(css).toMatch(/\.rec-head \.rec-x \{ width:44px;/)
+    expect(css).toMatch(/\.rec-row\.led \.gauge div \{ flex-wrap:wrap;/)
+    expect(css).toMatch(/\.g-record label\.radio \{ min-height:44px;/)
   })
   test('새 화면 높이 단위·:has()·HTML 대화 상자·비활성 속성·form·브라우저 스크롤 함수를 쓰지 않는다', () => {
     expect(cssCode).not.toMatch(/\d(dvh|svh|lvh)\b/)
@@ -2343,12 +2352,17 @@ import { focusResponse } from '../app/focusResponse'
   useEffect(() => {
     if (recording) {
       joystickRef.current = { x: 0, y: 0 }
+      setTalkOnArrive(false) // 교관에게 걸어가던 걸음은 취소됐다(창 위로 대화가 뜨지 않게)
       if (drawerOpen) { reopenDrawer.current = true; setDrawerOpen(false) }
     } else if (reopenDrawer.current) {
       reopenDrawer.current = false
       setDrawerOpen(true)
     }
   }, [recording]) // eslint-disable-line react-hooks/exhaustive-deps -- 창이 열리고 닫힐 때만
+  /** 기록 창 머리의 AI 질문: 질문 창을 열고 초점을 그 닫기 단추로(화면 키보드는 띄우지 않음) */
+  const askAiFromRecord = () => { setChatOpen(true); setTimeout(() => document.querySelector<HTMLElement>('.g-chat .g-x')?.focus({ preventScroll: true }), 50) }
+  /** 질문 창 닫기: 기록 창 위에서 열었으면 창 머리의 AI 질문 단추로 초점을 돌린다(Esc·Tab이 창 안에 머물게) */
+  const closeChat = () => { setChatOpen(false); if (recording) setTimeout(() => document.querySelector<HTMLElement>('.g-record .rec-ai')?.focus({ preventScroll: true }), 0) }
 ```
 
 (4) 3D 장면. 바꿀 곳:
@@ -2416,7 +2430,7 @@ moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recor
 
 ```tsx
               proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
-              recordHost={recordHost} onAskAi={noRecord ? undefined : () => setChatOpen(true)}
+              recordHost={recordHost} onAskAi={noRecord ? undefined : askAiFromRecord}
               onFinish={onGameFinish} />
           </aside>
         )}
@@ -2437,7 +2451,7 @@ moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recor
 /* 기록 창(설계 2026-11-10, docs/superpowers/specs/2026-11-10-record-window-design.md).
    어두운 바탕이 게임 화면을 덮고 창은 보이는 화면 위쪽에 붙는다(top·max-height는 RecordWindow가 visualViewport로 넣는다).
    층: 게임 부품(4~6) 위, 작업 목록·질문 창(8) 아래. 오래된 태블릿 크롬 때문에 새 화면 높이 단위와 has 선택자를 쓰지 않는다 */
-.g-recordwrap { position:absolute; inset:0; z-index:7; background:rgba(10,14,20,.45); }
+.g-recordwrap { position:absolute; inset:0; z-index:7; background:rgba(10,14,20,.45); -webkit-tap-highlight-color:transparent; }
 .g-recordwrap:focus { outline:none; } /* 바탕은 초점을 받아 Esc·Tab을 창 안에 두지만 테두리는 그리지 않는다 */
 .g-record { position:absolute; left:50%; transform:translateX(-50%); width:min(600px, calc(100vw - 32px)); display:flex; flex-direction:column; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.3); overflow:hidden; -webkit-user-select:text; user-select:text; }
 .rec-head { display:flex; align-items:center; gap:8px; padding:6px 6px 6px 16px; border-bottom:1px solid var(--line); }
@@ -2455,6 +2469,9 @@ moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recor
 .rec-feedback { position:relative; margin:10px 0 0; padding-right:44px; }
 .game.wa .g-record { background:var(--wa-paper); border:2px solid var(--wa-line); }
 .game.wa .rec-head { background:var(--wa-cream); }
+.rec-row.led .gauge div { flex-wrap:wrap; column-gap:12px; } /* 창 안 표시창: 이름과 값이 각각 통째로 줄바꿈(옮겨 적을 값이 쪼개지지 않게) */
+.g-record label.radio { min-height:44px; display:flex; align-items:center; gap:6px; margin:0; } /* 창 안 판정 줄도 누르기 크기 44px */
+.rec-note input { font-weight:400; }
 ```
 
 - [ ] **Step 4: 통과 확인**

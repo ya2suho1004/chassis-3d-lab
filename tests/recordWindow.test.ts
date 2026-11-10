@@ -51,8 +51,8 @@ describe('닫은 뒤 초점', () => {
   })
   test('연 버튼이 사라졌으면 다시 열린 목록의 닫기, 없으면 행동 버튼, 없으면 작업 목록 버튼', () => {
     const gone = el({ isConnected: false }).node, x = el().node, act = el().node, list = el().node
-    expect(restoreFocus(gone, doc({ '.g-drawer.open > .g-x': x, '.g-actions > .g-act': act, '.g-quest-btns > button': list }))).toBe(x)
-    expect(restoreFocus(gone, doc({ '.g-actions > .g-act': act, '.g-quest-btns > button': list }))).toBe(act)
+    expect(restoreFocus(gone, doc({ '.g-drawer.open > .g-x': x, '.g-actions > .g-act:not(.small)': act, '.g-quest-btns > button': list }))).toBe(x)
+    expect(restoreFocus(gone, doc({ '.g-actions > .g-act:not(.small)': act, '.g-quest-btns > button': list }))).toBe(act)
     expect(restoreFocus(el({ rects: 0 }).node, doc({ '.g-quest-btns > button': list }))).toBe(list)
     expect(restoreFocus(null, doc({}))).toBeNull()
   })
@@ -68,7 +68,7 @@ describe('닫은 뒤 초점', () => {
   })
   test('all=false면 연 버튼·목록 닫기만 본다', () => {
     const gone = el({ isConnected: false }).node, act = el().node, list = el().node
-    expect(restoreFocus(gone, doc({ '.g-actions > .g-act': act, '.g-quest-btns > button': list }), false)).toBeNull()
+    expect(restoreFocus(gone, doc({ '.g-actions > .g-act:not(.small)': act, '.g-quest-btns > button': list }), false)).toBeNull()
   })
 })
 

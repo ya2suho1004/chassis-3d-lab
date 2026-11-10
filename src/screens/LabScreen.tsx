@@ -271,12 +271,17 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   useEffect(() => {
     if (recording) {
       joystickRef.current = { x: 0, y: 0 }
+      setTalkOnArrive(false) // 교관에게 걸어가던 걸음은 취소됐다(창 위로 대화가 뜨지 않게)
       if (drawerOpen) { reopenDrawer.current = true; setDrawerOpen(false) }
     } else if (reopenDrawer.current) {
       reopenDrawer.current = false
       setDrawerOpen(true)
     }
   }, [recording]) // eslint-disable-line react-hooks/exhaustive-deps -- 창이 열리고 닫힐 때만
+  /** 기록 창 머리의 AI 질문: 질문 창을 열고 초점을 그 닫기 단추로(화면 키보드는 띄우지 않음) */
+  const askAiFromRecord = () => { setChatOpen(true); setTimeout(() => document.querySelector<HTMLElement>('.g-chat .g-x')?.focus({ preventScroll: true }), 50) }
+  /** 질문 창 닫기: 기록 창 위에서 열었으면 창 머리의 AI 질문 단추로 초점을 돌린다(Esc·Tab이 창 안에 머물게) */
+  const closeChat = () => { setChatOpen(false); if (recording) setTimeout(() => document.querySelector<HTMLElement>('.g-record .rec-ai')?.focus({ preventScroll: true }), 0) }
 
   const selectEquipment = (id: string | null) => {
     setSelectedId(id)
@@ -471,7 +476,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             <p className="g-tip"><b>TIP</b>{tips[tipIdx % tips.length]}</p>
           </div>
         )}
-        {loadedOnce && guideOpen && !talking && (
+        {loadedOnce && guideOpen && !talking && !recording && (
           <div className="g-guide" role="dialog" aria-label="조작 안내">
             <b>조작 안내</b>
             <ul>
@@ -492,7 +497,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             <button className="g-x" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>
             <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded initialSaveStatus={saveStatusRef.current} onSaveStatus={onSaveStatus} onRunChange={onRunChange} onContext={onContext}
               proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
-              recordHost={recordHost} onAskAi={noRecord ? undefined : () => setChatOpen(true)}
+              recordHost={recordHost} onAskAi={noRecord ? undefined : askAiFromRecord}
               onFinish={onGameFinish} />
           </aside>
         )}
@@ -500,7 +505,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         <div className="g-recordhost" ref={setRecordHost} />
         {!noRecord && (
           <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
-            <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
+            <button className="g-x" aria-label="질문 창 닫기" onClick={closeChat}>✕</button>
             <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
               stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
           </aside>

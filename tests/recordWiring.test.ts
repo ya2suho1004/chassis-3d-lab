@@ -70,7 +70,8 @@ describe('게임 화면 연결(§3.3·§6)', () => {
   const lab = read('src/screens/LabScreen.tsx')
   test('기록 창 자리를 작업 목록 밖에 두고 과제 패널에 넘긴다(AI 질문은 비기록 모드 제외)', () => {
     expect(lab).toMatch(/<div className="g-recordhost" ref=\{setRecordHost\} \/>/)
-    expect(lab).toMatch(/recordHost=\{recordHost\} onAskAi=\{noRecord \? undefined : \(\) => setChatOpen\(true\)\}/)
+    expect(lab).toMatch(/recordHost=\{recordHost\} onAskAi=\{noRecord \? undefined : askAiFromRecord\}/)
+    expect(lab.match(/recordHost=\{recordHost\}/g)?.length).toBe(1)
   })
   test('창이 열린 동안 조이스틱·행동 버튼·가운데 버튼·바깥 질문 버튼을 숨기고 3D 장면에 멈춤을 알린다', () => {
     expect(lab).toMatch(/const recording = !!ctx\?\.recordOpen/)
@@ -82,6 +83,12 @@ describe('게임 화면 연결(§3.3·§6)', () => {
     const all = lab.match(/className="g-gaugebtn/g)?.length ?? 0
     expect(all).toBeGreaterThan(0)
     expect(lab.match(/!recording && [^\n]*className="g-gaugebtn/g)?.length).toBe(all)
+  })
+  test('창이 열리면 교관에게 걷던 걸음·조작 안내가 창 위로 뜨지 않고, 질문 창은 창 위에서 열고 닫으면 창으로 초점이 돌아온다', () => {
+    expect(lab).toMatch(/joystickRef\.current = \{ x: 0, y: 0 \}\n\s+setTalkOnArrive\(false\)/)
+    expect(lab).toMatch(/guideOpen && !talking && !recording && \(/)
+    expect(lab).toMatch(/onClick=\{closeChat\}/)
+    expect(lab).toMatch(/if \(recording\) setTimeout\(\(\) => document\.querySelector<HTMLElement>\('\.g-record \.rec-ai'\)/)
   })
   test('목록에서 열었으면 창을 닫을 때 목록을 다시 연다', () => {
     expect(lab).toMatch(/if \(drawerOpen\) \{ reopenDrawer\.current = true; setDrawerOpen\(false\) \}/)
@@ -97,6 +104,8 @@ describe('창 모양·오래된 크롬(§8)', () => {
   })
   test('누르기 크기: 닫기 버튼 폭 44px', () => {
     expect(css).toMatch(/\.rec-head \.rec-x \{ width:44px;/)
+    expect(css).toMatch(/\.rec-row\.led \.gauge div \{ flex-wrap:wrap;/)
+    expect(css).toMatch(/\.g-record label\.radio \{ min-height:44px;/)
   })
   test('새 화면 높이 단위·:has()·HTML 대화 상자·비활성 속성·form·브라우저 스크롤 함수를 쓰지 않는다', () => {
     expect(cssCode).not.toMatch(/\d(dvh|svh|lvh)\b/)
