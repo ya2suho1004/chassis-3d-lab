@@ -1604,8 +1604,8 @@ import { recordWindowBox, scrollDelta } from '../app/recordSteps'
 
 const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), [tabindex="0"]'
 
-/** 칸이 든 줄: 계기 그림과 칸을 묶은 줄(.rec-row)을 먼저, 없으면 칸 한 줄(.field) */
-const rowOf = (el: Element): Element => el.closest('.rec-row') ?? el.closest('.field') ?? el
+/** 칸이 든 줄: 계기 그림과 칸을 묶은 줄(.rec-row)을 먼저, 없으면 칸 한 줄(.field), 비채점 칸이면 이름까지(.rec-note) */
+const rowOf = (el: Element): Element => el.closest('.rec-row') ?? el.closest('.field') ?? el.closest('.rec-note') ?? el
 
 /** el이 든 창 안 스크롤 영역(.rec-body)을 움직여 el이 다 보이게 한다 */
 export function revealInBody(el: Element | null): void {
