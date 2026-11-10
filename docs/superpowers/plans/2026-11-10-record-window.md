@@ -1928,7 +1928,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 ```ts
   /** keepFixList: 고치기로 다른 창으로 옮길 때는 '다시 확인할 항목' 목록을 다음 안내가 뜰 때까지 남긴다(기본 화면과 같게) */
   const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setRecord(stepId) }
-  const closeRecord = () => { setShown(null); setReview(false); setRecord(null) }
+  /** ✕·Esc·닫기로 닫을 때 '다시 확인할 항목' 목록은 남긴다(창 밖 알림의 고치기로 이어서 고치게). 단계 완료로 닫히는 길은 doStep이 먼저 안내를 비운다 */
+  const closeRecord = () => { if (!shown?.fixItems) setShown(null); setReview(false); setRecord(null) }
   /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았거나 창 자리가 없으면 열지 않는다. 엔진을 거치지 않아 기록이 없다.
    *  이미 그 칸의 창이면 그 칸으로 간다(안내는 그대로) */
   const openRecordFor = (itemId: string) => {
@@ -2474,6 +2475,8 @@ moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recor
 .rec-row.led .gauge div { flex-wrap:wrap; column-gap:12px; } /* 창 안 표시창: 이름과 값이 각각 통째로 줄바꿈(옮겨 적을 값이 쪼개지지 않게) */
 .g-record label.radio { min-height:44px; display:flex; align-items:center; gap:6px; margin:0; } /* 창 안 판정 줄도 누르기 크기 44px */
 .rec-note input { font-weight:400; }
+.field label, .field .flabel { word-break:keep-all; overflow-wrap:break-word; } /* 칸 이름이 낱말 가운데서 끊기지 않게("좌측 바퀴 조향각"은 띄어쓰기에서만 줄바꿈). 띄어쓰기 없는 긴 이름("최소회전반경(m)")은 넘치지 않고 칸 안에서 줄바꿈 */
+.g-record .field { grid-template-columns:90px minmax(0, 1fr) auto 36px; } /* 창 안에서만 표시 칸을 넓혀 '저장'이 두 줄로 쌓이지 않게(기본 .field는 24px) */
 ```
 
 - [ ] **Step 4: 통과 확인**

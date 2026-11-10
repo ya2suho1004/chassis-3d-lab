@@ -2,7 +2,8 @@
 // 오래된 학교 태블릿 크롬 때문에 HTML 대화 상자 요소·비활성 속성·새 화면 높이 단위를 쓰지 않고 div와 role로 만든다.
 // 열 때 초점은 제목에 둔다(칸에 주면 키보드가 바로 올라와 계기를 가린다). 닫으면 연 자리로 초점을 돌려준다.
 // 창 안 스크롤은 scrollTop만 바꾼다(바깥 화면까지 밀어 버리는 브라우저 스크롤 함수는 11-09 옆 밀림의 원인이라 쓰지 않음).
-// 어두운 바탕을 눌러도 닫지 않는다. ✕와 Esc(초점이 창 안일 때)로만 닫고, 닫기는 제출·완료가 아니다.
+// 닫히는 길은 넷이다: 머리의 ✕, Esc(초점이 창 안일 때), 아래 줄의 닫기(끝낸 단계), 단계 완료(끝나면 과제 패널이 닫는다).
+// 어두운 바탕을 눌러도 닫지 않는다. ✕·Esc·닫기는 제출·완료가 아니다.
 import { useEffect, useRef, useState, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { recordInputId } from '../app/focusResponse'
 import { recordWindowBox, scrollDelta } from '../app/recordSteps'

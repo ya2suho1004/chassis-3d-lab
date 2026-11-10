@@ -82,6 +82,13 @@ describe('연구 규칙 지킴(§4·§5)', () => {
     expect(h).toContain('산출 근거')
     expect(h.match(/name="rec-verdict"/g)?.length).toBe(2)
   })
+  test('안내 없음: 최초 답이 다 모이기 전에는 칸 옆에 저장만, ✓·✗는 없다(안내 있음은 같은 값에 ✗)', () => {
+    const h = sheet(answer(brakeToEnter('unguided'), 'axleWeight', '610'), 'axle')
+    expect(h).toMatch(/<span class="mark\s*">저장<\/span>/)
+    expect(h).not.toMatch(/<span class="mark (ok|bad)">/)
+    expect(h).not.toMatch(/[✓✗]/)
+    expect(sheet(answer(brakeToEnter(), 'axleWeight', '610'), 'axle')).toContain('<span class="mark bad">✗</span>')
+  })
   test('창의 칸은 엔진 정의와 같다(§2)', () => {
     const cases: Array<[TaskRun, string]> = [[brakeToEnter(), 'axle'], [brakeToPress(), 'read'], [brakeToOff(), 'calc'], [turnToSteer(), 'read'], [turnToReturn('guided', '35', '30'), 'record']]
     for (const [r, s] of cases) expect(ids(sheet(r, s))).toEqual([...recordItems(r.task, s)])

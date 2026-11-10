@@ -195,6 +195,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const canReview = canReviewDial(run)
   const reviewing = review && canReview
   const needles = reviewing ? steeredRig(task) : turningRigState(run)
+  // 조건이 사라지면(각도를 고쳐 맞힘) 켜 둔 다시 보기를 끈다. 그대로 두면 각도가 다시 틀렸을 때 누르지 않아도 저절로 켜진다
+  useEffect(() => { if (!canReview && review) setReview(false) }, [canReview, review])
 
   const show = (r: TaskRun, s: Shown, feedbackKey: string | null, itemId?: string) => {
     // 실제로 화면에 표시한 직후에만 feedbackShown을 기록한다 (읽음 증거 아님)
@@ -205,7 +207,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
   /** keepFixList: 고치기로 다른 창으로 옮길 때는 '다시 확인할 항목' 목록을 다음 안내가 뜰 때까지 남긴다(기본 화면과 같게) */
   const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setRecord(stepId) }
-  const closeRecord = () => { setShown(null); setReview(false); setRecord(null) }
+  /** ✕·Esc·닫기로 닫을 때 '다시 확인할 항목' 목록은 남긴다(창 밖 알림의 고치기로 이어서 고치게). 단계 완료로 닫히는 길은 doStep이 먼저 안내를 비운다 */
+  const closeRecord = () => { if (!shown?.fixItems) setShown(null); setReview(false); setRecord(null) }
   /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았거나 창 자리가 없으면 열지 않는다. 엔진을 거치지 않아 기록이 없다.
    *  이미 그 칸의 창이면 그 칸으로 간다(안내는 그대로) */
   const openRecordFor = (itemId: string) => {

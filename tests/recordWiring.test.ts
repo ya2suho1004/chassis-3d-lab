@@ -29,7 +29,15 @@ describe('과제 패널의 기록 창(§3)', () => {
     expect(task).toMatch(/recordHost && record && createPortal\(/)
     expect(task).toMatch(/<RecordWindow title=\{recordLabel\(task, record\) \?\? '기록'\} onClose=\{closeRecord\} onAskAi=\{onAskAi\}/)
     expect(task).toMatch(/<button type="button" className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>/)
+    // 아래 줄: 끝낸 단계는 닫기만(다시 완료할 일이 없다), 아직이면 단계 완료
+    expect(task).toContain('done(record) ? <button type="button" onClick={closeRecord}>닫기</button> : <button type="button" className="primary" onClick={() => doStep(record)}>단계 완료</button>')
     expect(task).toMatch(/if \(res\.outcome === 'completed'\) \{ setRun\(res\.run\); setShown\(null\); if \(record === stepId\) closeRecord\(\); return \}/)
+  })
+  test('✕·닫기로 창을 닫아도 다시 확인할 항목 목록은 남긴다(단계 완료 길은 doStep이 먼저 비운다)', () => {
+    expect(task).toMatch(/const closeRecord = \(\) => \{ if \(!shown\?\.fixItems\) setShown\(null\); setReview\(false\); setRecord\(null\) \}/)
+  })
+  test('다시 보기는 조건이 사라지면 꺼 둔다(각도가 다시 틀려도 저절로 켜지지 않게). 훅은 조건 없이 return 앞에', () => {
+    expect(task).toMatch(/const needles = [^\n]*\n\s*useEffect\(\(\) => \{ if \(!canReview && review\) setReview\(false\) \}, \[canReview, review\]\)/)
   })
   test('창 칸은 작업 목록과 같은 값·제출 함수를 쓰고 id만 다르다. 창 안 안내는 창 칸으로 가고 고치기는 다른 칸 창을 연다', () => {
     expect(task).toMatch(/const recIo: FieldIo = \{ \.\.\.listIo, idOf: recordInputId \}/)
@@ -90,6 +98,9 @@ describe('게임 화면 연결(§3.3·§6)', () => {
     expect(lab).toMatch(/onClick=\{closeChat\}/)
     expect(lab).toMatch(/if \(recording\) setTimeout\(\(\) => document\.querySelector<HTMLElement>\('\.g-record \.rec-ai'\)/)
   })
+  test('창이 열리면 멀리서 누른 교관 말풍선도 닫는다(창을 덮지 않게)', () => {
+    expect(code('src/screens/LabScreen.tsx')).toMatch(/if \(recording\) \{\n\s+joystickRef\.current = \{ x: 0, y: 0 \}\n\s+setTalkOnArrive\(false\)\s*\n\s+setNpcOpen\(false\)/)
+  })
   test('목록에서 열었으면 창을 닫을 때 목록을 다시 연다', () => {
     expect(lab).toMatch(/if \(drawerOpen\) \{ reopenDrawer\.current = true; setDrawerOpen\(false\) \}/)
     expect(lab).toMatch(/reopenDrawer\.current = false\n\s+setDrawerOpen\(true\)/)
@@ -106,7 +117,8 @@ describe('창 모양·오래된 크롬(§8)', () => {
     expect(css).toMatch(/\.rec-head \.rec-x \{ width:44px;/)
     expect(css).toMatch(/\.rec-row\.led \.gauge div \{ flex-wrap:wrap;/)
     expect(css).toMatch(/\.g-record label\.radio \{ min-height:44px;/)
-    expect(css).toMatch(/\.field label, \.field \.flabel \{ word-break:keep-all; \}/) // 칸 이름이 낱말 가운데서 끊기지 않게(좌측 바퀴 조/향각)
+    expect(css).toMatch(/\.field label, \.field \.flabel \{ word-break:keep-all; overflow-wrap:break-word; \}/) // 칸 이름이 낱말 가운데서 끊기지 않게(좌측 바퀴 조/향각), 띄어쓰기 없는 긴 이름(최소회전반경(m))은 넘치지 않게
+    expect(css).toMatch(/\.g-record \.field \{ grid-template-columns:90px minmax\(0, 1fr\) auto 36px; \}/) // 창 안 표시 칸: '저장'이 두 줄로 쌓이지 않게(기본 24px)
   })
   test('새 화면 높이 단위·:has()·HTML 대화 상자·비활성 속성·form·브라우저 스크롤 함수를 쓰지 않는다', () => {
     expect(cssCode).not.toMatch(/\d(dvh|svh|lvh)\b/)

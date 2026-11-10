@@ -272,6 +272,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
     if (recording) {
       joystickRef.current = { x: 0, y: 0 }
       setTalkOnArrive(false) // 교관에게 걸어가던 걸음은 취소됐다(창 위로 대화가 뜨지 않게)
+      setNpcOpen(false) // 멀리서 누른 교관 말풍선이 창을 덮지 않게
       if (drawerOpen) { reopenDrawer.current = true; setDrawerOpen(false) }
     } else if (reopenDrawer.current) {
       reopenDrawer.current = false
