@@ -2033,7 +2033,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
           footer={done(record) ? <button onClick={closeRecord}>닫기</button> : <button className="primary" onClick={() => doStep(record)}>단계 완료</button>}>
           <p className="small rec-sub">{task.steps.find((s) => s.stepId === record)?.instruction}</p>
           <RecordSheet run={run} stepId={record} io={recIo} gauge={gauge} needles={needles} reviewing={reviewing} canReview={canReview} onToggleReview={() => setReview(!reviewing)} note={action} onNote={setAction} />
-          {shown && <FeedbackBox className={`rec-feedback feedback ${shown.kind}`} shown={shown} onClose={() => setShown(null)} onFocusItem={(id) => focusRecordField(document, id)} onFix={openRecordFor} />}
+          {shown && <FeedbackBox className={`rec-feedback feedback ${shown.kind}`} shown={shown} onClose={() => { setShown(null); document.getElementById('rec-title')?.focus({ preventScroll: true }) }} onFocusItem={(id) => focusRecordField(document, id)} onFix={openRecordFor} />}
         </RecordWindow>,
         recordHost,
       )}
@@ -2411,6 +2411,7 @@ moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recor
    어두운 바탕이 게임 화면을 덮고 창은 보이는 화면 위쪽에 붙는다(top·max-height는 RecordWindow가 visualViewport로 넣는다).
    층: 게임 부품(4~6) 위, 작업 목록·질문 창(8) 아래. 오래된 태블릿 크롬 때문에 새 화면 높이 단위와 :has()를 쓰지 않는다 */
 .g-recordwrap { position:absolute; inset:0; z-index:7; background:rgba(10,14,20,.45); }
+.g-recordwrap:focus { outline:none; } /* 바탕은 초점을 받아 Esc·Tab을 창 안에 두지만 테두리는 그리지 않는다 */
 .g-record { position:absolute; left:50%; transform:translateX(-50%); width:min(600px, calc(100vw - 32px)); display:flex; flex-direction:column; background:#fff; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.3); overflow:hidden; -webkit-user-select:text; user-select:text; }
 .rec-head { display:flex; align-items:center; gap:8px; padding:6px 6px 6px 16px; border-bottom:1px solid var(--line); }
 .rec-head h2 { flex:1; margin:0; font-size:18px; outline:none; }
