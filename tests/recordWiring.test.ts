@@ -118,7 +118,7 @@ describe('창 모양·오래된 크롬(§8)', () => {
     expect(css).toMatch(/\.rec-row\.led \.gauge div \{ flex-wrap:wrap;/)
     expect(css).toMatch(/\.g-record label\.radio \{ min-height:44px;/)
     expect(css).toMatch(/\.field label, \.field \.flabel \{ word-break:keep-all; overflow-wrap:break-word; \}/) // 칸 이름이 낱말 가운데서 끊기지 않게(좌측 바퀴 조/향각), 띄어쓰기 없는 긴 이름(최소회전반경(m))은 넘치지 않게
-    expect(css).toMatch(/\.g-record \.field \{ grid-template-columns:90px minmax\(0, 1fr\) auto 36px; \}/) // 창 안 표시 칸: '저장'이 두 줄로 쌓이지 않게(기본 24px)
+    expect(css).toMatch(/\.g-record \.field \{ grid-template-columns:90px minmax\(0, 1fr\) auto minmax\(36px, max-content\); \}/) // 창 안 표시 칸: '저장'이 두 줄로 쌓이지 않게(기본 24px)
   })
   test('새 화면 높이 단위·:has()·HTML 대화 상자·비활성 속성·form·브라우저 스크롤 함수를 쓰지 않는다', () => {
     expect(cssCode).not.toMatch(/\d(dvh|svh|lvh)\b/)
@@ -145,7 +145,8 @@ describe('고친 값 경고(마무리 §3)', () => {
     expect(task).toMatch(/const submit = \(itemId: string\) => \{\n\s+setUnsavedWarned\(false\)/)
   })
   test('표시 칸 36px, 입력 전은 작은 글자 한 줄', () => {
-    expect(css).toMatch(/\.field \{ display:grid; grid-template-columns:90px 1fr auto 36px;/)
+    expect(css).toMatch(/\.field \{ display:grid; grid-template-columns:90px 1fr auto minmax\(36px, max-content\);/)
+    expect(css).toMatch(/\.mark \{ white-space:nowrap; \}/)
     expect(css).toMatch(/\.mark\.dirty \{ color:var\(--warn\); font-weight:700; font-size:12px; white-space:nowrap; \}/)
   })
 })

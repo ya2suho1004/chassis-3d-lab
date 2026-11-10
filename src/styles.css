@@ -35,8 +35,9 @@ button:disabled { opacity:.45; cursor:default; }
 .steps .btns { display:flex; gap:6px; } .steps .ok { color:var(--ok); font-weight:700; }
 .gauge { background:#111; color:#7CFC00; font-family:ui-monospace,Menlo,monospace; border-radius:8px; padding:10px 14px; display:grid; gap:6px; }
 .gauge div { display:flex; justify-content:space-between; } .gauge b { font-size:20px; }
-.field { display:grid; grid-template-columns:90px 1fr auto 36px; align-items:center; gap:8px; margin:6px 0; }
+.field { display:grid; grid-template-columns:90px 1fr auto minmax(36px, max-content); align-items:center; gap:8px; margin:6px 0; }
 .field label { margin:0; }
+.mark { white-space:nowrap; } /* 표 칸 안 표시도 '저/장'처럼 쪼개지지 않게(마무리 §6.4) */
 .mark.ok { color:var(--ok); font-weight:700; } .mark.bad { color:var(--bad); font-weight:700; }
 .mark.dirty { color:var(--warn); font-weight:700; font-size:12px; white-space:nowrap; } /* 고쳤지만 입력하지 않은 칸(마무리 §3) */
 table.sheet { width:100%; border-collapse:collapse; font-size:15px; }
@@ -547,4 +548,4 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .g-record label.radio { min-height:44px; display:flex; align-items:center; gap:6px; margin:0; } /* 창 안 판정 줄도 누르기 크기 44px */
 .rec-note input { font-weight:400; }
 .field label, .field .flabel { word-break:keep-all; overflow-wrap:break-word; } /* 칸 이름이 낱말 가운데서 끊기지 않게("좌측 바퀴 조향각"은 띄어쓰기에서만 줄바꿈). 띄어쓰기 없는 긴 이름("최소회전반경(m)")은 넘치지 않고 칸 안에서 줄바꿈 */
-.g-record .field { grid-template-columns:90px minmax(0, 1fr) auto 36px; } /* 창 안에서만 표시 칸을 넓혀 '저장'이 두 줄로 쌓이지 않게(기본 .field는 24px) */
+.g-record .field { grid-template-columns:90px minmax(0, 1fr) auto minmax(36px, max-content); } /* 창 안: 가운데 칸이 넘치지 않게 minmax(0, 1fr). 표시 칸은 기본 .field와 같이 36px 이상 */
