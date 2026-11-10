@@ -158,6 +158,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
   const [shown, setShown] = useState<Shown | null>(null)
   // 제출한 값은 수행 기록에서 다시 채운다(화면 전환·이어서 하기, 설계 2026-11-10 §7). 사건은 만들지 않는다
+  // 칸 값은 패널이 붙을 때 한 번만 채운다. 부모가 run을 바꿔도(3D↔도식 전환) 응답이 같아 다시 채우지 않고, 게임↔기본 화면 전환은 패널이 새로 붙어 다시 채운다
   const [inputs, setInputs] = useState<Record<string, string>>(() => restoreInputs(initialRun))
   const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[]; answersLocked: boolean } | null>(null)
   const [action, setAction] = useState('')
@@ -365,11 +366,11 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
             <tbody>
               <tr><td>회전 방향</td><td colSpan={3}><b>{dirLabel}</b> <span className="small">(시험위원 지정)</span></td></tr>
               <tr><td>제시값</td><td colSpan={3}>축거 L = {m.wheelbaseM} m, r = {m.kingpinOffsetM} m</td></tr>
-              <tr><td>최소회전반경 (m)</td><td><input id={responseInputId('radius')} inputMode="decimal" value={inputs.radius ?? ''} onChange={(e) => setInputs({ ...inputs, radius: e.target.value })} disabled={!done('return')} aria-label="최소회전반경" /></td><td>{task.ruleset.radiusMaxM} m 이하</td><td><button onClick={() => submit('radius')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('radius')}`}>{mark('radius')}</span></td></tr>
+              <tr><td>최소회전반경 (m)</td><td><input id={responseInputId('radius')} inputMode="decimal" value={inputs.radius ?? ''} onChange={(e) => setInputs({ ...inputs, radius: e.target.value })} disabled={!listIo.open('radius')} aria-label="최소회전반경" /></td><td>{task.ruleset.radiusMaxM} m 이하</td><td><button onClick={() => submit('radius')} disabled={!listIo.open('radius')}>입력</button> <span className={`mark ${markClass('radius')}`}>{mark('radius')}</span></td></tr>
               <tr><td>판정</td><td>
-                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
-                <label className="radio"><input type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
-              </td><td>기준 이하이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
+                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
+                <label className="radio"><input type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
+              </td><td>기준 이하이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!listIo.open('vehicleCondition')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
               <tr><td>산출 근거</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="예: L ÷ sin α + r" aria-label="산출 근거" /> <span className="small">(비채점 설명 칸 — 점수·기록 없음)</span></td></tr>
             </tbody>
           </table>
@@ -394,12 +395,12 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
           <table className="sheet">
             <thead><tr><th>항목</th><th>산출값</th><th>기준</th><th></th></tr></thead>
             <tbody>
-              <tr><td>편차 (%)</td><td><input id={responseInputId('deviation')} inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!done('off')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('deviation')}`}>{mark('deviation')}</span></td></tr>
-              <tr><td>합 (%)</td><td><input id={responseInputId('sum')} inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!done('off')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('sum')}`}>{mark('sum')}</span></td></tr>
+              <tr><td>편차 (%)</td><td><input id={responseInputId('deviation')} inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!listIo.open('deviation')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!listIo.open('deviation')}>입력</button> <span className={`mark ${markClass('deviation')}`}>{mark('deviation')}</span></td></tr>
+              <tr><td>합 (%)</td><td><input id={responseInputId('sum')} inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!listIo.open('sum')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!listIo.open('sum')}>입력</button> <span className={`mark ${markClass('sum')}`}>{mark('sum')}</span></td></tr>
               <tr><td>판정</td><td>
-                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
-                <label className="radio"><input type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
-              </td><td>편차·합 모두 기준 안이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
+                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
+                <label className="radio"><input type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
+              </td><td>편차·합 모두 기준 안이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!listIo.open('vehicleCondition')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
               <tr><td>정비 및 조치할 사항</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="양호면 '없음'" aria-label="조치" /> <span className="small">(비채점 설명 칸 — 교사 확인 0E: 점수·기록 없음)</span></td></tr>
             </tbody>
           </table>

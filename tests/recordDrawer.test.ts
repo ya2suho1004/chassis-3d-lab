@@ -13,7 +13,8 @@ describe('작업 목록 칸', () => {
     const h = renderPanel(answer(brakeToEnter('unguided'), 'axleWeight', '610'))
     expect(h).toMatch(/id="resp-axleWeight"[^>]*value="610"/)
     expect(h).toContain('<span class="mark ">저장</span>')
-    expect(h).not.toMatch(/[✓✗]/)
+    expect(h).not.toMatch(/<span class="mark (ok|bad)">/)
+    expect(h).not.toMatch(/오류 \d/)
   })
   test('기록 단계 버튼은 할 일 이름으로 보인다', () => {
     const h = renderPanel(brakeToEnter())
@@ -24,6 +25,11 @@ describe('작업 목록 칸', () => {
     expect(h).toMatch(/id="resp-left"[^>]*disabled=""/)
     expect(h).toMatch(/id="resp-right"[^>]*disabled=""/)
     expect(h).toContain('측정 중')
+  })
+  test('작업 목록 칸은 recordSteps.itemOpen 하나로 열린다(좌·우는 최대값 고정 뒤, 표 칸도 같은 규칙)', () => {
+    const task = fs.readFileSync('src/screens/TaskScreen.tsx', 'utf8')
+    expect(task).toMatch(/open: \(id\) => itemOpen\(run, id, gauge\.hold\)/)
+    expect(task).not.toMatch(/disabled=\{!done\('(off|return)'\)\}/)
   })
   test('칸이 빈 단계를 끝내려 하면 적어 두고 입력을 누르지 않은 경우를 따로 알린다', () => {
     const task = fs.readFileSync('src/screens/TaskScreen.tsx', 'utf8')
