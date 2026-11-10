@@ -151,11 +151,11 @@ button.g-save.bad { font:inherit; font-weight:700; color:#fff; background:#b3261
 .g-toast { position:absolute; left:50%; top:12px; transform:translateX(-50%); width:min(520px, 60vw); z-index:6; padding-right:44px; box-shadow:0 6px 20px rgba(0,0,0,.18); background-color:#fff; }
 .g-info { position:absolute; left:50%; bottom:96px; transform:translateX(-50%); width:min(520px, 70vw); background:rgba(255,255,255,.96); border-radius:12px; padding:10px 46px 10px 14px; z-index:4; box-shadow:0 6px 20px rgba(0,0,0,.15); }
 .g-info p { margin:6px 0; font-size:14px; }
-.g-hud { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); background:rgba(20,24,32,.6); color:#fff; border-radius:16px; padding:6px 12px; font-size:13px; pointer-events:none; max-width:46vw; text-align:center; }
+.g-hud { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); background:rgba(20,24,32,.6); color:#fff; border-radius:16px; padding:6px 12px; font-size:13px; pointer-events:none; max-width:46vw; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 /* 왼쪽 아래: 조이스틱 + 질문 */
 .joystick { position:absolute; left:28px; bottom:28px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,.22); border:2px solid rgba(255,255,255,.55); touch-action:none; z-index:4; display:flex; align-items:center; justify-content:center; }
 .joystick .knob { width:62px; height:62px; border-radius:50%; background:rgba(255,255,255,.85); box-shadow:0 2px 8px rgba(0,0,0,.25); pointer-events:none; }
-.g-chatbtn { position:absolute; left:196px; bottom:60px; border-radius:22px; border:none; background:rgba(20,24,32,.72); color:#fff; padding:8px 16px; z-index:4; }
+.g-chatbtn { position:absolute; left:28px; bottom:188px; border-radius:22px; border:none; background:rgba(20,24,32,.72); color:#fff; padding:8px 16px; z-index:4; }
 /* 오른쪽 아래: 행동 버튼 */
 .g-actions { position:absolute; right:18px; bottom:22px; display:flex; flex-direction:column; align-items:flex-end; gap:10px; z-index:4; }
 .g-act { min-width:150px; min-height:64px !important; border-radius:32px; border:3px solid #fff; background:linear-gradient(180deg,#3a7bf0,#2456c2); color:#fff; font-size:18px; font-weight:800; box-shadow:0 4px 14px rgba(0,0,0,.25); }
@@ -461,6 +461,14 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
   .game.wa .g-ppe { display:none; }
   /* 오른쪽 아래 수행 버튼과 겹치지 않게 조이스틱 위로 */
   .g-chatbtn { left:16px; bottom:146px; }
+  /* 가운데 버튼(계기 보기 등)은 조이스틱·수행 버튼 사이에 들어가지 않으므로 질문 버튼 위로. 계기 닫기는 조이스틱이 숨는 자리 */
+  .g-gaugebtn { left:16px; bottom:201px; transform:none; }
+  .g-gaugebtn.on { bottom:16px; }
+  .g-info { left:16px; right:16px; width:auto; transform:none; bottom:256px; }
+}
+/* 태블릿·노트북: 장비 설명 카드를 가운데 버튼 위로 올리고 양옆(조이스틱·질문 / 행동 버튼) 열을 비운다 */
+@media (min-width: 761px) and (min-height: 501px) {
+  .g-info { bottom:120px; width:min(520px, calc(100vw - 420px)); }
 }
 /* 태블릿 폭: 위쪽 버튼 줄과 의뢰 카드가 한 줄에 들어가지 않으므로 카드를 버튼 줄 아래로 */
 @media (min-width: 761px) and (max-width: 1100px) and (min-height: 501px) {
@@ -498,3 +506,8 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .record-check p { margin:4px 0; }
 .record-check-list { margin:6px 0; padding-left:18px; }
 .record-check-list li { margin:6px 0; overflow-wrap:anywhere; }
+
+/* 작업 목록·기본 화면의 안내(2026-11-10): 칸에 값을 넣으려고 내려도 위에 붙어 보이게 */
+.panel-feedback { position:sticky; top:0; z-index:3; margin:0 0 10px; padding-right:44px; box-shadow:0 4px 12px rgba(0,0,0,.12); }
+.fb-x { position:absolute; top:6px; right:6px; min-height:36px; width:36px; padding:0; border-radius:50%; border:none; background:rgba(0,0,0,.08); color:#333; font-size:16px; }
+.feedback .fb-go { margin-top:6px; }

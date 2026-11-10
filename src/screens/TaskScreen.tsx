@@ -13,10 +13,13 @@ import type { FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
 import type { PanelReadout } from '../scene/panelReadout'
 import { TURNING_TASK_ID } from '../domain/grading'
+import { focusResponse, responseInputId } from '../app/focusResponse'
+import { FeedbackBox } from './FeedbackBox'
 
 const newId = () => newUuid()
 
-export type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string }
+/** focusItem: 이 안내가 가리키는 기록 칸(값이 필요한 단계). 있으면 그 칸으로 가는 버튼을 보인다 */
+export type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string; focusItem?: string }
 
 /** 단계 하나에서 누를 수 있는 버튼(목록과 게임 화면 행동 버튼이 같은 것을 쓴다) */
 export interface TaskAction { key: string; label: string; onClick: () => void; disabled?: boolean; cls?: string }
@@ -185,7 +188,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     }
     if (res.outcome === 'incomplete') {
       const item = res.reasonCode?.replace('NEEDS_RESPONSE_', '') ?? ''
-      return setShown({ kind: 'guidance', title: '이 단계를 끝내려면 값을 먼저 입력하세요', text: null, plain: `${ITEM_LABEL[item] ?? item} 입력이 필요합니다.` })
+      return setShown({ kind: 'guidance', title: '이 단계를 끝내려면 값을 먼저 입력하세요', text: null, plain: `${ITEM_LABEL[item] ?? item} 입력이 필요합니다.`, focusItem: item })
     }
     setRun(res.run)
   }
@@ -295,17 +298,14 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         <div className="small">{showMarks ? `오류 ${run.errorCount} · ` : ''}안전 위반 {run.safetyViolationCount} · 힌트 {run.hintCount} · {noRecord ? <span>기록 안 됨</span> : <span className={saveStatus === 'failed' ? 'bad' : ''}>{saveStatus === 'saved' ? '이 기기 저장됨' : saveStatus === 'saving' ? '저장 중…' : '저장 실패!'}</span>}{!noRecord && saveStatus === 'failed' && <> <button className="link" onClick={retrySave}>다시 저장</button></>}{run.paused && ' · 일시중지'}</div>
       </header>
 
+      {/* 안내는 교관 칸 밖에 두고 위에 붙인다: 작업 목록을 내려 칸에 값을 넣어도 정오·설명이 보이게(2026-11-10) */}
+      {shown && <FeedbackBox className={`panel-feedback feedback ${shown.kind}`} shown={shown} onClose={() => setShown(null)} onFocusItem={(id) => focusResponse(document, id)} />}
+
       <section className="npc card">
         {isTurning
           ? <><b>NPC 교관:</b> 오늘은 최소회전반경을 측정해 산출하고 차량 상태를 판정합니다. 작업지시서: {dirLabel}, 축거 L {m.wheelbaseM} m, r {m.kingpinOffsetM} m.</>
           : <><b>NPC 교관:</b> 오늘은 뒤축 제동력을 측정해 편차와 합을 계산하고 차량 상태를 판정합니다. 작업지시서: 후륜, 단위 {m.unit}.</>}
         {guidance && <div className="guidance">다음 할 일 → <b>{guidance.text}</b></div>}
-        {shown && (
-          <div className={`feedback ${shown.kind}`} role="alert">
-            <b>{shown.title}</b>
-            {shown.text ? (<ul><li>무엇: {shown.text.what}</li><li>왜: {shown.text.why}</li><li>어떻게: {shown.text.how}</li></ul>) : <p>{shown.plain}</p>}
-          </div>
-        )}
       </section>
 
       <div className="columns">
@@ -348,7 +348,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
           {(['leftAngle', 'rightAngle'] as const).map((id) => (
             <div className="field" key={id}>
               <label>{ITEM_LABEL[id]}</label>
-              <input inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={!done('steer')} aria-label={ITEM_LABEL[id]} />
+              <input id={responseInputId(id)} inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={!done('steer')} aria-label={ITEM_LABEL[id]} />
               <button onClick={() => submit(id)} disabled={!done('steer')}>입력</button>
               <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
             </div>
@@ -359,9 +359,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
             <tbody>
               <tr><td>회전 방향</td><td colSpan={3}><b>{dirLabel}</b> <span className="small">(시험위원 지정)</span></td></tr>
               <tr><td>제시값</td><td colSpan={3}>축거 L = {m.wheelbaseM} m, r = {m.kingpinOffsetM} m</td></tr>
-              <tr><td>최소회전반경 (m)</td><td><input inputMode="decimal" value={inputs.radius ?? ''} onChange={(e) => setInputs({ ...inputs, radius: e.target.value })} disabled={!done('return')} aria-label="최소회전반경" /></td><td>{task.ruleset.radiusMaxM} m 이하</td><td><button onClick={() => submit('radius')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('radius')}`}>{mark('radius')}</span></td></tr>
+              <tr><td>최소회전반경 (m)</td><td><input id={responseInputId('radius')} inputMode="decimal" value={inputs.radius ?? ''} onChange={(e) => setInputs({ ...inputs, radius: e.target.value })} disabled={!done('return')} aria-label="최소회전반경" /></td><td>{task.ruleset.radiusMaxM} m 이하</td><td><button onClick={() => submit('radius')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('radius')}`}>{mark('radius')}</span></td></tr>
               <tr><td>판정</td><td>
-                <label className="radio"><input type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
+                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
                 <label className="radio"><input type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
               </td><td>기준 이하이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
               <tr><td>산출 근거</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="예: L ÷ sin α + r" aria-label="산출 근거" /> <span className="small">(비채점 설명 칸 — 점수·기록 없음)</span></td></tr>
@@ -383,7 +383,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
           {(['axleWeight', 'left', 'right'] as const).map((id) => (
             <div className="field" key={id}>
               <label>{ITEM_LABEL[id]}</label>
-              <input inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={id === 'axleWeight' ? !done('enter') : !done('press')} aria-label={ITEM_LABEL[id]} />
+              <input id={responseInputId(id)} inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={id === 'axleWeight' ? !done('enter') : !done('press')} aria-label={ITEM_LABEL[id]} />
               <button onClick={() => submit(id)} disabled={id === 'axleWeight' ? !done('enter') : !done('press')}>입력</button>
               <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
             </div>
@@ -393,10 +393,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
           <table className="sheet">
             <thead><tr><th>항목</th><th>산출값</th><th>기준</th><th></th></tr></thead>
             <tbody>
-              <tr><td>편차 (%)</td><td><input inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!done('off')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('deviation')}`}>{mark('deviation')}</span></td></tr>
-              <tr><td>합 (%)</td><td><input inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!done('off')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('sum')}`}>{mark('sum')}</span></td></tr>
+              <tr><td>편차 (%)</td><td><input id={responseInputId('deviation')} inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!done('off')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('deviation')}`}>{mark('deviation')}</span></td></tr>
+              <tr><td>합 (%)</td><td><input id={responseInputId('sum')} inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!done('off')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('sum')}`}>{mark('sum')}</span></td></tr>
               <tr><td>판정</td><td>
-                <label className="radio"><input type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
+                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
                 <label className="radio"><input type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
               </td><td>편차·합 모두 기준 안이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
               <tr><td>정비 및 조치할 사항</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="양호면 '없음'" aria-label="조치" /> <span className="small">(비채점 설명 칸 — 교사 확인 0E: 점수·기록 없음)</span></td></tr>
