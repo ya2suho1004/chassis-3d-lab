@@ -218,7 +218,7 @@ git commit -m "feat(기록 창): 고친 값 판단(unsavedItems)과 '입력 전'
 **Files:**
 - Modify: `src/screens/TaskScreen.tsx`
 - Modify: `src/styles.css`
-- Modify: `tests/recordWiring.test.ts`(기존 정규식 3곳 바꾸기 + 새 시험)
+- Modify: `tests/recordWiring.test.ts`(기존 정규식 4곳 바꾸기 + 새 시험)
 
 - [ ] **Step 1: 시험 고치기** — `tests/recordWiring.test.ts`
 
@@ -226,6 +226,7 @@ git commit -m "feat(기록 창): 고친 값 판단(unsavedItems)과 '입력 전'
 - `onClose=\{closeRecord\}`가 들어간 RecordWindow 정규식 → `onClose=\{requestClose\}`
 - 단계 완료 버튼 정규식 `<button type="button" className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>` → `<button type="button" className="primary" onClick=\{\(\) => \{ if \(!warnUnsaved\(record\)\) doStep\(record\) \}\}>단계 완료<\/button>`
 - 아래 줄 선택을 고정한 `toContain('done(record) ? <button type="button" onClick={closeRecord}>닫기</button> : …')` → `toContain('done(record) ? <button type="button" onClick={requestClose}>닫기</button> : <button type="button" className="primary" onClick={() => { if (!warnUnsaved(record)) doStep(record) }}>단계 완료</button>')`
+- ✕·닫기로 닫아도 고칠 목록을 남기는지 보는 `closeRecord` 정규식의 `setReview\(false\); setRecord\(null\)` → `setReview\(false\); setUnsavedWarned\(false\); setRecord\(null\)`(뜻은 그대로. 구현 중 찾아 더함)
 
 (b) 맨 끝에 더한다.
 
@@ -380,6 +381,8 @@ Expected: 모두 PASS
 git add src/screens/TaskScreen.tsx src/styles.css tests/recordWiring.test.ts
 git commit -m "feat(기록 창): 고친 값에 '입력 전' 표시, 창 닫기·단계 완료 때 한 번 알림, 표시 칸 36px" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
+
+- [ ] **Step 6 (구현 중 보완): 경고는 이미 입력한 답을 고친 칸만** — 처음 적고 입력하지 않은 칸까지 경고하면, 단계 완료에서 "한 번 더 누르세요" 뒤에도 엔진이 막아 안내가 틀린다(설계 §3 보완). `src/app/recordSteps.ts`에 `unsavedEdits(run, inputs, itemIds)`(= `unsavedItems` 중 `restoreInputs`에 저장된 답이 있는 칸)를 더하고 `warnUnsaved`가 이것을 쓴다(`const left = unsavedEdits(run, inputs, recordItems(task, stepId))`). 시험: `tests/recordSteps.test.ts`(처음 적은 칸은 빠짐), `tests/recordWiring.test.ts`(배선 정규식). 커밋 "fix(기록 창): 고친 값 경고는 이미 입력한 답을 고친 칸만 — 처음 적은 칸은 단계 완료 안내가 맡는다".
 
 ---
 
