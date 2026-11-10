@@ -25,6 +25,13 @@ describe('안내 상자', () => {
     expect(renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown, onClose: () => {} }))).toMatch(/aria-label="안내 닫기"/)
     expect(renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown }))).not.toMatch(/안내 닫기/)
   })
+  test('다시 확인할 항목 안내에는 항목마다 고치기 버튼이 있다(처리 함수가 있을 때만)', () => {
+    const shown = { kind: 'explanatory' as const, title: '최초 응답이 모두 저장되었습니다', text: null, plain: '다시 확인할 항목: 좌측 바퀴 조향각.', fixItems: ['leftAngle', 'radius'] }
+    const h = renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown, onFix: () => {} }))
+    expect(h).toContain('>고치기: 좌측 바퀴 조향각</button>')
+    expect(h).toContain('>고치기: 최소회전반경(m)</button>')
+    expect(renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown }))).not.toContain('고치기')
+  })
 })
 
 describe('칸으로 이동', () => {
@@ -55,16 +62,18 @@ describe('화면 연결', () => {
     expect(css).toMatch(/\.panel-feedback \{ position:sticky; top:0;/)
   })
   test('모든 기록 칸에 이동용 번호가 있다', () => {
-    expect(task.match(/id=\{responseInputId\(id\)\}/g)?.length).toBe(2)
+    // 판독 칸은 공용 칸(RecordFields)이 io.idOf로 번호를 단다(설계 2026-11-10 §9)
+    expect(task).toMatch(/idOf: \(id\) => responseInputId\(id\)/)
+    expect(task.match(/<NumberField key=\{id\} itemId=\{id\} io=\{listIo\} \/>/g)?.length).toBe(2)
     for (const item of ['radius', 'deviation', 'sum']) expect(task).toContain(`id={responseInputId('${item}')}`)
     expect(task.match(/id=\{responseInputId\('vehicleCondition'\)\}/g)?.length).toBe(2)
   })
-  test('서랍이 열려 있으면 게임 알림을 띄우지 않고(서랍 뒤에 가려짐), 알림의 칸 이동은 서랍을 연다', () => {
-    expect(lab).toMatch(/ctx\?\.shown && !drawerOpen && \(/)
-    expect(lab).toMatch(/onFocusItem=\{\(id\) => \{ setDrawerOpen\(true\); setTimeout\(\(\) => focusResponse\(document, id\), 60\) \}\}/)
+  test('서랍이나 기록 창이 열려 있으면 게임 알림을 띄우지 않고, 알림의 칸 이동·고치기는 그 칸의 기록 창을 연다', () => {
+    expect(lab).toMatch(/ctx\?\.shown && !drawerOpen && !recording && \(/)
+    expect(lab).toMatch(/onFocusItem=\{\(id\) => ctx\?\.openRecordFor\(id\)\} onFix=\{\(id\) => ctx\?\.openRecordFor\(id\)\}/)
   })
-  test('계기·측정판을 크게 볼 때와 연습 중에는 안내 줄을 숨기고, 장비 이름은 괄호 설명을 빼고 쓴다', () => {
-    expect(lab).toMatch(/className="g-hud" hidden=\{practicing \|\| viewing\}/)
+  test('계기·측정판을 크게 볼 때, 연습 중, 기록 창이 열렸을 때는 안내 줄을 숨기고, 장비 이름은 괄호 설명을 빼고 쓴다', () => {
+    expect(lab).toMatch(/className="g-hud" hidden=\{practicing \|\| viewing \|\| recording\}/)
     expect(lab).toMatch(/근처: \$\{nearIds\.map\(\(id\) => shortLabel\(/)
   })
 })

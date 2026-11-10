@@ -118,6 +118,11 @@ const RESPONSE_REQUIREMENTS: Record<string, string[]> = {
   radiusSubmitted: ['radius', 'vehicleCondition'],
 }
 
+/** 단계의 완료 조건이 요구하는 응답 칸. 기록 창·고치기도 이 정의를 쓴다(설계 2026-11-10 §2) */
+export function responseItemsOf(step: Pick<TaskStep, 'completionCondition'>): readonly string[] {
+  return RESPONSE_REQUIREMENTS[step.completionCondition] ?? []
+}
+
 function defaultDeps(): EngineDeps {
   return { now: () => Date.now(), newId: () => newUuid() }
 }
@@ -218,7 +223,7 @@ function attemptStep(run: TaskRun, step: TaskStep, actionId: string): AttemptRes
     return { run, outcome: 'incomplete', reasonCode: `NEEDS_SUBSTEP_${next ?? 'exitVehicle'}`, feedbackKey: null }
   }
   // 3) 응답이 필요한 완료 조건
-  const needed = RESPONSE_REQUIREMENTS[step.completionCondition] ?? []
+  const needed = responseItemsOf(step)
   for (const itemId of needed) {
     const it = run.responses.items.find((i) => i.itemId === itemId)
     const answered = it ? it.firstInput !== null || it.firstAnswer !== null : false

@@ -87,6 +87,8 @@ export interface LabSceneProps {
   turning?: TurningRig
   /** 측정판 가까이 보기(좌·우 앞바퀴) */
   turntableCloseUp?: 'left' | 'right' | null
+  /** 기록 창이 열린 동안 걷기 멈춤(설계 2026-11-10 §3.3): 가던 길·이동 요청·조이스틱을 버린다. 학생은 숨기지 않는다 */
+  holdStill?: boolean
 }
 
 export interface AvatarCue { action: AvatarAction; seq: number; target: Pt | null }
@@ -689,7 +691,7 @@ function AimProbe({ layout, onAim }: { layout: SceneLayout; onAim: (id: string |
   return null
 }
 
-function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, posRef, view, onStep, cue, ppe, look }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void; cue: AvatarCue | null; ppe: boolean; look: CharacterLook }) {
+function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, holdStill = false, posRef, view, onStep, cue, ppe, look }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; holdStill?: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void; cue: AvatarCue | null; ppe: boolean; look: CharacterLook }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
   // 1인칭은 카메라를 FirstPersonLook이 눈높이에 직접 둔다. 궤도 시점만 이동량만큼 카메라를 함께 옮긴다
@@ -733,6 +735,11 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       walked.current += moved
       if (n > 0) onStep?.()
     }
+    // 기록 창이 열린 동안(설계 2026-11-10 §3.3): 가던 길과 새 이동 요청을 버리고 조이스틱을 무시한다. 학생은 숨기지 않는다(frozen과 다름)
+    if (holdStill) {
+      requestRef.current = null
+      if (pathRef.current) { pathRef.current = null; onMove(posRef.current, false) }
+    }
     // 새 목적지 요청 처리
     if (requestRef.current) {
       const target = requestRef.current
@@ -745,7 +752,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
     let moving = false
     // 조이스틱·키보드: 카메라가 보는 쪽 기준으로 걷는다. 막힌 칸이면 x·z 한쪽만 움직여 벽을 따라 미끄러진다
     const j = joystickRef?.current
-    const mag = j && !frozen ? Math.hypot(j.x, j.y) : 0
+    const mag = j && !frozen && !holdStill ? Math.hypot(j.x, j.y) : 0
     if (j && mag > 0.15) {
       pathRef.current = null
       const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd)
@@ -799,7 +806,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} look={look} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -943,7 +950,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} holdStill={holdStill} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}
       {discOpen && discGauge && <DiscCamera gaugeWorld={discGauge} />}

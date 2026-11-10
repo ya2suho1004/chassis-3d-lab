@@ -1,4 +1,5 @@
 import { ITEM_LABEL } from '../app/resultLabels'
+import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
@@ -13,13 +14,20 @@ import type { FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
 import type { PanelReadout } from '../scene/panelReadout'
 import { TURNING_TASK_ID } from '../domain/grading'
-import { focusResponse, responseInputId } from '../app/focusResponse'
+import { focusResponse, recordInputId, responseInputId } from '../app/focusResponse'
 import { FeedbackBox } from './FeedbackBox'
+import { canReviewDial, itemOpen, markFor, missingText, recordLabel, recordStepOf, restoreInputs } from '../app/recordSteps'
+import { RecordSheet } from './RecordSheet'
+import { focusRecordField, RecordWindow, revealInBody } from './RecordWindow'
+import { steeredRig, turningRigState } from '../scene/turningRig'
+import { dialCaption, ReviewToggle, TurningDialPicture } from './TurningDialPicture'
+import { NumberField, type FieldIo } from './RecordFields'
 
 const newId = () => newUuid()
 
-/** focusItem: 이 안내가 가리키는 기록 칸(값이 필요한 단계). 있으면 그 칸으로 가는 버튼을 보인다 */
-export type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string; focusItem?: string }
+/** focusItem: 이 안내가 가리키는 기록 칸(값이 필요한 단계). 있으면 그 칸으로 가는 버튼을 보인다.
+ *  fixItems: 다시 확인할 칸들(설계 2026-11-10 §6). 칸마다 고치기 버튼을 보인다 */
+export type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string; focusItem?: string; fixItems?: string[] }
 
 /** 단계 하나에서 누를 수 있는 버튼(목록과 게임 화면 행동 버튼이 같은 것을 쓴다) */
 export interface TaskAction { key: string; label: string; onClick: () => void; disabled?: boolean; cls?: string }
@@ -40,6 +48,10 @@ export interface TaskContext {
   saveStatus: SaveState
   /** 지금 상태로 초안을 다시 저장(D4) */
   retrySave: () => void
+  /** 기록 창이 열려 있는지(설계 2026-11-10 §3.3) — 게임 화면이 걷기·버튼·알림을 멈춘다 */
+  recordOpen: boolean
+  /** 그 칸의 기록 창을 연다(게임 알림의 입력칸으로·고치기, §6) */
+  openRecordFor: (itemId: string) => void
 }
 
 // 항목 표시 이름은 app/resultLabels(결과 화면과 같은 이름)
@@ -69,7 +81,7 @@ function useCountUp(active: boolean, ms = 1500): number {
 
 export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
 
-export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext, initialSaveStatus = 'saved', onSaveStatus }: {
+export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext, initialSaveStatus = 'saved', onSaveStatus, recordHost = null, onAskAi }: {
   /** 비기록 모드: 저장 상태 대신 "기록 안 됨"을 보인다 */
   noRecord?: boolean
   repo: Repository; session: SessionContext; initialRun: TaskRun
@@ -84,6 +96,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   /** 화면 전환으로 패널이 새로 붙을 때 이어받을 저장 상태(D4) */
   initialSaveStatus?: SaveState
   onSaveStatus?: (s: SaveState) => void
+  /** 게임 화면이 주는 기록 창 자리(설계 2026-11-10). 없으면(기본 화면·도식) 창 없이 칸으로 안내한다 */
+  recordHost?: HTMLElement | null
+  /** 기록 창 머리의 AI 질문(비기록 모드는 넘기지 않는다) */
+  onAskAi?: () => void
 }) {
   const [run, setRun] = useState(initialRun)
   // 부모와 마지막으로 주고받은 run. 부모→패널 갱신과 패널→부모 알림이 서로 되돌리지 않게 한다.
@@ -154,10 +170,15 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     }
   }
   const [shown, setShown] = useState<Shown | null>(null)
-  const [inputs, setInputs] = useState<Record<string, string>>({})
-  const [graded, setGraded] = useState<Record<string, boolean | null>>({})
+  // 제출한 값은 수행 기록에서 다시 채운다(화면 전환·이어서 하기, 설계 2026-11-10 §7). 사건은 만들지 않는다
+  // 칸 값은 패널이 붙을 때 한 번만 채운다. 부모가 run을 바꿔도(3D↔도식 전환) 응답이 같아 다시 채우지 않고, 게임↔기본 화면 전환은 패널이 새로 붙어 다시 채운다
+  const [inputs, setInputs] = useState<Record<string, string>>(() => restoreInputs(initialRun))
   const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[]; answersLocked: boolean } | null>(null)
   const [action, setAction] = useState('')
+  /** 측정 당시 눈금 다시 보기를 켰는지(설계 §5). 조건이 사라지면(각도를 고쳐 맞힘) 저절로 꺼진다 */
+  const [review, setReview] = useState(false)
+  /** 열린 기록 창의 단계(설계 §3). 창을 열고 닫는 것은 기록하지 않는다 */
+  const [record, setRecord] = useState<string | null>(null)
 
   const task = run.task
   const m = task.measurement
@@ -167,8 +188,15 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const done = (id: string) => run.completedSteps.includes(id)
   const guidance = guidanceFor(run)
   const showMarks = answerFeedbackAllowed(run)
-  const mark = (id: string) => (!showMarks ? (graded[id] !== undefined ? '저장' : '') : graded[id] === true ? '✓' : graded[id] === false ? '✗' : '')
-  const markClass = (id: string) => (!showMarks ? '' : graded[id] === true ? 'ok' : graded[id] === false ? 'bad' : '')
+  // 칸 표시는 수행 기록의 최종 답에서 읽는다(설계 §7) — 안내 없음은 최초 답이 다 모이기 전까지 '저장'만
+  const mark = (id: string) => markFor(run, id).text
+  const markClass = (id: string) => markFor(run, id).cls
+  // 측정판 눈금 그림(설계 §5, 결정 A): 바늘은 핸들을 돌린 동안만 기운다. 각도 오답을 안 뒤에만 측정 당시 바늘을 다시 본다
+  const canReview = canReviewDial(run)
+  const reviewing = review && canReview
+  const needles = reviewing ? steeredRig(task) : turningRigState(run)
+  // 조건이 사라지면(각도를 고쳐 맞힘) 켜 둔 다시 보기를 끈다. 그대로 두면 각도가 다시 틀렸을 때 누르지 않아도 저절로 켜진다
+  useEffect(() => { if (!canReview && review) setReview(false) }, [canReview, review])
 
   const show = (r: TaskRun, s: Shown, feedbackKey: string | null, itemId?: string) => {
     // 실제로 화면에 표시한 직후에만 feedbackShown을 기록한다 (읽음 증거 아님)
@@ -177,18 +205,32 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     setShown(s)
   }
 
+  /** keepFixList: 고치기로 다른 창으로 옮길 때는 '다시 확인할 항목' 목록을 다음 안내가 뜰 때까지 남긴다(기본 화면과 같게) */
+  const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setRecord(stepId) }
+  /** ✕·Esc·닫기로 닫을 때 '다시 확인할 항목' 목록은 남긴다(창 밖 알림의 고치기로 이어서 고치게). 단계 완료로 닫히는 길은 doStep이 먼저 안내를 비운다 */
+  const closeRecord = () => { if (!shown?.fixItems) setShown(null); setReview(false); setRecord(null) }
+  /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았거나 창 자리가 없으면 열지 않는다. 엔진을 거치지 않아 기록이 없다.
+   *  이미 그 칸의 창이면 그 칸으로 간다(안내는 그대로) */
+  const openRecordFor = (itemId: string) => {
+    const st = recordStepOf(task, itemId)
+    if (!st || !recordHost || !itemOpen(run, itemId, true)) return
+    if (st === record) { focusRecordField(document, itemId); return }
+    openRecord(st, true)
+  }
   const doStep = (stepId: string) => {
     const far = needsMove(stepId)
-    if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
+    if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: record ? `창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.` : `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
     const res = attempt(run, { type: 'step', stepId }, newId())
-    if (res.outcome === 'completed') { setRun(res.run); setShown(null); return }
+    if (res.outcome === 'completed') { setRun(res.run); setShown(null); if (record === stepId) closeRecord(); return }
     if (res.outcome === 'blocked') {
       const kind = res.reasonCode?.startsWith('SAFETY_') ? 'safety' : 'explanatory'
       return show(res.run, { kind, title: kind === 'safety' ? '안전 위반 — 진행이 막혔습니다' : '순서가 틀렸습니다', text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey)
     }
     if (res.outcome === 'incomplete') {
       const item = res.reasonCode?.replace('NEEDS_RESPONSE_', '') ?? ''
-      return setShown({ kind: 'guidance', title: '이 단계를 끝내려면 값을 먼저 입력하세요', text: null, plain: `${ITEM_LABEL[item] ?? item} 입력이 필요합니다.`, focusItem: item })
+      // 게임 화면: 칸이 빈 단계는 기록 창을 연다(엔진은 이 시도를 기록하지 않음, 설계 §3.1). 창 안에서 다시 누르면 빠진 칸을 알린다
+      if (recordHost && record !== stepId && res.reasonCode?.startsWith('NEEDS_RESPONSE_')) return openRecord(stepId)
+      return setShown({ kind: 'guidance', title: '이 단계를 끝내려면 값을 먼저 입력하세요', text: null, plain: missingText(ITEM_LABEL[item] ?? item, !!inputs[item]?.trim()), focusItem: item })
     }
     setRun(res.run)
   }
@@ -217,7 +259,6 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     const res = submitResponse(run, itemId, raw, newId())
     if (res.outcome === 'ignored') return setShown({ kind: 'guidance', title: '값을 입력하세요', text: null, plain: `${ITEM_LABEL[itemId]} 칸이 비어 있습니다.` })
     if (res.outcome === 'invalid') return show(res.run, { kind: 'explanatory', title: '입력 형식 오류', text: null, plain: res.reasonCode === 'FORMAT_INTEGER_REQUIRED' ? (isTurning ? '정수만 입력합니다 (예: 30).' : '정수만 입력합니다 (예: 240).') : '숫자만 입력합니다 (예: 6.6).' }, null)
-    setGraded((g) => ({ ...g, [itemId]: res.grading?.correct ?? null }))
     // 무안내 모드: 필수 응답 6개의 최초 답이 모두 저장되기 전에는 정오를 알려 주지 않는다(feedbackPolicy, 제안 상태)
     if (!answerFeedbackAllowed(res.run)) {
       setRun(res.run)
@@ -226,10 +267,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     }
     if (res.grading?.correct === false) return show(res.run, { kind: 'explanatory', title: `${ITEM_LABEL[itemId]} — 다시 확인하세요`, text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey, itemId)
     setRun(res.run)
-    const wrongNow = res.run.responses.items.filter((i) => i.finalCorrect === false).map((i) => ITEM_LABEL[i.itemId] ?? i.itemId)
-    if (run.difficultyMode === 'unguided' && !answerFeedbackAllowed(run) && wrongNow.length > 0) {
-      // 방금 마지막 최초 응답이 저장됨 → 틀린 항목 이름만 알려 준다(정답은 알려 주지 않음)
-      return setShown({ kind: 'explanatory', title: '최초 응답이 모두 저장되었습니다', text: null, plain: `다시 확인할 항목: ${wrongNow.join(', ')}. 해당 칸을 고쳐 다시 입력하면 설명을 보여 줍니다.` })
+    const wrongIds = res.run.responses.items.filter((i) => i.finalCorrect === false).map((i) => i.itemId)
+    if (run.difficultyMode === 'unguided' && !answerFeedbackAllowed(run) && wrongIds.length > 0) {
+      // 방금 마지막 최초 응답이 저장됨 → 틀린 항목 이름과 고치기 버튼만 보인다(정답은 알려 주지 않음, 설계 §6)
+      return setShown({ kind: 'explanatory', title: '최초 응답이 모두 저장되었습니다', text: null, plain: `다시 확인할 항목: ${wrongIds.map((i) => ITEM_LABEL[i] ?? i).join(', ')}. 해당 칸을 고쳐 다시 입력하면 설명을 보여 줍니다.`, fixItems: wrongIds })
     }
     setShown({ kind: 'guidance', title: `${ITEM_LABEL[itemId]} 입력 확인`, text: null, plain: '맞습니다. 다음으로 진행하세요.' })
   }
@@ -250,11 +291,34 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     if (r.result === 'passed') void finish(r.run, 'completed')
   }
 
+  /** 고치기(설계 §6): 게임 화면은 그 칸의 기록 창, 그 밖은 그 칸으로 간다 */
+  const fixItem = (itemId: string) => (recordHost ? openRecordFor(itemId) : void focusResponse(document, itemId))
+
   // U1 근사(교사 허용 2026-10-27, 장비 수리 후 확인): 페달을 끝까지 밟으면 버튼 없이 최대값이 자동 고정된다고 가정. 새 버튼·성공 사건 없음
   const rise = useCountUp(done('press'))
   const shownL = m.left === null ? null : Math.round(m.left * rise)
   const shownR = m.right === null ? null : Math.round(m.right * rise)
-  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${shownL}   R ${shownR}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') && rise >= 1 }
+  // measuring: 페달 뒤 숫자가 올라가는 동안. 좌·우 칸을 닫아 둔다(설계 §2, Codex 지적 9)
+  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${shownL}   R ${shownR}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') && rise >= 1, measuring: done('press') && rise < 1 }
+  /** 작업 목록(서랍·기본 화면) 칸. 기록 창과 같은 값·제출 함수를 쓴다(설계 §9) */
+  const listIo: FieldIo = {
+    value: (id) => inputs[id] ?? '',
+    change: (id, v) => setInputs((cur) => ({ ...cur, [id]: v })),
+    submit: (id) => submit(id),
+    mark: (id) => markFor(run, id),
+    open: (id) => itemOpen(run, id, gauge.hold),
+    idOf: (id) => responseInputId(id),
+  }
+  /** 기록 창 칸: 작업 목록과 같은 값·제출 함수, id만 rec-(같은 화면에 함께 붙어 있어도 겹치지 않게) */
+  const recIo: FieldIo = { ...listIo, idOf: recordInputId }
+  // 창 안 안내가 새로 뜨면 창 안에서 보이게 한다(키보드를 닫으면 안내는 칸 아래에 있다, 설계 §3.2).
+  // 다른 단계 창으로 옮긴 직후에는 하지 않는다(창 맨 위 제목부터 보이게, 남겨 둔 목록은 아래에 있다)
+  const prevRecordRef = useRef<string | null>(null)
+  useEffect(() => {
+    const switched = prevRecordRef.current !== record
+    prevRecordRef.current = record
+    if (record && shown && !switched) revealInBody(document.querySelector('.g-record .rec-feedback'))
+  }, [record, shown])
 
   const actionsFor = (stepId: string): TaskAction[] => {
     const out: TaskAction[] = []
@@ -268,7 +332,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       }
     } else {
       const far = needsMove(stepId)
-      out.push({ key: 'do', label: far ? '이동 필요' : '수행', onClick: () => doStep(stepId), cls: far ? 'far' : '' })
+      out.push({ key: 'do', label: far ? '이동 필요' : recordLabel(task, stepId) ?? '수행', onClick: () => doStep(stepId), cls: far ? 'far' : '' })
     }
     return out
   }
@@ -286,10 +350,11 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       doneCount: run.completedSteps.length, total: task.steps.length,
       hint, inspect,
       saveStatus, retrySave,
+      recordOpen: record !== null && recordHost !== null, openRecordFor,
       panel: { axle: done('enter') ? m.axleWeight : null, left: done('press') ? shownL : run.motorOn ? 0 : null, right: done('press') ? shownR : run.motorOn ? 0 : null, hold: gauge.hold, unit: m.unit ?? '' },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold, saveStatus])
+  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold, saveStatus, record, recordHost])
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>
@@ -299,7 +364,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       </header>
 
       {/* 안내는 교관 칸 밖에 두고 위에 붙인다: 작업 목록을 내려 칸에 값을 넣어도 정오·설명이 보이게(2026-11-10) */}
-      {shown && <FeedbackBox className={`panel-feedback feedback ${shown.kind}`} shown={shown} onClose={() => setShown(null)} onFocusItem={(id) => focusResponse(document, id)} />}
+      {shown && <FeedbackBox className={`panel-feedback feedback ${shown.kind}`} shown={shown} onClose={() => setShown(null)} onFocusItem={(id) => focusResponse(document, id)} onFix={fixItem} />}
 
       <section className="npc card">
         {isTurning
@@ -339,31 +404,23 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
 {isTurning ? (
         <section className="card">
-          <h2>회전반경 측정판 (숫자식)</h2>
-          <div className="gauge">
-            <div><span>좌측 바퀴</span><b>{done('steer') && !done('return') ? `${m.leftAngleDeg}°` : '0°'}</b></div>
-            <div><span>우측 바퀴</span><b>{done('steer') && !done('return') ? `${m.rightAngleDeg}°` : '0°'}</b></div>
-          </div>
+          <h2>회전반경 측정판</h2>
+          <TurningDialPicture side="left" deg={needles.leftDeg} caption={dialCaption('left', reviewing)} />
+          <TurningDialPicture side="right" deg={needles.rightDeg} caption={dialCaption('right', reviewing)} />
+          {canReview && <ReviewToggle reviewing={reviewing} onToggle={() => setReview(!reviewing)} />}
           <h3>판독 입력 (정수, °)</h3>
-          {(['leftAngle', 'rightAngle'] as const).map((id) => (
-            <div className="field" key={id}>
-              <label>{ITEM_LABEL[id]}</label>
-              <input id={responseInputId(id)} inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={!done('steer')} aria-label={ITEM_LABEL[id]} />
-              <button onClick={() => submit(id)} disabled={!done('steer')}>입력</button>
-              <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
-            </div>
-          ))}
+          {(['leftAngle', 'rightAngle'] as const).map((id) => <NumberField key={id} itemId={id} io={listIo} />)}
 
           <h3>시험 결과 기록표 (섀시 5 — 최소회전반경)</h3>
           <table className="sheet">
             <tbody>
               <tr><td>회전 방향</td><td colSpan={3}><b>{dirLabel}</b> <span className="small">(시험위원 지정)</span></td></tr>
               <tr><td>제시값</td><td colSpan={3}>축거 L = {m.wheelbaseM} m, r = {m.kingpinOffsetM} m</td></tr>
-              <tr><td>최소회전반경 (m)</td><td><input id={responseInputId('radius')} inputMode="decimal" value={inputs.radius ?? ''} onChange={(e) => setInputs({ ...inputs, radius: e.target.value })} disabled={!done('return')} aria-label="최소회전반경" /></td><td>{task.ruleset.radiusMaxM} m 이하</td><td><button onClick={() => submit('radius')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('radius')}`}>{mark('radius')}</span></td></tr>
+              <tr><td>최소회전반경 (m)</td><td><input id={responseInputId('radius')} inputMode="decimal" value={inputs.radius ?? ''} onChange={(e) => setInputs({ ...inputs, radius: e.target.value })} disabled={!listIo.open('radius')} aria-label="최소회전반경" /></td><td>{task.ruleset.radiusMaxM} m 이하</td><td><button onClick={() => submit('radius')} disabled={!listIo.open('radius')}>입력</button> <span className={`mark ${markClass('radius')}`}>{mark('radius')}</span></td></tr>
               <tr><td>판정</td><td>
-                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
-                <label className="radio"><input type="radio" name="verdict" disabled={!done('return')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
-              </td><td>기준 이하이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('return')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
+                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
+                <label className="radio"><input type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
+              </td><td>기준 이하이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!listIo.open('vehicleCondition')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
               <tr><td>산출 근거</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="예: L ÷ sin α + r" aria-label="산출 근거" /> <span className="small">(비채점 설명 칸 — 점수·기록 없음)</span></td></tr>
             </tbody>
           </table>
@@ -377,28 +434,23 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
             <div><span>AXLE Load</span><b>{gauge.axle}</b></div>
             <div><span>BRAKE L / R</span><b>{gauge.lr}</b></div>
             {gauge.hold && <div><span>MAX HOLD</span><b>최대값 고정</b></div>}
+            {gauge.measuring && <div><span>MAX HOLD</span><b>측정 중…</b></div>}
           </div>
           {gauge.hold && <p className="small">임시 표시: 실제 장비의 값 고정 방식은 수리 후 확인 예정(U1). 지금은 페달을 끝까지 밟으면 최대값이 자동으로 고정된다고 가정합니다.</p>}
           <h3>판독 입력 (정수, {m.unit})</h3>
-          {(['axleWeight', 'left', 'right'] as const).map((id) => (
-            <div className="field" key={id}>
-              <label>{ITEM_LABEL[id]}</label>
-              <input id={responseInputId(id)} inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={id === 'axleWeight' ? !done('enter') : !done('press')} aria-label={ITEM_LABEL[id]} />
-              <button onClick={() => submit(id)} disabled={id === 'axleWeight' ? !done('enter') : !done('press')}>입력</button>
-              <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
-            </div>
-          ))}
+          {(['axleWeight', 'left', 'right'] as const).map((id) => <NumberField key={id} itemId={id} io={listIo} />)}
+          {gauge.measuring && <p className="small">좌·우 값은 최대값이 고정되면 적을 수 있습니다.</p>}
 
           <h3>시험 결과 기록표 (섀시 5)</h3>
           <table className="sheet">
             <thead><tr><th>항목</th><th>산출값</th><th>기준</th><th></th></tr></thead>
             <tbody>
-              <tr><td>편차 (%)</td><td><input id={responseInputId('deviation')} inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!done('off')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('deviation')}`}>{mark('deviation')}</span></td></tr>
-              <tr><td>합 (%)</td><td><input id={responseInputId('sum')} inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!done('off')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('sum')}`}>{mark('sum')}</span></td></tr>
+              <tr><td>편차 (%)</td><td><input id={responseInputId('deviation')} inputMode="decimal" value={inputs.deviation ?? ''} onChange={(e) => setInputs({ ...inputs, deviation: e.target.value })} disabled={!listIo.open('deviation')} aria-label="편차" /></td><td>{task.ruleset.deviationMaxPercent}% 이내</td><td><button onClick={() => submit('deviation')} disabled={!listIo.open('deviation')}>입력</button> <span className={`mark ${markClass('deviation')}`}>{mark('deviation')}</span></td></tr>
+              <tr><td>합 (%)</td><td><input id={responseInputId('sum')} inputMode="decimal" value={inputs.sum ?? ''} onChange={(e) => setInputs({ ...inputs, sum: e.target.value })} disabled={!listIo.open('sum')} aria-label="합" /></td><td>뒤축 {task.ruleset.sumMinRearPercent}% 이상</td><td><button onClick={() => submit('sum')} disabled={!listIo.open('sum')}>입력</button> <span className={`mark ${markClass('sum')}`}>{mark('sum')}</span></td></tr>
               <tr><td>판정</td><td>
-                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
-                <label className="radio"><input type="radio" name="verdict" disabled={!done('off')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
-              </td><td>편차·합 모두 기준 안이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!done('off')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
+                <label className="radio"><input id={responseInputId('vehicleCondition')} type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'pass'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'pass' })} /> 양호</label>
+                <label className="radio"><input type="radio" name="verdict" disabled={!listIo.open('vehicleCondition')} checked={inputs.vehicleCondition === 'fail'} onChange={() => setInputs({ ...inputs, vehicleCondition: 'fail' })} /> 불량</label>
+              </td><td>편차·합 모두 기준 안이면 양호</td><td><button onClick={() => submit('vehicleCondition')} disabled={!listIo.open('vehicleCondition')}>입력</button> <span className={`mark ${markClass('vehicleCondition')}`}>{mark('vehicleCondition')}</span></td></tr>
               <tr><td>정비 및 조치할 사항</td><td colSpan={3}><input value={action} onChange={(e) => setAction(e.target.value)} placeholder="양호면 '없음'" aria-label="조치" /> <span className="small">(비채점 설명 칸 — 교사 확인 0E: 점수·기록 없음)</span></td></tr>
             </tbody>
           </table>
@@ -414,11 +466,22 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         </div>
         {inspection && inspection.result !== 'passed' && (
           <div className="feedback explanatory"><b>NPC: 보완이 필요합니다 ({inspection.issues.length}건)</b>
-            <ul>{inspection.issues.map((i, k) => (<li key={k}>{i.kind === 'step' ? `${task.steps.findIndex((s) => s.stepId === i.stepId) + 1}번 단계` : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}</li>))}</ul>
+            <ul>{inspection.issues.map((i, k) => (<li key={k}>{i.kind === 'step' ? `${task.steps.findIndex((s) => s.stepId === i.stepId) + 1}번 단계` : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}{i.kind === 'response' && itemOpen(run, i.itemId, true) && <> <button className="link" onClick={() => fixItem(i.itemId)}>고치기</button></>}</li>))}</ul>
             {inspection.answersLocked && <p className="small">입력한 답이 맞는지는 모든 칸에 처음 답을 적은 뒤 알려 줍니다.</p>}
           </div>
         )}
       </section>
+
+      {/* 기록 창(설계 2026-11-10): 게임 화면이 준 자리에 그린다. 칸 값·제출 함수는 작업 목록과 같다 */}
+      {recordHost && record && createPortal(
+        <RecordWindow title={recordLabel(task, record) ?? '기록'} onClose={closeRecord} onAskAi={onAskAi}
+          footer={done(record) ? <button type="button" onClick={closeRecord}>닫기</button> : <button type="button" className="primary" onClick={() => doStep(record)}>단계 완료</button>}>
+          <p className="small rec-sub">{task.steps.find((s) => s.stepId === record)?.instruction}</p>
+          <RecordSheet run={run} stepId={record} io={recIo} gauge={gauge} needles={needles} reviewing={reviewing} canReview={canReview} onToggleReview={() => setReview(!reviewing)} note={action} onNote={setAction} />
+          {shown && <FeedbackBox className={`rec-feedback feedback ${shown.kind}`} shown={shown} onClose={() => { setShown(null); document.getElementById('rec-title')?.focus({ preventScroll: true }) }} onFocusItem={(id) => focusRecordField(document, id)} onFix={openRecordFor} />}
+        </RecordWindow>,
+        recordHost,
+      )}
     </main>
   )
 }

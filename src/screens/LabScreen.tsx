@@ -22,7 +22,6 @@ import { turningRigState } from '../scene/turningRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen, type TaskContext } from './TaskScreen'
 import { FeedbackBox } from './FeedbackBox'
-import { focusResponse } from '../app/focusResponse'
 import { saveBadge, type SaveState } from '../app/saveRecovery'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog, panelWorkOrder } from './NpcDialog'
@@ -132,6 +131,8 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const onContext = useCallback((c: TaskContext) => setCtx(c), [])
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  /** 기록 창 자리(설계 2026-11-10). 과제 패널이 이 자리에 창을 그린다 */
+  const [recordHost, setRecordHost] = useState<HTMLDivElement | null>(null)
   // AI 대화(E4): 게임·기본 화면이 패널을 따로 만들므로 대화는 여기 둔다. 수행 번호가 바뀌면 새로 시작한다(다음 학생에게 넘어가지 않음)
   const chatFor = useRef({ recordId: session.recordId, chat: createChatConversation() })
   if (chatFor.current.recordId !== session.recordId) chatFor.current = { recordId: session.recordId, chat: createChatConversation() }
@@ -263,6 +264,25 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const turningNear = run?.task.taskId === 'min-turning-radius' && nearIds.includes('min-turning-radius-01')
   /** 계기·측정판 가까이 보기 중이면 걷기·연습 버튼을 숨긴다 */
   const viewing = closeUp || ttSide !== null
+  /** 기록 창이 열려 있으면 걷기·행동 버튼·알림을 멈춘다(설계 2026-11-10 §3.3) */
+  const recording = !!ctx?.recordOpen
+  /** 목록에서 연 창이면 닫힐 때 목록을 다시 연다 */
+  const reopenDrawer = useRef(false)
+  useEffect(() => {
+    if (recording) {
+      joystickRef.current = { x: 0, y: 0 }
+      setTalkOnArrive(false) // 교관에게 걸어가던 걸음은 취소됐다(창 위로 대화가 뜨지 않게)
+      setNpcOpen(false) // 멀리서 누른 교관 말풍선이 창을 덮지 않게
+      if (drawerOpen) { reopenDrawer.current = true; setDrawerOpen(false) }
+    } else if (reopenDrawer.current) {
+      reopenDrawer.current = false
+      setDrawerOpen(true)
+    }
+  }, [recording]) // eslint-disable-line react-hooks/exhaustive-deps -- 창이 열리고 닫힐 때만
+  /** 기록 창 머리의 AI 질문: 질문 창을 열고 초점을 그 닫기 단추로(화면 키보드는 띄우지 않음) */
+  const askAiFromRecord = () => { setChatOpen(true); setTimeout(() => document.querySelector<HTMLElement>('.g-chat .g-x')?.focus({ preventScroll: true }), 50) }
+  /** 질문 창 닫기: 기록 창 위에서 열었으면 창 머리의 AI 질문 단추로 초점을 돌린다(Esc·Tab이 창 안에 머물게) */
+  const closeChat = () => { setChatOpen(false); if (recording) setTimeout(() => document.querySelector<HTMLElement>('.g-record .rec-ai')?.focus({ preventScroll: true }), 0) }
 
   const selectEquipment = (id: string | null) => {
     setSelectedId(id)
@@ -316,7 +336,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
-            onSelectEquipment={selectEquipment} onNpcTap={() => { if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} />
+            onSelectEquipment={selectEquipment} onNpcTap={() => { if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording} />
         </div>
 
         {!talking && (
@@ -364,9 +384,9 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             </div>}
 
             {/* 작업 목록이 열려 있으면 알림은 목록 안 안내로 보인다(이 알림은 목록 뒤에 가려진다) */}
-            {ctx?.shown && !drawerOpen && (
+            {ctx?.shown && !drawerOpen && !recording && (
               <FeedbackBox className={`g-toast feedback ${ctx.shown.kind}`} shown={ctx.shown} onClose={ctx.clearShown}
-                onFocusItem={(id) => { setDrawerOpen(true); setTimeout(() => focusResponse(document, id), 60) }} />
+                onFocusItem={(id) => ctx?.openRecordFor(id)} onFix={(id) => ctx?.openRecordFor(id)} />
             )}
 
             {selected && (
@@ -378,7 +398,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               </div>
             )}
 
-            <div className="g-hud" hidden={practicing || viewing}>{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => shortLabel(layout.equipment.find((e) => e.id === id)?.label)).join(', ')}` : viewMode === 'first' ? '왼쪽 조이스틱으로 걷기 · 화면을 끌어 둘러보기 · 가운데 점을 장비에 맞추기' : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
+            <div className="g-hud" hidden={practicing || viewing || recording}>{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => shortLabel(layout.equipment.find((e) => e.id === id)?.label)).join(', ')}` : viewMode === 'first' ? '왼쪽 조이스틱으로 걷기 · 화면을 끌어 둘러보기 · 가운데 점을 장비에 맞추기' : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
 
             {viewMode === 'first' && <div className={`g-reticle ${aimId ? 'on' : ''}`} aria-hidden />}
             {viewMode === 'first' && aimId && (
@@ -387,10 +407,10 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               </button>
             )}
 
-            {!viewing && !practicing && <Joystick input={joystickRef} />}
-            {run && !viewing && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}><Icon name="gauge" /> 계기 보기</button>}
-            {run && !viewing && !practicing && turningNear && <button className="g-gaugebtn" onClick={() => setTtSide('left')}><Icon name="gauge" /> 측정판 보기</button>}
-            {!practicing && !viewing && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}><Icon name="look" /> 디스크 런아웃 연습</button>}
+            {!viewing && !practicing && !recording && <Joystick input={joystickRef} />}
+            {run && !viewing && !recording && panelNear && <button className="g-gaugebtn" onClick={() => setCloseUp(true)}><Icon name="gauge" /> 계기 보기</button>}
+            {run && !viewing && !practicing && !recording && turningNear && <button className="g-gaugebtn" onClick={() => setTtSide('left')}><Icon name="gauge" /> 측정판 보기</button>}
+            {!practicing && !viewing && !recording && discNear && <button className="g-gaugebtn" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}><Icon name="look" /> 디스크 런아웃 연습</button>}
             {discOpen && (
               <div className="g-practice" role="dialog" aria-label="디스크 런아웃 연습">
                 <div className="g-practice-head"><b>디스크 런아웃 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { discCtl.current.spin = 0; setDiscOpen(false) }}>✕</button></div>
@@ -410,7 +430,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 {discMsg && <p className={discMsg.ok ? 'ok' : 'bad'}>{discMsg.text}</p>}
               </div>
             )}
-            {!practicing && !viewing && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}><Icon name="look" /> 차동기어 백래시 연습</button>}
+            {!practicing && !viewing && !recording && blNear && <button className="g-gaugebtn" onClick={() => { setBlOpen(true); setBlMsg(null) }}><Icon name="look" /> 차동기어 백래시 연습</button>}
             {blOpen && (
               <div className="g-practice" role="dialog" aria-label="차동기어 백래시 연습">
                 <div className="g-practice-head"><b>차동기어 백래시 연습</b><span className="small">기록 없음 · 연습용 값(실측 아님)</span><button className="g-x" aria-label="연습 닫기" onClick={() => { blSt.current.push = 0; setBlOpen(false) }}>✕</button></div>
@@ -431,7 +451,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 {blMsg && <p className={blMsg.ok ? 'ok' : 'bad'}>{blMsg.text}</p>}
               </div>
             )}
-            {closeUp && <button className="g-gaugebtn on" onClick={() => setCloseUp(false)}>✕ 계기 닫기</button>}
+            {closeUp && !recording && <button className="g-gaugebtn on" onClick={() => setCloseUp(false)}>✕ 계기 닫기</button>}
             {ttSide && (
               <div className="g-ttbar" role="group" aria-label="측정판 보기">
                 <button className={ttSide === 'left' ? 'on' : ''} aria-pressed={ttSide === 'left'} onClick={() => setTtSide('left')}>◀ 좌측 바퀴</button>
@@ -439,9 +459,9 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
                 <button onClick={() => setTtSide(null)}>✕ 닫기</button>
               </div>
             )}
-            {!practicing && !ttSide && !noRecord && <button className="g-chatbtn" onClick={() => setChatOpen(true)}><Icon name="talk" /> AI 교관에게 질문</button>}
+            {!practicing && !ttSide && !noRecord && !recording && <button className="g-chatbtn" onClick={() => setChatOpen(true)}><Icon name="talk" /> AI 교관에게 질문</button>}
 
-            {!ttSide && <div className="g-actions">
+            {!ttSide && !recording && <div className="g-actions">
               {run && ctx?.nextActions.map((a) => <button key={a.key} className={`g-act ${a.cls ?? ''}`} onClick={a.onClick}>{a.label}</button>)}
               {run && <button className="g-act small" onClick={() => ctx?.hint()}>힌트</button>}
             </div>}
@@ -457,7 +477,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             <p className="g-tip"><b>TIP</b>{tips[tipIdx % tips.length]}</p>
           </div>
         )}
-        {loadedOnce && guideOpen && !talking && (
+        {loadedOnce && guideOpen && !talking && !recording && (
           <div className="g-guide" role="dialog" aria-label="조작 안내">
             <b>조작 안내</b>
             <ul>
@@ -478,12 +498,15 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
             <button className="g-x" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>
             <TaskScreen repo={repo} noRecord={noRecord} session={session} initialRun={run} embedded initialSaveStatus={saveStatusRef.current} onSaveStatus={onSaveStatus} onRunChange={onRunChange} onContext={onContext}
               proximity={{ nearIds, labelOf: (id) => layout.equipment.find((e) => e.id === id)?.label ?? id }}
+              recordHost={recordHost} onAskAi={noRecord ? undefined : askAiFromRecord}
               onFinish={onGameFinish} />
           </aside>
         )}
+        {/* 기록 창 자리(설계 2026-11-10): 작업 목록 밖에 두어 목록을 닫아도 창이 보인다. 층은 z 7(질문 창 아래) */}
+        <div className="g-recordhost" ref={setRecordHost} />
         {!noRecord && (
           <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
-            <button className="g-x" aria-label="질문 창 닫기" onClick={() => setChatOpen(false)}>✕</button>
+            <button className="g-x" aria-label="질문 창 닫기" onClick={closeChat}>✕</button>
             <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
               stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
           </aside>

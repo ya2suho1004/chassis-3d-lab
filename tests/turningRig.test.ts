@@ -4,7 +4,8 @@ import lv1Raw from '../src/data/tasks/task.min-turning-radius.case-lv1.json'
 import lv2Raw from '../src/data/tasks/task.min-turning-radius.case-lv2.json'
 import { createTaskRun, type TaskRun } from '../src/domain/taskEngine'
 import type { ApprovedTask } from '../src/domain/types'
-import { frontWheelWorld, turningRigState } from '../src/scene/turningRig'
+import brakeRaw from '../src/data/tasks/task.braking-force.case-lv1.json'
+import { frontWheelWorld, steeredRig, turningRigState } from '../src/scene/turningRig'
 
 const withSteps = (t: unknown, steps: string[]): TaskRun => ({ ...createTaskRun(t as ApprovedTask, { difficultyMode: 'guided' }), completedSteps: steps })
 
@@ -21,5 +22,10 @@ describe('최소회전반경 차량 연출', () => {
     expect(frontWheelWorld(e, 'left')).toEqual({ x: 4.45 - 1.38, z: 4.55 + 0.775, outX: 0, outZ: 1 })
     const r = frontWheelWorld(e, 'right')
     expect(r.x).toBeCloseTo(3.07, 9); expect(r.z).toBeCloseTo(3.775, 9); expect(r.outZ).toBe(-1)
+  })
+  it('측정 당시 각도는 조향 단계와 관계없이 사례 각도(기록 창 다시 보기용), 회전 방향이 없으면 직진', () => {
+    expect(steeredRig(lv1Raw as unknown as ApprovedTask)).toEqual({ leftDeg: 35, rightDeg: 30 })
+    expect(steeredRig(lv2Raw as unknown as ApprovedTask)).toEqual({ leftDeg: -32, rightDeg: -36 })
+    expect(steeredRig(brakeRaw as unknown as ApprovedTask)).toEqual({ leftDeg: 0, rightDeg: 0 })
   })
 })
