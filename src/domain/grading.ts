@@ -27,7 +27,7 @@ export interface ResponseItemState {
 
 export interface ResponseSheet {
   taskId: string
-  /** 승인 정밀도 정책(계산 항목의 학생 값 정리에 사용) */
+  /** 승인 정밀도 정책(기록·안내용). 채점은 학생 값을 다시 절사하지 않는다(마무리 §2) — 절사는 기준값 계산에만 쓴다 */
   precision: DecisionPrecision | null
   /** 과제별 차량 판정 계산 결과(제동력: 편차·합, 최소회전반경: 바깥쪽 바퀴·R) */
   vehicle: VehicleVerdictResult | TurningVerdictResult

@@ -3,7 +3,8 @@
 // 커밋은 vite.config.ts가 빌드 때 __APP_COMMIT__로 넣는다(Vercel 커밋 변수 → git → unknown).
 declare const __APP_COMMIT__: string | undefined
 
-export const APP_BASE_VERSION = '0.3.0-demo'
+// 0.3.1-demo(2026-11-10): 계산 답 채점 규칙 가(학생 값을 다시 절사하지 않음)부터. judgeEngineVersion은 0.1.0 그대로라 규칙은 이 판으로 가른다
+export const APP_BASE_VERSION = '0.3.1-demo'
 const MAX = 64
 
 /** 커밋을 모르면 숨기지 않고 'unknown'으로 드러낸다 */

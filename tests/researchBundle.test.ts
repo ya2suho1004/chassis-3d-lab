@@ -161,6 +161,7 @@ describe('설명서와 건수 대조', () => {
     const b = await bundle([])
     const readme = file(b, 'README.txt')
     for (const w of ['연구자 전용', '대응표', '대표 수행', 'AI 대화', '빈 칸', '철회']) expect(readme).toContain(w)
+    for (const w of ['0.3.1-demo', '다시 절사하지 않고', 'judgeEngineVersion은 둘 다 0.1.0']) expect(readme).toContain(w)
     expect(b.counts).toMatchObject({ received: 0, usable: 0, problem: 0 })
   })
 

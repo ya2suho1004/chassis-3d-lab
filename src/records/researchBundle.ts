@@ -108,10 +108,10 @@ function readme(input: BundleInput, c: BundleCounts, payloads: RecordPayload[]):
     researchEligible: '과제·기준·배치·연구사용 승인이 모두 있고 research이며 완료·NPC 통과일 때만 true. 기관 승인·동의를 대신하지 않는다', completionStatus: 'completed 완료, aborted 중단', retryOfRecordId: '다시 한 수행이면 앞 수행 번호', retryCount: '다시 한 횟수',
     displayMode: '처음 화면 방식(threeD, diagram)', experiencedDisplayModes: '겪은 화면 방식(|로 구분)', startedAt: '시작 시각(UTC, 기기 시계)', completedAt: '확정 시각(UTC, 기기 시계)', durationSeconds: '마지막 사건까지 경과 초. completedAt−startedAt이 아니다',
     pauseCount: '멈춤 횟수', resumeCount: '이어 하기 횟수', timeQuality: '시간 품질(continuous 연속, resumed 이어 함, uncertain 불확실)',
-    taskDefinitionVersion: '과제 정의 판', rulesetVersion: '판정 기준 판', measurementSetVersion: '측정값 묶음 판', layoutVersion: '배치 판', judgeEngineVersion: '판정 엔진 판', sessionConfigVersion: '세션 설정 판', researchProtocolVersion: '연구 절차 판', feedbackPolicyVersion: '피드백 정책 판',
+    taskDefinitionVersion: '과제 정의 판', rulesetVersion: '판정 기준 판', measurementSetVersion: '측정값 묶음 판', layoutVersion: '배치 판', judgeEngineVersion: '판정 엔진 판. 계산 채점 규칙 변경(2026-11-10)은 이 판이 아니라 clientAppVersion으로 가른다(읽는 규칙 참고)', sessionConfigVersion: '세션 설정 판', researchProtocolVersion: '연구 절차 판', feedbackPolicyVersion: '피드백 정책 판',
     errorCount: '비안전 학습 오류 수', errorTypes: '오류 종류:횟수', safetyViolationCount: '안전 위반 수', safetyViolationTypes: '안전 위반 종류:횟수', hintCount: '학생이 요청한 힌트 수. 자동 피드백은 세지 않는다(사건 표의 feedbackShown)',
     vehicleVerdict: '기준으로 계산한 실제 차량 판정(pass/fail). 학생 답이 아니다', judgmentCorrect: '판정 항목의 최초 답이 모두 정답이면 true', firstCorrectCount: '최초 답 정답 항목 수', finalCorrectCount: '최종 답 정답 항목 수', requiredCount: '응답 항목 수', unansweredFirstCount: '최초 답이 채점되지 않은 항목 수',
-    npcInspectionResult: '마지막 NPC 검사(passed, needsCorrection, notCompleted)', npcInspectionCount: 'NPC 검사 횟수', eventCount: '사건 수', clientAppVersion: '앱 판',
+    npcInspectionResult: '마지막 NPC 검사(passed, needsCorrection, notCompleted)', npcInspectionCount: 'NPC 검사 횟수', eventCount: '사건 수', clientAppVersion: '앱 판(기본 판+빌드 커밋). 0.3.1-demo부터 계산 답을 다시 절사하지 않고 채점',
     localSaveStatus: '기기 저장 상태', uploadStatus: '전송 상태. 학습 성과와 무관', uploadedAt: '서버 접수 시각', receiptId: '접수번호. 내용 접수 확인일 뿐 신원·정답·적격의 증명이 아니다', payloadHash: '원본 해시(JCS+SHA-256)',
   }
   return [
@@ -136,6 +136,7 @@ function readme(input: BundleInput, c: BundleCounts, payloads: RecordPayload[]):
     '[읽는 규칙]',
     '- 대표 수행을 고르지 않았다. 다시 한 수행과 중단 기록도 모두 들어 있다. 어느 수행을 분석할지는 연구 규칙으로 정한다(마지막·최고 수행을 자동으로 쓰지 않는다).',
     '- 빈 칸은 값이 없다는 뜻(null)이다. 0이나 오답이 아니다.',
+    '- 계산 답(편차·합·최소회전반경) 채점 규칙은 앱 판(clientAppVersion) 0.3.1-demo부터 바뀌었다: 학생 값을 다시 절사하지 않고 기준값과 그대로 비교한다(예: 기준 6.6에 6.69는 오답). 0.3.0-demo는 학생 값을 절사한 뒤 비교했다(6.69도 정답). judgeEngineVersion은 둘 다 0.1.0이라 이 열로는 가를 수 없다. 이어 하기로 이어진 수행은 처음 시작한 판이 남아 한 수행 안에 두 규칙이 섞일 수 있다. 계산 정오는 firstInput·finalInput으로 다시 채점할 수 있지만 errorTypes의 calc, answerSubmitted의 INCORRECT, feedbackShown, NPC 검사 결과는 다시 만들 수 없다.',
     '- 작은따옴표로 시작하는 칸은 스프레드시트 수식 실행을 막으려고 붙인 것이다. = + - @ 로 시작하는 값에 붙는다. 원래 값은 records.jsonl에 있다.',
     '- AI 대화는 들어 있지 않다. 대화 기록은 교사 화면의 대화 기록 CSV로 따로 받는다.',
     '- 시각은 UTC다. 한국 시각은 9시간을 더한다.', '',
