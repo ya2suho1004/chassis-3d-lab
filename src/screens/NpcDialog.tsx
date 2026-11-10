@@ -59,7 +59,7 @@ export function NpcDialog({ near, running, taskTitle, taskId, nickname, aiAvaila
                 setBusy(true)
                 const err = await onReceive()
                 setBusy(false)
-                if (!err) setAfter('좋아. 작업 순서는 오른쪽 위에 보여. 안전 수칙 꼭 지키고!')
+                if (!err) setAfter('좋아. 작업 순서는 작업 목록에서 확인해. 안전 수칙 꼭 지키고!')
               }}>과제 받기</button>
               <button onClick={onClose}>조금 더 둘러볼게요</button>
             </>

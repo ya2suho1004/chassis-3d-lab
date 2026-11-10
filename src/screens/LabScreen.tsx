@@ -378,7 +378,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               {run && ctx && <p key={fx.effects.includes('checkPop') ? fx.seq : 'p'} className={`g-progress ${fx.effects.includes('checkPop') ? 'pop' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
               <div className="g-quest-btns">
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
-                <button onClick={() => goTo(npcSpot)}>교관에게</button>
+                <button onClick={() => { setTalkOnArrive(true); goTo(npcSpot) }}>교관에게</button>
                 {navTargets.map((e) => <button key={e.id} onClick={() => goTo(e.accessPoint!)}>{e.label.replace(/\(.*\)/, '').trim()}</button>)}
               </div>
             </div>}
