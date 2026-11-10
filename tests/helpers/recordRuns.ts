@@ -18,19 +18,25 @@ export const step = (r: TaskRun, s: string) => attempt(r, { type: 'step', stepId
 export const safe = (r: TaskRun, c: string) => attempt(r, { type: 'confirmSafety', conditionId: c }, id()).run
 export const answer = (r: TaskRun, item: string, v: string) => submitResponse(r, item, v, id()).run
 
+/** 목표 단계에 실제로 도착했는지 확인한다(자료가 바뀌어 막히면 엉뚱한 상태로 조용히 지나가지 않게) */
+const reached = (r: TaskRun, stepId: string): TaskRun => {
+  if (!r.completedSteps.includes(stepId)) throw new Error(`시험 도우미: ${stepId} 단계까지 가지 못함(${r.completedSteps.join(',')})`)
+  return r
+}
+
 /** 제동력: 차량 진입(enter)까지 */
 export function brakeToEnter(mode: DifficultyMode = 'guided'): TaskRun {
   let r = createTaskRun(brake, { difficultyMode: mode }, deps)
   r = safe(step(r, 'ppe'), 's-engine')
   for (const s of ['tire', 'equip', 'enter']) r = step(r, s)
-  return r
+  return reached(r, 'enter')
 }
 /** 제동력: 페달(press)까지(축중은 600으로 적음) */
 export function brakeToPress(mode: DifficultyMode = 'guided'): TaskRun {
   let r = step(answer(brakeToEnter(mode), 'axleWeight', '600'), 'axle')
   r = safe(step(r, 'mode'), 's-lift')
   for (const s of ['lower', 'motor', 'press']) r = step(r, s)
-  return r
+  return reached(r, 'press')
 }
 /** 제동력: 차량 빼기(off)까지(좌 240·우 200으로 적음) */
 export function brakeToOff(mode: DifficultyMode = 'guided'): TaskRun {
@@ -38,17 +44,17 @@ export function brakeToOff(mode: DifficultyMode = 'guided'): TaskRun {
   r = attempt(r, { type: 'subStep', stepId: 'off', action: 'motorOff' }, id()).run
   r = safe(r, 's-lift')
   r = attempt(r, { type: 'subStep', stepId: 'off', action: 'liftUp' }, id()).run
-  return attempt(r, { type: 'subStep', stepId: 'off', action: 'exitVehicle' }, id()).run
+  return reached(attempt(r, { type: 'subStep', stepId: 'off', action: 'exitVehicle' }, id()).run, 'off')
 }
 /** 최소회전반경: 조향(steer)까지 */
 export function turnToSteer(mode: DifficultyMode = 'guided'): TaskRun {
   let r = createTaskRun(turn, { difficultyMode: mode }, deps)
   for (const s of ['ppe', 'engineOff', 'turntable', 'direction', 'steer']) r = step(r, s)
-  return r
+  return reached(r, 'steer')
 }
 /** 최소회전반경: 직진 복귀(return)까지(조향각은 받은 값으로 적음) */
 export function turnToReturn(mode: DifficultyMode, left: string, right: string): TaskRun {
-  return step(step(answer(answer(turnToSteer(mode), 'leftAngle', left), 'rightAngle', right), 'read'), 'return')
+  return reached(step(step(answer(answer(turnToSteer(mode), 'leftAngle', left), 'rightAngle', right), 'read'), 'return'), 'return')
 }
 /** 과제 패널(작업 목록·기본 화면)을 서버 없이 그린다. 기록 창 자리는 넘기지 않는다 */
 export function renderPanel(run: TaskRun): string {

@@ -1,7 +1,8 @@
 // 기록 창 규칙(설계 2026-11-10 §2·§3·§5·§7·§8): 칸·이름·열림·복원·표시·다시 보기·창 크기·스크롤
 import { describe, expect, test } from 'vitest'
 import { canReviewDial, itemOpen, markFor, missingText, recordItems, recordLabel, recordStepOf, recordWindowBox, restoreInputs, scrollDelta } from '../src/app/recordSteps'
-import { answer, brake, brakeToEnter, brakeToPress, turn, turnToReturn, turnToSteer } from './helpers/recordRuns'
+import { createResponseSheet } from '../src/domain/grading'
+import { answer, brake, brakeToEnter, brakeToOff, brakeToPress, turn, turnToReturn, turnToSteer } from './helpers/recordRuns'
 
 describe('기록 단계·칸·이름', () => {
   test('기록 단계에만 이름이 있다', () => {
@@ -33,6 +34,12 @@ describe('칸이 열리는 때', () => {
     expect(itemOpen(t, 'leftAngle', false)).toBe(true)
     expect(itemOpen(t, 'radius', false)).toBe(false)
   })
+  test('계산 칸은 차량 빼기 뒤, 반경 칸은 직진 복귀 뒤에 열린다', () => {
+    const r = brakeToOff()
+    for (const id of ['deviation', 'sum', 'vehicleCondition']) expect(itemOpen(r, id, false)).toBe(true)
+    const t = turnToReturn('guided', '35', '30')
+    for (const id of ['radius', 'vehicleCondition']) expect(itemOpen(t, id, false)).toBe(true)
+  })
   test('제동력 좌·우는 페달 뒤에도 최대값이 고정돼야 열린다', () => {
     const r = brakeToPress()
     expect(itemOpen(r, 'left', false)).toBe(false)
@@ -41,6 +48,18 @@ describe('칸이 열리는 때', () => {
 })
 
 describe('값 복원·칸 표시', () => {
+  test('안내 없음: 마지막 최초 답이 저장되는 순간 ✓·✗로 바뀐다(판정 칸 포함)', () => {
+    const sheet = createResponseSheet(brake)
+    const refOf = (id: string) => String(sheet.items.find((i) => i.itemId === id)!.referenceValue)
+    let r = answer(answer(brakeToOff('unguided'), 'deviation', '99.9'), 'sum', refOf('sum'))
+    expect(markFor(r, 'deviation')).toEqual({ text: '저장', cls: '' })
+    expect(markFor(r, 'vehicleCondition')).toEqual({ text: '', cls: '' })
+    r = answer(r, 'vehicleCondition', sheet.vehicleVerdict!)
+    expect(markFor(r, 'deviation')).toEqual({ text: '✗', cls: 'bad' })
+    expect(markFor(r, 'sum')).toEqual({ text: '✓', cls: 'ok' })
+    expect(markFor(r, 'vehicleCondition')).toEqual({ text: '✓', cls: 'ok' })
+    expect(markFor(r, 'axleWeight')).toEqual({ text: '✓', cls: 'ok' })
+  })
   test('제출한 최종 답만 채우고, 판정은 고른 값으로 채운다', () => {
     expect(restoreInputs(answer(answer(brakeToEnter(), 'axleWeight', '610'), 'axleWeight', '600'))).toEqual({ axleWeight: '600' })
     const t = answer(turnToReturn('guided', '35', '30'), 'vehicleCondition', 'pass')

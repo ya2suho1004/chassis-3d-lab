@@ -17,7 +17,7 @@ const RECORD_LABEL: Record<string, string> = {
 const stepById = (task: ApprovedTask, stepId: string) => task.steps.find((s) => s.stepId === stepId)
 
 /** 기록 단계의 칸. 기록 단계가 아니면 빈 배열 */
-export function recordItems(task: ApprovedTask, stepId: string): string[] {
+export function recordItems(task: ApprovedTask, stepId: string): readonly string[] {
   const st = stepById(task, stepId)
   return st ? responseItemsOf(st) : []
 }
@@ -75,6 +75,7 @@ export function missingText(label: string, typed: boolean): string {
 
 /** 창 위치·최대 높이(§8): 보이는 화면(visualViewport)을 따른다. 없으면 innerHeight */
 export function recordWindowBox(vv: { height: number; offsetTop: number } | null, innerHeight: number): { top: number; maxHeight: number } {
+  // 160px 하한: 보이는 높이가 아주 작거나 0이어도 창이 사라지지 않게 한다. 키보드를 띄운 폰 가로처럼 보이는 높이가 176px보다 작으면 창이 화면 아래로 조금 넘친다(받아들인 한계)
   const height = vv ? vv.height : innerHeight
   return { top: Math.round((vv ? vv.offsetTop : 0) + 8), maxHeight: Math.max(160, Math.round(height - 16)) }
 }

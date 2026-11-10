@@ -119,7 +119,7 @@ const RESPONSE_REQUIREMENTS: Record<string, string[]> = {
 }
 
 /** 단계의 완료 조건이 요구하는 응답 칸. 기록 창·고치기도 이 정의를 쓴다(설계 2026-11-10 §2) */
-export function responseItemsOf(step: Pick<TaskStep, 'completionCondition'>): string[] {
+export function responseItemsOf(step: Pick<TaskStep, 'completionCondition'>): readonly string[] {
   return RESPONSE_REQUIREMENTS[step.completionCondition] ?? []
 }
 
