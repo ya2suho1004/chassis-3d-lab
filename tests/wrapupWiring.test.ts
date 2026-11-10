@@ -22,6 +22,8 @@ describe('작은 흐름 수정(§6)', () => {
   })
   test('의뢰 카드의 교관에게: 걸어간 뒤 대화가 열린다', () => {
     const lab = read('src/screens/LabScreen.tsx')
-    expect(lab).toContain('<button onClick={() => { setTalkOnArrive(true); goTo(npcSpot) }}>교관에게</button>')
+    expect(lab).toContain('<button onClick={() => goTo(npcSpot, true)}>교관에게</button>')
+    expect(lab).toContain('onGoToNpc={() => { setNpcOpen(false); goTo(npcSpot, true) }}')
+    expect(lab).toContain('const goTo = (p: Pt, talk = false) => { setTalkOnArrive(talk); moveRequestRef.current = p }')
   })
 })
