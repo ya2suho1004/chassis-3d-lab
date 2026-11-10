@@ -2,17 +2,23 @@
 // ‘핸들 끝까지 돌림’(steer)을 마친 뒤 ‘직진으로 되돌림’(return) 전까지 앞바퀴가 사례 각도만큼 꺾여 있다.
 // 각도는 부호 있음: + = 차의 왼쪽으로 꺾임(위에서 볼 때 시계 반대, three.js rotation.y +).
 import type { TaskRun } from '../domain/taskEngine'
+import type { ApprovedTask } from '../domain/types'
 
 export interface TurningRig { leftDeg: number; rightDeg: number }
 export const STRAIGHT: TurningRig = { leftDeg: 0, rightDeg: 0 }
 
-export function turningRigState(run: TaskRun | null): TurningRig {
-  if (!run || run.task.taskId !== 'min-turning-radius') return STRAIGHT
-  const m = run.task.measurement
-  const steered = run.completedSteps.includes('steer') && !run.completedSteps.includes('return')
-  if (!steered || (m.turnDirection !== 'left' && m.turnDirection !== 'right')) return STRAIGHT
+/** 핸들을 끝까지 돌린 상태의 앞바퀴 각도(측정 당시). 회전 방향이 없으면 직진. 기록 창의 '측정 당시 눈금 다시 보기'도 이 값을 쓴다 */
+export function steeredRig(task: ApprovedTask): TurningRig {
+  const m = task.measurement
+  if (m.turnDirection !== 'left' && m.turnDirection !== 'right') return STRAIGHT
   const s = m.turnDirection === 'left' ? 1 : -1
   return { leftDeg: s * (m.leftAngleDeg ?? 0), rightDeg: s * (m.rightAngleDeg ?? 0) }
+}
+
+export function turningRigState(run: TaskRun | null): TurningRig {
+  if (!run || run.task.taskId !== 'min-turning-radius') return STRAIGHT
+  const steered = run.completedSteps.includes('steer') && !run.completedSteps.includes('return')
+  return steered ? steeredRig(run.task) : STRAIGHT
 }
 
 /** K3 모델(build_k3.py) 앞바퀴 중심의 모델 좌표(x, z). 모델 앞은 −z, 왼쪽은 −x */
