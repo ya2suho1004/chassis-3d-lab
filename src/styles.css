@@ -518,3 +518,4 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .tt-dial svg { display:block; width:100%; height:auto; }
 .tt-review { margin:4px 0 10px; }
 .field .flabel { font-weight:600; }
+.fb-fix { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 0; }

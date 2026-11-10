@@ -18,8 +18,9 @@ import { FeedbackBox } from './FeedbackBox'
 
 const newId = () => newUuid()
 
-/** focusItem: 이 안내가 가리키는 기록 칸(값이 필요한 단계). 있으면 그 칸으로 가는 버튼을 보인다 */
-export type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string; focusItem?: string }
+/** focusItem: 이 안내가 가리키는 기록 칸(값이 필요한 단계). 있으면 그 칸으로 가는 버튼을 보인다.
+ *  fixItems: 다시 확인할 칸들(설계 2026-11-10 §6). 칸마다 고치기 버튼을 보인다 */
+export type Shown = { kind: 'safety' | 'explanatory' | 'hint' | 'guidance'; title: string; text: FeedbackText | null; plain?: string; focusItem?: string; fixItems?: string[] }
 
 /** 단계 하나에서 누를 수 있는 버튼(목록과 게임 화면 행동 버튼이 같은 것을 쓴다) */
 export interface TaskAction { key: string; label: string; onClick: () => void; disabled?: boolean; cls?: string }

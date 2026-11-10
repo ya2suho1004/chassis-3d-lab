@@ -25,6 +25,13 @@ describe('안내 상자', () => {
     expect(renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown, onClose: () => {} }))).toMatch(/aria-label="안내 닫기"/)
     expect(renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown }))).not.toMatch(/안내 닫기/)
   })
+  test('다시 확인할 항목 안내에는 항목마다 고치기 버튼이 있다(처리 함수가 있을 때만)', () => {
+    const shown = { kind: 'explanatory' as const, title: '최초 응답이 모두 저장되었습니다', text: null, plain: '다시 확인할 항목: 좌측 바퀴 조향각.', fixItems: ['leftAngle', 'radius'] }
+    const h = renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown, onFix: () => {} }))
+    expect(h).toContain('>고치기: 좌측 바퀴 조향각</button>')
+    expect(h).toContain('>고치기: 최소회전반경(m)</button>')
+    expect(renderToStaticMarkup(createElement(FeedbackBox, { className: 'x', shown }))).not.toContain('고치기')
+  })
 })
 
 describe('칸으로 이동', () => {
