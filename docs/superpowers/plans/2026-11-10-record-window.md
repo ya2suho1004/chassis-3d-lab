@@ -2438,6 +2438,8 @@ moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recor
         <div className="g-recordhost" ref={setRecordHost} />
 ```
 
+(12) 조작 안내(처음 한 번 뜨는 안내)가 기록 창 위에 뜨지 않게. 바꿀 곳: `{loadedOnce && guideOpen && !talking && (` → 바꾼 글: `{loadedOnce && guideOpen && !talking && !recording && (`
+
 **`src/app/hudLayout.ts`** — `HUD_EXCLUDED`의 `'.g-more': '대화 말풍선 안의 넘기기 표시',` 줄 아래에 더한다.
 
 ```ts
