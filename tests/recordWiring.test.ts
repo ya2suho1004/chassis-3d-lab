@@ -52,3 +52,16 @@ describe('과제 패널의 기록 창(§3)', () => {
     expect(task).toContain('창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.')
   })
 })
+
+describe('3D 장면 걷기 멈춤(§3.3)', () => {
+  const scene = read('src/scene/LabScene.tsx')
+  test('창이 열리면 가던 길과 이동 요청을 버리고 조이스틱을 무시한다', () => {
+    expect(scene).toMatch(/holdStill\?: boolean/)
+    expect(scene).toMatch(/if \(holdStill\) \{\n\s+requestRef\.current = null\n\s+if \(pathRef\.current\) \{ pathRef\.current = null; onMove\(posRef\.current, false\) \}/)
+    expect(scene).toMatch(/const mag = j && !frozen && !holdStill \? Math\.hypot\(j\.x, j\.y\) : 0/)
+    expect(scene).toMatch(/<Walker [^\n]*frozen=\{camBusy\} holdStill=\{holdStill\}/)
+  })
+  test('학생 모습은 숨기지 않는다(숨김은 대화·확대 때의 frozen만)', () => {
+    expect(scene).toMatch(/<group visible=\{!frozen && view !== 'first'\}>/)
+  })
+})
