@@ -15,6 +15,8 @@ import type { PanelReadout } from '../scene/panelReadout'
 import { TURNING_TASK_ID } from '../domain/grading'
 import { focusResponse, responseInputId } from '../app/focusResponse'
 import { FeedbackBox } from './FeedbackBox'
+import { itemOpen, markFor, missingText, recordLabel, restoreInputs } from '../app/recordSteps'
+import { NumberField, type FieldIo } from './RecordFields'
 
 const newId = () => newUuid()
 
@@ -155,8 +157,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     }
   }
   const [shown, setShown] = useState<Shown | null>(null)
-  const [inputs, setInputs] = useState<Record<string, string>>({})
-  const [graded, setGraded] = useState<Record<string, boolean | null>>({})
+  // 제출한 값은 수행 기록에서 다시 채운다(화면 전환·이어서 하기, 설계 2026-11-10 §7). 사건은 만들지 않는다
+  const [inputs, setInputs] = useState<Record<string, string>>(() => restoreInputs(initialRun))
   const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[]; answersLocked: boolean } | null>(null)
   const [action, setAction] = useState('')
 
@@ -168,8 +170,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const done = (id: string) => run.completedSteps.includes(id)
   const guidance = guidanceFor(run)
   const showMarks = answerFeedbackAllowed(run)
-  const mark = (id: string) => (!showMarks ? (graded[id] !== undefined ? '저장' : '') : graded[id] === true ? '✓' : graded[id] === false ? '✗' : '')
-  const markClass = (id: string) => (!showMarks ? '' : graded[id] === true ? 'ok' : graded[id] === false ? 'bad' : '')
+  // 칸 표시는 수행 기록의 최종 답에서 읽는다(설계 §7) — 안내 없음은 최초 답이 다 모이기 전까지 '저장'만
+  const mark = (id: string) => markFor(run, id).text
+  const markClass = (id: string) => markFor(run, id).cls
 
   const show = (r: TaskRun, s: Shown, feedbackKey: string | null, itemId?: string) => {
     // 실제로 화면에 표시한 직후에만 feedbackShown을 기록한다 (읽음 증거 아님)
@@ -189,7 +192,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     }
     if (res.outcome === 'incomplete') {
       const item = res.reasonCode?.replace('NEEDS_RESPONSE_', '') ?? ''
-      return setShown({ kind: 'guidance', title: '이 단계를 끝내려면 값을 먼저 입력하세요', text: null, plain: `${ITEM_LABEL[item] ?? item} 입력이 필요합니다.`, focusItem: item })
+      return setShown({ kind: 'guidance', title: '이 단계를 끝내려면 값을 먼저 입력하세요', text: null, plain: missingText(ITEM_LABEL[item] ?? item, !!inputs[item]?.trim()), focusItem: item })
     }
     setRun(res.run)
   }
@@ -218,7 +221,6 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     const res = submitResponse(run, itemId, raw, newId())
     if (res.outcome === 'ignored') return setShown({ kind: 'guidance', title: '값을 입력하세요', text: null, plain: `${ITEM_LABEL[itemId]} 칸이 비어 있습니다.` })
     if (res.outcome === 'invalid') return show(res.run, { kind: 'explanatory', title: '입력 형식 오류', text: null, plain: res.reasonCode === 'FORMAT_INTEGER_REQUIRED' ? (isTurning ? '정수만 입력합니다 (예: 30).' : '정수만 입력합니다 (예: 240).') : '숫자만 입력합니다 (예: 6.6).' }, null)
-    setGraded((g) => ({ ...g, [itemId]: res.grading?.correct ?? null }))
     // 무안내 모드: 필수 응답 6개의 최초 답이 모두 저장되기 전에는 정오를 알려 주지 않는다(feedbackPolicy, 제안 상태)
     if (!answerFeedbackAllowed(res.run)) {
       setRun(res.run)
@@ -255,7 +257,17 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const rise = useCountUp(done('press'))
   const shownL = m.left === null ? null : Math.round(m.left * rise)
   const shownR = m.right === null ? null : Math.round(m.right * rise)
-  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${shownL}   R ${shownR}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') && rise >= 1 }
+  // measuring: 페달 뒤 숫자가 올라가는 동안. 좌·우 칸을 닫아 둔다(설계 §2, Codex 지적 9)
+  const gauge = { axle: done('enter') ? `${m.axleWeight} ${m.unit}` : '---', lr: done('press') ? `L ${shownL}   R ${shownR}  (${m.unit})` : done('motor') ? '측정 대기 — 페달을 밟으세요' : '---', hold: done('press') && rise >= 1, measuring: done('press') && rise < 1 }
+  /** 작업 목록(서랍·기본 화면) 칸. 기록 창과 같은 값·제출 함수를 쓴다(설계 §9) */
+  const listIo: FieldIo = {
+    value: (id) => inputs[id] ?? '',
+    change: (id, v) => setInputs((cur) => ({ ...cur, [id]: v })),
+    submit: (id) => submit(id),
+    mark: (id) => markFor(run, id),
+    open: (id) => itemOpen(run, id, gauge.hold),
+    idOf: (id) => responseInputId(id),
+  }
 
   const actionsFor = (stepId: string): TaskAction[] => {
     const out: TaskAction[] = []
@@ -269,7 +281,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       }
     } else {
       const far = needsMove(stepId)
-      out.push({ key: 'do', label: far ? '이동 필요' : '수행', onClick: () => doStep(stepId), cls: far ? 'far' : '' })
+      out.push({ key: 'do', label: far ? '이동 필요' : recordLabel(task, stepId) ?? '수행', onClick: () => doStep(stepId), cls: far ? 'far' : '' })
     }
     return out
   }
@@ -346,14 +358,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
             <div><span>우측 바퀴</span><b>{done('steer') && !done('return') ? `${m.rightAngleDeg}°` : '0°'}</b></div>
           </div>
           <h3>판독 입력 (정수, °)</h3>
-          {(['leftAngle', 'rightAngle'] as const).map((id) => (
-            <div className="field" key={id}>
-              <label>{ITEM_LABEL[id]}</label>
-              <input id={responseInputId(id)} inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={!done('steer')} aria-label={ITEM_LABEL[id]} />
-              <button onClick={() => submit(id)} disabled={!done('steer')}>입력</button>
-              <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
-            </div>
-          ))}
+          {(['leftAngle', 'rightAngle'] as const).map((id) => <NumberField key={id} itemId={id} io={listIo} />)}
 
           <h3>시험 결과 기록표 (섀시 5 — 최소회전반경)</h3>
           <table className="sheet">
@@ -378,17 +383,12 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
             <div><span>AXLE Load</span><b>{gauge.axle}</b></div>
             <div><span>BRAKE L / R</span><b>{gauge.lr}</b></div>
             {gauge.hold && <div><span>MAX HOLD</span><b>최대값 고정</b></div>}
+            {gauge.measuring && <div><span>MAX HOLD</span><b>측정 중…</b></div>}
           </div>
           {gauge.hold && <p className="small">임시 표시: 실제 장비의 값 고정 방식은 수리 후 확인 예정(U1). 지금은 페달을 끝까지 밟으면 최대값이 자동으로 고정된다고 가정합니다.</p>}
           <h3>판독 입력 (정수, {m.unit})</h3>
-          {(['axleWeight', 'left', 'right'] as const).map((id) => (
-            <div className="field" key={id}>
-              <label>{ITEM_LABEL[id]}</label>
-              <input id={responseInputId(id)} inputMode="numeric" value={inputs[id] ?? ''} onChange={(e) => setInputs({ ...inputs, [id]: e.target.value })} disabled={id === 'axleWeight' ? !done('enter') : !done('press')} aria-label={ITEM_LABEL[id]} />
-              <button onClick={() => submit(id)} disabled={id === 'axleWeight' ? !done('enter') : !done('press')}>입력</button>
-              <span className={`mark ${markClass(id)}`}>{mark(id)}</span>
-            </div>
-          ))}
+          {(['axleWeight', 'left', 'right'] as const).map((id) => <NumberField key={id} itemId={id} io={listIo} />)}
+          {gauge.measuring && <p className="small">좌·우 값은 최대값이 고정되면 적을 수 있습니다.</p>}
 
           <h3>시험 결과 기록표 (섀시 5)</h3>
           <table className="sheet">

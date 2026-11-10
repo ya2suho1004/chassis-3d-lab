@@ -62,7 +62,9 @@ describe('화면 연결', () => {
     expect(css).toMatch(/\.panel-feedback \{ position:sticky; top:0;/)
   })
   test('모든 기록 칸에 이동용 번호가 있다', () => {
-    expect(task.match(/id=\{responseInputId\(id\)\}/g)?.length).toBe(2)
+    // 판독 칸은 공용 칸(RecordFields)이 io.idOf로 번호를 단다(설계 2026-11-10 §9)
+    expect(task).toMatch(/idOf: \(id\) => responseInputId\(id\)/)
+    expect(task.match(/<NumberField key=\{id\} itemId=\{id\} io=\{listIo\} \/>/g)?.length).toBe(2)
     for (const item of ['radius', 'deviation', 'sum']) expect(task).toContain(`id={responseInputId('${item}')}`)
     expect(task.match(/id=\{responseInputId\('vehicleCondition'\)\}/g)?.length).toBe(2)
   })
