@@ -671,6 +671,7 @@ describe('기록 칸', () => {
     expect(h).toContain('<label for="rec-axleWeight">축중</label>')
     expect(h).toMatch(/id="rec-axleWeight" inputMode="numeric"[^>]*value="600"/)
     expect(h).toMatch(/>입력<\/button>/)
+    expect(h).toContain('<button type="button">입력</button>')
     expect(h).toContain('<span class="mark ">저장</span>')
     expect(h).not.toMatch(/<form/)
   })
@@ -687,6 +688,8 @@ describe('기록 칸', () => {
     expect(h.match(/name="rec-verdict"/g)?.length).toBe(2)
     expect(h).toContain('id="rec-vehicleCondition"')
     expect(h).toMatch(/checked=""[^>]*\/> 불량/)
+    expect(h).toContain('role="radiogroup" aria-label="판정"')
+    expect(h).not.toMatch(/checked=""[^>]*\/> 양호/)
   })
 })
 ```
@@ -721,11 +724,17 @@ export const recordInputId = (itemId: string) => responseInputId(itemId, 'rec-')
 import { ITEM_LABEL } from '../app/resultLabels'
 
 export interface FieldIo {
+  /** 칸에 보일 글자 */
   value: (itemId: string) => string
+  /** 칸 글자 바꾸기 */
   change: (itemId: string, v: string) => void
+  /** 제출(입력 버튼) */
   submit: (itemId: string) => void
+  /** 칸 옆 표시 글자·클래스 */
   mark: (itemId: string) => { text: string; cls: string }
+  /** 칸이 열렸는가(선행 단계·최대값 고정) */
   open: (itemId: string) => boolean
+  /** 칸 id(서랍 resp-·창 rec-) */
   idOf: (itemId: string) => string
 }
 
@@ -737,7 +746,7 @@ export function NumberField({ itemId, io, decimal = false }: { itemId: string; i
     <div className="field">
       <label htmlFor={io.idOf(itemId)}>{label}</label>
       <input id={io.idOf(itemId)} inputMode={decimal ? 'decimal' : 'numeric'} value={io.value(itemId)} onChange={(e) => io.change(itemId, e.target.value)} disabled={!open} aria-label={label} />
-      <button onClick={() => io.submit(itemId)} disabled={!open}>입력</button>
+      <button type="button" onClick={() => io.submit(itemId)} disabled={!open}>입력</button>
       <span className={`mark ${m.cls}`}>{m.text}</span>
     </div>
   )
@@ -750,11 +759,11 @@ export function VerdictField({ io, radioName }: { io: FieldIo; radioName: string
   return (
     <div className="field">
       <span className="flabel">{ITEM_LABEL[id]}</span>
-      <span>
+      <span role="radiogroup" aria-label={ITEM_LABEL[id]}>
         <label className="radio"><input id={io.idOf(id)} type="radio" name={radioName} disabled={!open} checked={io.value(id) === 'pass'} onChange={() => io.change(id, 'pass')} /> 양호</label>
         <label className="radio"><input type="radio" name={radioName} disabled={!open} checked={io.value(id) === 'fail'} onChange={() => io.change(id, 'fail')} /> 불량</label>
       </span>
-      <button onClick={() => io.submit(id)} disabled={!open}>입력</button>
+      <button type="button" onClick={() => io.submit(id)} disabled={!open}>입력</button>
       <span className={`mark ${m.cls}`}>{m.text}</span>
     </div>
   )
