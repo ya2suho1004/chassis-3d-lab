@@ -583,7 +583,7 @@ const TICKS = Array.from({ length: 91 }, (_, i) => i - 45)
 
 export function TurningDialPicture({ side, deg, caption }: { side: 'left' | 'right'; deg: number; caption?: string }) {
   const name = side === 'left' ? '좌측 바퀴' : '우측 바퀴'
-  const a = Math.max(-48, Math.min(48, deg))
+  const a = Number.isFinite(deg) ? Math.max(-45, Math.min(45, deg)) : 0
   const p0 = dialPoint(DIAL.RP0, a), p1 = dialPoint(DIAL.RP1, a)
   return (
     <figure className="tt-dial">
