@@ -1,4 +1,5 @@
 import { ITEM_LABEL } from '../app/resultLabels'
+import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
@@ -13,9 +14,11 @@ import type { FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
 import type { PanelReadout } from '../scene/panelReadout'
 import { TURNING_TASK_ID } from '../domain/grading'
-import { focusResponse, responseInputId } from '../app/focusResponse'
+import { focusResponse, recordInputId, responseInputId } from '../app/focusResponse'
 import { FeedbackBox } from './FeedbackBox'
-import { canReviewDial, itemOpen, markFor, missingText, recordLabel, restoreInputs } from '../app/recordSteps'
+import { canReviewDial, itemOpen, markFor, missingText, recordLabel, recordStepOf, restoreInputs } from '../app/recordSteps'
+import { RecordSheet } from './RecordSheet'
+import { focusRecordField, RecordWindow, revealInBody } from './RecordWindow'
 import { steeredRig, turningRigState } from '../scene/turningRig'
 import { dialCaption, ReviewToggle, TurningDialPicture } from './TurningDialPicture'
 import { NumberField, type FieldIo } from './RecordFields'
@@ -45,6 +48,10 @@ export interface TaskContext {
   saveStatus: SaveState
   /** 지금 상태로 초안을 다시 저장(D4) */
   retrySave: () => void
+  /** 기록 창이 열려 있는지(설계 2026-11-10 §3.3) — 게임 화면이 걷기·버튼·알림을 멈춘다 */
+  recordOpen: boolean
+  /** 그 칸의 기록 창을 연다(게임 알림의 입력칸으로·고치기, §6) */
+  openRecordFor: (itemId: string) => void
 }
 
 // 항목 표시 이름은 app/resultLabels(결과 화면과 같은 이름)
@@ -74,7 +81,7 @@ function useCountUp(active: boolean, ms = 1500): number {
 
 export interface Proximity { nearIds: string[]; labelOf: (id: string) => string }
 
-export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext, initialSaveStatus = 'saved', onSaveStatus }: {
+export function TaskScreen({ repo, noRecord = false, session, initialRun, onFinish, embedded = false, proximity = null, onRunChange, onContext, initialSaveStatus = 'saved', onSaveStatus, recordHost = null, onAskAi }: {
   /** 비기록 모드: 저장 상태 대신 "기록 안 됨"을 보인다 */
   noRecord?: boolean
   repo: Repository; session: SessionContext; initialRun: TaskRun
@@ -89,6 +96,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   /** 화면 전환으로 패널이 새로 붙을 때 이어받을 저장 상태(D4) */
   initialSaveStatus?: SaveState
   onSaveStatus?: (s: SaveState) => void
+  /** 게임 화면이 주는 기록 창 자리(설계 2026-11-10). 없으면(기본 화면·도식) 창 없이 칸으로 안내한다 */
+  recordHost?: HTMLElement | null
+  /** 기록 창 머리의 AI 질문(비기록 모드는 넘기지 않는다) */
+  onAskAi?: () => void
 }) {
   const [run, setRun] = useState(initialRun)
   // 부모와 마지막으로 주고받은 run. 부모→패널 갱신과 패널→부모 알림이 서로 되돌리지 않게 한다.
@@ -166,6 +177,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const [action, setAction] = useState('')
   /** 측정 당시 눈금 다시 보기를 켰는지(설계 §5). 조건이 사라지면(각도를 고쳐 맞힘) 저절로 꺼진다 */
   const [review, setReview] = useState(false)
+  /** 열린 기록 창의 단계(설계 §3). 창을 열고 닫는 것은 기록하지 않는다 */
+  const [record, setRecord] = useState<string | null>(null)
 
   const task = run.task
   const m = task.measurement
@@ -190,17 +203,26 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     setShown(s)
   }
 
+  const openRecord = (stepId: string) => { setShown(null); setReview(false); setRecord(stepId) }
+  const closeRecord = () => { setShown(null); setReview(false); setRecord(null) }
+  /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았으면 열지 않는다. 엔진을 거치지 않아 기록이 없다 */
+  const openRecordFor = (itemId: string) => {
+    const st = recordStepOf(task, itemId)
+    if (st && itemOpen(run, itemId, true)) openRecord(st)
+  }
   const doStep = (stepId: string) => {
     const far = needsMove(stepId)
     if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
     const res = attempt(run, { type: 'step', stepId }, newId())
-    if (res.outcome === 'completed') { setRun(res.run); setShown(null); return }
+    if (res.outcome === 'completed') { setRun(res.run); setShown(null); if (record === stepId) closeRecord(); return }
     if (res.outcome === 'blocked') {
       const kind = res.reasonCode?.startsWith('SAFETY_') ? 'safety' : 'explanatory'
       return show(res.run, { kind, title: kind === 'safety' ? '안전 위반 — 진행이 막혔습니다' : '순서가 틀렸습니다', text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey)
     }
     if (res.outcome === 'incomplete') {
       const item = res.reasonCode?.replace('NEEDS_RESPONSE_', '') ?? ''
+      // 게임 화면: 칸이 빈 단계는 기록 창을 연다(엔진은 이 시도를 기록하지 않음, 설계 §3.1). 창 안에서 다시 누르면 빠진 칸을 알린다
+      if (recordHost && record !== stepId && res.reasonCode?.startsWith('NEEDS_RESPONSE_')) return openRecord(stepId)
       return setShown({ kind: 'guidance', title: '이 단계를 끝내려면 값을 먼저 입력하세요', text: null, plain: missingText(ITEM_LABEL[item] ?? item, !!inputs[item]?.trim()), focusItem: item })
     }
     setRun(res.run)
@@ -263,7 +285,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
 
   /** 고치기(설계 §6): 그 칸으로 간다 */
-  const fixItem = (itemId: string) => { focusResponse(document, itemId) }
+  const fixItem = (itemId: string) => (recordHost ? openRecordFor(itemId) : void focusResponse(document, itemId))
 
   // U1 근사(교사 허용 2026-10-27, 장비 수리 후 확인): 페달을 끝까지 밟으면 버튼 없이 최대값이 자동 고정된다고 가정. 새 버튼·성공 사건 없음
   const rise = useCountUp(done('press'))
@@ -280,6 +302,12 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     open: (id) => itemOpen(run, id, gauge.hold),
     idOf: (id) => responseInputId(id),
   }
+  /** 기록 창 칸: 작업 목록과 같은 값·제출 함수, id만 rec-(같은 화면에 함께 붙어 있어도 겹치지 않게) */
+  const recIo: FieldIo = { ...listIo, idOf: recordInputId }
+  // 창 안 안내가 새로 뜨면 창 안에서 보이게 한다(키보드를 닫으면 안내는 칸 아래에 있다, 설계 §3.2)
+  useEffect(() => {
+    if (record && shown) revealInBody(document.querySelector('.g-record .rec-feedback'))
+  }, [record, shown])
 
   const actionsFor = (stepId: string): TaskAction[] => {
     const out: TaskAction[] = []
@@ -311,10 +339,11 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       doneCount: run.completedSteps.length, total: task.steps.length,
       hint, inspect,
       saveStatus, retrySave,
+      recordOpen: record !== null, openRecordFor,
       panel: { axle: done('enter') ? m.axleWeight : null, left: done('press') ? shownL : run.motorOn ? 0 : null, right: done('press') ? shownR : run.motorOn ? 0 : null, hold: gauge.hold, unit: m.unit ?? '' },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold, saveStatus])
+  }, [run, shown, nearKey, onContext, shownL, shownR, gauge.hold, saveStatus, record, recordHost])
 
   return (
     <main className={embedded ? 'embedded task' : 'screen task'}>
@@ -431,6 +460,17 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
           </div>
         )}
       </section>
+
+      {/* 기록 창(설계 2026-11-10): 게임 화면이 준 자리에 그린다. 칸 값·제출 함수는 작업 목록과 같다 */}
+      {recordHost && record && createPortal(
+        <RecordWindow title={recordLabel(task, record) ?? '기록'} onClose={closeRecord} onAskAi={onAskAi}
+          footer={done(record) ? <button onClick={closeRecord}>닫기</button> : <button className="primary" onClick={() => doStep(record)}>단계 완료</button>}>
+          <p className="small rec-sub">{task.steps.find((s) => s.stepId === record)?.instruction}</p>
+          <RecordSheet run={run} stepId={record} io={recIo} gauge={gauge} needles={needles} reviewing={reviewing} canReview={canReview} onToggleReview={() => setReview(!reviewing)} note={action} onNote={setAction} />
+          {shown && <FeedbackBox className={`rec-feedback feedback ${shown.kind}`} shown={shown} onClose={() => { setShown(null); document.getElementById('rec-title')?.focus({ preventScroll: true }) }} onFocusItem={(id) => focusRecordField(document, id)} onFix={openRecordFor} />}
+        </RecordWindow>,
+        recordHost,
+      )}
     </main>
   )
 }
