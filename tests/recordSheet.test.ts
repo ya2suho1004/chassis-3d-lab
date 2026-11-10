@@ -3,11 +3,12 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { recordInputId } from '../src/app/focusResponse'
-import { itemOpen, markFor } from '../src/app/recordSteps'
+import { itemOpen, markFor, recordItems } from '../src/app/recordSteps'
 import type { TaskRun } from '../src/domain/taskEngine'
 import { STRAIGHT, steeredRig } from '../src/scene/turningRig'
 import type { FieldIo } from '../src/screens/RecordFields'
 import { RecordSheet, type BrakeGauge } from '../src/screens/RecordSheet'
+import { dialCaption, TurningDialPicture } from '../src/screens/TurningDialPicture'
 import { answer, brakeToEnter, brakeToOff, brakeToPress, turn, turnToReturn, turnToSteer } from './helpers/recordRuns'
 
 const io = (run: TaskRun, hold = true): FieldIo => ({ value: () => '', change: () => {}, submit: () => {}, mark: (id) => markFor(run, id), open: (id) => itemOpen(run, id, hold), idOf: recordInputId })
@@ -16,6 +17,8 @@ type SheetProps = Parameters<typeof RecordSheet>[0]
 const sheet = (run: TaskRun, stepId: string, over: Partial<SheetProps> = {}) =>
   renderToStaticMarkup(createElement(RecordSheet, { run, stepId, io: io(run), gauge, needles: STRAIGHT, reviewing: false, canReview: false, onToggleReview: () => {}, note: '', onNote: () => {}, ...over }))
 const ids = (h: string) => [...h.matchAll(/id="rec-([A-Za-z]+)"/g)].map((m) => m[1])
+
+const textOutsideSvg = (h: string) => h.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ')
 
 describe('기록 창 내용', () => {
   test('축중: 표시창과 축중 칸만', () => {
@@ -54,5 +57,37 @@ describe('기록 창 내용', () => {
     expect(h).toContain('내가 적은 조향각: 좌 34° · 우 30°')
     expect(h).toContain('sin 30° = 0.5')
     expect(ids(h)).toEqual(['radius', 'vehicleCondition'])
+  })
+})
+
+describe('연구 규칙 지킴(§4·§5)', () => {
+  test('계산: 좌·우도 내가 적은 값이고, 실제 값 계기는 없다', () => {
+    const h = sheet(answer(answer(answer(brakeToOff(), 'axleWeight', '610'), 'left', '245'), 'right', '205'), 'calc')
+    expect(h).toContain('내가 적은 값: 축중 610 · 좌 245 · 우 205 (kg)')
+    expect(h).not.toContain('AXLE Load')
+    expect(h).not.toContain('BRAKE')
+    expect(h).not.toMatch(/\b(600|240|200)\b/)
+  })
+  test('조향각: 그림 밖 글자·aria-label에 숫자가 없고, 바퀴마다 제 바늘', () => {
+    const rig = steeredRig(turn)
+    const h = sheet(turnToSteer(), 'read', { needles: rig })
+    expect(textOutsideSvg(h)).not.toMatch(/\d/)
+    expect(h).not.toMatch(/aria-label="[^"]*\d/)
+    for (const side of ['left', 'right'] as const)
+      expect(h).toContain(renderToStaticMarkup(createElement(TurningDialPicture, { side, deg: side === 'left' ? rig.leftDeg : rig.rightDeg, caption: dialCaption(side, false) })))
+  })
+  test('반경: 두 조향각 모두 내가 적은 값, 산출 근거·창 라디오 이름', () => {
+    const h = sheet(turnToReturn('guided', '34', '31'), 'record')
+    expect(h).toContain('내가 적은 조향각: 좌 34° · 우 31°')
+    expect(h).toContain('산출 근거')
+    expect(h.match(/name="rec-verdict"/g)?.length).toBe(2)
+  })
+  test('창의 칸은 엔진 정의와 같다(§2)', () => {
+    const cases: Array<[TaskRun, string]> = [[brakeToEnter(), 'axle'], [brakeToPress(), 'read'], [brakeToOff(), 'calc'], [turnToSteer(), 'read'], [turnToReturn('guided', '35', '30'), 'record']]
+    for (const [r, s] of cases) expect(ids(sheet(r, s))).toEqual([...recordItems(r.task, s)])
+  })
+  test('기록 단계가 아니거나 모르는 단계면 그리지 않는다', () => {
+    expect(sheet(brakeToEnter(), 'ppe')).toBe('')
+    expect(sheet(brakeToEnter(), 'nope')).toBe('')
   })
 })
