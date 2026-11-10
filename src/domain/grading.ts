@@ -1,7 +1,7 @@
 // 응답 채점 — 판독(measurement)·계산(calculation)·판정(judgment)의 최초/최종 답 보존
 // 원칙(docs/design/docs/04 §5~6): 제출된 응답만 기록한다. 미입력은 null이며 0이나 오답으로 바꾸지 않는다.
 // 최초 답은 이후 정정으로 덮어쓰지 않는다. judgmentCorrect는 판정 항목의 최초 답이 모두 정답일 때만 true.
-import { applyPrecision, calculateVehicleVerdict, type DecisionPrecision, type VehicleVerdictResult } from './judge'
+import { calculateVehicleVerdict, type DecisionPrecision, type VehicleVerdictResult } from './judge'
 import { calculateTurningVerdict, type TurningVerdictResult } from './turningJudge'
 import type { ApprovedTask, RequiredResponseItem, ResponseKind } from './types'
 
@@ -113,16 +113,11 @@ function parseNumeric(raw: string, policy: string | null): { value: number } | {
   return { value: Number(raw) }
 }
 
-function gradeNumeric(item: ResponseItemState, value: number, precision: DecisionPrecision | null): boolean | null {
+function gradeNumeric(item: ResponseItemState, value: number): boolean | null {
   if (item.referenceValue === null) return null
-  if (item.gradingRuleId === 'decimalExact') {
-    // 계산 항목은 기재 정책(절사 1자리)으로 학생 값도 정리한 뒤 비교
-    if (item.kind === 'calculation' && item.precisionPolicyRef === 'truncate1') {
-      const v = precision ? applyPrecision(value, precision) : value
-      return v === item.referenceValue
-    }
-    return value === item.referenceValue
-  }
+  // 계산 항목도 학생 값을 다시 절사하지 않고 그대로 비교한다(설계 계약 task-vocabulary 1.2.0 296–302, 13번 문서 104줄, MOON 결정 가 2026-11-10).
+  // 기준값은 이미 기재 정책(절사 1자리)으로 정리돼 있어 6.6·6.60은 정답, 6.69·6.6999는 오답이다
+  if (item.gradingRuleId === 'decimalExact') return value === item.referenceValue
   return null
 }
 
@@ -148,7 +143,7 @@ export function submitAnswer(sheet: ResponseSheet, itemId: string, rawInput: str
     const parsed = parseNumeric(trimmed, item.precisionPolicyRef)
     if ('reasonCode' in parsed) return { sheet, result: { itemId, isFirst, correct: null, reasonCode: parsed.reasonCode } }
     // 기준값이 없으면(판정 불가 설정) 채점하지 않는다
-    correct = gradeNumeric(item, parsed.value, sheet.precision)
+    correct = gradeNumeric(item, parsed.value)
     if (correct === null) return { sheet, result: { itemId, isFirst, correct: null, reasonCode: 'NOT_EVALUABLE' } }
     next = isFirst
       ? { ...item, firstInput: trimmed, firstCorrect: correct, finalInput: trimmed, finalCorrect: correct }

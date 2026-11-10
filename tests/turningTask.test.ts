@@ -27,10 +27,11 @@ describe('최소회전반경 채점', () => {
     expect(ref(lv2, 'radius')).toBe(5.1)
     expect(createResponseSheet(lv2).vehicleVerdict).toBe('pass')
   })
-  it('R은 학생 값도 소수 첫째 자리 절사 뒤 비교, 안쪽 바퀴로 계산한 값은 오답', () => {
+  it('R은 학생 값을 다시 절사하지 않는다(5.19는 오답, 5.1·5.10은 정답), 안쪽 바퀴로 계산한 값은 오답', () => {
     const s = createResponseSheet(lv2)
-    expect(submitAnswer(s, 'radius', '5.19').result.correct).toBe(true)
+    expect(submitAnswer(s, 'radius', '5.19').result.correct).toBe(false)
     expect(submitAnswer(s, 'radius', '5.1').result.correct).toBe(true)
+    expect(submitAnswer(s, 'radius', '5.10').result.correct).toBe(true)
     expect(submitAnswer(s, 'radius', '5.2').result.correct).toBe(false)
     // 안쪽(우측 36°)은 표에 없지만, 좌회전 사례 1에서 안쪽 35°로 계산하면 2.7 ÷ 0.5736 + 0.1 = 4.8
     expect(submitAnswer(createResponseSheet(lv1), 'radius', '4.8').result.correct).toBe(false)
