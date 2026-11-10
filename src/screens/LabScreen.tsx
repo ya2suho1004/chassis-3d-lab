@@ -21,6 +21,8 @@ import { brakeRigState } from '../scene/brakeRig'
 import { turningRigState } from '../scene/turningRig'
 import { loadSceneLayout, nearEquipment, vehiclePlacement, type LabelMode, type Pt, type SceneLayout } from '../scene/layoutModel'
 import { TaskScreen, type TaskContext } from './TaskScreen'
+import { FeedbackBox } from './FeedbackBox'
+import { focusResponse } from '../app/focusResponse'
 import { saveBadge, type SaveState } from '../app/saveRecovery'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog, panelWorkOrder } from './NpcDialog'
@@ -53,6 +55,9 @@ const BASIS_LABEL: Record<string, string> = { measured: '실측', 'measured-part
 
 /** 끄덕임 화면을 보여 주는 시간(카메라 이동 + 끄덕임 + 여유). 누르면 바로 넘어간다 */
 const NOD_SCREEN_MS = 2300
+
+/** 안내 줄용 장비 이름: 괄호 설명을 빼서 한 줄에 들어가게 한다(3D 이름표에는 전체 이름이 있다) */
+const shortLabel = (label: string | undefined) => (label ?? '').replace(/\(.*\)/, '').trim()
 
 export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
   repo: Repository
@@ -358,12 +363,10 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               </div>
             </div>}
 
-            {ctx?.shown && (
-              <div className={`g-toast feedback ${ctx.shown.kind}`} role="alert">
-                <button className="g-x" aria-label="닫기" onClick={ctx.clearShown}>✕</button>
-                <b>{ctx.shown.title}</b>
-                {ctx.shown.text ? (<ul><li>무엇: {ctx.shown.text.what}</li><li>왜: {ctx.shown.text.why}</li><li>어떻게: {ctx.shown.text.how}</li></ul>) : <p>{ctx.shown.plain}</p>}
-              </div>
+            {/* 작업 목록이 열려 있으면 알림은 목록 안 안내로 보인다(이 알림은 목록 뒤에 가려진다) */}
+            {ctx?.shown && !drawerOpen && (
+              <FeedbackBox className={`g-toast feedback ${ctx.shown.kind}`} shown={ctx.shown} onClose={ctx.clearShown}
+                onFocusItem={(id) => { setDrawerOpen(true); setTimeout(() => focusResponse(document, id), 60) }} />
             )}
 
             {selected && (
@@ -375,7 +378,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               </div>
             )}
 
-            <div className="g-hud" hidden={practicing}>{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => layout.equipment.find((e) => e.id === id)?.label).join(', ')}` : viewMode === 'first' ? '왼쪽 조이스틱으로 걷기 · 화면을 끌어 둘러보기 · 가운데 점을 장비에 맞추기' : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
+            <div className="g-hud" hidden={practicing || viewing}>{moving ? '이동 중…' : nearIds.length ? `근처: ${nearIds.map((id) => shortLabel(layout.equipment.find((e) => e.id === id)?.label)).join(', ')}` : viewMode === 'first' ? '왼쪽 조이스틱으로 걷기 · 화면을 끌어 둘러보기 · 가운데 점을 장비에 맞추기' : '왼쪽 조이스틱이나 바닥 탭으로 이동 · 끌어서 화면 돌리기'}</div>
 
             {viewMode === 'first' && <div className={`g-reticle ${aimId ? 'on' : ''}`} aria-hidden />}
             {viewMode === 'first' && aimId && (
