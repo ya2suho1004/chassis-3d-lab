@@ -16,7 +16,7 @@ import type { PanelReadout } from '../scene/panelReadout'
 import { TURNING_TASK_ID } from '../domain/grading'
 import { focusResponse, recordInputId, responseInputId } from '../app/focusResponse'
 import { FeedbackBox } from './FeedbackBox'
-import { canReviewDial, itemOpen, markFor, missingText, recordLabel, recordStepOf, restoreInputs } from '../app/recordSteps'
+import { canReviewDial, fieldMark, itemOpen, missingText, recordItems, recordLabel, recordStepOf, restoreInputs, unsavedItems } from '../app/recordSteps'
 import { RecordSheet } from './RecordSheet'
 import { focusRecordField, RecordWindow, revealInBody } from './RecordWindow'
 import { steeredRig, turningRigState } from '../scene/turningRig'
@@ -179,6 +179,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const [review, setReview] = useState(false)
   /** 열린 기록 창의 단계(설계 §3). 창을 열고 닫는 것은 기록하지 않는다 */
   const [record, setRecord] = useState<string | null>(null)
+  /** 고친 값 경고를 이번에 이미 했는지(마무리 §3). 창을 열고 닫을 때·입력을 누를 때 처음으로 */
+  const [unsavedWarned, setUnsavedWarned] = useState(false)
 
   const task = run.task
   const m = task.measurement
@@ -189,8 +191,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const guidance = guidanceFor(run)
   const showMarks = answerFeedbackAllowed(run)
   // 칸 표시는 수행 기록의 최종 답에서 읽는다(설계 §7) — 안내 없음은 최초 답이 다 모이기 전까지 '저장'만
-  const mark = (id: string) => markFor(run, id).text
-  const markClass = (id: string) => markFor(run, id).cls
+  // 칸 표시: 고쳤지만 입력하지 않은 칸은 '입력 전'(마무리 §3), 아니면 수행 기록의 최종 답 정오(안내 없음은 '저장'만)
+  const mark = (id: string) => fieldMark(run, inputs, id).text
+  const markClass = (id: string) => fieldMark(run, inputs, id).cls
   // 측정판 눈금 그림(설계 §5, 결정 A): 바늘은 핸들을 돌린 동안만 기운다. 각도 오답을 안 뒤에만 측정 당시 바늘을 다시 본다
   const canReview = canReviewDial(run)
   const reviewing = review && canReview
@@ -206,9 +209,19 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
 
   /** keepFixList: 고치기로 다른 창으로 옮길 때는 '다시 확인할 항목' 목록을 다음 안내가 뜰 때까지 남긴다(기본 화면과 같게) */
-  const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setRecord(stepId) }
+  const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(stepId) }
   /** ✕·Esc·닫기로 닫을 때 '다시 확인할 항목' 목록은 남긴다(창 밖 알림의 고치기로 이어서 고치게). 단계 완료로 닫히는 길은 doStep이 먼저 안내를 비운다 */
-  const closeRecord = () => { if (!shown?.fixItems) setShown(null); setReview(false); setRecord(null) }
+  const closeRecord = () => { if (!shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(null) }
+  /** 고친 값 경고(마무리 §3): 창 단계 칸 중 고쳤지만 입력하지 않은 칸이 있으면 처음 한 번은 멈추고 알린다. 다시 누르면 진행(적은 글자는 남고 제출되지 않음) */
+  const warnUnsaved = (stepId: string): boolean => {
+    const left = unsavedItems(run, inputs, recordItems(task, stepId))
+    if (left.length === 0 || unsavedWarned) return false
+    setUnsavedWarned(true)
+    setShown({ kind: 'guidance', title: '고친 값을 아직 입력하지 않았습니다', text: null, plain: `${left.map((i) => ITEM_LABEL[i] ?? i).join(', ')} 칸 옆 입력을 눌러야 저장됩니다. 그대로 두려면 한 번 더 누르세요.`, focusItem: left[0] })
+    return true
+  }
+  /** 창 닫기(✕·Esc·닫기): 고친 값 경고를 먼저 거친다. 단계 완료로 닫히는 길은 doStep이 closeRecord를 바로 부른다 */
+  const requestClose = () => { if (record && warnUnsaved(record)) return; closeRecord() }
   /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았거나 창 자리가 없으면 열지 않는다. 엔진을 거치지 않아 기록이 없다.
    *  이미 그 칸의 창이면 그 칸으로 간다(안내는 그대로) */
   const openRecordFor = (itemId: string) => {
@@ -255,6 +268,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
 
   const submit = (itemId: string) => {
+    setUnsavedWarned(false)
     const raw = inputs[itemId] ?? ''
     const res = submitResponse(run, itemId, raw, newId())
     if (res.outcome === 'ignored') return setShown({ kind: 'guidance', title: '값을 입력하세요', text: null, plain: `${ITEM_LABEL[itemId]} 칸이 비어 있습니다.` })
@@ -305,7 +319,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     value: (id) => inputs[id] ?? '',
     change: (id, v) => setInputs((cur) => ({ ...cur, [id]: v })),
     submit: (id) => submit(id),
-    mark: (id) => markFor(run, id),
+    mark: (id) => fieldMark(run, inputs, id),
     open: (id) => itemOpen(run, id, gauge.hold),
     idOf: (id) => responseInputId(id),
   }
@@ -474,8 +488,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
       {/* 기록 창(설계 2026-11-10): 게임 화면이 준 자리에 그린다. 칸 값·제출 함수는 작업 목록과 같다 */}
       {recordHost && record && createPortal(
-        <RecordWindow title={recordLabel(task, record) ?? '기록'} onClose={closeRecord} onAskAi={onAskAi}
-          footer={done(record) ? <button type="button" onClick={closeRecord}>닫기</button> : <button type="button" className="primary" onClick={() => doStep(record)}>단계 완료</button>}>
+        <RecordWindow title={recordLabel(task, record) ?? '기록'} onClose={requestClose} onAskAi={onAskAi}
+          footer={done(record) ? <button type="button" onClick={requestClose}>닫기</button> : <button type="button" className="primary" onClick={() => { if (!warnUnsaved(record)) doStep(record) }}>단계 완료</button>}>
           <p className="small rec-sub">{task.steps.find((s) => s.stepId === record)?.instruction}</p>
           <RecordSheet run={run} stepId={record} io={recIo} gauge={gauge} needles={needles} reviewing={reviewing} canReview={canReview} onToggleReview={() => setReview(!reviewing)} note={action} onNote={setAction} />
           {shown && <FeedbackBox className={`rec-feedback feedback ${shown.kind}`} shown={shown} onClose={() => { setShown(null); document.getElementById('rec-title')?.focus({ preventScroll: true }) }} onFocusItem={(id) => focusRecordField(document, id)} onFix={openRecordFor} />}

@@ -27,14 +27,14 @@ describe('과제 패널의 기록 창(§3)', () => {
   })
   test('창은 게임 화면이 준 자리에 portal로 그리고, 단계 완료는 같은 doStep을 거쳐 끝나면 창을 닫는다', () => {
     expect(task).toMatch(/recordHost && record && createPortal\(/)
-    expect(task).toMatch(/<RecordWindow title=\{recordLabel\(task, record\) \?\? '기록'\} onClose=\{closeRecord\} onAskAi=\{onAskAi\}/)
-    expect(task).toMatch(/<button type="button" className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>/)
+    expect(task).toMatch(/<RecordWindow title=\{recordLabel\(task, record\) \?\? '기록'\} onClose=\{requestClose\} onAskAi=\{onAskAi\}/)
+    expect(task).toMatch(/<button type="button" className="primary" onClick=\{\(\) => \{ if \(!warnUnsaved\(record\)\) doStep\(record\) \}\}>단계 완료<\/button>/)
     // 아래 줄: 끝낸 단계는 닫기만(다시 완료할 일이 없다), 아직이면 단계 완료
-    expect(task).toContain('done(record) ? <button type="button" onClick={closeRecord}>닫기</button> : <button type="button" className="primary" onClick={() => doStep(record)}>단계 완료</button>')
+    expect(task).toContain('done(record) ? <button type="button" onClick={requestClose}>닫기</button> : <button type="button" className="primary" onClick={() => { if (!warnUnsaved(record)) doStep(record) }}>단계 완료</button>')
     expect(task).toMatch(/if \(res\.outcome === 'completed'\) \{ setRun\(res\.run\); setShown\(null\); if \(record === stepId\) closeRecord\(\); return \}/)
   })
   test('✕·닫기로 창을 닫아도 다시 확인할 항목 목록은 남긴다(단계 완료 길은 doStep이 먼저 비운다)', () => {
-    expect(task).toMatch(/const closeRecord = \(\) => \{ if \(!shown\?\.fixItems\) setShown\(null\); setReview\(false\); setRecord\(null\) \}/)
+    expect(task).toMatch(/const closeRecord = \(\) => \{ if \(!shown\?\.fixItems\) setShown\(null\); setReview\(false\); setUnsavedWarned\(false\); setRecord\(null\) \}/)
   })
   test('다시 보기는 조건이 사라지면 꺼 둔다(각도가 다시 틀려도 저절로 켜지지 않게). 훅은 조건 없이 return 앞에', () => {
     expect(task).toMatch(/const needles = [^\n]*\n\s*useEffect\(\(\) => \{ if \(!canReview && review\) setReview\(false\) \}, \[canReview, review\]\)/)
@@ -127,5 +127,24 @@ describe('창 모양·오래된 크롬(§8)', () => {
       const c = code(f)
       expect(c, f).not.toMatch(/<dialog|\binert\b|<form|scrollIntoView\(/)
     }
+  })
+})
+
+describe('고친 값 경고(마무리 §3)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  const css = read('src/styles.css')
+  test('작업 목록·기록 창 칸 표시는 fieldMark(입력 전이 정오보다 먼저)', () => {
+    expect(task).toMatch(/mark: \(id\) => fieldMark\(run, inputs, id\)/)
+    expect(task).toMatch(/const mark = \(id: string\) => fieldMark\(run, inputs, id\)\.text/)
+    expect(task).toMatch(/const markClass = \(id: string\) => fieldMark\(run, inputs, id\)\.cls/)
+  })
+  test('창 닫기·단계 완료는 고친 값이 있으면 처음 한 번 멈추고 알린다, 입력을 누르면 경고를 처음으로', () => {
+    expect(task).toMatch(/if \(left\.length === 0 \|\| unsavedWarned\) return false/)
+    expect(task).toMatch(/const requestClose = \(\) => \{ if \(record && warnUnsaved\(record\)\) return; closeRecord\(\) \}/)
+    expect(task).toMatch(/const submit = \(itemId: string\) => \{\n\s+setUnsavedWarned\(false\)/)
+  })
+  test('표시 칸 36px, 입력 전은 작은 글자 한 줄', () => {
+    expect(css).toMatch(/\.field \{ display:grid; grid-template-columns:90px 1fr auto 36px;/)
+    expect(css).toMatch(/\.mark\.dirty \{ color:var\(--warn\); font-weight:700; font-size:12px; white-space:nowrap; \}/)
   })
 })

@@ -35,9 +35,10 @@ button:disabled { opacity:.45; cursor:default; }
 .steps .btns { display:flex; gap:6px; } .steps .ok { color:var(--ok); font-weight:700; }
 .gauge { background:#111; color:#7CFC00; font-family:ui-monospace,Menlo,monospace; border-radius:8px; padding:10px 14px; display:grid; gap:6px; }
 .gauge div { display:flex; justify-content:space-between; } .gauge b { font-size:20px; }
-.field { display:grid; grid-template-columns:90px 1fr auto 24px; align-items:center; gap:8px; margin:6px 0; }
+.field { display:grid; grid-template-columns:90px 1fr auto 36px; align-items:center; gap:8px; margin:6px 0; }
 .field label { margin:0; }
 .mark.ok { color:var(--ok); font-weight:700; } .mark.bad { color:var(--bad); font-weight:700; }
+.mark.dirty { color:var(--warn); font-weight:700; font-size:12px; white-space:nowrap; } /* 고쳤지만 입력하지 않은 칸(마무리 §3) */
 table.sheet { width:100%; border-collapse:collapse; font-size:15px; }
 table.sheet th, table.sheet td { border:1px solid var(--line); padding:6px 8px; vertical-align:middle; }
 table.sheet input { width:110px; padding:8px; }
