@@ -68,12 +68,12 @@ describe('화면 연결', () => {
     for (const item of ['radius', 'deviation', 'sum']) expect(task).toContain(`id={responseInputId('${item}')}`)
     expect(task.match(/id=\{responseInputId\('vehicleCondition'\)\}/g)?.length).toBe(2)
   })
-  test('서랍이 열려 있으면 게임 알림을 띄우지 않고(서랍 뒤에 가려짐), 알림의 칸 이동은 서랍을 연다', () => {
-    expect(lab).toMatch(/ctx\?\.shown && !drawerOpen && \(/)
-    expect(lab).toMatch(/onFocusItem=\{\(id\) => \{ setDrawerOpen\(true\); setTimeout\(\(\) => focusResponse\(document, id\), 60\) \}\}/)
+  test('서랍이나 기록 창이 열려 있으면 게임 알림을 띄우지 않고, 알림의 칸 이동·고치기는 그 칸의 기록 창을 연다', () => {
+    expect(lab).toMatch(/ctx\?\.shown && !drawerOpen && !recording && \(/)
+    expect(lab).toMatch(/onFocusItem=\{\(id\) => ctx\?\.openRecordFor\(id\)\} onFix=\{\(id\) => ctx\?\.openRecordFor\(id\)\}/)
   })
-  test('계기·측정판을 크게 볼 때와 연습 중에는 안내 줄을 숨기고, 장비 이름은 괄호 설명을 빼고 쓴다', () => {
-    expect(lab).toMatch(/className="g-hud" hidden=\{practicing \|\| viewing\}/)
+  test('계기·측정판을 크게 볼 때, 연습 중, 기록 창이 열렸을 때는 안내 줄을 숨기고, 장비 이름은 괄호 설명을 빼고 쓴다', () => {
+    expect(lab).toMatch(/className="g-hud" hidden=\{practicing \|\| viewing \|\| recording\}/)
     expect(lab).toMatch(/근처: \$\{nearIds\.map\(\(id\) => shortLabel\(/)
   })
 })

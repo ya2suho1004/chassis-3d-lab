@@ -65,3 +65,45 @@ describe('3D 장면 걷기 멈춤(§3.3)', () => {
     expect(scene).toMatch(/<group visible=\{!frozen && view !== 'first'\}>/)
   })
 })
+
+describe('게임 화면 연결(§3.3·§6)', () => {
+  const lab = read('src/screens/LabScreen.tsx')
+  test('기록 창 자리를 작업 목록 밖에 두고 과제 패널에 넘긴다(AI 질문은 비기록 모드 제외)', () => {
+    expect(lab).toMatch(/<div className="g-recordhost" ref=\{setRecordHost\} \/>/)
+    expect(lab).toMatch(/recordHost=\{recordHost\} onAskAi=\{noRecord \? undefined : \(\) => setChatOpen\(true\)\}/)
+  })
+  test('창이 열린 동안 조이스틱·행동 버튼·가운데 버튼·바깥 질문 버튼을 숨기고 3D 장면에 멈춤을 알린다', () => {
+    expect(lab).toMatch(/const recording = !!ctx\?\.recordOpen/)
+    expect(lab).toMatch(/\{!viewing && !practicing && !recording && <Joystick/)
+    expect(lab).toMatch(/\{!ttSide && !recording && <div className="g-actions">/)
+    expect(lab).toMatch(/!noRecord && !recording && <button className="g-chatbtn"/)
+    expect(lab).toMatch(/holdStill=\{recording\}/)
+    expect(lab).toMatch(/joystickRef\.current = \{ x: 0, y: 0 \}/)
+    const all = lab.match(/className="g-gaugebtn/g)?.length ?? 0
+    expect(all).toBeGreaterThan(0)
+    expect(lab.match(/!recording && [^\n]*className="g-gaugebtn/g)?.length).toBe(all)
+  })
+  test('목록에서 열었으면 창을 닫을 때 목록을 다시 연다', () => {
+    expect(lab).toMatch(/if \(drawerOpen\) \{ reopenDrawer\.current = true; setDrawerOpen\(false\) \}/)
+    expect(lab).toMatch(/reopenDrawer\.current = false\n\s+setDrawerOpen\(true\)/)
+  })
+})
+
+describe('창 모양·오래된 크롬(§8)', () => {
+  const css = read('src/styles.css')
+  const cssCode = css.replace(/\/\*[\s\S]*?\*\//g, '')
+  test('층은 게임 부품(4~6) 위, 작업 목록·질문 창(8) 아래', () => {
+    expect(css).toMatch(/\.g-recordwrap \{ position:absolute; inset:0; z-index:7;/)
+  })
+  test('누르기 크기: 닫기 버튼 폭 44px', () => {
+    expect(css).toMatch(/\.rec-head \.rec-x \{ width:44px;/)
+  })
+  test('새 화면 높이 단위·:has()·HTML 대화 상자·비활성 속성·form·브라우저 스크롤 함수를 쓰지 않는다', () => {
+    expect(cssCode).not.toMatch(/\d(dvh|svh|lvh)\b/)
+    expect(cssCode).not.toContain(':has(')
+    for (const f of ['src/screens/RecordWindow.tsx', 'src/screens/RecordSheet.tsx', 'src/screens/RecordFields.tsx']) {
+      const c = code(f)
+      expect(c, f).not.toMatch(/<dialog|\binert\b|<form|scrollIntoView\(/)
+    }
+  })
+})
