@@ -15,7 +15,9 @@ import type { PanelReadout } from '../scene/panelReadout'
 import { TURNING_TASK_ID } from '../domain/grading'
 import { focusResponse, responseInputId } from '../app/focusResponse'
 import { FeedbackBox } from './FeedbackBox'
-import { itemOpen, markFor, missingText, recordLabel, restoreInputs } from '../app/recordSteps'
+import { canReviewDial, itemOpen, markFor, missingText, recordLabel, restoreInputs } from '../app/recordSteps'
+import { steeredRig, turningRigState } from '../scene/turningRig'
+import { dialCaption, ReviewToggle, TurningDialPicture } from './TurningDialPicture'
 import { NumberField, type FieldIo } from './RecordFields'
 
 const newId = () => newUuid()
@@ -162,6 +164,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const [inputs, setInputs] = useState<Record<string, string>>(() => restoreInputs(initialRun))
   const [inspection, setInspection] = useState<{ result: string; issues: InspectionIssue[]; answersLocked: boolean } | null>(null)
   const [action, setAction] = useState('')
+  /** 측정 당시 눈금 다시 보기를 켰는지(설계 §5). 조건이 사라지면(각도를 고쳐 맞힘) 저절로 꺼진다 */
+  const [review, setReview] = useState(false)
 
   const task = run.task
   const m = task.measurement
@@ -174,6 +178,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   // 칸 표시는 수행 기록의 최종 답에서 읽는다(설계 §7) — 안내 없음은 최초 답이 다 모이기 전까지 '저장'만
   const mark = (id: string) => markFor(run, id).text
   const markClass = (id: string) => markFor(run, id).cls
+  // 측정판 눈금 그림(설계 §5, 결정 A): 바늘은 핸들을 돌린 동안만 기운다. 각도 오답을 안 뒤에만 측정 당시 바늘을 다시 본다
+  const canReview = canReviewDial(run)
+  const reviewing = review && canReview
+  const needles = reviewing ? steeredRig(task) : turningRigState(run)
 
   const show = (r: TaskRun, s: Shown, feedbackKey: string | null, itemId?: string) => {
     // 실제로 화면에 표시한 직후에만 feedbackShown을 기록한다 (읽음 증거 아님)
@@ -353,11 +361,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
 {isTurning ? (
         <section className="card">
-          <h2>회전반경 측정판 (숫자식)</h2>
-          <div className="gauge">
-            <div><span>좌측 바퀴</span><b>{done('steer') && !done('return') ? `${m.leftAngleDeg}°` : '0°'}</b></div>
-            <div><span>우측 바퀴</span><b>{done('steer') && !done('return') ? `${m.rightAngleDeg}°` : '0°'}</b></div>
-          </div>
+          <h2>회전반경 측정판</h2>
+          <TurningDialPicture side="left" deg={needles.leftDeg} caption={dialCaption('left', reviewing)} />
+          <TurningDialPicture side="right" deg={needles.rightDeg} caption={dialCaption('right', reviewing)} />
+          {canReview && <ReviewToggle reviewing={reviewing} onToggle={() => setReview(!reviewing)} />}
           <h3>판독 입력 (정수, °)</h3>
           {(['leftAngle', 'rightAngle'] as const).map((id) => <NumberField key={id} itemId={id} io={listIo} />)}
 
