@@ -34,7 +34,7 @@ describe('과제 패널의 기록 창(§3)', () => {
     expect(task).toMatch(/if \(res\.outcome === 'completed'\) \{ setRun\(res\.run\); setShown\(null\); if \(record === stepId\) closeRecord\(\); return \}/)
   })
   test('✕·닫기로 창을 닫아도 다시 확인할 항목 목록은 남긴다(단계 완료 길은 doStep이 먼저 비운다)', () => {
-    expect(task).toMatch(/const closeRecord = \(\) => \{ if \(!shown\?\.fixItems\) setShown\(null\); setReview\(false\); setUnsavedWarned\(false\); setRecord\(null\) \}/)
+    expect(task).toMatch(/const closeRecord = \(\) => \{ listUnderWarning\.current = null; if \(!shown\?\.fixItems\) setShown\(null\); setReview\(false\); setUnsavedWarned\(false\); setRecord\(null\) \}/)
   })
   test('다시 보기는 조건이 사라지면 꺼 둔다(각도가 다시 틀려도 저절로 켜지지 않게). 훅은 조건 없이 return 앞에', () => {
     expect(task).toMatch(/const needles = [^\n]*\n\s*useEffect\(\(\) => \{ if \(!canReview && review\) setReview\(false\) \}, \[canReview, review\]\)/)
@@ -141,7 +141,7 @@ describe('고친 값 경고(마무리 §3)', () => {
   test('창 닫기·단계 완료는 고친 값이 있으면 처음 한 번 멈추고 알린다, 입력을 누르면 경고를 처음으로', () => {
     expect(task).toMatch(/const left = unsavedEdits\(run, inputs, recordItems\(task, stepId\)\)/)
     expect(task).toMatch(/if \(left\.length === 0 \|\| unsavedWarned\) return false/)
-    expect(task).toMatch(/const requestClose = \(\) => \{ if \(record && warnUnsaved\(record\)\) return; closeRecord\(\) \}/)
+    expect(task).toMatch(/const requestClose = \(\) => \{\n\s+if \(record && warnUnsaved\(record\)\) return\n\s+const list = listUnderWarning\.current\n\s+closeRecord\(\)\n\s+if \(list\) setShown\(list\)\n\s+\}/)
     expect(task).toMatch(/const submit = \(itemId: string\) => \{\n\s+setUnsavedWarned\(false\)/)
   })
   test('표시 칸 36px, 입력 전은 작은 글자 한 줄', () => {
@@ -159,5 +159,22 @@ describe('고칠 목록·경고 제목(마무리 §4·§6)', () => {
   })
   test('정지·상승·차량 빼기: 순서 오류와 안전 오류 제목을 나눈다', () => {
     expect(task).toMatch(/title: `\$\{kind === 'safety' \? '안전 위반' : '순서가 틀렸습니다'\} — \$\{OFF_LABEL\[action\]\}`/)
+  })
+})
+
+describe('고친 값 경고 보완(검토 M1·M2, 검증 결함 2)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  test('경고가 덮은 다시 확인할 항목 목록을 기억하고, 경고에도 같은 고치기를 붙이며, 닫거나 옮기면 되돌린다', () => {
+    expect(task).toMatch(/const listUnderWarning = useRef<Shown \| null>\(null\)/)
+    expect(task).toMatch(/const list = shown\?\.fixItems \? shown : null\n\s+listUnderWarning\.current = list/)
+    expect(task).toMatch(/focusItem: left\[0\], \.\.\.\(list \? \{ fixItems: list\.fixItems \} : \{\}\) \}\)/)
+    expect(task).toMatch(/if \(keepFixList && list\) setShown\(list\); else if \(!keepFixList \|\| !shown\?\.fixItems\) setShown\(null\)/)
+    expect(task).toMatch(/setUnsavedWarned\(false\)\n\s+listUnderWarning\.current = null/)
+  })
+  test('창 안 고치기로 다른 창으로 옮길 때도 경고를 거친다', () => {
+    expect(task).toMatch(/if \(record && warnUnsaved\(record\)\) return\n\s+openRecord\(st, true\)/)
+  })
+  test('창 밖 단계 버튼도 고친 값이 입력 전이면 바로 끝내지 않고 알린다(게임 화면은 창을 열고)', () => {
+    expect(task).toMatch(/if \(record !== stepId && !unsavedWarned && unsavedEdits\(run, inputs, recordItems\(task, stepId\)\)\.length > 0\) \{\n\s+if \(recordHost\) openRecord\(stepId\)\n\s+warnUnsaved\(stepId\)\n\s+return\n\s+\}/)
   })
 })

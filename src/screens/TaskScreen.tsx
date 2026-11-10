@@ -181,6 +181,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const [record, setRecord] = useState<string | null>(null)
   /** 고친 값 경고를 이번에 이미 했는지(마무리 §3). 창을 열고 닫을 때·입력을 누를 때 처음으로 */
   const [unsavedWarned, setUnsavedWarned] = useState(false)
+  /** 고친 값 경고가 잠시 덮은 '다시 확인할 항목' 안내(검토 M1·M2). 경고에도 같은 고치기 버튼을 붙이고, 창을 닫거나 고치기로 옮기면 이 안내로 되돌린다 */
+  const listUnderWarning = useRef<Shown | null>(null)
 
   const task = run.task
   const m = task.measurement
@@ -209,30 +211,51 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
 
   /** keepFixList: 고치기로 다른 창으로 옮길 때는 '다시 확인할 항목' 목록을 다음 안내가 뜰 때까지 남긴다(기본 화면과 같게) */
-  const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(stepId) }
+  const openRecord = (stepId: string, keepFixList = false) => {
+    const list = listUnderWarning.current
+    listUnderWarning.current = null
+    if (keepFixList && list) setShown(list); else if (!keepFixList || !shown?.fixItems) setShown(null)
+    setReview(false); setUnsavedWarned(false); setRecord(stepId)
+  }
   /** ✕·Esc·닫기로 닫을 때 '다시 확인할 항목' 목록은 남긴다(창 밖 알림의 고치기로 이어서 고치게). 단계 완료로 닫히는 길은 doStep이 먼저 안내를 비운다 */
-  const closeRecord = () => { if (!shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(null) }
+  const closeRecord = () => { listUnderWarning.current = null; if (!shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(null) }
   /** 고친 값 경고(마무리 §3): 창 단계 칸 중 이미 입력한 답을 고쳤지만 입력하지 않은 칸이 있으면 처음 한 번은 멈추고 알린다. 다시 누르면 진행(적은 글자는 남고 제출되지 않음) */
   const warnUnsaved = (stepId: string): boolean => {
     const left = unsavedEdits(run, inputs, recordItems(task, stepId))
     if (left.length === 0 || unsavedWarned) return false
     setUnsavedWarned(true)
-    setShown({ kind: 'guidance', title: '고친 값을 아직 입력하지 않았습니다', text: null, plain: `${left.map((i) => ITEM_LABEL[i] ?? i).join(', ')} 칸 옆 입력을 눌러야 저장됩니다. 그대로 두려면 한 번 더 누르세요.`, focusItem: left[0] })
+    // 덮는 '다시 확인할 항목' 목록은 기억해 두고 경고에도 같은 고치기 버튼을 붙인다(검토 M1·M2)
+    const list = shown?.fixItems ? shown : null
+    listUnderWarning.current = list
+    setShown({ kind: 'guidance', title: '고친 값을 아직 입력하지 않았습니다', text: null, plain: `${left.map((i) => ITEM_LABEL[i] ?? i).join(', ')} 칸 옆 입력을 눌러야 저장됩니다. 그대로 두려면 한 번 더 누르세요.`, focusItem: left[0], ...(list ? { fixItems: list.fixItems } : {}) })
     return true
   }
-  /** 창 닫기(✕·Esc·닫기): 고친 값 경고를 먼저 거친다. 단계 완료로 닫히는 길은 doStep이 closeRecord를 바로 부른다 */
-  const requestClose = () => { if (record && warnUnsaved(record)) return; closeRecord() }
+  /** 창 닫기(✕·Esc·닫기): 고친 값 경고를 먼저 거친다. 경고가 덮었던 '다시 확인할 항목' 목록은 되돌린다. 단계 완료로 닫히는 길은 doStep이 closeRecord를 바로 부른다(목록도 비움) */
+  const requestClose = () => {
+    if (record && warnUnsaved(record)) return
+    const list = listUnderWarning.current
+    closeRecord()
+    if (list) setShown(list)
+  }
   /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았거나 창 자리가 없으면 열지 않는다. 엔진을 거치지 않아 기록이 없다.
    *  이미 그 칸의 창이면 그 칸으로 간다(안내는 그대로) */
   const openRecordFor = (itemId: string) => {
     const st = recordStepOf(task, itemId)
     if (!st || !recordHost || !itemOpen(run, itemId, true)) return
     if (st === record) { focusRecordField(document, itemId); return }
+    // 다른 창으로 옮기기 전에도 고친 값 경고를 거친다(검토 M2). 경고에 고치기 버튼이 그대로 있어 한 번 더 누르면 옮긴다
+    if (record && warnUnsaved(record)) return
     openRecord(st, true)
   }
   const doStep = (stepId: string) => {
     const far = needsMove(stepId)
     if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: record ? `창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.` : `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
+    // 창 밖(큰 버튼·작업 목록 줄)에서 기록 단계를 끝내려는데 이미 입력한 답을 고친 값이 입력 전이면 바로 끝내지 않고 한 번 알린다(검증 결함 2). 게임 화면은 그 단계 창을 열고 창 안에서 알린다
+    if (record !== stepId && !unsavedWarned && unsavedEdits(run, inputs, recordItems(task, stepId)).length > 0) {
+      if (recordHost) openRecord(stepId)
+      warnUnsaved(stepId)
+      return
+    }
     const res = attempt(run, { type: 'step', stepId }, newId())
     if (res.outcome === 'completed') { setRun(res.run); setShown(null); if (record === stepId) closeRecord(); return }
     if (res.outcome === 'blocked') {
@@ -273,6 +296,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
   const submit = (itemId: string) => {
     setUnsavedWarned(false)
+    listUnderWarning.current = null
     const raw = inputs[itemId] ?? ''
     const res = submitResponse(run, itemId, raw, newId())
     if (res.outcome === 'ignored') return setShown({ kind: 'guidance', title: '값을 입력하세요', text: null, plain: `${ITEM_LABEL[itemId]} 칸이 비어 있습니다.` })
