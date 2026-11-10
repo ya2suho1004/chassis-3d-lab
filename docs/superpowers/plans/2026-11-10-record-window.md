@@ -1794,14 +1794,14 @@ git commit -m "feat(기록 창): 창 틀 — 제목 초점·Esc·Tab 돌리기·
 
 ```ts
 describe('과제 패널의 기록 창(§3)', () => {
-  const task = read('src/screens/TaskScreen.tsx')
+  const task = code('src/screens/TaskScreen.tsx')
   test('게임 화면(창 자리 있음)에서만 칸이 빈 단계 시도를 기록 창으로 연다', () => {
     expect(task).toMatch(/if \(recordHost && record !== stepId && res\.reasonCode\?\.startsWith\('NEEDS_RESPONSE_'\)\) return openRecord\(stepId\)/)
   })
   test('창은 게임 화면이 준 자리에 portal로 그리고, 단계 완료는 같은 doStep을 거쳐 끝나면 창을 닫는다', () => {
     expect(task).toMatch(/recordHost && record && createPortal\(/)
     expect(task).toMatch(/<RecordWindow title=\{recordLabel\(task, record\) \?\? '기록'\} onClose=\{closeRecord\} onAskAi=\{onAskAi\}/)
-    expect(task).toMatch(/<button className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>/)
+    expect(task).toMatch(/<button type="button" className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>/)
     expect(task).toMatch(/if \(res\.outcome === 'completed'\) \{ setRun\(res\.run\); setShown\(null\); if \(record === stepId\) closeRecord\(\); return \}/)
   })
   test('창 칸은 작업 목록과 같은 값·제출 함수를 쓰고 id만 다르다. 창 안 안내는 창 칸으로 가고 고치기는 다른 칸 창을 연다', () => {
@@ -1810,12 +1810,19 @@ describe('과제 패널의 기록 창(§3)', () => {
     expect(task).toMatch(/revealInBody\(document\.querySelector\('\.g-record \.rec-feedback'\)\)/)
   })
   test('게임 화면에 창 열림과 칸 열기를 알리고, 창 자리가 바뀌면 다시 알린다', () => {
-    expect(task).toMatch(/recordOpen: record !== null, openRecordFor,/)
+    expect(task).toMatch(/recordOpen: record !== null && recordHost !== null, openRecordFor,/)
     expect(task).toMatch(/gauge\.hold, saveStatus, record, recordHost\]\)/)
   })
   test('고치기: 게임 화면은 기록 창, 그 밖은 칸으로 이동. 칸이 열리지 않았으면 열지 않는다', () => {
     expect(task).toMatch(/const fixItem = \(itemId: string\) => \(recordHost \? openRecordFor\(itemId\) : void focusResponse\(document, itemId\)\)/)
-    expect(task).toMatch(/if \(st && itemOpen\(run, itemId, true\)\) openRecord\(st\)/)
+    expect(task).toMatch(/if \(!st \|\| !recordHost \|\| !itemOpen\(run, itemId, true\)\) return/)
+    expect(task).toMatch(/if \(st === record\) \{ focusRecordField\(document, itemId\); return \}/)
+    expect(task).toMatch(/openRecord\(st, true\)/)
+  })
+  test('고치기로 다른 창으로 옮길 때 다시 확인할 목록을 남기고, 옮긴 직후엔 안내를 끌어오지 않으며, 장비가 멀면 창을 닫고 이동하라고 알린다', () => {
+    expect(task).toMatch(/if \(!keepFixList \|\| !shown\?\.fixItems\) setShown\(null\)/)
+    expect(task).toMatch(/if \(record && shown && !switched\) revealInBody/)
+    expect(task).toContain('창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.')
   })
 })
 ```
@@ -1919,16 +1926,32 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 (5) 창 열기·닫기. `  const doStep = (stepId: string) => {` 줄 바로 위에 더한다.
 
 ```ts
-  const openRecord = (stepId: string) => { setShown(null); setReview(false); setRecord(stepId) }
+  /** keepFixList: 고치기로 다른 창으로 옮길 때는 '다시 확인할 항목' 목록을 다음 안내가 뜰 때까지 남긴다(기본 화면과 같게) */
+  const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setRecord(stepId) }
   const closeRecord = () => { setShown(null); setReview(false); setRecord(null) }
-  /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았으면 열지 않는다. 엔진을 거치지 않아 기록이 없다 */
+  /** 그 칸의 기록 창을 연다(고치기·입력칸으로, 설계 §6). 칸이 아직 열리지 않았거나 창 자리가 없으면 열지 않는다. 엔진을 거치지 않아 기록이 없다.
+   *  이미 그 칸의 창이면 그 칸으로 간다(안내는 그대로) */
   const openRecordFor = (itemId: string) => {
     const st = recordStepOf(task, itemId)
-    if (st && itemOpen(run, itemId, true)) openRecord(st)
+    if (!st || !recordHost || !itemOpen(run, itemId, true)) return
+    if (st === record) { focusRecordField(document, itemId); return }
+    openRecord(st, true)
   }
 ```
 
-(6) doStep. 바꿀 곳:
+(6) doStep. 바꿀 곳(doStep 첫 줄 가까이):
+
+```ts
+    if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
+```
+
+바꾼 글:
+
+```ts
+    if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: record ? `창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.` : `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
+```
+
+바꿀 곳:
 
 ```ts
     if (res.outcome === 'completed') { setRun(res.run); setShown(null); return }
@@ -1982,9 +2005,13 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
   /** 기록 창 칸: 작업 목록과 같은 값·제출 함수, id만 rec-(같은 화면에 함께 붙어 있어도 겹치지 않게) */
   const recIo: FieldIo = { ...listIo, idOf: recordInputId }
-  // 창 안 안내가 새로 뜨면 창 안에서 보이게 한다(키보드를 닫으면 안내는 칸 아래에 있다, 설계 §3.2)
+  // 창 안 안내가 새로 뜨면 창 안에서 보이게 한다(키보드를 닫으면 안내는 칸 아래에 있다, 설계 §3.2).
+  // 다른 단계 창으로 옮긴 직후에는 하지 않는다(창 맨 위 제목부터 보이게, 남겨 둔 목록은 아래에 있다)
+  const prevRecordRef = useRef<string | null>(null)
   useEffect(() => {
-    if (record && shown) revealInBody(document.querySelector('.g-record .rec-feedback'))
+    const switched = prevRecordRef.current !== record
+    prevRecordRef.current = record
+    if (record && shown && !switched) revealInBody(document.querySelector('.g-record .rec-feedback'))
   }, [record, shown])
 ```
 
@@ -1998,7 +2025,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
 
 ```ts
       saveStatus, retrySave,
-      recordOpen: record !== null, openRecordFor,
+      recordOpen: record !== null && recordHost !== null, openRecordFor,
 ```
 
 바꿀 곳:
@@ -2030,7 +2057,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       {/* 기록 창(설계 2026-11-10): 게임 화면이 준 자리에 그린다. 칸 값·제출 함수는 작업 목록과 같다 */}
       {recordHost && record && createPortal(
         <RecordWindow title={recordLabel(task, record) ?? '기록'} onClose={closeRecord} onAskAi={onAskAi}
-          footer={done(record) ? <button onClick={closeRecord}>닫기</button> : <button className="primary" onClick={() => doStep(record)}>단계 완료</button>}>
+          footer={done(record) ? <button type="button" onClick={closeRecord}>닫기</button> : <button type="button" className="primary" onClick={() => doStep(record)}>단계 완료</button>}>
           <p className="small rec-sub">{task.steps.find((s) => s.stepId === record)?.instruction}</p>
           <RecordSheet run={run} stepId={record} io={recIo} gauge={gauge} needles={needles} reviewing={reviewing} canReview={canReview} onToggleReview={() => setReview(!reviewing)} note={action} onNote={setAction} />
           {shown && <FeedbackBox className={`rec-feedback feedback ${shown.kind}`} shown={shown} onClose={() => { setShown(null); document.getElementById('rec-title')?.focus({ preventScroll: true }) }} onFocusItem={(id) => focusRecordField(document, id)} onFix={openRecordFor} />}

@@ -21,14 +21,14 @@ describe('작업 목록 고치기(§6)', () => {
 })
 
 describe('과제 패널의 기록 창(§3)', () => {
-  const task = read('src/screens/TaskScreen.tsx')
+  const task = code('src/screens/TaskScreen.tsx')
   test('게임 화면(창 자리 있음)에서만 칸이 빈 단계 시도를 기록 창으로 연다', () => {
     expect(task).toMatch(/if \(recordHost && record !== stepId && res\.reasonCode\?\.startsWith\('NEEDS_RESPONSE_'\)\) return openRecord\(stepId\)/)
   })
   test('창은 게임 화면이 준 자리에 portal로 그리고, 단계 완료는 같은 doStep을 거쳐 끝나면 창을 닫는다', () => {
     expect(task).toMatch(/recordHost && record && createPortal\(/)
     expect(task).toMatch(/<RecordWindow title=\{recordLabel\(task, record\) \?\? '기록'\} onClose=\{closeRecord\} onAskAi=\{onAskAi\}/)
-    expect(task).toMatch(/<button className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>/)
+    expect(task).toMatch(/<button type="button" className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>/)
     expect(task).toMatch(/if \(res\.outcome === 'completed'\) \{ setRun\(res\.run\); setShown\(null\); if \(record === stepId\) closeRecord\(\); return \}/)
   })
   test('창 칸은 작업 목록과 같은 값·제출 함수를 쓰고 id만 다르다. 창 안 안내는 창 칸으로 가고 고치기는 다른 칸 창을 연다', () => {
@@ -37,11 +37,18 @@ describe('과제 패널의 기록 창(§3)', () => {
     expect(task).toMatch(/revealInBody\(document\.querySelector\('\.g-record \.rec-feedback'\)\)/)
   })
   test('게임 화면에 창 열림과 칸 열기를 알리고, 창 자리가 바뀌면 다시 알린다', () => {
-    expect(task).toMatch(/recordOpen: record !== null, openRecordFor,/)
+    expect(task).toMatch(/recordOpen: record !== null && recordHost !== null, openRecordFor,/)
     expect(task).toMatch(/gauge\.hold, saveStatus, record, recordHost\]\)/)
   })
   test('고치기: 게임 화면은 기록 창, 그 밖은 칸으로 이동. 칸이 열리지 않았으면 열지 않는다', () => {
     expect(task).toMatch(/const fixItem = \(itemId: string\) => \(recordHost \? openRecordFor\(itemId\) : void focusResponse\(document, itemId\)\)/)
-    expect(task).toMatch(/if \(st && itemOpen\(run, itemId, true\)\) openRecord\(st\)/)
+    expect(task).toMatch(/if \(!st \|\| !recordHost \|\| !itemOpen\(run, itemId, true\)\) return/)
+    expect(task).toMatch(/if \(st === record\) \{ focusRecordField\(document, itemId\); return \}/)
+    expect(task).toMatch(/openRecord\(st, true\)/)
+  })
+  test('고치기로 다른 창으로 옮길 때 다시 확인할 목록을 남기고, 옮긴 직후엔 안내를 끌어오지 않으며, 장비가 멀면 창을 닫고 이동하라고 알린다', () => {
+    expect(task).toMatch(/if \(!keepFixList \|\| !shown\?\.fixItems\) setShown\(null\)/)
+    expect(task).toMatch(/if \(record && shown && !switched\) revealInBody/)
+    expect(task).toContain('창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.')
   })
 })
