@@ -106,6 +106,7 @@ describe('창 모양·오래된 크롬(§8)', () => {
     expect(css).toMatch(/\.rec-head \.rec-x \{ width:44px;/)
     expect(css).toMatch(/\.rec-row\.led \.gauge div \{ flex-wrap:wrap;/)
     expect(css).toMatch(/\.g-record label\.radio \{ min-height:44px;/)
+    expect(css).toMatch(/\.field label, \.field \.flabel \{ word-break:keep-all; \}/) // 칸 이름이 낱말 가운데서 끊기지 않게(좌측 바퀴 조/향각)
   })
   test('새 화면 높이 단위·:has()·HTML 대화 상자·비활성 속성·form·브라우저 스크롤 함수를 쓰지 않는다', () => {
     expect(cssCode).not.toMatch(/\d(dvh|svh|lvh)\b/)
