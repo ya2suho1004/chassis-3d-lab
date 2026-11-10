@@ -257,7 +257,11 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: `${far} 접근점에 서야 이 단계를 할 수 있습니다.` })
     const res = attempt(run, { type: 'subStep', stepId: 'off', action }, newId())
     if (res.outcome === 'completed') { setRun(res.run); setShown({ kind: 'guidance', title: OFF_LABEL[action], text: null, plain: action === 'motorOff' ? '롤러 정지. 상승 전에 주변을 다시 확인하세요.' : action === 'liftUp' ? '리프트가 올라갔습니다. 이제 차량을 뺄 수 있습니다.' : '차량을 뺐습니다. 산출·판정을 기록하세요.' }); return }
-    if (res.outcome === 'blocked') return show(res.run, { kind: 'safety', title: `안전 위반 — ${OFF_LABEL[action]}`, text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey)
+    if (res.outcome === 'blocked') {
+      // 순서 오류(ORDER_)와 안전 오류(SAFETY_)를 엔진 집계와 같게 나눈다(Codex 회의 지적 7)
+      const kind = res.reasonCode?.startsWith('SAFETY_') ? 'safety' : 'explanatory'
+      return show(res.run, { kind, title: `${kind === 'safety' ? '안전 위반' : '순서가 틀렸습니다'} — ${OFF_LABEL[action]}`, text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey)
+    }
     setRun(res.run)
   }
 
@@ -279,10 +283,12 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       const remaining = res.run.responses.items.filter((i) => i.firstInput === null && i.firstAnswer === null).length
       return setShown({ kind: 'guidance', title: `${ITEM_LABEL[itemId]} 입력 저장`, text: null, plain: remaining > 0 ? `저장했습니다. 남은 입력 ${remaining}개를 모두 제출하면 정오를 알려 줍니다.` : '모든 최초 응답이 저장되었습니다.' })
     }
-    if (res.grading?.correct === false) return show(res.run, { kind: 'explanatory', title: `${ITEM_LABEL[itemId]} — 다시 확인하세요`, text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey, itemId)
-    setRun(res.run)
+    // 방금 마지막 최초 응답이 저장됐는가(안내 없음). 그러면 틀린 칸마다 고치기를 붙인다(설계 §6, 마무리 §4) — 그 답이 틀렸을 때도
+    const lastFirst = run.difficultyMode === 'unguided' && !answerFeedbackAllowed(run)
     const wrongIds = res.run.responses.items.filter((i) => i.finalCorrect === false).map((i) => i.itemId)
-    if (run.difficultyMode === 'unguided' && !answerFeedbackAllowed(run) && wrongIds.length > 0) {
+    if (res.grading?.correct === false) return show(res.run, { kind: 'explanatory', title: `${ITEM_LABEL[itemId]} — 다시 확인하세요`, text: feedbackFor(task, res.feedbackKey), ...(lastFirst ? { fixItems: wrongIds } : {}) }, res.feedbackKey, itemId)
+    setRun(res.run)
+    if (lastFirst && wrongIds.length > 0) {
       // 방금 마지막 최초 응답이 저장됨 → 틀린 항목 이름과 고치기 버튼만 보인다(정답은 알려 주지 않음, 설계 §6)
       return setShown({ kind: 'explanatory', title: '최초 응답이 모두 저장되었습니다', text: null, plain: `다시 확인할 항목: ${wrongIds.map((i) => ITEM_LABEL[i] ?? i).join(', ')}. 해당 칸을 고쳐 다시 입력하면 설명을 보여 줍니다.`, fixItems: wrongIds })
     }

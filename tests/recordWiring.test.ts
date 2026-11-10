@@ -149,3 +149,15 @@ describe('고친 값 경고(마무리 §3)', () => {
     expect(css).toMatch(/\.mark\.dirty \{ color:var\(--warn\); font-weight:700; font-size:12px; white-space:nowrap; \}/)
   })
 })
+
+describe('고칠 목록·경고 제목(마무리 §4·§6)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  test('안내 없음에서 마지막 최초 답이 오답이어도 그 설명에 고치기 목록을 붙인다(같은 show·같은 키)', () => {
+    expect(task).toMatch(/const lastFirst = run\.difficultyMode === 'unguided' && !answerFeedbackAllowed\(run\)/)
+    expect(task).toMatch(/text: feedbackFor\(task, res\.feedbackKey\), \.\.\.\(lastFirst \? \{ fixItems: wrongIds \} : \{\}\) \}, res\.feedbackKey, itemId\)/)
+    expect(task).toMatch(/if \(lastFirst && wrongIds\.length > 0\)/)
+  })
+  test('정지·상승·차량 빼기: 순서 오류와 안전 오류 제목을 나눈다', () => {
+    expect(task).toMatch(/title: `\$\{kind === 'safety' \? '안전 위반' : '순서가 틀렸습니다'\} — \$\{OFF_LABEL\[action\]\}`/)
+  })
+})
