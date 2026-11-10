@@ -139,6 +139,7 @@ describe('고친 값 경고(마무리 §3)', () => {
     expect(task).toMatch(/const markClass = \(id: string\) => fieldMark\(run, inputs, id\)\.cls/)
   })
   test('창 닫기·단계 완료는 고친 값이 있으면 처음 한 번 멈추고 알린다, 입력을 누르면 경고를 처음으로', () => {
+    expect(task).toMatch(/const left = unsavedEdits\(run, inputs, recordItems\(task, stepId\)\)/)
     expect(task).toMatch(/if \(left\.length === 0 \|\| unsavedWarned\) return false/)
     expect(task).toMatch(/const requestClose = \(\) => \{ if \(record && warnUnsaved\(record\)\) return; closeRecord\(\) \}/)
     expect(task).toMatch(/const submit = \(itemId: string\) => \{\n\s+setUnsavedWarned\(false\)/)

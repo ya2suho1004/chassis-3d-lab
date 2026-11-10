@@ -16,7 +16,7 @@ import type { PanelReadout } from '../scene/panelReadout'
 import { TURNING_TASK_ID } from '../domain/grading'
 import { focusResponse, recordInputId, responseInputId } from '../app/focusResponse'
 import { FeedbackBox } from './FeedbackBox'
-import { canReviewDial, fieldMark, itemOpen, missingText, recordItems, recordLabel, recordStepOf, restoreInputs, unsavedItems } from '../app/recordSteps'
+import { canReviewDial, fieldMark, itemOpen, missingText, recordItems, recordLabel, recordStepOf, restoreInputs, unsavedEdits } from '../app/recordSteps'
 import { RecordSheet } from './RecordSheet'
 import { focusRecordField, RecordWindow, revealInBody } from './RecordWindow'
 import { steeredRig, turningRigState } from '../scene/turningRig'
@@ -212,9 +212,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const openRecord = (stepId: string, keepFixList = false) => { if (!keepFixList || !shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(stepId) }
   /** ✕·Esc·닫기로 닫을 때 '다시 확인할 항목' 목록은 남긴다(창 밖 알림의 고치기로 이어서 고치게). 단계 완료로 닫히는 길은 doStep이 먼저 안내를 비운다 */
   const closeRecord = () => { if (!shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(null) }
-  /** 고친 값 경고(마무리 §3): 창 단계 칸 중 고쳤지만 입력하지 않은 칸이 있으면 처음 한 번은 멈추고 알린다. 다시 누르면 진행(적은 글자는 남고 제출되지 않음) */
+  /** 고친 값 경고(마무리 §3): 창 단계 칸 중 이미 입력한 답을 고쳤지만 입력하지 않은 칸이 있으면 처음 한 번은 멈추고 알린다. 다시 누르면 진행(적은 글자는 남고 제출되지 않음) */
   const warnUnsaved = (stepId: string): boolean => {
-    const left = unsavedItems(run, inputs, recordItems(task, stepId))
+    const left = unsavedEdits(run, inputs, recordItems(task, stepId))
     if (left.length === 0 || unsavedWarned) return false
     setUnsavedWarned(true)
     setShown({ kind: 'guidance', title: '고친 값을 아직 입력하지 않았습니다', text: null, plain: `${left.map((i) => ITEM_LABEL[i] ?? i).join(', ')} 칸 옆 입력을 눌러야 저장됩니다. 그대로 두려면 한 번 더 누르세요.`, focusItem: left[0] })
