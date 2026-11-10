@@ -238,10 +238,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     }
     if (res.grading?.correct === false) return show(res.run, { kind: 'explanatory', title: `${ITEM_LABEL[itemId]} — 다시 확인하세요`, text: feedbackFor(task, res.feedbackKey) }, res.feedbackKey, itemId)
     setRun(res.run)
-    const wrongNow = res.run.responses.items.filter((i) => i.finalCorrect === false).map((i) => ITEM_LABEL[i.itemId] ?? i.itemId)
-    if (run.difficultyMode === 'unguided' && !answerFeedbackAllowed(run) && wrongNow.length > 0) {
-      // 방금 마지막 최초 응답이 저장됨 → 틀린 항목 이름만 알려 준다(정답은 알려 주지 않음)
-      return setShown({ kind: 'explanatory', title: '최초 응답이 모두 저장되었습니다', text: null, plain: `다시 확인할 항목: ${wrongNow.join(', ')}. 해당 칸을 고쳐 다시 입력하면 설명을 보여 줍니다.` })
+    const wrongIds = res.run.responses.items.filter((i) => i.finalCorrect === false).map((i) => i.itemId)
+    if (run.difficultyMode === 'unguided' && !answerFeedbackAllowed(run) && wrongIds.length > 0) {
+      // 방금 마지막 최초 응답이 저장됨 → 틀린 항목 이름과 고치기 버튼만 보인다(정답은 알려 주지 않음, 설계 §6)
+      return setShown({ kind: 'explanatory', title: '최초 응답이 모두 저장되었습니다', text: null, plain: `다시 확인할 항목: ${wrongIds.map((i) => ITEM_LABEL[i] ?? i).join(', ')}. 해당 칸을 고쳐 다시 입력하면 설명을 보여 줍니다.`, fixItems: wrongIds })
     }
     setShown({ kind: 'guidance', title: `${ITEM_LABEL[itemId]} 입력 확인`, text: null, plain: '맞습니다. 다음으로 진행하세요.' })
   }
@@ -261,6 +261,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     setInspection({ result: r.result, ...visibleInspection(r.run, r.issues) })
     if (r.result === 'passed') void finish(r.run, 'completed')
   }
+
+  /** 고치기(설계 §6): 그 칸으로 간다 */
+  const fixItem = (itemId: string) => { focusResponse(document, itemId) }
 
   // U1 근사(교사 허용 2026-10-27, 장비 수리 후 확인): 페달을 끝까지 밟으면 버튼 없이 최대값이 자동 고정된다고 가정. 새 버튼·성공 사건 없음
   const rise = useCountUp(done('press'))
@@ -321,7 +324,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       </header>
 
       {/* 안내는 교관 칸 밖에 두고 위에 붙인다: 작업 목록을 내려 칸에 값을 넣어도 정오·설명이 보이게(2026-11-10) */}
-      {shown && <FeedbackBox className={`panel-feedback feedback ${shown.kind}`} shown={shown} onClose={() => setShown(null)} onFocusItem={(id) => focusResponse(document, id)} />}
+      {shown && <FeedbackBox className={`panel-feedback feedback ${shown.kind}`} shown={shown} onClose={() => setShown(null)} onFocusItem={(id) => focusResponse(document, id)} onFix={fixItem} />}
 
       <section className="npc card">
         {isTurning
@@ -423,7 +426,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         </div>
         {inspection && inspection.result !== 'passed' && (
           <div className="feedback explanatory"><b>NPC: 보완이 필요합니다 ({inspection.issues.length}건)</b>
-            <ul>{inspection.issues.map((i, k) => (<li key={k}>{i.kind === 'step' ? `${task.steps.findIndex((s) => s.stepId === i.stepId) + 1}번 단계` : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}</li>))}</ul>
+            <ul>{inspection.issues.map((i, k) => (<li key={k}>{i.kind === 'step' ? `${task.steps.findIndex((s) => s.stepId === i.stepId) + 1}번 단계` : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}{i.kind === 'response' && itemOpen(run, i.itemId, true) && <> <button className="link" onClick={() => fixItem(i.itemId)}>고치기</button></>}</li>))}</ul>
             {inspection.answersLocked && <p className="small">입력한 답이 맞는지는 모든 칸에 처음 답을 적은 뒤 알려 줍니다.</p>}
           </div>
         )}
