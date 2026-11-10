@@ -112,7 +112,7 @@ Expected: FAIL — `responseItemsOf is not a function`
 
 ```ts
 /** 단계의 완료 조건이 요구하는 응답 칸. 기록 창·고치기도 이 정의를 쓴다(설계 2026-11-10 §2) */
-export function responseItemsOf(step: Pick<TaskStep, 'completionCondition'>): string[] {
+export function responseItemsOf(step: Pick<TaskStep, 'completionCondition'>): readonly string[] {
   return RESPONSE_REQUIREMENTS[step.completionCondition] ?? []
 }
 ```
@@ -414,7 +414,7 @@ const RECORD_LABEL: Record<string, string> = {
 const stepById = (task: ApprovedTask, stepId: string) => task.steps.find((s) => s.stepId === stepId)
 
 /** 기록 단계의 칸. 기록 단계가 아니면 빈 배열 */
-export function recordItems(task: ApprovedTask, stepId: string): string[] {
+export function recordItems(task: ApprovedTask, stepId: string): readonly string[] {
   const st = stepById(task, stepId)
   return st ? responseItemsOf(st) : []
 }
