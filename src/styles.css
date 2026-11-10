@@ -511,3 +511,9 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .panel-feedback { position:sticky; top:0; z-index:3; margin:0 0 10px; padding-right:44px; box-shadow:0 4px 12px rgba(0,0,0,.12); }
 .fb-x { position:absolute; top:6px; right:6px; min-height:36px; width:36px; padding:0; border-radius:50%; border:none; background:rgba(0,0,0,.08); color:#333; font-size:16px; }
 .feedback .fb-go { margin-top:6px; }
+
+/* 회전반경 측정판 눈금 그림(설계 2026-11-10 §5): 띠가 칸 폭을 꽉 채운다(1° 눈금 사이 = 폭의 약 1.2%) */
+.tt-dial { margin:0 0 6px; }
+.tt-dial figcaption { font-size:14px; font-weight:600; margin:0 0 2px; }
+.tt-dial svg { display:block; width:100%; height:auto; }
+.tt-review { margin:4px 0 10px; }
