@@ -1515,9 +1515,10 @@ git commit -m "feat(기록 창): 단계별 창 내용(계기 그림·칸·내가
 
 ```ts
 // 기록 창 틀(설계 2026-11-10 §3·§8): 대화 상자 역할, 제목에 초점, Tab 돌리기, 닫은 뒤 초점, 창 안 스크롤만
+import fs from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { focusRecordField, RecordWindow, restoreFocus, wrapTab } from '../src/screens/RecordWindow'
 
 type WinProps = Parameters<typeof RecordWindow>[0]
@@ -1528,6 +1529,7 @@ describe('기록 창 틀', () => {
     const h = html()
     expect(h).toMatch(/role="dialog" aria-modal="true" aria-labelledby="rec-title"/)
     expect(h).toContain('<h2 id="rec-title" tabindex="-1">축중 기록</h2>')
+    expect(h).toContain('<div class="g-recordwrap" tabindex="-1">')
     expect(h).toContain('aria-label="기록 창 닫기"')
     expect(h).toContain('<p>내용</p>')
     expect(h).toContain('<div class="rec-foot"><button>단계 완료</button></div>')
@@ -1546,6 +1548,8 @@ describe('Tab 돌리기', () => {
     expect(wrapTab([a, b, c], b, false)).toBeNull()
     expect(wrapTab([a, b, c], null, false)).toBe(a)
     expect(wrapTab([], a, false)).toBeNull()
+    expect(wrapTab([a, b, c], b, true)).toBeNull()
+    expect(wrapTab([a, b, c], null, true)).toBe(c)
   })
 })
 
@@ -1568,6 +1572,20 @@ describe('닫은 뒤 초점', () => {
     expect(restoreFocus(el({ rects: 0 }).node, doc({ '.g-quest-btns > button': list }))).toBe(list)
     expect(restoreFocus(null, doc({}))).toBeNull()
   })
+  test('고른 버튼에 실제로 초점이 간다', () => {
+    const gone = el({ isConnected: false }).node, x = el()
+    restoreFocus(gone, doc({ '.g-drawer.open > .g-x': x.node }))
+    expect(x.calls).toEqual(['focus'])
+  })
+  test('숨겨진(visibility:hidden) 버튼은 건너뛴다', () => {
+    const hidden = el(), list = el()
+    vi.stubGlobal('getComputedStyle', (n: unknown) => ({ visibility: n === hidden.node ? 'hidden' : 'visible' }))
+    try { expect(restoreFocus(hidden.node, doc({ '.g-quest-btns > button': list.node }))).toBe(list.node) } finally { vi.unstubAllGlobals() }
+  })
+  test('all=false면 연 버튼·목록 닫기만 본다', () => {
+    const gone = el({ isConnected: false }).node, act = el().node, list = el().node
+    expect(restoreFocus(gone, doc({ '.g-actions > .g-act': act, '.g-quest-btns > button': list }), false)).toBeNull()
+  })
 })
 
 describe('창 안 칸으로', () => {
@@ -1581,6 +1599,24 @@ describe('창 안 칸으로', () => {
     expect(body.scrollTop).toBe(228)
     expect(calls).toEqual(['{"preventScroll":true}'])
     expect(focusRecordField(d, 'left')).toBe(false)
+  })
+  test('줄(.rec-row)이 없으면 칸 한 줄(.field), 비채점 칸이면 이름까지(.rec-note)를 보인다', () => {
+    for (const hit of ['.field', '.rec-note']) {
+      const body = { scrollTop: 0, getBoundingClientRect: () => ({ top: 100, bottom: 400 }) }
+      const box = { getBoundingClientRect: () => ({ top: 380, bottom: 430 }), closest: (s: string) => (s === '.rec-body' ? body : null) }
+      const input = { closest: (s: string) => (s === hit ? box : null), focus: () => {} }
+      const d = { getElementById: () => input } as unknown as Pick<Document, 'getElementById'>
+      expect(focusRecordField(d, 'deviation')).toBe(true)
+      expect(body.scrollTop).toBe(38)
+    }
+  })
+})
+
+describe('배선', () => {
+  test('연 버튼은 처음 한 번만 기억하고, 돌려줄 때 먼저 연 버튼·목록 닫기만 본다', () => {
+    const src = fs.readFileSync('src/screens/RecordWindow.tsx', 'utf8')
+    expect(src).toContain('if (openerRef.current === undefined)')
+    expect(src).toContain('restoreFocus(opener, document, false)')
   })
 })
 ```
@@ -1602,7 +1638,7 @@ import { useEffect, useRef, useState, type FocusEvent, type KeyboardEvent, type 
 import { recordInputId } from '../app/focusResponse'
 import { recordWindowBox, scrollDelta } from '../app/recordSteps'
 
-const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), [tabindex="0"]'
+const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]'
 
 /** 칸이 든 줄: 계기 그림과 칸을 묶은 줄(.rec-row)을 먼저, 없으면 칸 한 줄(.field), 비채점 칸이면 이름까지(.rec-note) */
 const rowOf = (el: Element): Element => el.closest('.rec-row') ?? el.closest('.field') ?? el.closest('.rec-note') ?? el
@@ -1632,14 +1668,15 @@ export function wrapTab(items: readonly HTMLElement[], current: Element | null, 
   return at === -1 || at === items.length - 1 ? items[0]! : null
 }
 
-/** 닫은 뒤 초점: 연 버튼이 보이면 그것, 아니면 다시 열린 작업 목록의 닫기, 행동 버튼, 의뢰 카드의 작업 목록 버튼 순 */
-export function restoreFocus(opener: HTMLElement | null, doc: Pick<Document, 'querySelector'>): HTMLElement | null {
+/** 닫은 뒤 초점: 연 버튼이 보이면 그것, 아니면 다시 열린 작업 목록의 닫기, (all이면) 행동 버튼, 의뢰 카드의 작업 목록 버튼 순.
+ *  all=false면 연 버튼·목록 닫기만 본다(작업 목록이 다시 열리길 기다리는 동안) */
+export function restoreFocus(opener: HTMLElement | null, doc: Pick<Document, 'querySelector'>, all = true): HTMLElement | null {
   const usable = (el: HTMLElement | null | undefined): el is HTMLElement => {
     if (!el || !el.isConnected || el.tagName === 'BODY' || (el as HTMLButtonElement).disabled) return false
     if (el.getClientRects().length === 0) return false
     return typeof getComputedStyle !== 'function' || getComputedStyle(el).visibility !== 'hidden'
   }
-  const candidates = [opener, doc.querySelector<HTMLElement>('.g-drawer.open > .g-x'), doc.querySelector<HTMLElement>('.g-actions > .g-act'), doc.querySelector<HTMLElement>('.g-quest-btns > button')]
+  const candidates = [opener, doc.querySelector<HTMLElement>('.g-drawer.open > .g-x'), ...(all ? [doc.querySelector<HTMLElement>('.g-actions > .g-act'), doc.querySelector<HTMLElement>('.g-quest-btns > button')] : [])]
   const target = candidates.find(usable) ?? null
   target?.focus({ preventScroll: true })
   return target
@@ -1658,12 +1695,26 @@ export function RecordWindow({ title, onClose, onAskAi, footer, children }: {
   const titleRef = useRef<HTMLHeadingElement>(null)
   const [box, setBox] = useState(() => recordWindowBox(null, typeof window === 'undefined' ? 800 : window.innerHeight))
 
-  // 닫힐 때 연 자리로 초점을 돌려준다. 작업 목록이 다시 열린 뒤에 하려고 조금 기다리고, 다른 기록 창이 떠 있으면 하지 않는다.
-  // (아래 제목 초점보다 먼저 선언해야 연 버튼을 기억한다)
+  // 닫힐 때 연 자리로 초점을 돌려준다(아래 제목 초점보다 먼저 선언해야 연 버튼을 기억한다).
+  // 개발 모드(StrictMode)는 효과를 두 번 돌리므로 처음 기억한 것만 쓴다. 작업 목록이 다시 열리는 데 오래 걸리는 기기를 위해
+  // 0.08초 뒤부터 0.5초까지 화면마다 연 버튼·목록 닫기만 다시 보고, 끝까지 없으면 행동 버튼·작업 목록 버튼으로 간다.
+  // 그사이 다른 기록 창이 떴거나 누가 초점을 가져갔으면 하지 않는다.
+  const openerRef = useRef<HTMLElement | null | undefined>(undefined)
   useEffect(() => {
-    const a = document.activeElement
-    const opener = a instanceof HTMLElement ? a : null
-    return () => { setTimeout(() => { if (!document.querySelector('.g-record')) restoreFocus(opener, document) }, 80) }
+    if (openerRef.current === undefined) { const a = document.activeElement; openerRef.current = a instanceof HTMLElement ? a : null }
+    return () => {
+      const opener = openerRef.current ?? null
+      const until = Date.now() + 500
+      const attempt = () => {
+        if (document.querySelector('.g-record')) return
+        const a = document.activeElement
+        if (a && a !== document.body) return
+        if (restoreFocus(opener, document, false)) return
+        if (Date.now() >= until) { restoreFocus(opener, document); return }
+        requestAnimationFrame(attempt)
+      }
+      setTimeout(attempt, 80)
+    }
   }, [])
   // 열 때와 다른 단계 창으로 바뀔 때: 맨 위부터, 초점은 제목에
   useEffect(() => {
@@ -1673,8 +1724,12 @@ export function RecordWindow({ title, onClose, onAskAi, footer, children }: {
   // 보이는 화면 따라가기: 화면 키보드가 올라오면 창이 줄고, 초점이 있는 칸의 줄을 다시 보인다
   useEffect(() => {
     const vv = window.visualViewport ?? null
+    let lastH = -1
     const update = () => {
       setBox(recordWindowBox(vv ? { height: vv.height, offsetTop: vv.offsetTop } : null, window.innerHeight))
+      const h = vv ? vv.height : window.innerHeight
+      if (h === lastH) return
+      lastH = h
       requestAnimationFrame(() => {
         const a = document.activeElement
         if (a && a.tagName === 'INPUT' && bodyRef.current?.contains(a)) revealInBody(rowOf(a))
@@ -1688,10 +1743,10 @@ export function RecordWindow({ title, onClose, onAskAi, footer, children }: {
   }, [])
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') { e.stopPropagation(); onClose(); return }
+    if (e.key === 'Escape' && !e.nativeEvent.isComposing) { e.stopPropagation(); onClose(); return }
     if (e.key !== 'Tab' || !winRef.current) return
     const to = wrapTab(Array.from(winRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)), document.activeElement, e.shiftKey)
-    if (to) { e.preventDefault(); to.focus() }
+    if (to) { e.preventDefault(); to.focus({ preventScroll: true }) }
   }
   // 칸을 누르면 그 줄(계기 그림 포함)이 창 안에 보이게
   const onFocusIn = (e: FocusEvent<HTMLDivElement>) => {
@@ -1700,7 +1755,7 @@ export function RecordWindow({ title, onClose, onAskAi, footer, children }: {
   }
 
   return (
-    <div className="g-recordwrap" onKeyDown={onKeyDown}>
+    <div className="g-recordwrap" tabIndex={-1} onKeyDown={onKeyDown}>
       <div className="g-record" ref={winRef} role="dialog" aria-modal="true" aria-labelledby="rec-title" style={{ top: box.top, maxHeight: box.maxHeight }}>
         <div className="rec-head">
           <h2 id="rec-title" ref={titleRef} tabIndex={-1}>{title}</h2>

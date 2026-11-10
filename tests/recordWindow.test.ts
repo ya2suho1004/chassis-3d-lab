@@ -1,7 +1,8 @@
 // 기록 창 틀(설계 2026-11-10 §3·§8): 대화 상자 역할, 제목에 초점, Tab 돌리기, 닫은 뒤 초점, 창 안 스크롤만
+import fs from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { focusRecordField, RecordWindow, restoreFocus, wrapTab } from '../src/screens/RecordWindow'
 
 type WinProps = Parameters<typeof RecordWindow>[0]
@@ -12,6 +13,7 @@ describe('기록 창 틀', () => {
     const h = html()
     expect(h).toMatch(/role="dialog" aria-modal="true" aria-labelledby="rec-title"/)
     expect(h).toContain('<h2 id="rec-title" tabindex="-1">축중 기록</h2>')
+    expect(h).toContain('<div class="g-recordwrap" tabindex="-1">')
     expect(h).toContain('aria-label="기록 창 닫기"')
     expect(h).toContain('<p>내용</p>')
     expect(h).toContain('<div class="rec-foot"><button>단계 완료</button></div>')
@@ -30,6 +32,8 @@ describe('Tab 돌리기', () => {
     expect(wrapTab([a, b, c], b, false)).toBeNull()
     expect(wrapTab([a, b, c], null, false)).toBe(a)
     expect(wrapTab([], a, false)).toBeNull()
+    expect(wrapTab([a, b, c], b, true)).toBeNull()
+    expect(wrapTab([a, b, c], null, true)).toBe(c)
   })
 })
 
@@ -52,6 +56,20 @@ describe('닫은 뒤 초점', () => {
     expect(restoreFocus(el({ rects: 0 }).node, doc({ '.g-quest-btns > button': list }))).toBe(list)
     expect(restoreFocus(null, doc({}))).toBeNull()
   })
+  test('고른 버튼에 실제로 초점이 간다', () => {
+    const gone = el({ isConnected: false }).node, x = el()
+    restoreFocus(gone, doc({ '.g-drawer.open > .g-x': x.node }))
+    expect(x.calls).toEqual(['focus'])
+  })
+  test('숨겨진(visibility:hidden) 버튼은 건너뛴다', () => {
+    const hidden = el(), list = el()
+    vi.stubGlobal('getComputedStyle', (n: unknown) => ({ visibility: n === hidden.node ? 'hidden' : 'visible' }))
+    try { expect(restoreFocus(hidden.node, doc({ '.g-quest-btns > button': list.node }))).toBe(list.node) } finally { vi.unstubAllGlobals() }
+  })
+  test('all=false면 연 버튼·목록 닫기만 본다', () => {
+    const gone = el({ isConnected: false }).node, act = el().node, list = el().node
+    expect(restoreFocus(gone, doc({ '.g-actions > .g-act': act, '.g-quest-btns > button': list }), false)).toBeNull()
+  })
 })
 
 describe('창 안 칸으로', () => {
@@ -65,5 +83,23 @@ describe('창 안 칸으로', () => {
     expect(body.scrollTop).toBe(228)
     expect(calls).toEqual(['{"preventScroll":true}'])
     expect(focusRecordField(d, 'left')).toBe(false)
+  })
+  test('줄(.rec-row)이 없으면 칸 한 줄(.field), 비채점 칸이면 이름까지(.rec-note)를 보인다', () => {
+    for (const hit of ['.field', '.rec-note']) {
+      const body = { scrollTop: 0, getBoundingClientRect: () => ({ top: 100, bottom: 400 }) }
+      const box = { getBoundingClientRect: () => ({ top: 380, bottom: 430 }), closest: (s: string) => (s === '.rec-body' ? body : null) }
+      const input = { closest: (s: string) => (s === hit ? box : null), focus: () => {} }
+      const d = { getElementById: () => input } as unknown as Pick<Document, 'getElementById'>
+      expect(focusRecordField(d, 'deviation')).toBe(true)
+      expect(body.scrollTop).toBe(38)
+    }
+  })
+})
+
+describe('배선', () => {
+  test('연 버튼은 처음 한 번만 기억하고, 돌려줄 때 먼저 연 버튼·목록 닫기만 본다', () => {
+    const src = fs.readFileSync('src/screens/RecordWindow.tsx', 'utf8')
+    expect(src).toContain('if (openerRef.current === undefined)')
+    expect(src).toContain('restoreFocus(opener, document, false)')
   })
 })
