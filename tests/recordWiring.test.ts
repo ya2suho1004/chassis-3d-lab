@@ -56,7 +56,7 @@ describe('과제 패널의 기록 창(§3)', () => {
   })
   test('고치기로 다른 창으로 옮길 때 다시 확인할 목록을 남기고, 옮긴 직후엔 안내를 끌어오지 않으며, 장비가 멀면 창을 닫고 이동하라고 알린다', () => {
     expect(task).toMatch(/if \(!keepFixList \|\| !shown\?\.fixItems\) setShown\(null\)/)
-    expect(task).toMatch(/if \(record && shown && !switched\) revealInBody/)
+    expect(task).toMatch(/if \(record && shown && \(!switched \|\| revealOnOpen\.current\)\) revealInBody/)
     expect(task).toContain('창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.')
   })
 })
@@ -176,6 +176,22 @@ describe('고친 값 경고 보완(검토 M1·M2, 검증 결함 2)', () => {
     expect(task).toMatch(/if \(record && warnUnsaved\(record\)\) return\n\s+openRecord\(st, true\)/)
   })
   test('창 밖 단계 버튼도 고친 값이 입력 전이면 바로 끝내지 않고 알린다(게임 화면은 창을 열고)', () => {
-    expect(task).toMatch(/if \(record !== stepId && !unsavedWarned && unsavedEdits\(run, inputs, recordItems\(task, stepId\)\)\.length > 0\) \{\n\s+if \(recordHost\) openRecord\(stepId\)\n\s+warnUnsaved\(stepId\)\n\s+return\n\s+\}/)
+    expect(task).toMatch(/if \(record !== stepId && !unsavedWarned && unsavedEdits\(run, inputs, recordItems\(task, stepId\)\)\.length > 0\) \{\n\s+if \(recordHost\) \{ openRecord\(stepId\); revealOnOpen\.current = true \}\n\s+warnUnsaved\(stepId, recordHost \? '창 아래 단계 완료를 누르세요' : '한 번 더 누르세요'\)\n\s+return\n\s+\}/)
+  })
+})
+
+describe('재검토 반영(큰 버튼은 최신 함수, 새 창 경고 보이기, 경고 문구)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  test('큰 버튼·목록 줄 버튼은 늘 최신 doStep을 부른다(칸 글자가 바뀌어도)', () => {
+    expect(task).toMatch(/const doStepRef = useRef\(doStep\)/)
+    expect(task).toMatch(/useEffect\(\(\) => \{ doStepRef\.current = doStep \}\)/)
+    expect(task).toMatch(/onClick: \(\) => doStepRef\.current\(stepId\)/)
+    expect(task).not.toMatch(/onClick: \(\) => doStep\(stepId\)/)
+  })
+  test('창 밖 단계 버튼이 연 창의 경고는 끌어와 보이고, 문구는 그 길에 맞는 버튼을 가리킨다', () => {
+    expect(task).toMatch(/const revealOnOpen = useRef\(false\)/)
+    expect(task).toMatch(/revealOnOpen\.current = false/)
+    expect(task).toMatch(/const warnUnsaved = \(stepId: string, again = '한 번 더 누르세요'\): boolean =>/)
+    expect(task).toMatch(/그대로 두려면 \$\{again\}\./)
   })
 })

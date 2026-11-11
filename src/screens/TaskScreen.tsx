@@ -183,6 +183,8 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const [unsavedWarned, setUnsavedWarned] = useState(false)
   /** 고친 값 경고가 잠시 덮은 '다시 확인할 항목' 안내(검토 M1·M2). 경고에도 같은 고치기 버튼을 붙이고, 창을 닫거나 고치기로 옮기면 이 안내로 되돌린다 */
   const listUnderWarning = useRef<Shown | null>(null)
+  /** 창 밖 단계 버튼이 창을 열며 띄운 경고는 옮긴 직후라도 창 안에서 보이게 끌어온다(재검토 Minor 1-a) */
+  const revealOnOpen = useRef(false)
 
   const task = run.task
   const m = task.measurement
@@ -220,14 +222,14 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   /** ✕·Esc·닫기로 닫을 때 '다시 확인할 항목' 목록은 남긴다(창 밖 알림의 고치기로 이어서 고치게). 단계 완료로 닫히는 길은 doStep이 먼저 안내를 비운다 */
   const closeRecord = () => { listUnderWarning.current = null; if (!shown?.fixItems) setShown(null); setReview(false); setUnsavedWarned(false); setRecord(null) }
   /** 고친 값 경고(마무리 §3): 창 단계 칸 중 이미 입력한 답을 고쳤지만 입력하지 않은 칸이 있으면 처음 한 번은 멈추고 알린다. 다시 누르면 진행(적은 글자는 남고 제출되지 않음) */
-  const warnUnsaved = (stepId: string): boolean => {
+  const warnUnsaved = (stepId: string, again = '한 번 더 누르세요'): boolean => {
     const left = unsavedEdits(run, inputs, recordItems(task, stepId))
     if (left.length === 0 || unsavedWarned) return false
     setUnsavedWarned(true)
     // 덮는 '다시 확인할 항목' 목록은 기억해 두고 경고에도 같은 고치기 버튼을 붙인다(검토 M1·M2)
     const list = shown?.fixItems ? shown : null
     listUnderWarning.current = list
-    setShown({ kind: 'guidance', title: '고친 값을 아직 입력하지 않았습니다', text: null, plain: `${left.map((i) => ITEM_LABEL[i] ?? i).join(', ')} 칸 옆 입력을 눌러야 저장됩니다. 그대로 두려면 한 번 더 누르세요.`, focusItem: left[0], ...(list ? { fixItems: list.fixItems } : {}) })
+    setShown({ kind: 'guidance', title: '고친 값을 아직 입력하지 않았습니다', text: null, plain: `${left.map((i) => ITEM_LABEL[i] ?? i).join(', ')} 칸 옆 입력을 눌러야 저장됩니다. 그대로 두려면 ${again}.`, focusItem: left[0], ...(list ? { fixItems: list.fixItems } : {}) })
     return true
   }
   /** 창 닫기(✕·Esc·닫기): 고친 값 경고를 먼저 거친다. 경고가 덮었던 '다시 확인할 항목' 목록은 되돌린다. 단계 완료로 닫히는 길은 doStep이 closeRecord를 바로 부른다(목록도 비움) */
@@ -252,8 +254,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     if (far) return setShown({ kind: 'guidance', title: '장비로 이동하세요', text: null, plain: record ? `창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.` : `${far} 접근점에 서야 이 단계를 할 수 있습니다. 바닥을 탭해 이동하세요.` })
     // 창 밖(큰 버튼·작업 목록 줄)에서 기록 단계를 끝내려는데 이미 입력한 답을 고친 값이 입력 전이면 바로 끝내지 않고 한 번 알린다(검증 결함 2). 게임 화면은 그 단계 창을 열고 창 안에서 알린다
     if (record !== stepId && !unsavedWarned && unsavedEdits(run, inputs, recordItems(task, stepId)).length > 0) {
-      if (recordHost) openRecord(stepId)
-      warnUnsaved(stepId)
+      // warnUnsaved는 이 렌더의 shown(누르기 직전 안내)을 읽으므로 openRecord와 같은 핸들러에서 불러도 덮을 목록을 잃지 않는다(재검토 Minor 1-b)
+      if (recordHost) { openRecord(stepId); revealOnOpen.current = true }
+      warnUnsaved(stepId, recordHost ? '창 아래 단계 완료를 누르세요' : '한 번 더 누르세요')
       return
     }
     const res = attempt(run, { type: 'step', stepId }, newId())
@@ -357,11 +360,15 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const recIo: FieldIo = { ...listIo, idOf: recordInputId }
   // 창 안 안내가 새로 뜨면 창 안에서 보이게 한다(키보드를 닫으면 안내는 칸 아래에 있다, 설계 §3.2).
   // 다른 단계 창으로 옮긴 직후에는 하지 않는다(창 맨 위 제목부터 보이게, 남겨 둔 목록은 아래에 있다)
+  /** 게임 화면 큰 버튼은 onContext 효과가 마지막으로 넘긴 함수를 부른다. 그 효과는 칸 글자(inputs)가 바뀌어도 다시 돌지 않으므로(키마다 3D 화면을 다시 그리지 않게) 늘 최신 doStep을 부르게 한다(재검토 Important) */
+  const doStepRef = useRef(doStep)
+  useEffect(() => { doStepRef.current = doStep })
   const prevRecordRef = useRef<string | null>(null)
   useEffect(() => {
     const switched = prevRecordRef.current !== record
     prevRecordRef.current = record
-    if (record && shown && !switched) revealInBody(document.querySelector('.g-record .rec-feedback'))
+    if (record && shown && (!switched || revealOnOpen.current)) revealInBody(document.querySelector('.g-record .rec-feedback'))
+    revealOnOpen.current = false
   }, [record, shown])
 
   const actionsFor = (stepId: string): TaskAction[] => {
@@ -376,7 +383,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       }
     } else {
       const far = needsMove(stepId)
-      out.push({ key: 'do', label: far ? '이동 필요' : recordLabel(task, stepId) ?? '수행', onClick: () => doStep(stepId), cls: far ? 'far' : '' })
+      out.push({ key: 'do', label: far ? '이동 필요' : recordLabel(task, stepId) ?? '수행', onClick: () => doStepRef.current(stepId), cls: far ? 'far' : '' })
     }
     return out
   }
