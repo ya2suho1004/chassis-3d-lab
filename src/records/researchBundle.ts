@@ -55,6 +55,7 @@ const isObj = (v: unknown) => typeof v === 'object' && v !== null && !Array.isAr
 function structureOk(p: any): boolean {
   return isObj(p) && typeof p.recordId === 'string' && isObj(p.versions) && isObj(p.timing) && isObj(p.errorTypes) && isObj(p.safetyViolationTypes)
     && [p.measurementInputs, p.calculationAnswers, p.judgmentAnswers, p.stepEvents, p.experiencedDisplayModes].every(Array.isArray)
+    && (p.calculatorLog === undefined || (Array.isArray(p.calculatorLog) && p.calculatorLog.every(isObj)))
 }
 
 const csv = (header: readonly string[], rows: unknown[][]) => '﻿' + [header.join(','), ...rows.map((r) => r.map(csvCell).join(','))].join('\r\n') + '\r\n'
@@ -115,7 +116,7 @@ function readme(input: BundleInput, c: BundleCounts, payloads: RecordPayload[]):
     taskDefinitionVersion: '과제 정의 판', rulesetVersion: '판정 기준 판', measurementSetVersion: '측정값 묶음 판', layoutVersion: '배치 판', judgeEngineVersion: '판정 엔진 판. 계산 채점 규칙 변경(2026-11-10)은 이 판이 아니라 clientAppVersion으로 가른다(읽는 규칙 참고)', sessionConfigVersion: '세션 설정 판', researchProtocolVersion: '연구 절차 판', feedbackPolicyVersion: '피드백 정책 판',
     errorCount: '비안전 학습 오류 수', errorTypes: '오류 종류:횟수', safetyViolationCount: '안전 위반 수', safetyViolationTypes: '안전 위반 종류:횟수', hintCount: '학생이 요청한 힌트 수. 자동 피드백은 세지 않는다(사건 표의 feedbackShown)',
     vehicleVerdict: '기준으로 계산한 실제 차량 판정(pass/fail). 학생 답이 아니다', judgmentCorrect: '판정 항목의 최초 답이 모두 정답이면 true', firstCorrectCount: '최초 답 정답 항목 수', finalCorrectCount: '최종 답 정답 항목 수', requiredCount: '응답 항목 수', unansweredFirstCount: '최초 답이 채점되지 않은 항목 수',
-    npcInspectionResult: '마지막 NPC 검사(passed, needsCorrection, notCompleted)', npcInspectionCount: 'NPC 검사 횟수', eventCount: '사건 수', clientAppVersion: '앱 판(기본 판+빌드 커밋). 0.3.1-demo부터 계산 답을 다시 절사하지 않고 채점',
+    npcInspectionResult: '마지막 NPC 검사(passed, needsCorrection, notCompleted)', npcInspectionCount: 'NPC 검사 횟수', eventCount: '사건 수', clientAppVersion: '앱 판(기본 판+빌드 커밋). 0.3.1-demo부터 계산 답을 다시 절사하지 않고 채점, 0.3.2-demo부터 계산기. 이어 하기로 이어진 수행은 처음 시작한 판이 남는다',
     localSaveStatus: '기기 저장 상태', uploadStatus: '전송 상태. 학습 성과와 무관', uploadedAt: '서버 접수 시각', receiptId: '접수번호. 내용 접수 확인일 뿐 신원·정답·적격의 증명이 아니다', payloadHash: '원본 해시(JCS+SHA-256)',
   }
   return [
@@ -165,13 +166,13 @@ function readme(input: BundleInput, c: BundleCounts, payloads: RecordPayload[]):
     '- stepId: 단계', '- actionId: 한 조작 묶음. 같은 조작에서 나온 다른 사건을 합치지 않는다', '- reasonCode: 이유 코드', '- itemId: 응답 항목',
     '- feedbackKey / feedbackKind: 표시한 피드백과 종류(safety, explanatory, hint, guidance)', '- fromDisplayMode / toDisplayMode: 화면 방식 전환 전후', '',
     '[calculator.csv — 계산기 기록, = 를 누른 1번에 1행]',
-    '앞 열은 수행 정보로 summary.csv와 같다. 기록 판 1.3.0(앱 0.3.2-demo)부터 있고, 그 전 기록은 행이 없다. 채점·오류 수와 무관하다.',
+    '앞 열은 수행 정보로 summary.csv와 같다. 기록 판 1.3.0부터 있고, 그 전 기록은 행이 없다. 계산기가 있었는지는 schemaVersion(1.3.0)으로 가른다 — 이어 하기로 이어진 수행은 clientAppVersion이 이전 판일 수 있다. 채점·오류 수와 무관하다.',
     '- sequence: 계산기 기록 순서(1부터)', '- elapsedMs: 시작부터 경과 밀리초(사건과 같은 시계)',
-    '- stepId: 계산기를 쓴 기록 단계(calc 제동력 계산·판정, record 최소회전반경 반경·판정)',
+    '- stepId: 과제별 고정값(calc 제동력, record 최소회전반경). 계산기를 쓴 화면·단계는 담지 않는다(기본 화면·작업 목록 계산 표의 계산기는 어느 단계에서나 쓸 수 있다)',
     '- kind: basic 일반 계산기(누른 차례대로 바로 계산 — 곱셈·나눗셈을 먼저 하지 않음), scientific 공학용(식 입력, 곱셈·나눗셈 먼저, sin은 도 단위)',
-    '- expression: = 를 누를 때까지 누른 식. + - * / 와 sin( ) 로 적는다(화면에는 × ÷ −). 숫자 하나하나와 지우기는 남기지 않는다. - 로 시작하면 수식 막기 작은따옴표가 붙는다',
-    '- result: 계산기 화면에 보인 결과(10자리 유효숫자, 소수 첫째 자리로 자르지 않음)',
-    '- error: 결과 대신 오류 — divideByZero 0으로 나눔·값 없음, syntax 식 오류',
+    '- expression: = 를 누를 때까지 누른 식. + - * / 와 sin( ) 로 적는다(화면에는 × ÷ −). 숫자 하나하나와 지우기는 남기지 않는다. = 뒤에 이어 계산한 식은 직전 결과(10자리 반올림 값)로 시작하고, 공학용 식에는 = 때 자동으로 닫은 괄호가 들어 있다. - 나 + 로 시작하면 수식 막기 작은따옴표가 붙는다',
+    '- result: 계산기 화면에 보인 결과(10자리 유효숫자, 소수 첫째 자리로 자르지 않음). 지수 표기(예: 1e-7)일 수 있고, 음수면 수식 막기 작은따옴표가 붙는다',
+    '- error: 결과 대신 오류 — divideByZero 0으로 나눔·값 없음, syntax 식 오류. 일반 계산기는 = 전 중간 단계에서 0으로 나누면 오류만 보이고 남기지 않는다',
     '- 한 수행에 60줄까지 남긴다. 넘거나 기록 크기 예산(31 KiB)을 넘으면 뒤의 줄을 덜고 records.jsonl의 calculatorLogTruncated가 true다.', '',
     '[problems.csv — 표에서 분리한 줄]',
     '- recordId: 수행 번호(줄에 적힌 값)', '- problem: JSON_BROKEN 글이 깨짐, STRUCTURE_INVALID 구조가 다름, RECORD_ID_MISMATCH 번호가 다름, HASH_MISMATCH 해시가 다름, DUPLICATE_RECORD_ID 번호가 겹침', '- detail: 설명',

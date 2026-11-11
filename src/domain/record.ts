@@ -1,4 +1,4 @@
-// 기록 payload 생성 — docs/design/contracts/record.schema.json (1.1.0) 형식
+// 기록 payload 생성 — docs/design/contracts/record.schema.v1.3.0.json(1.3.0, 2026-11-11부터 두 과제 모두) 형식. 이전 판: record.schema.json(1.1.0)·record.schema.v1.2.0.json
 // 원칙(04 §7~8, 05 §4): 확정 연구 내용(recordPayload)만 만든다. 저장·전송 상태(deliveryEnvelope)는 넣지 않는다.
 // durationSeconds는 이벤트 경과시간(단조시계)에서 오며 completedAt−startedAt으로 계산하지 않는다.
 // researchEligible은 승인 4종·runPurpose=research·completed·NPC passed가 모두 참일 때만 true다.

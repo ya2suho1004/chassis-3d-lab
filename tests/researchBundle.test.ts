@@ -241,6 +241,17 @@ describe('화면 연결', () => {
 })
 
 describe('계산기 기록 표(계산기 설계 §5)', () => {
+  test('계산기 칸 모양이 깨진 줄은 표에서 분리하고 묶음은 계속 만든다', async () => {
+    const p = { ...makePayload(), calculatorLog: 'broken' } as unknown as RecordPayload
+    const b = await bundle(deviceRows([{ payload: p, envelope: env(p.recordId) }]))
+    expect(b.counts.problem).toBe(1)
+    expect(objects(file(b, 'problems.csv'))[0]).toMatchObject({ recordId: p.recordId, problem: 'STRUCTURE_INVALID' })
+  })
+  test('설명서: stepId는 과제별 고정값, 계산기 유무는 schemaVersion으로', async () => {
+    const p = makePayload()
+    const readme = file(await bundle(deviceRows([{ payload: p, envelope: env(p.recordId) }])), 'README.txt')
+    for (const w of ['과제별 고정값', 'schemaVersion(1.3.0)으로 가른다', '자동으로 닫은 괄호']) expect(readme).toContain(w)
+  })
   test('= 1번에 1행, 수행 정보와 식·결과·오류가 그대로 나온다', async () => {
     const p = { ...makePayload(), calculatorLog: [
       { sequence: 1, elapsedMs: 1000, stepId: 'calc', kind: 'basic', expression: '240-200/600*100', result: '6.666666667' },

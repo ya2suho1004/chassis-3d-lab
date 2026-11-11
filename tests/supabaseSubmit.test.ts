@@ -250,6 +250,13 @@ describe('기록 판 1.3.0 — 계산기 기록(계산기 설계 §4)', () => {
       expect(rows).toHaveLength(0)
     }
   })
+  test('식·결과에 계산기 글자가 아닌 것이 있으면 거절한다', async () => {
+    for (const [k, bad] of [line({ expression: 'hello' }), line({ result: 'abc' }), line({ expression: '1+1 ' })].entries()) {
+      const { post, rows } = server()
+      expect(await post(reqOf({ ...base(), recordId: `00000000-0000-4000-8000-0000000000e${k}`, calculatorLog: [bad] })), `경우 ${k}`).toMatchObject({ ok: false })
+      expect(rows).toHaveLength(0)
+    }
+  })
   test('61줄과, 계산기 칸이 빠진 1.3.0은 거절한다', async () => {
     const { post } = server()
     const many = Array.from({ length: 61 }, (_, i) => line({ sequence: i + 1, elapsedMs: 1000 + i }))
