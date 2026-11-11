@@ -1,6 +1,6 @@
 // 화면 품질: 주소 고정(?q=), 터치 기기 기본 낮음, 느리면 한 번 자동 낮춤(올리지는 않음)
 import { describe, expect, it } from 'vitest'
-import { AUTO_LOW_FPS, initialQuality, shouldAutoLower } from '../src/app/quality'
+import { AUTO_LOW_FPS, antialiasRequested, initialQuality, shouldAutoLower } from '../src/app/quality'
 
 describe('화면 품질 고르기', () => {
   it('주소 ?q=high|low는 고정', () => {
@@ -18,5 +18,12 @@ describe('화면 품질 고르기', () => {
     expect(shouldAutoLower({ ...base, locked: true })).toBe(false)
     expect(shouldAutoLower({ ...base, userChose: true })).toBe(false)
     expect(shouldAutoLower({ ...base, low: true })).toBe(false)
+  })
+  it('주소 ?aa=1만 품질 낮음의 계단 줄이기를 켠다(기본은 끔)', () => {
+    expect(antialiasRequested('?aa=1')).toBe(true)
+    expect(antialiasRequested('?q=low&aa=1')).toBe(true)
+    expect(antialiasRequested('')).toBe(false)
+    expect(antialiasRequested('?aa=0')).toBe(false)
+    expect(antialiasRequested('?aa=true')).toBe(false)
   })
 })
