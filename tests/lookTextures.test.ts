@@ -73,16 +73,41 @@ describe('둥근 빛', () => {
 })
 
 describe('그림 만들기(캔버스 없이)', () => {
-  test('바닥 색 그림: sRGB, 반복, 밉맵', () => {
+  test('바닥 색 그림: sRGB, 반복, 밉맵, 비스듬히 볼 때 선명도 4', () => {
     const t = epoxyColorTexture([4, 3])
     expect(t).toBeInstanceOf(THREE.DataTexture)
     expect(t.colorSpace).toBe(THREE.SRGBColorSpace)
-    expect(t.wrapS).toBe(THREE.RepeatWrapping); expect(t.repeat.x).toBe(4); expect(t.repeat.y).toBe(3)
-    expect(t.generateMipmaps).toBe(true)
+    expect(t.wrapS).toBe(THREE.RepeatWrapping); expect(t.wrapT).toBe(THREE.RepeatWrapping); expect(t.repeat.x).toBe(4); expect(t.repeat.y).toBe(3)
+    expect(t.generateMipmaps).toBe(true); expect(t.minFilter).toBe(THREE.LinearMipmapLinearFilter)
+    expect(t.anisotropy).toBe(4)
     expect(epoxyColorTexture([4, 3])).toBe(t)
   })
   test('광택 그림은 색 공간 없이(값 그대로)', () => {
-    expect(epoxyRoughnessTexture([2, 2]).colorSpace).toBe(THREE.NoColorSpace)
+    const t = epoxyRoughnessTexture([2, 2])
+    expect(t.colorSpace).toBe(THREE.NoColorSpace); expect(t.anisotropy).toBe(4)
+  })
+  test('만든 바닥 그림을 이어 붙여도 이음매가 없다(맞닿는 끝 줄의 차이가 안쪽 이웃 점의 차이만큼)', () => {
+    for (const [t, ch] of [[epoxyColorTexture([1, 1]), 1], [epoxyRoughnessTexture([1, 1]), 0]] as Array<[THREE.DataTexture, number]>) {
+      const d = t.image.data as Uint8Array, n = 256
+      const at = (x: number, y: number) => d[(y * n + x) * 4 + ch]!
+      let wrap = 0, inside = 0
+      for (let i = 0; i < n; i++) {
+        wrap = Math.max(wrap, Math.abs(at(0, i) - at(n - 1, i)), Math.abs(at(i, 0) - at(i, n - 1)))
+        for (let j = 1; j < n; j++) inside = Math.max(inside, Math.abs(at(j, i) - at(j - 1, i)), Math.abs(at(i, j) - at(i, j - 1)))
+      }
+      expect(wrap).toBeLessThanOrEqual(inside + 1)
+    }
+  })
+  test('모든 그림은 그래픽 장치로 올라가게 표시돼 있다(안 그러면 빈 그림으로 보인다)', () => {
+    const hall = { xMin: -10, xMax: 18, zMin: 0, zMax: 30 }
+    for (const t of [epoxyColorTexture([4, 3]), epoxyRoughnessTexture([2, 2]), wallShadeTexture('low'), wallShadeTexture('up'), hallFalloffTexture(hall, [hall]), glowTexture('alpha'), glowTexture('rgb')]) expect(t.version).toBeGreaterThan(0)
+  })
+  test('이어 붙이지 않는 그림: 가장자리에서 멈추고, 선명도 보정은 쓰지 않는다. 밝기를 곱하는 그림은 sRGB, 투명도 그림은 값 그대로', () => {
+    const hall = { xMin: -10, xMax: 18, zMin: 0, zMax: 30 }
+    const srgb = [wallShadeTexture('low'), wallShadeTexture('up'), hallFalloffTexture(hall, [hall]), glowTexture('rgb')], plain = [glowTexture('alpha')]
+    for (const t of [...srgb, ...plain]) { expect(t.wrapS).toBe(THREE.ClampToEdgeWrapping); expect(t.wrapT).toBe(THREE.ClampToEdgeWrapping); expect(t.anisotropy).toBe(1) }
+    for (const t of srgb) expect(t.colorSpace).toBe(THREE.SRGBColorSpace)
+    for (const t of plain) expect(t.colorSpace).toBe(THREE.NoColorSpace)
   })
   test('벽 그늘 그림은 아래 줄이 v = 0', () => {
     const d = wallShadeTexture('low').image.data as Uint8Array

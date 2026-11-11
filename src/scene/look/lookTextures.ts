@@ -1,5 +1,6 @@
 // 빛·재질 다듬기에 쓰는 그림(설계 2026-11-11 §4.5·§4.6). 그림 파일 없이, 점마다 계산해서 만든다.
 // 캔버스의 번짐(gradient)·흐림(filter)은 쓰지 않는다: 크롬은 번짐에 미세한 점을 섞어 바닥에 잔 그물 무늬가 보였고, 흐림은 일부 사파리에서 안 된다.
+// 만든 그림은 한 번만 만들어 여러 곳이 함께 쓴다. 받은 쪽에서 설정(반복 수 등)을 바꾸지 않는다.
 import * as THREE from 'three'
 import { PALETTE, type Bounds } from './lookConfig'
 
@@ -60,7 +61,8 @@ export function glowAt(u: number, v: number): number {
 }
 
 const cache = new Map<string, THREE.DataTexture>()
-function build(key: string, w: number, h: number, at: (u: number, v: number) => [number, number, number, number], opts: { srgb: boolean; repeat?: [number, number] }): THREE.DataTexture {
+/** anisotropy: 비스듬히 볼 때의 선명도 보정(넓게 깔리는 바닥 그림에만 쓴다 — 태블릿 부담을 줄이려고 나머지는 1) */
+function build(key: string, w: number, h: number, at: (u: number, v: number) => [number, number, number, number], opts: { srgb: boolean; repeat?: [number, number]; anisotropy?: number }): THREE.DataTexture {
   const hit = cache.get(key)
   if (hit) return hit
   const data = new Uint8Array(w * h * 4)
@@ -72,17 +74,17 @@ function build(key: string, w: number, h: number, at: (u: number, v: number) => 
   if (opts.srgb) t.colorSpace = THREE.SRGBColorSpace
   if (opts.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(opts.repeat[0], opts.repeat[1]) }
   t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true
-  t.anisotropy = 8
+  t.anisotropy = opts.anisotropy ?? 1
   t.needsUpdate = true
   cache.set(key, t)
   return t
 }
 
 export function epoxyColorTexture(repeat: [number, number]): THREE.DataTexture {
-  return build(`epoxy-color-${repeat.join('x')}`, 256, 256, (u, v) => [...epoxyColorAt(u, v), 255], { srgb: true, repeat })
+  return build(`epoxy-color-${repeat.join('x')}`, 256, 256, (u, v) => [...epoxyColorAt(u, v), 255], { srgb: true, repeat, anisotropy: 4 })
 }
 export function epoxyRoughnessTexture(repeat: [number, number]): THREE.DataTexture {
-  return build(`epoxy-rough-${repeat.join('x')}`, 256, 256, (u, v) => { const r = epoxyRoughAt(u, v); return [r, r, r, 255] }, { srgb: false, repeat })
+  return build(`epoxy-rough-${repeat.join('x')}`, 256, 256, (u, v) => { const r = epoxyRoughAt(u, v); return [r, r, r, 255] }, { srgb: false, repeat, anisotropy: 4 })
 }
 export function wallShadeTexture(kind: 'low' | 'up'): THREE.DataTexture {
   return build(`wall-shade-${kind}`, 4, 64, (_u, v) => { const g = wallShadeAt(kind, v); return [g, g, g, 255] }, { srgb: true })
@@ -92,7 +94,8 @@ export function hallFalloffTexture(hall: Bounds, zones: Bounds[]): THREE.DataTex
   const key = `hall-${[hall, ...zones].map((r) => [r.xMin, r.xMax, r.zMin, r.zMax].join(',')).join('|')}`
   return build(key, 128, 128, (u, v) => { const g = hallFalloffAt(hall.xMin + u * (hall.xMax - hall.xMin), hall.zMax - v * (hall.zMax - hall.zMin), zones); return [g, g, g, 255] }, { srgb: true })
 }
-/** 둥근 빛 그림. alpha: 흰색에 투명도로(더하기 섞기 빛 판용), rgb: 밝기로(반사광 속 조명판용) */
+/** 둥근 빛 그림. alpha: 흰색에 투명도로(더하기 섞기 빛 판용), rgb: 밝기로(반사광 속 조명판용).
+ *  rgb는 색 그림(sRGB)으로 읽혀서 빛 값으로는 alpha보다 빨리 어두워진다(가운데가 또렷한 반사 — 시안에서 이 모양으로 맞췄다) */
 export function glowTexture(mode: 'alpha' | 'rgb'): THREE.DataTexture {
   return build(`glow-${mode}`, 64, 64, (u, v) => { const g = glowAt(u, v) * 255; return mode === 'alpha' ? [255, 255, 255, g] : [g, g, g, 255] }, { srgb: mode === 'rgb' })
 }
