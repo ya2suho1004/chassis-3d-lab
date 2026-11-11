@@ -34,6 +34,19 @@ describe('응답 채점 — 기본', () => {
     expect(b.result.correct).toBe(false)
   })
 
+  test('계산값은 학생 값을 다시 절사하지 않는다(설계 계약, MOON 결정 가): 6.69·6.6999·73.39는 오답, 6.60·73.3은 정답', () => {
+    const s = createResponseSheet(task1)
+    expect(submitAnswer(s, 'deviation', '6.69').result.correct).toBe(false)
+    expect(submitAnswer(s, 'deviation', '6.6999').result.correct).toBe(false)
+    expect(submitAnswer(s, 'sum', '73.39').result.correct).toBe(false)
+    expect(submitAnswer(s, 'deviation', '6.60').result.correct).toBe(true)
+    expect(submitAnswer(s, 'sum', '73.3').result.correct).toBe(true)
+    // 형식 오류가 아니라 채점된 오답이므로 첫 답으로 남는다
+    const r = submitAnswer(s, 'deviation', '6.69')
+    expect(r.result.reasonCode).toBeNull()
+    expect(r.sheet.items.find((i) => i.itemId === 'deviation')!.firstInput).toBe('6.69')
+  })
+
   test('빈 입력은 오답이 아니라 미응답', () => {
     const { sheet, result } = submitAnswer(createResponseSheet(task1), 'sum', '   ')
     expect(result.correct).toBeNull()

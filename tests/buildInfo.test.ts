@@ -25,4 +25,5 @@ describe('앱 판 번호 — 커밋 포함(H1)', () => {
     expect(cfg).toMatch(/__APP_COMMIT__/)
     expect(cfg).toMatch(/VERCEL_GIT_COMMIT_SHA/)
   })
+  test('계산 채점 규칙 가(2026-11-10)부터 기본 판 0.3.1-demo — 기록으로 규칙을 가른다', () => { expect(APP_BASE_VERSION).toBe('0.3.1-demo') })
 })

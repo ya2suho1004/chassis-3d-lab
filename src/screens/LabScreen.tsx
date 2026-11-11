@@ -120,7 +120,8 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const [reviewActiveId, setReviewActiveId] = useState<string | null>(null)
   const [labelChoice, setLabelChoice] = useState<LabelMode | null>(null)
   const moveRequestRef = useRef<Pt | null>(null)
-  const goTo = (p: Pt) => { moveRequestRef.current = p }
+  /** 걸어갈 곳을 정한다. talk가 참이면 도착해서 교관 대화를 연다. 다른 곳으로 가면 걷던 교관행 대화 예약은 취소된다(검토 M4) */
+  const goTo = (p: Pt, talk = false) => { setTalkOnArrive(talk); moveRequestRef.current = p }
   /** 화면 방식: 게임(3D 꽉 찬 화면 + 겹친 정보, 기본) · 기본(3D 옆에 패널) */
   const [uiStyle, setUiStyle] = useState<'game' | 'classic'>('game')
   const joystickRef = useRef<MoveInput>({ x: 0, y: 0 })
@@ -378,7 +379,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               {run && ctx && <p key={fx.effects.includes('checkPop') ? fx.seq : 'p'} className={`g-progress ${fx.effects.includes('checkPop') ? 'pop' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
               <div className="g-quest-btns">
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
-                <button onClick={() => goTo(npcSpot)}>교관에게</button>
+                <button onClick={() => goTo(npcSpot, true)}>교관에게</button>
                 {navTargets.map((e) => <button key={e.id} onClick={() => goTo(e.accessPoint!)}>{e.label.replace(/\(.*\)/, '').trim()}</button>)}
               </div>
             </div>}
@@ -523,7 +524,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
         {npcOpen && !gate.closed && (
           <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
-            onGoToNpc={() => { setNpcOpen(false); setTalkOnArrive(true); goTo(npcSpot) }}
+            onGoToNpc={() => { setNpcOpen(false); goTo(npcSpot, true) }}
             onOpenTasks={() => { setNpcOpen(false); setDrawerOpen(true) }}
             onInspect={() => { setNpcOpen(false); ctx?.inspect(); setDrawerOpen(true) }}
             onClose={() => setNpcOpen(false)} />

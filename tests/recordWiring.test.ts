@@ -27,14 +27,14 @@ describe('과제 패널의 기록 창(§3)', () => {
   })
   test('창은 게임 화면이 준 자리에 portal로 그리고, 단계 완료는 같은 doStep을 거쳐 끝나면 창을 닫는다', () => {
     expect(task).toMatch(/recordHost && record && createPortal\(/)
-    expect(task).toMatch(/<RecordWindow title=\{recordLabel\(task, record\) \?\? '기록'\} onClose=\{closeRecord\} onAskAi=\{onAskAi\}/)
-    expect(task).toMatch(/<button type="button" className="primary" onClick=\{\(\) => doStep\(record\)\}>단계 완료<\/button>/)
+    expect(task).toMatch(/<RecordWindow title=\{recordLabel\(task, record\) \?\? '기록'\} onClose=\{requestClose\} onAskAi=\{onAskAi\}/)
+    expect(task).toMatch(/<button type="button" className="primary" onClick=\{\(\) => \{ if \(!warnUnsaved\(record\)\) doStep\(record\) \}\}>단계 완료<\/button>/)
     // 아래 줄: 끝낸 단계는 닫기만(다시 완료할 일이 없다), 아직이면 단계 완료
-    expect(task).toContain('done(record) ? <button type="button" onClick={closeRecord}>닫기</button> : <button type="button" className="primary" onClick={() => doStep(record)}>단계 완료</button>')
+    expect(task).toContain('done(record) ? <button type="button" onClick={requestClose}>닫기</button> : <button type="button" className="primary" onClick={() => { if (!warnUnsaved(record)) doStep(record) }}>단계 완료</button>')
     expect(task).toMatch(/if \(res\.outcome === 'completed'\) \{ setRun\(res\.run\); setShown\(null\); if \(record === stepId\) closeRecord\(\); return \}/)
   })
   test('✕·닫기로 창을 닫아도 다시 확인할 항목 목록은 남긴다(단계 완료 길은 doStep이 먼저 비운다)', () => {
-    expect(task).toMatch(/const closeRecord = \(\) => \{ if \(!shown\?\.fixItems\) setShown\(null\); setReview\(false\); setRecord\(null\) \}/)
+    expect(task).toMatch(/const closeRecord = \(\) => \{ listUnderWarning\.current = null; if \(!shown\?\.fixItems\) setShown\(null\); setReview\(false\); setUnsavedWarned\(false\); setRecord\(null\) \}/)
   })
   test('다시 보기는 조건이 사라지면 꺼 둔다(각도가 다시 틀려도 저절로 켜지지 않게). 훅은 조건 없이 return 앞에', () => {
     expect(task).toMatch(/const needles = [^\n]*\n\s*useEffect\(\(\) => \{ if \(!canReview && review\) setReview\(false\) \}, \[canReview, review\]\)/)
@@ -56,7 +56,9 @@ describe('과제 패널의 기록 창(§3)', () => {
   })
   test('고치기로 다른 창으로 옮길 때 다시 확인할 목록을 남기고, 옮긴 직후엔 안내를 끌어오지 않으며, 장비가 멀면 창을 닫고 이동하라고 알린다', () => {
     expect(task).toMatch(/if \(!keepFixList \|\| !shown\?\.fixItems\) setShown\(null\)/)
-    expect(task).toMatch(/if \(record && shown && !switched\) revealInBody/)
+    expect(task).toMatch(/if \(record && shown && !switched\) reveal\(\)/)
+    // 창 밖 단계 버튼이 연 창의 경고: 창이 맨 위로 되돌린 뒤(개발 모드 StrictMode의 두 번째 효과 포함) 다음 그림 때 끌어온다(재확인 G4)
+    expect(task).toMatch(/else if \(record && shown && revealOnOpen\.current\) requestAnimationFrame\(reveal\)/)
     expect(task).toContain('창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.')
   })
 })
@@ -118,7 +120,7 @@ describe('창 모양·오래된 크롬(§8)', () => {
     expect(css).toMatch(/\.rec-row\.led \.gauge div \{ flex-wrap:wrap;/)
     expect(css).toMatch(/\.g-record label\.radio \{ min-height:44px;/)
     expect(css).toMatch(/\.field label, \.field \.flabel \{ word-break:keep-all; overflow-wrap:break-word; \}/) // 칸 이름이 낱말 가운데서 끊기지 않게(좌측 바퀴 조/향각), 띄어쓰기 없는 긴 이름(최소회전반경(m))은 넘치지 않게
-    expect(css).toMatch(/\.g-record \.field \{ grid-template-columns:90px minmax\(0, 1fr\) auto 36px; \}/) // 창 안 표시 칸: '저장'이 두 줄로 쌓이지 않게(기본 24px)
+    expect(css).toMatch(/\.g-record \.field \{ grid-template-columns:90px minmax\(0, 1fr\) auto minmax\(36px, max-content\); \}/) // 창 안 표시 칸: '저장'이 두 줄로 쌓이지 않게(기본 24px)
   })
   test('새 화면 높이 단위·:has()·HTML 대화 상자·비활성 속성·form·브라우저 스크롤 함수를 쓰지 않는다', () => {
     expect(cssCode).not.toMatch(/\d(dvh|svh|lvh)\b/)
@@ -127,5 +129,71 @@ describe('창 모양·오래된 크롬(§8)', () => {
       const c = code(f)
       expect(c, f).not.toMatch(/<dialog|\binert\b|<form|scrollIntoView\(/)
     }
+  })
+})
+
+describe('고친 값 경고(마무리 §3)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  const css = read('src/styles.css')
+  test('작업 목록·기록 창 칸 표시는 fieldMark(입력 전이 정오보다 먼저)', () => {
+    expect(task).toMatch(/mark: \(id\) => fieldMark\(run, inputs, id\)/)
+    expect(task).toMatch(/const mark = \(id: string\) => fieldMark\(run, inputs, id\)\.text/)
+    expect(task).toMatch(/const markClass = \(id: string\) => fieldMark\(run, inputs, id\)\.cls/)
+  })
+  test('창 닫기·단계 완료는 고친 값이 있으면 처음 한 번 멈추고 알린다, 입력을 누르면 경고를 처음으로', () => {
+    expect(task).toMatch(/const left = unsavedEdits\(run, inputs, recordItems\(task, stepId\)\)/)
+    expect(task).toMatch(/if \(left\.length === 0 \|\| unsavedWarned\) return false/)
+    expect(task).toMatch(/const requestClose = \(\) => \{\n\s+if \(record && warnUnsaved\(record\)\) return\n\s+const list = listUnderWarning\.current\n\s+closeRecord\(\)\n\s+if \(list\) setShown\(list\)\n\s+\}/)
+    expect(task).toMatch(/const submit = \(itemId: string\) => \{\n\s+setUnsavedWarned\(false\)/)
+  })
+  test('표시 칸 36px, 입력 전은 작은 글자 한 줄', () => {
+    expect(css).toMatch(/\.field \{ display:grid; grid-template-columns:90px 1fr auto minmax\(36px, max-content\);/)
+    expect(css).toMatch(/\.mark \{ white-space:nowrap; \}/)
+    expect(css).toMatch(/\.mark\.dirty \{ color:var\(--warn\); font-weight:700; font-size:12px; white-space:nowrap; \}/)
+  })
+})
+
+describe('고칠 목록·경고 제목(마무리 §4·§6)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  test('안내 없음에서 마지막 최초 답이 오답이어도 그 설명에 고치기 목록을 붙인다(같은 show·같은 키)', () => {
+    expect(task).toMatch(/const lastFirst = run\.difficultyMode === 'unguided' && !answerFeedbackAllowed\(run\)/)
+    expect(task).toMatch(/text: feedbackFor\(task, res\.feedbackKey\), \.\.\.\(lastFirst \? \{ fixItems: wrongIds \} : \{\}\) \}, res\.feedbackKey, itemId\)/)
+    expect(task).toMatch(/if \(lastFirst && wrongIds\.length > 0\)/)
+  })
+  test('정지·상승·차량 빼기: 순서 오류와 안전 오류 제목을 나눈다', () => {
+    expect(task).toMatch(/title: `\$\{kind === 'safety' \? '안전 위반' : '순서가 틀렸습니다'\} — \$\{OFF_LABEL\[action\]\}`/)
+  })
+})
+
+describe('고친 값 경고 보완(검토 M1·M2, 검증 결함 2)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  test('경고가 덮은 다시 확인할 항목 목록을 기억하고, 경고에도 같은 고치기를 붙이며, 닫거나 옮기면 되돌린다', () => {
+    expect(task).toMatch(/const listUnderWarning = useRef<Shown \| null>\(null\)/)
+    expect(task).toMatch(/const list = shown\?\.fixItems \? shown : null\n\s+listUnderWarning\.current = list/)
+    expect(task).toMatch(/focusItem: left\[0\], \.\.\.\(list \? \{ fixItems: list\.fixItems \} : \{\}\) \}\)/)
+    expect(task).toMatch(/if \(keepFixList && list\) setShown\(list\); else if \(!keepFixList \|\| !shown\?\.fixItems\) setShown\(null\)/)
+    expect(task).toMatch(/setUnsavedWarned\(false\)\n\s+listUnderWarning\.current = null/)
+  })
+  test('창 안 고치기로 다른 창으로 옮길 때도 경고를 거친다', () => {
+    expect(task).toMatch(/if \(record && warnUnsaved\(record\)\) return\n\s+openRecord\(st, true\)/)
+  })
+  test('창 밖 단계 버튼도 고친 값이 입력 전이면 바로 끝내지 않고 알린다(게임 화면은 창을 열고)', () => {
+    expect(task).toMatch(/if \(record !== stepId && !unsavedWarned && unsavedEdits\(run, inputs, recordItems\(task, stepId\)\)\.length > 0\) \{\n\s+if \(recordHost\) \{ openRecord\(stepId\); revealOnOpen\.current = true \}\n\s+warnUnsaved\(stepId, recordHost \? '창 아래 단계 완료를 누르세요' : '한 번 더 누르세요'\)\n\s+return\n\s+\}/)
+  })
+})
+
+describe('재검토 반영(큰 버튼은 최신 함수, 새 창 경고 보이기, 경고 문구)', () => {
+  const task = code('src/screens/TaskScreen.tsx')
+  test('큰 버튼·목록 줄 버튼은 늘 최신 doStep을 부른다(칸 글자가 바뀌어도)', () => {
+    expect(task).toMatch(/const doStepRef = useRef\(doStep\)/)
+    expect(task).toMatch(/useEffect\(\(\) => \{ doStepRef\.current = doStep \}\)/)
+    expect(task).toMatch(/onClick: \(\) => doStepRef\.current\(stepId\)/)
+    expect(task).not.toMatch(/onClick: \(\) => doStep\(stepId\)/)
+  })
+  test('창 밖 단계 버튼이 연 창의 경고는 끌어와 보이고, 문구는 그 길에 맞는 버튼을 가리킨다', () => {
+    expect(task).toMatch(/const revealOnOpen = useRef\(false\)/)
+    expect(task).toMatch(/revealOnOpen\.current = false/)
+    expect(task).toMatch(/const warnUnsaved = \(stepId: string, again = '한 번 더 누르세요'\): boolean =>/)
+    expect(task).toMatch(/그대로 두려면 \$\{again\}\./)
   })
 })

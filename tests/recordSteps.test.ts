@@ -1,6 +1,6 @@
 // 기록 창 규칙(설계 2026-11-10 §2·§3·§5·§7·§8): 칸·이름·열림·복원·표시·다시 보기·창 크기·스크롤
 import { describe, expect, test } from 'vitest'
-import { canReviewDial, itemOpen, markFor, missingText, recordItems, recordLabel, recordStepOf, recordWindowBox, restoreInputs, scrollDelta } from '../src/app/recordSteps'
+import { canReviewDial, itemOpen, markFor, fieldMark, missingText, recordItems, recordLabel, recordStepOf, recordWindowBox, restoreInputs, scrollDelta, unsavedEdits, unsavedItems } from '../src/app/recordSteps'
 import { createResponseSheet } from '../src/domain/grading'
 import { answer, brake, brakeToEnter, brakeToOff, brakeToPress, turn, turnToReturn, turnToSteer } from './helpers/recordRuns'
 
@@ -109,5 +109,36 @@ describe('창 크기·스크롤·빠진 칸 문구', () => {
   test('입력을 누르지 않은 칸은 그것을 알린다', () => {
     expect(missingText('축중', false)).toBe('축중 입력이 필요합니다.')
     expect(missingText('축중', true)).toBe('축중 칸 옆 입력을 눌러야 저장됩니다.')
+  })
+})
+
+describe('고친 값 경고(마무리 §3)', () => {
+  test('제출한 값과 같거나 비어 있으면 아니고, 다르거나 적기만 했으면 입력 전', () => {
+    const r = answer(brakeToEnter(), 'axleWeight', '600')
+    expect(unsavedItems(r, { axleWeight: '600' }, ['axleWeight'])).toEqual([])
+    expect(unsavedItems(r, { axleWeight: ' 600 ' }, ['axleWeight'])).toEqual([])
+    expect(unsavedItems(r, { axleWeight: '' }, ['axleWeight'])).toEqual([])
+    expect(unsavedItems(r, { axleWeight: '610' }, ['axleWeight'])).toEqual(['axleWeight'])
+    expect(unsavedItems(r, { left: '240' }, ['left', 'right'])).toEqual(['left'])
+  })
+  test('판정은 고른 값과 제출한 값을 비교한다', () => {
+    const t = answer(turnToReturn('guided', '35', '30'), 'vehicleCondition', 'pass')
+    expect(unsavedItems(t, { vehicleCondition: 'pass' }, ['vehicleCondition'])).toEqual([])
+    expect(unsavedItems(t, { vehicleCondition: 'fail' }, ['vehicleCondition'])).toEqual(['vehicleCondition'])
+  })
+  test('칸 표시: 입력 전이 정오보다 먼저, 정오는 드러내지 않는다', () => {
+    const g = answer(brakeToEnter('guided'), 'axleWeight', '610')
+    expect(fieldMark(g, { axleWeight: '600' }, 'axleWeight')).toEqual({ text: '입력 전', cls: 'dirty' })
+    expect(fieldMark(g, { axleWeight: '610' }, 'axleWeight')).toEqual({ text: '✗', cls: 'bad' })
+    const u = answer(brakeToEnter('unguided'), 'axleWeight', '610')
+    expect(fieldMark(u, { axleWeight: '610' }, 'axleWeight')).toEqual({ text: '저장', cls: '' })
+    expect(fieldMark(u, { axleWeight: '600' }, 'axleWeight')).toEqual({ text: '입력 전', cls: 'dirty' })
+  })
+  test('경고는 이미 입력한 답을 고친 칸만(처음 적고 입력하지 않은 칸은 빼고 단계 완료 안내가 맡는다)', () => {
+    const r = answer(brakeToEnter(), 'axleWeight', '600')
+    expect(unsavedEdits(r, { axleWeight: '610' }, ['axleWeight'])).toEqual(['axleWeight'])
+    expect(unsavedEdits(r, { axleWeight: '600' }, ['axleWeight'])).toEqual([])
+    expect(unsavedEdits(brakeToEnter(), { axleWeight: '600' }, ['axleWeight'])).toEqual([])
+    expect(unsavedEdits(r, { axleWeight: '610', left: '240' }, ['axleWeight', 'left'])).toEqual(['axleWeight'])
   })
 })

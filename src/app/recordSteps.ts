@@ -86,3 +86,22 @@ export function scrollDelta(body: { top: number; bottom: number }, row: { top: n
   if (row.bottom > body.bottom - margin) return Math.min(row.bottom - body.bottom + margin, row.top - body.top - margin)
   return 0
 }
+
+/** 칸에 적은 글자가 제출한 최종 답과 다른 칸(마무리 설계 §3): 고쳤거나 적기만 하고 '입력'을 누르지 않은 칸 */
+export function unsavedItems(run: TaskRun, inputs: Record<string, string>, itemIds: readonly string[]): string[] {
+  const saved = restoreInputs(run)
+  return itemIds.filter((id) => {
+    const t = (inputs[id] ?? '').trim()
+    return t !== '' && t !== (saved[id] ?? '')
+  })
+}
+
+/** 고친 값 경고에 쓸 칸(마무리 §3): 이미 입력한 답이 있는데 칸 글자가 그와 다른 칸만. 처음 적고 입력하지 않은 칸은 빼서, 단계 완료 때는 '…칸 옆 입력을 눌러야 저장됩니다' 안내가 그대로 맡는다(한 번 더 누르라는 틀린 안내를 막음) */
+export function unsavedEdits(run: TaskRun, inputs: Record<string, string>, itemIds: readonly string[]): string[] {
+  const saved = restoreInputs(run)
+  return unsavedItems(run, inputs, itemIds).filter((id) => saved[id] !== undefined)
+}
+/** 칸 옆 표시: 입력하지 않은 고친 값은 '입력 전'(정오보다 먼저, 정오를 드러내지 않음), 아니면 markFor */
+export function fieldMark(run: TaskRun, inputs: Record<string, string>, itemId: string): { text: string; cls: string } {
+  return unsavedItems(run, inputs, [itemId]).length > 0 ? { text: '입력 전', cls: 'dirty' } : markFor(run, itemId)
+}

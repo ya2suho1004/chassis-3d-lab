@@ -11,7 +11,7 @@ import type { ApprovedTask, FeedbackText } from '../domain/types'
 import { newUuid } from '../domain/uuid'
 import { APP_BASE_VERSION, APP_COMMIT, appVersionString } from './buildInfo'
 
-/** 기록 clientAppVersion — 기본 판 + 빌드 커밋(H1). 예: 0.3.0-demo+1a2b3c4d5e6f */
+/** 기록 clientAppVersion — 기본 판 + 빌드 커밋(H1). 예: 0.3.1-demo+1a2b3c4d5e6f */
 export const APP_VERSION = appVersionString(APP_BASE_VERSION, APP_COMMIT)
 
 /** 기본 코드 규칙: 학급 글자 1개 + 하이픈 + 두 자리 번호 (예: A-01). 실제 규칙은 세션 설정에서 승인. */
