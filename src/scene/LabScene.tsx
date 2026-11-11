@@ -857,8 +857,9 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
     if (e.kind !== 'panel' || !tester) return null
     return Math.atan2(-(tester.x - e.x), -(tester.z - e.z))
   }
-  const Floor = ({ r }: { r: { xMin: number; xMax: number; zMin: number; zMax: number } }) => (
-    <mesh rotation-x={-Math.PI / 2} position={[(r.xMin + r.xMax) / 2, 0, (r.zMin + r.zMax) / 2]} onClick={onFloorTap} receiveShadow material={floorMat}>
+  // 바닥 한 구역. 장면 안쪽에서 정의한 부품으로 두면 LabScene이 다시 그려질 때마다 새 부품으로 여겨져 바닥 메시와 모양을 통째로 다시 만든다(학생이 걷는 동안 초당 네 번쯤). 그래서 그냥 함수로 부른다
+  const floorOf = (r: { xMin: number; xMax: number; zMin: number; zMax: number }, key: string) => (
+    <mesh key={key} rotation-x={-Math.PI / 2} position={[(r.xMin + r.xMax) / 2, 0, (r.zMin + r.zMax) / 2]} onClick={onFloorTap} receiveShadow material={floorMat}>
       <planeGeometry args={[r.xMax - r.xMin, r.zMax - r.zMin]} />
     </mesh>
   )
@@ -883,10 +884,10 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
       <WorkshopEnv layout={layout} resolution={tier.envResolution} />
       <LayerSetup />
       {onFps && <FpsProbe onFps={onFps} />}
-      <Floor r={mz} />
+      {floorOf(mz, 'main')}
       {/* 바닥 그림자: 낮음은 주된 빛 그림자 + 닿는 그늘, 높음은 닿는 그늘만 굽는다(주된 빛 그림자는 실시간) */}
       <FloorShadowBake bounds={shadowBounds} sun={tier.sunShadow} contact={tier.contactShadow} stateKey={`${raisedLiftIds.join(',')}|${rig.vehicle}|${rig.liftUp}`} />
-      {ab && <Floor r={ab} />}
+      {ab && floorOf(ab, 'abs')}
       {/* 시험 차로 흰 차선(사진 27·28) */}
       {tester && [-1, 1].map((s) => (
         <mesh key={s} rotation-x={-Math.PI / 2} position={[tester.x + s * (tester.w / 2 + 0.25), 0.003, tester.z]}>
@@ -903,7 +904,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
         const horizontal = Math.abs(z2 - z1) < 1e-6
         return (
           <group key={o.id}>
-            <mesh rotation-x={-Math.PI / 2} position={[(x1 + x2) / 2, 0.01, (z1 + z2) / 2]}>
+            <mesh rotation-x={-Math.PI / 2} position={[(x1 + x2) / 2, 0.01, (z1 + z2) / 2]} receiveShadow>
               <planeGeometry args={horizontal ? [len, 0.3] : [0.3, len]} />
               <meshStandardMaterial color={PALETTE.line} roughness={0.5} />
             </mesh>
@@ -937,7 +938,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
         {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">{npcLabel === 'full' ? 'NPC 교관 — 탭하여 대화' : '교관'}</div></Html>}
       </group>
       {/* 시작점 표시 */}
-      <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshStandardMaterial color={PALETTE.line} roughness={0.5} /></mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]} receiveShadow><ringGeometry args={[0.3, 0.45, 24]} /><meshStandardMaterial color={PALETTE.line} roughness={0.5} /></mesh>
       <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} holdStill={holdStill} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}

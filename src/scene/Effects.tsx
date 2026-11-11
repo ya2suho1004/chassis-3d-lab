@@ -2,7 +2,7 @@
 // 첫 화면 내려받기를 줄이려고 따로 나눠 품질 높음일 때만 불러온다(태블릿 품질 낮음은 내려받지 않음). postprocessing을 들여오는 파일은 이것 하나여야 한다.
 import { Bloom, EffectComposer, N8AO, SMAA, Vignette } from '@react-three/postprocessing'
 import { Effect } from 'postprocessing'
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { LOOK, PALETTE } from './look/lookConfig'
 import { SOFT_CLIP_GLSL } from './look/toneCurve'
 
@@ -16,7 +16,7 @@ void mainImage( const in vec4 inputColor, const in vec2 uv, out vec4 outputColor
   }
 }
 
-export default function Effects() {
+function Effects() {
   // 이 효과는 GPU 자원을 따로 쥐지 않는다(셰이더는 효과 묶음이 갖는다). dispose={null}은 R3F가 이 객체를 건드리지 않게 하는 표시다
   const softClip = useMemo(() => new SoftClipEffect(), [])
   return (
@@ -29,3 +29,7 @@ export default function Effects() {
     </EffectComposer>
   )
 }
+
+// 부모(LabScene)는 학생이 걷는 동안 초당 네 번쯤 다시 그려진다. 이 부품까지 다시 그려지면 EffectComposer가 효과 묶음을 통째로 새로 만들고
+// 그림판(깊이·구석 그늘)을 다시 잡는다(걷는 25초에 그림 480장). 받는 값이 없으니 한 번만 그리게 묶는다 — 촬영 도구의 walk 검사가 본다
+export default memo(Effects)

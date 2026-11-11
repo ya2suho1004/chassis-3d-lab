@@ -24,9 +24,16 @@ describe('실습장 장면', () => {
     expect(scene).not.toMatch(/LAB_HDRI|ContactShadows|BakedFloorShadows|epoxyFloorTexture|Lightformer/)
     expect(scene).toMatch(/makeFloorMaterial\(/)
   })
+  test('바닥은 다시 그릴 때마다 새로 만들지 않는다(장면 안쪽에서 정의한 부품이 아니라 함수로 그린다)', () => {
+    expect(scene).not.toMatch(/const Floor = \(|<Floor /)
+    expect(scene).toMatch(/\{floorOf\(mz, 'main'\)\}/)
+    expect(scene).toMatch(/\{ab && floorOf\(ab, 'abs'\)\}/)
+  })
   test('바닥 표시선은 조명을 받는 칠 색이다(형광 초록 아님)', () => {
     expect(scene).not.toMatch(/#1fbf6b/)
     expect(scene.match(/<meshStandardMaterial color=\{PALETTE\.line\} roughness=\{0\.5\} \/>/g)).toHaveLength(2)
+    expect(scene).toMatch(/0\.01, \(z1 \+ z2\) \/ 2\]\} receiveShadow>/)
+    expect(scene).toMatch(/0\.02, layout\.studentStart\.z\]\} receiveShadow>/)
   })
   test('품질 낮음의 계단 줄이기는 주소 인자로만 켠다', () => {
     expect(scene).toMatch(/antialias: !lowSpec \|\| antialias,/)
@@ -37,9 +44,11 @@ describe('실습장 장면', () => {
 })
 
 describe('태블릿 묶음 보호', () => {
-  test('postprocessing을 들여오는 파일은 Effects.tsx 하나뿐이다', () => {
-    const users = walk('src').filter((f) => /from '(@react-three\/)?postprocessing'/.test(read(f)))
+  test('화면 효과 패키지(postprocessing·n8ao)를 들여오는 파일은 Effects.tsx 하나뿐이고, 그 파일은 필요할 때만 따로 불러온다', () => {
+    const users = walk('src').filter((f) => /from ['"](@react-three\/postprocessing|postprocessing|n8ao)['"]/.test(read(f)))
     expect(users).toEqual([join('src', 'scene', 'Effects.tsx')])
+    // 바로 들여오면(import … from './Effects') 주 묶음에 섞인다. import('./Effects')로만 부른다
+    expect(walk('src').filter((f) => /from ['"][./]*(scene\/)?Effects['"]/.test(read(f)))).toEqual([])
   })
   test('화면 효과는 품질 높음에서만 따로 불러온다', () => {
     const scene = read('src/scene/LabScene.tsx')
@@ -53,6 +62,10 @@ describe('태블릿 묶음 보호', () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order)
     expect(fx).toMatch(/luminanceThreshold=\{LOOK\.bloomThreshold\}/)
     expect(fx).not.toMatch(/ToneMappingMode|ACES/)
+    expect(fx).toMatch(/<EffectComposer multisampling=\{0\}>/)
+    expect(fx).toMatch(/<primitive object=\{softClip\} dispose=\{null\} \/>/)
+    // 부모가 다시 그려져도 효과 묶음을 새로 만들지 않는다
+    expect(fx).toMatch(/export default memo\(Effects\)/)
   })
 })
 
@@ -105,6 +118,7 @@ describe('그 밖의 배선', () => {
     const sur = read('src/scene/Surroundings.tsx')
     expect(sur).toMatch(/new THREE\.InstancedMesh\(geometry, material, spots\.length\)/)
     expect(sur.match(/<CeilingInstances /g)).toHaveLength(2)
+    expect(sur).toMatch(/useEffect\(\(\) => \(\) => \{ haloMat\.dispose\(\) \}, \[haloMat\]\)/)
     expect(sur).not.toMatch(/panels\.map\(/)
   })
   test('그림은 캔버스 번짐·흐림 없이 만든다', () => {

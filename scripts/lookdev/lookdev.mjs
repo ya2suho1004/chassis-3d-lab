@@ -31,9 +31,10 @@ const WRITE_BLOCK = `(() => { if (window.__writeBlock) return; const nf = window
   const open = XMLHttpRequest.prototype.open; XMLHttpRequest.prototype.open = function (method) { if (String(method).toUpperCase() !== 'GET') { window.__blocked.push(String(method)); throw new Error('blocked by lookdev: ' + method) } return open.apply(this, arguments) };
   window.__writeBlock = true })();`
 const PRESETS = `(() => { try { localStorage.setItem('chassis.intro.v1', JSON.stringify({ seen: true, off: true })); localStorage.setItem('lab.guide.v1', 'seen') } catch (e) {} })();`
-/** 한 화면의 WebGL 그리기 호출·삼각형 수 */
-const GL_STATS = `(() => { if (window.__glStats) return; const st = { frames: 0, last: { calls: 0, tris: 0 }, hist: [] }; window.__glStats = st; let fc = 0, ft = 0;
+/** 한 화면의 WebGL 그리기 호출·삼각형 수, 그리고 그래픽 장치에 새로 만든 것(그림·그림판·셰이더·버퍼)의 누적 수 */
+const GL_STATS = `(() => { if (window.__glStats) return; const st = { frames: 0, last: { calls: 0, tris: 0 }, hist: [], made: { textures: 0, framebuffers: 0, programs: 0, buffers: 0 } }; window.__glStats = st; let fc = 0, ft = 0;
   const wrap = (p) => { if (!p) return; const de = p.drawElements, da = p.drawArrays, dei = p.drawElementsInstanced, dai = p.drawArraysInstanced;
+    for (const [fn, key] of [['createTexture', 'textures'], ['createFramebuffer', 'framebuffers'], ['createProgram', 'programs'], ['createBuffer', 'buffers']]) { const orig = p[fn]; p[fn] = function () { st.made[key]++; return orig.apply(this, arguments) } }
     p.drawElements = function (mode, count) { fc++; if (mode === 4) ft += count / 3; return de.apply(this, arguments) };
     p.drawArrays = function (mode, first, count) { fc++; if (mode === 4) ft += count / 3; return da.apply(this, arguments) };
     if (dei) p.drawElementsInstanced = function (mode, count, type, off, n) { fc++; if (mode === 4) ft += (count / 3) * n; return dei.apply(this, arguments) };
@@ -214,12 +215,20 @@ async function walk(base, outDir, name, quality) {
     await sleep(2000)
     const idle = await captures(), t0 = Date.now()
     out.envCaptures = { idle, walking: 0 }
-    // 빈 바닥 지점 세 곳(작업대 앞 두 곳, 최소회전반경 차량 앞)을 차례로 걸어간다
-    for (const [x, z] of [[16.6, 1.6], [16.6, 2.75], [2.6, 5.85]]) {
-      await walkTo(b, x, z)
-      out.envCaptures.walking = (await captures()) - idle
-      out.walkSeconds = +((Date.now() - t0) / 1000).toFixed(1)
+    // 빈 바닥 지점 세 곳(작업대 앞 두 곳, 최소회전반경 차량 앞)을 차례로 두 바퀴 걷는다.
+    // 첫 바퀴는 처음 보이는 물체를 그래픽 장치에 올리느라 새로 만드는 것이 있다. 둘째 바퀴에서 새로 만든 것이 있으면 걷는 동안 무언가를 되풀이해 만드는 것이다
+    const made = () => b.ev(`({ ...window.__glStats.made })`)
+    let made1 = null
+    for (let lap = 1; lap <= 2; lap++) {
+      for (const [x, z] of [[16.6, 1.6], [16.6, 2.75], [2.6, 5.85]]) {
+        await walkTo(b, x, z)
+        out.envCaptures.walking = (await captures()) - idle
+        out.walkSeconds = +((Date.now() - t0) / 1000).toFixed(1)
+      }
+      if (lap === 1) made1 = await made()
     }
+    const made2 = await made()
+    out.madeSecondLap = Object.fromEntries(Object.keys(made2).map((k) => [k, made2[k] - made1[k]]))
     out.bakes = { before: bake0, after: await bakes() }
   } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
   console.log(JSON.stringify(out))

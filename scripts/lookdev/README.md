@@ -23,7 +23,7 @@ node scripts/lookdev/lookdev.mjs colors <출력폴더> <이름>
 | `cams` | 고정 구도 10개(`hero top tester carclose lifttop turncar lifts graze north bench`)를 찍는다 | `<이름>-<품질>-<구도>.png`, `<이름>-<품질>-cams.json`(그리기 호출 수·삼각형 수·굽기 통계·오류) |
 | `inst` | 계측부 가까이 보기. `disc` 다이얼 게이지 2종, `panel` 계기 화면, `turn` 측정판 좌·우 | `<이름>-<품질>-inst-….png` |
 | `toggle` | 품질을 두 번 바꾸고 기본 화면에 다녀온다(부품이 붙고 떨어질 때 오류가 없는지, 그때마다 바닥 그림자를 다시 굽는지) | 표준 출력(JSON: 단계별 굽기 횟수·오류), `<이름>-<품질>-toggled.png`(바꾼 뒤), `…-toggled-back.png`(되돌린 뒤) |
-| `walk` | 빈 바닥 세 곳을 걸어 다니는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지 센다 | 표준 출력(JSON: `envCaptures.walking`이 0, `bakes`가 그대로여야 한다) |
+| `walk` | 빈 바닥 세 곳을 두 바퀴 걷는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지, 둘째 바퀴에서 그래픽 장치에 새로 만드는 것(그림·그림판·셰이더·버퍼)이 없는지 센다 | 표준 출력(JSON: `envCaptures.walking`이 0, `bakes`가 그대로, `madeSecondLap`의 `textures`·`framebuffers`·`programs`가 0이고 `buffers`가 100 이하여야 한다) |
 | `ctx` | 그래픽 장치 연결을 끊었다 되돌린다(기기 메모리가 모자랄 때 생기는 일). 반사광과 구운 그림자가 돌아오는지 본다 | 표준 출력(JSON: `envCapturesAfter` 1, 굽기 횟수 +1), `<이름>-<품질>-ctx-before.png`, `…-ctx-after.png` |
 | `sheet` | 지금·새 판 × 높음·낮음 2×2 비교 그림 | `sheet-<새이름>-<구도>.png` |
 | `colors` | 계기 화면 숫자와 측정판 종이색을 재서 원본 색과 견준다 | 표준 출력(JSON) |
