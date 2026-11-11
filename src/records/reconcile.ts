@@ -1,7 +1,7 @@
 // 수업 종료 접수 대조(C2, 설계 05 §12) — 이 기기 기록과 서버 접수를 맞춰 회수할 기록을 찾는다. 순수 로직.
 // 새로 모으는 자료 없음. 이 모듈은 아무것도 지우거나 보내지 않는다. 미접수 원본의 보관·삭제 시점은 연구자·기관 절차가 정한다.
 import { payloadHash, stripUndefinedKeys } from '../delivery/jcs'
-import { rejectedOnlyByUndefinedKeys } from '../delivery/submit'
+import { resendableRejected } from '../delivery/submit'
 import { csvCell } from './csv'
 import type { Draft, StoredRecord } from './repository'
 import type { UploadStatus } from './types'
@@ -15,7 +15,7 @@ const KEEP = '연구용 묶음(ZIP)으로 보관하고 연구자가 확인하세
 /** 접수 확인 전 기록에 교사가 할 일. 어느 경우에도 지우라고 하지 않는다. */
 export function deviceAction(rec: StoredRecord): string {
   const { uploadStatus, lastErrorCode } = rec.envelope
-  if (uploadStatus === 'pending' || rejectedOnlyByUndefinedKeys(rec)) return '‘대기 기록 지금 전송’을 누르세요.'
+  if (uploadStatus === 'pending' || resendableRejected(rec)) return '‘대기 기록 지금 전송’을 누르세요.'
   if (uploadStatus === 'confirmationPending' || uploadStatus === 'uploading') return '서버 저장 여부를 아직 모릅니다. ‘강제 재전송’으로 같은 번호를 다시 확인하세요.'
   if (uploadStatus === 'conflict') return `같은 번호로 다른 내용이 이미 접수되어 다시 보내지 않습니다. ${KEEP}`
   if (uploadStatus === 'rejected') return `거절된 기록은 다시 보내지 않습니다${lastErrorCode ? `(사유 ${lastErrorCode})` : ''}. ${KEEP}`

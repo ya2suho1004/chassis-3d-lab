@@ -103,6 +103,20 @@ export function rejectedOnlyByUndefinedKeys(rec: StoredRecord): boolean {
   try { canonicalize(stripUndefinedKeys(rec.payload)); return true } catch { return false }
 }
 
+/**
+ * 서버가 기록 판을 아직 몰라 거절한 기록인가(계산기 설계 §7 반영 순서 안전망, 최종 검토 I-1).
+ * 서버는 판을 저장 전에 거절(UNSUPPORTED_SCHEMA)하므로, 서버를 새로 배포한 뒤 다시 보내도 서버의 거절을 무시하는 것이 아니다.
+ * 교사가 '대기 기록 지금 전송'을 누를 때만 다시 보낸다(자동 재전송 아님). 서버가 아직 모르면 같은 사유로 다시 거절되고 저장되지 않는다.
+ */
+export function rejectedOnlyByUnsupportedSchema(rec: StoredRecord): boolean {
+  return rec.envelope.uploadStatus === 'rejected' && rec.envelope.lastErrorCode === 'UNSUPPORTED_SCHEMA'
+}
+
+/** 교사의 '대기 기록 지금 전송'으로 다시 보낼 수 있는 거절 기록 */
+export function resendableRejected(rec: StoredRecord): boolean {
+  return rejectedOnlyByUndefinedKeys(rec) || rejectedOnlyByUnsupportedSchema(rec)
+}
+
 export async function submitRecord(rec: StoredRecord, deps: SubmitDeps): Promise<SubmitResult> {
   const env = rec.envelope
   if (env.localSaveStatus !== 'saved') return { outcome: { kind: 'skipped', reason: 'NOT_SAVED_LOCALLY' }, patch: {} }

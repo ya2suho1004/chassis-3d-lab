@@ -45,6 +45,7 @@ describe('기기 상태 요약(서버 로그인 없이)', () => {
 
   test('할 일 문구: 다시 보낼 수 있는 것과 다시 보내지 않는 것을 구분하고, 어디에도 지우라고 하지 않는다', () => {
     expect(deviceAction(record(1))).toMatch(/대기 기록 지금 전송/)
+    expect(deviceAction(record(1, { uploadStatus: 'rejected', lastErrorCode: 'UNSUPPORTED_SCHEMA' }))).toMatch(/대기 기록 지금 전송/)
     expect(deviceAction(record(1, { uploadStatus: 'confirmationPending' }))).toMatch(/강제 재전송/)
     const rejected = deviceAction(record(1, { uploadStatus: 'rejected', lastErrorCode: 'SESSION_NOT_ALLOWED' }))
     expect(rejected).toMatch(/다시 보내지 않습니다/)
