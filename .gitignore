@@ -19,3 +19,6 @@ supabase/.branches/
 
 # 브레인스토밍 화면 시안(로컬 전용)
 .superpowers/
+
+# 화면 촬영 도구 출력(로컬 전용)
+scripts/lookdev/out/
