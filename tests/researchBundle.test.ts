@@ -7,7 +7,7 @@ import { payloadHash as rawHash } from '../src/delivery/jcs'
 import { buildRecordPayload, type RecordPayload } from '../src/domain/record'
 import { createTaskRun, submitResponse } from '../src/domain/taskEngine'
 import type { ApprovedTask } from '../src/domain/types'
-import { buildResearchBundle, deviceRows, serverRows, ANSWERS_CSV_HEADER, EVENTS_CSV_HEADER, type BundleRow } from '../src/records/researchBundle'
+import { buildResearchBundle, deviceRows, serverRows, ANSWERS_CSV_HEADER, EVENTS_CSV_HEADER, CALCULATOR_CSV_HEADER, type BundleRow } from '../src/records/researchBundle'
 import { crc32, zipStore } from '../src/records/zip'
 import { listAllServerRecords, type ServerRecordRow } from '../src/teacher/serverAdmin'
 import type { DeliveryEnvelope } from '../src/records/types'
@@ -145,7 +145,7 @@ describe('설명서와 건수 대조', () => {
     const p = makePayload()
     const b = await bundle(deviceRows([{ payload: p, envelope: env(p.recordId) }]))
     const readme = file(b, 'README.txt')
-    for (const name of ['answers.csv', 'events.csv', 'summary.csv', 'problems.csv']) {
+    for (const name of ['answers.csv', 'events.csv', 'calculator.csv', 'summary.csv', 'problems.csv']) {
       const header = parseCsv(file(b, name))[0]!
       for (const col of header) expect(readme, `${name} ${col}`).toContain(col)
     }
@@ -154,6 +154,7 @@ describe('설명서와 건수 대조', () => {
     expect(readme).toContain('DEMO-ONLY')
     expect(readme).toContain(`항목 행 ${b.counts.answerRows}`)
     expect(readme).toContain(`사건 행 ${b.counts.eventRows}`)
+    expect(readme).toContain(`계산 행 ${b.counts.calculatorRows}`)
     expect(b.counts.eventRows).toBe(p.stepEvents.length)
   })
 
@@ -236,5 +237,28 @@ describe('화면 연결', () => {
 
   test('학생 결과 화면에는 묶음 내려받기를 두지 않는다', () => {
     expect(fs.readFileSync('src/screens/ResultScreen.tsx', 'utf8')).not.toMatch(/researchBundle|연구용 묶음/)
+  })
+})
+
+describe('계산기 기록 표(계산기 설계 §5)', () => {
+  test('= 1번에 1행, 수행 정보와 식·결과·오류가 그대로 나온다', async () => {
+    const p = { ...makePayload(), calculatorLog: [
+      { sequence: 1, elapsedMs: 1000, stepId: 'calc', kind: 'basic', expression: '240-200/600*100', result: '6.666666667' },
+      { sequence: 2, elapsedMs: 2000, stepId: 'calc', kind: 'basic', expression: '5/0', error: 'divideByZero' },
+    ], calculatorLogTruncated: false } as RecordPayload
+    const b = await bundle(deviceRows([{ payload: p, envelope: env(p.recordId) }]))
+    expect(b.counts.calculatorRows).toBe(2)
+    expect(parseCsv(file(b, 'calculator.csv'))[0]).toEqual(CALCULATOR_CSV_HEADER)
+    const rows = objects(file(b, 'calculator.csv'))
+    expect(rows.map((r) => [r.recordId, r.sequence, r.kind, r.expression, r.result, r.error])).toEqual([
+      [p.recordId, '1', 'basic', '240-200/600*100', '6.666666667', ''],
+      [p.recordId, '2', 'basic', '5/0', '', 'divideByZero'],
+    ])
+  })
+  test('1.3.0보다 앞선 기록(계산기 칸 없음)은 행이 없다', async () => {
+    const { calculatorLog: _l, calculatorLogTruncated: _t, ...old } = makePayload()
+    const b = await bundle(deviceRows([{ payload: old as RecordPayload, envelope: env(old.recordId) }]))
+    expect(b.counts.calculatorRows).toBe(0)
+    expect(objects(file(b, 'calculator.csv'))).toEqual([])
   })
 })
