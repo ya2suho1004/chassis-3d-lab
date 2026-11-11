@@ -657,16 +657,17 @@ describe('품질별 구성', () => {
 })
 
 describe('개발용 조정 인자', () => {
-  test('아는 이름의 숫자 값만 덮어쓴다', () => {
+  test('아는 이름의 숫자 값만 덮어쓴 새 값 표를 돌려준다(원본은 바뀌지 않는다)', () => {
+    const before = { ...LOOK_DEFAULTS }
     const v = withOverrides(LOOK_DEFAULTS, 'key:2.5,env:0.4')
     expect(v.key).toBe(2.5); expect(v.env).toBe(0.4); expect(v.hemi).toBe(LOOK_DEFAULTS.hemi)
+    expect(v).not.toBe(LOOK_DEFAULTS); expect(LOOK_DEFAULTS).toEqual(before)
   })
-  test('모르는 이름·숫자가 아닌 값·빈 값은 버린다. 원본은 바뀌지 않는다', () => {
-    const before = { ...LOOK_DEFAULTS }
+  test('모르는 이름·물려받은 이름(toString 등)·숫자가 아닌 값·빈 값은 버린다', () => {
     expect(withOverrides(LOOK_DEFAULTS, 'nope:1,key:abc,env:,hemi')).toEqual(LOOK_DEFAULTS)
+    expect(Object.keys(withOverrides(LOOK_DEFAULTS, 'toString:1,constructor:2,valueOf:3'))).toEqual(Object.keys(LOOK_DEFAULTS))
     expect(withOverrides(LOOK_DEFAULTS, null)).toBe(LOOK_DEFAULTS)
     expect(withOverrides(LOOK_DEFAULTS, '')).toBe(LOOK_DEFAULTS)
-    expect(LOOK_DEFAULTS).toEqual(before)
   })
 })
 
@@ -677,16 +678,24 @@ describe('주된 빛', () => {
     expect(d.y).toBeCloseTo(Math.sin((LOOK_DEFAULTS.keyElevationDeg * Math.PI) / 180), 6)
     expect(d.z).toBeGreaterThan(0)
     expect(d.x).toBeLessThan(0)
+    expect((Math.atan2(d.x, d.z) * 180) / Math.PI).toBeCloseTo(LOOK_DEFAULTS.keyAzimuthDeg, 6)
   })
-  test('그림자 범위가 실습장(주 구역 + ABS 구역, 바닥~4.4 m)의 여덟 꼭짓점을 모두 담는다', () => {
+  test('그림자 범위가 실습장(주 구역 + ABS 구역, 바닥~4.4 m)의 여덟 꼭짓점을 딱 맞게 담는다(옆 여유 0.5 m, 앞뒤 여유 1 m)', () => {
     const b = labBounds(layout), dir = keyDirection(LOOK_DEFAULTS)
     const f = fitShadowFrustum(b, BAKE.casterHeight, dir)
+    expect(f.near).toBeGreaterThan(0); expect(f.far).toBeGreaterThan(f.near)
     const cam = new THREE.OrthographicCamera(f.left, f.right, f.top, f.bottom, f.near, f.far)
     cam.position.set(...f.position); cam.lookAt(...f.target); cam.updateMatrixWorld(true); cam.updateProjectionMatrix()
+    const lo = new THREE.Vector3(Infinity, Infinity, Infinity), hi = new THREE.Vector3(-Infinity, -Infinity, -Infinity)
     for (const x of [b.xMin, b.xMax]) for (const z of [b.zMin, b.zMax]) for (const y of [0, BAKE.casterHeight]) {
       const p = new THREE.Vector3(x, y, z).project(cam)
       expect(Math.abs(p.x)).toBeLessThanOrEqual(1); expect(Math.abs(p.y)).toBeLessThanOrEqual(1); expect(Math.abs(p.z)).toBeLessThanOrEqual(1)
+      lo.min(p); hi.max(p)
     }
+    // 헐겁지도 않다: 옆이 넓으면 그림자 점이 굵어지고, 앞뒤가 길면 그림자 치우침(shadowBias)이 커져 그림자가 물체에서 떨어진다
+    const w = f.right - f.left, h = f.top - f.bottom, depth = f.far - f.near
+    for (const side of [((lo.x + 1) * w) / 2, ((1 - hi.x) * w) / 2, ((lo.y + 1) * h) / 2, ((1 - hi.y) * h) / 2]) expect(side).toBeCloseTo(0.5, 6)
+    for (const end of [((lo.z + 1) * depth) / 2, ((1 - hi.z) * depth) / 2]) expect(end).toBeCloseTo(1, 6)
   })
   test('예전 범위가 놓치던 공용 조작부·ABS 구역 남쪽 끝도 범위 안이다', () => {
     const f = fitShadowFrustum(labBounds(layout), BAKE.casterHeight, keyDirection(LOOK_DEFAULTS))
@@ -726,9 +735,10 @@ Expected: FAIL — `../src/scene/look/lookConfig`를 찾을 수 없음
 // 실습장 빛·재질 값(설계 docs/superpowers/specs/2026-11-11-light-and-material-design.md §4). 값은 이 파일 한 곳에만 둔다.
 // 채점·기록과 무관한 겉모습 값이고, 과제 진행에 따라 바뀌는 값은 없다(안내 없음 원칙).
 import * as THREE from 'three'
-import type { SceneLayout } from '../layoutModel'
+import type { Rect, SceneLayout } from '../layoutModel'
 
-export interface Bounds { xMin: number; xMax: number; zMin: number; zMax: number }
+/** 바닥 범위(배치 자료의 Rect와 같은 모양) */
+export type Bounds = Rect
 
 /** 숫자 값. 개발 서버에서는 주소 인자 ?look=이름:값,이름:값 으로 덮어써 볼 수 있다(운영 묶음에는 없음) */
 export const LOOK_DEFAULTS = {
@@ -742,7 +752,7 @@ export const LOOK_DEFAULTS = {
   floorRoughness: 0.3, floorReflect: 1,
   /** 구운 그림자 세기: 주된 빛 그림자, 닿는 그늘(낮음·높음 — 높음은 실시간 그림자와 겹쳐 약하게), 빛의 퍼짐 각(도) */
   sunShadow: 0.6, contactShadow: 0.5, contactShadowHigh: 0.4, shadowSoftDeg: 4.5,
-  /** 실시간 그림자(품질 높음) */
+  /** 실시간 그림자(품질 높음). shadowBias는 그림자 범위의 앞뒤 길이(지금 약 24 m)에 대한 비율이라, 범위가 달라지면 실제 치우침도 달라진다 */
   shadowRadius: 2.6, shadowBias: -0.0006, shadowNormalBias: 0.06,
   /** 조명판 둘레 빛 판 세기(낮음·높음 — 높음은 화면 효과 빛 번짐이 더해져 약하게) */
   haloLow: 0.3, haloHigh: 0.18,
@@ -758,7 +768,7 @@ export function withOverrides(base: LookValues, spec: string | null): LookValues
   for (const part of spec.split(',')) {
     const [k, raw] = part.split(':')
     const n = Number(raw)
-    if (k && k in base && raw !== undefined && raw.trim() !== '' && Number.isFinite(n)) out[k as keyof LookValues] = n
+    if (k && Object.hasOwn(base, k) && raw !== undefined && raw.trim() !== '' && Number.isFinite(n)) out[k as keyof LookValues] = n
   }
   return out
 }
@@ -775,7 +785,7 @@ export const PALETTE = {
 export const PANEL_RGB = [2.6, 2.45, 2.2] as const
 export const FOG = { near: 20, far: 62 } as const
 export const SHADOW_MAP_SIZE = 2048
-/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m), 굽기 전 기다림(ms).
+/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m — 천장 4.2 m보다 높아야 한다), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m), 굽기 전 기다림(ms).
  *  처음은 로딩 화면이 걷히기 전(불러오기 끝 + 0.4초, LabScreen)에 굽도록 짧게, 다시 굽기는 리프트·차량 움직임이 끝나도록 길게 */
 export const BAKE = { size: 1024, depthSize: 2048, contactSize: 512, casterHeight: 4.4, contactFar: 2.2, minPenumbra: 0.02, maxPenumbra: 0.5, firstDelayMs: 150, rebakeDelayMs: 2500 } as const
 
@@ -808,8 +818,9 @@ export function labBounds(layout: Pick<SceneLayout, 'mainZone' | 'absProtrusion'
 export interface ShadowFrustum { position: [number, number, number]; target: [number, number, number]; left: number; right: number; bottom: number; top: number; near: number; far: number }
 
 /**
- * 빛 쪽(dir)에서 본 직교 카메라가 범위 상자(바닥 범위 × 높이 0~height)를 딱 담게 맞춘다.
- * three.js 카메라와 같은 규칙: 카메라는 -z를 보고, 위는 +y. dir이 수직이면 안 된다.
+ * 빛 쪽(dir)에서 본 직교 카메라가 범위 상자(바닥 범위 × 높이 0~height)를 딱 담게 맞춘다(옆으로 margin, 앞뒤로 1 m 여유).
+ * three.js 카메라와 같은 규칙: 카메라는 -z를 보고, 위는 +y.
+ * 조건: dir은 길이 1인 벡터. 범위 상자가 빛 쪽으로 distance - 0.5 m보다 멀리 뻗으면 가까운 쪽이 잘린다(지금 실습장은 가운데에서 가장 먼 꼭짓점까지 약 16 m).
  */
 export function fitShadowFrustum(bounds: Bounds, height: number, dir: THREE.Vector3, distance = 40, margin = 0.5): ShadowFrustum {
   const target = new THREE.Vector3((bounds.xMin + bounds.xMax) / 2, 0, (bounds.zMin + bounds.zMax) / 2)
@@ -966,7 +977,7 @@ Expected: FAIL — `../src/scene/look/lookTextures`를 찾을 수 없음
 // 빛·재질 다듬기에 쓰는 그림(설계 2026-11-11 §4.5·§4.6). 그림 파일 없이, 점마다 계산해서 만든다.
 // 캔버스의 번짐(gradient)·흐림(filter)은 쓰지 않는다: 크롬은 번짐에 미세한 점을 섞어 바닥에 잔 그물 무늬가 보였고, 흐림은 일부 사파리에서 안 된다.
 import * as THREE from 'three'
-import type { Bounds } from './lookConfig'
+import { PALETTE, type Bounds } from './lookConfig'
 
 /** 결정적 의사 난수(매번 같은 무늬) */
 function rng(seed: number) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647) }
@@ -988,10 +999,13 @@ export function drift(u: number, v: number, seed: number): number {
   return sum / norm
 }
 
-/** 에폭시 바닥 색(sRGB 0~255): #22774c에 아주 옅고 넓은 색 흐름만 */
+/** 값 표의 바닥 색(#rrggbb)을 sRGB 0~255로 */
+const FLOOR_RGB = [1, 3, 5].map((i) => parseInt(PALETTE.floor.slice(i, i + 2), 16)) as [number, number, number]
+
+/** 에폭시 바닥 색(sRGB 0~255): 값 표의 바닥 색(#22774c)에 아주 옅고 넓은 색 흐름만 */
 export function epoxyColorAt(u: number, v: number): [number, number, number] {
   const d = drift(u, v, 11)
-  return [34 + d * 3, 119 + d * 7, 76 + d * 5]
+  return [FLOOR_RGB[0] + d * 3, FLOOR_RGB[1] + d * 7, FLOOR_RGB[2] + d * 5]
 }
 
 /** 에폭시 바닥 광택(0~255, 재질 거칠기에 곱해짐): 넓은 얼룩으로 조금씩 다르게 */
@@ -1663,7 +1677,7 @@ describe('태블릿 묶음 보호', () => {
   test('화면 효과는 품질 높음에서만 따로 불러온다', () => {
     const scene = read('src/scene/LabScene.tsx')
     expect(scene).toMatch(/const Effects = lazy\(\(\) => import\('\.\/Effects'\)\)/)
-    expect(scene).toMatch(/\{!lowSpec && <Suspense fallback=\{null\}><Effects \/><\/Suspense>\}/)
+    expect(scene).toMatch(/\{tier\.postEffects && <Suspense fallback=\{null\}><Effects \/><\/Suspense>\}/)
   })
   test('화면 효과 순서: 구석 그늘 → 빛 번짐 → 색 보정 곡선 → 계단 줄이기 → 가장자리', () => {
     const fx = read('src/scene/Effects.tsx')
@@ -1720,7 +1734,7 @@ describe('그 밖의 배선', () => {
 - [ ] **Step 2: 실패 확인**
 
 Run: `npm test -- tests/lookWiring.test.ts`
-Expected: FAIL — 15개 가운데 8개 실패('실습장 장면' 5개, '화면 효과 순서', '캐릭터 만들기 화면', '조명판과 빛 판'). 나머지 7개는 이미 통과한다
+Expected: FAIL — 15개 가운데 9개 실패('실습장 장면' 5개, '화면 효과는 품질 높음에서만 따로 불러온다', '화면 효과 순서', '캐릭터 만들기 화면', '조명판과 빛 판'). 나머지 6개는 이미 통과한다
 
 - [ ] **Step 3: 화면 효과 바꾸기** — `src/scene/Effects.tsx`를 통째로 아래로 바꾼다.
 
@@ -2096,6 +2110,18 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
 
 ```tsx
 <ringGeometry args={[0.3, 0.45, 24]} /><meshStandardMaterial color={PALETTE.line} roughness={0.5} /></mesh>
+```
+
+(14) 화면 효과를 켜는 조건을 품질별 구성에서 읽는다(`lookFor`의 `postEffects` — 품질 낮음은 false). 바꿀 곳:
+
+```tsx
+      {!lowSpec && <Suspense fallback={null}><Effects /></Suspense>}
+```
+
+바꾼 글:
+
+```tsx
+      {tier.postEffects && <Suspense fallback={null}><Effects /></Suspense>}
 ```
 
 고친 뒤 `LabScene.tsx`에 `hdri`, `LAB_HDRI`, `assetUrl`, `Environment`, `Lightformer`, `ContactShadows`, `epoxyFloorTexture`라는 글자가 남아 있으면 안 된다(`grep -n "hdri\|LAB_HDRI\|assetUrl\|Lightformer\|ContactShadows\|epoxyFloorTexture" src/scene/LabScene.tsx` → 결과 없음). `useProgress`·`useState`·`useEffect`·`Suspense`는 다른 곳에서 쓰므로 import에 그대로 둔다.
