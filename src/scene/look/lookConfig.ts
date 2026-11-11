@@ -1,9 +1,10 @@
 // 실습장 빛·재질 값(설계 docs/superpowers/specs/2026-11-11-light-and-material-design.md §4). 값은 이 파일 한 곳에만 둔다.
 // 채점·기록과 무관한 겉모습 값이고, 과제 진행에 따라 바뀌는 값은 없다(안내 없음 원칙).
 import * as THREE from 'three'
-import type { SceneLayout } from '../layoutModel'
+import type { Rect, SceneLayout } from '../layoutModel'
 
-export interface Bounds { xMin: number; xMax: number; zMin: number; zMax: number }
+/** 바닥 범위(배치 자료의 Rect와 같은 모양) */
+export type Bounds = Rect
 
 /** 숫자 값. 개발 서버에서는 주소 인자 ?look=이름:값,이름:값 으로 덮어써 볼 수 있다(운영 묶음에는 없음) */
 export const LOOK_DEFAULTS = {
@@ -17,7 +18,7 @@ export const LOOK_DEFAULTS = {
   floorRoughness: 0.3, floorReflect: 1,
   /** 구운 그림자 세기: 주된 빛 그림자, 닿는 그늘(낮음·높음 — 높음은 실시간 그림자와 겹쳐 약하게), 빛의 퍼짐 각(도) */
   sunShadow: 0.6, contactShadow: 0.5, contactShadowHigh: 0.4, shadowSoftDeg: 4.5,
-  /** 실시간 그림자(품질 높음) */
+  /** 실시간 그림자(품질 높음). shadowBias는 그림자 범위의 앞뒤 길이(지금 약 24 m)에 대한 비율이라, 범위가 달라지면 실제 치우침도 달라진다 */
   shadowRadius: 2.6, shadowBias: -0.0006, shadowNormalBias: 0.06,
   /** 조명판 둘레 빛 판 세기(낮음·높음 — 높음은 화면 효과 빛 번짐이 더해져 약하게) */
   haloLow: 0.3, haloHigh: 0.18,
@@ -33,7 +34,7 @@ export function withOverrides(base: LookValues, spec: string | null): LookValues
   for (const part of spec.split(',')) {
     const [k, raw] = part.split(':')
     const n = Number(raw)
-    if (k && k in base && raw !== undefined && raw.trim() !== '' && Number.isFinite(n)) out[k as keyof LookValues] = n
+    if (k && Object.hasOwn(base, k) && raw !== undefined && raw.trim() !== '' && Number.isFinite(n)) out[k as keyof LookValues] = n
   }
   return out
 }
@@ -50,7 +51,7 @@ export const PALETTE = {
 export const PANEL_RGB = [2.6, 2.45, 2.2] as const
 export const FOG = { near: 20, far: 62 } as const
 export const SHADOW_MAP_SIZE = 2048
-/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m), 굽기 전 기다림(ms).
+/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m — 천장 4.2 m보다 높아야 한다), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m), 굽기 전 기다림(ms).
  *  처음은 로딩 화면이 걷히기 전(불러오기 끝 + 0.4초, LabScreen)에 굽도록 짧게, 다시 굽기는 리프트·차량 움직임이 끝나도록 길게 */
 export const BAKE = { size: 1024, depthSize: 2048, contactSize: 512, casterHeight: 4.4, contactFar: 2.2, minPenumbra: 0.02, maxPenumbra: 0.5, firstDelayMs: 150, rebakeDelayMs: 2500 } as const
 
@@ -83,8 +84,9 @@ export function labBounds(layout: Pick<SceneLayout, 'mainZone' | 'absProtrusion'
 export interface ShadowFrustum { position: [number, number, number]; target: [number, number, number]; left: number; right: number; bottom: number; top: number; near: number; far: number }
 
 /**
- * 빛 쪽(dir)에서 본 직교 카메라가 범위 상자(바닥 범위 × 높이 0~height)를 딱 담게 맞춘다.
- * three.js 카메라와 같은 규칙: 카메라는 -z를 보고, 위는 +y. dir이 수직이면 안 된다.
+ * 빛 쪽(dir)에서 본 직교 카메라가 범위 상자(바닥 범위 × 높이 0~height)를 딱 담게 맞춘다(옆으로 margin, 앞뒤로 1 m 여유).
+ * three.js 카메라와 같은 규칙: 카메라는 -z를 보고, 위는 +y.
+ * 조건: dir은 길이 1인 벡터. 범위 상자가 빛 쪽으로 distance - 0.5 m보다 멀리 뻗으면 가까운 쪽이 잘린다(지금 실습장은 가운데에서 가장 먼 꼭짓점까지 약 16 m).
  */
 export function fitShadowFrustum(bounds: Bounds, height: number, dir: THREE.Vector3, distance = 40, margin = 0.5): ShadowFrustum {
   const target = new THREE.Vector3((bounds.xMin + bounds.xMax) / 2, 0, (bounds.zMin + bounds.zMax) / 2)
