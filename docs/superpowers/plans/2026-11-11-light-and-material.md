@@ -36,7 +36,7 @@
   - 형 검사: `node_modules/.bin/tsc -p tsconfig.json --noEmit`
   - 멈추면 앞에 `perl -e 'alarm 300; exec @ARGV'`를 붙인다.
 - **커밋 메시지:** 끝에 `-m "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>"`를 붙인다.
-- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1017개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
+- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1018개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
 - **"바꿀 곳 → 바꾼 글"의 뜻:** '바꿀 곳'의 글은 파일에 **한 번만** 나온다(두 번이라고 적힌 곳 제외). 그 글을 '바꾼 글'로 통째로 바꾼다. 줄의 나머지 부분이 보이지 않으면 그 부분은 그대로 둔다.
 
 ## 미리 재 둔 값(헤드리스 크롬, 이 맥 — 태블릿 값이 아님)
@@ -2499,7 +2499,7 @@ git commit -m "feat(빛과 재질): 장면에 끼우기 — 주된 빛·실습�
 
 **Files:**
 - Modify: `src/app/intro.ts`, `src/App.tsx`, `src/app/assetUrl.ts`
-- Modify: `scripts/build-asset-versions.mjs`, `src/data/assetVersions.json`(다시 만듦)
+- Modify: `scripts/build-asset-versions.mjs`, `scripts/build-asset-versions.d.mts`, `src/data/assetVersions.json`(다시 만듦)
 - Delete: `public/assets/hdri/autoshop_01_1k.hdr`
 - Modify: `docs/design/docs/08_ASSET_AND_COPYRIGHT.md`
 - Test: `tests/intro.test.ts`, `tests/assetVersions.test.ts`, `tests/lookWiring.test.ts`
@@ -2548,7 +2548,25 @@ import { PRELOAD_MODELS, introPlan, parseIntroPrefs, preloadPlan, tipsFor } from
 
 - [ ] **Step 2: 시험 고치기** — `tests/assetVersions.test.ts`
 
-HDRI 주소 검사를 '모델만 있다' 검사로 바꾼다. 바꿀 곳:
+(1) import를 고친다(임시 폴더를 만들고 지우는 데 쓴다). 바꿀 곳:
+
+```ts
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, test } from 'vitest'
+```
+
+바꾼 글:
+
+```ts
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { describe, expect, test } from 'vitest'
+```
+
+(2) HDRI 주소 검사를 'HDRI 꼬리표가 없다' 검사로 바꾼다. 바꿀 곳:
 
 ```ts
   test('모델·HDRI 주소에 내용 해시 꼬리표가 붙는다', () => {
@@ -2559,9 +2577,34 @@ HDRI 주소 검사를 '모델만 있다' 검사로 바꾼다. 바꿀 곳:
 바꾼 글:
 
 ```ts
-  test('모델 주소에 내용 해시 꼬리표가 붙는다', () => {
+  test('모델 주소에 내용 해시 꼬리표가 붙는다(정비소 HDRI 꼬리표는 없다)', () => {
     expect(assetUrl('models/k3.glb')).toMatch(/assets\/models\/k3\.glb\?v=[0-9a-f]{10}$/)
-    expect(Object.keys(versions).every((k) => k.startsWith('models/'))).toBe(true)
+    expect(Object.keys(versions).some((k) => k.startsWith('hdri/'))).toBe(false)
+```
+
+(3) 마지막 시험 위에, 폴더를 있는 대로 훑는지 보는 시험을 더한다. 바꿀 곳:
+
+```ts
+  test('소스에 꼬리표 없는 자료 주소(BASE_URL}assets/)가 남아 있지 않다', () => {
+```
+
+바꾼 글:
+
+```ts
+  test('자료 폴더를 이름으로 적어 두지 않고 있는 대로 훑는다(새 폴더를 더해도 꼬리표가 빠지지 않는다)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'asset-versions-'))
+    try {
+      for (const d of ['models', 'sounds', '.cache']) mkdirSync(join(dir, d))
+      writeFileSync(join(dir, 'models', 'a.glb'), 'A'); writeFileSync(join(dir, 'sounds', 'b.ogg'), 'B')
+      // 점으로 시작하는 폴더·파일과 맨 위의 파일은 자료가 아니다
+      writeFileSync(join(dir, 'sounds', '.DS_Store'), 'x'); writeFileSync(join(dir, '.cache', 'c.bin'), 'C'); writeFileSync(join(dir, 'README.txt'), 'top')
+      const v = computeAssetVersions(pathToFileURL(dir + '/'))
+      expect(Object.keys(v)).toEqual(['models/a.glb', 'sounds/b.ogg'])
+      expect(v['models/a.glb']).toMatch(/^[0-9a-f]{10}$/)
+      expect(v['sounds/b.ogg']).not.toBe(v['models/a.glb'])
+    } finally { rmSync(dir, { recursive: true, force: true }) }
+  })
+  test('소스에 꼬리표 없는 자료 주소(BASE_URL}assets/)가 남아 있지 않다', () => {
 ```
 
 - [ ] **Step 3: 끼움 시험 더하기** — `tests/lookWiring.test.ts`
@@ -2589,7 +2632,7 @@ HDRI 주소 검사를 '모델만 있다' 검사로 바꾼다. 바꿀 곳:
 - [ ] **Step 4: 실패 확인**
 
 Run: `npm test -- tests/intro.test.ts tests/assetVersions.test.ts tests/lookWiring.test.ts`
-Expected: FAIL — 3개 실패(파일마다 하나): `preloadPlan`에 아직 `hdri`가 있고 파일·폴더·꼬리표가 남아 있음
+Expected: FAIL — 4개 실패(`tests/intro.test.ts` 1개, `tests/lookWiring.test.ts` 1개, `tests/assetVersions.test.ts` 2개): `preloadPlan`에 아직 `hdri`가 있고 파일·폴더·꼬리표가 남아 있으며, 꼬리표 스크립트가 아직 훑을 자리를 받지 않음
 
 - [ ] **Step 5: 미리 받기에서 빼기** — `src/app/intro.ts`
 
@@ -2675,23 +2718,53 @@ import { useGLTF } from '@react-three/drei'
 바꾼 글:
 
 ```js
-// 3D 자료 버전 꼬리표 생성(2026-11-03): public/assets/models의 파일마다 내용 해시(앞 10자)를 src/data/assetVersions.json에 쓴다.
+// 3D 자료 버전 꼬리표 생성(2026-11-03): public/assets 아래 폴더(지금은 models 하나)의 파일마다 내용 해시(앞 10자)를 src/data/assetVersions.json에 쓴다.
 // (정비소 HDRI는 2026-11-11부터 쓰지 않는다 — 반사광을 실습장 자체로 만든다)
 ```
 
-(2) 훑는 폴더에서 `hdri`를 뺀다(폴더가 없어지므로). 바꿀 곳:
+(2) 훑는 폴더를 이름으로 적어 두지 않고(`['models', 'hdri']`) 있는 폴더를 모두 훑게 한다. 훑을 자리(`root`)를 받을 수 있게 해서 시험이 임시 폴더로 확인한다. 바꿀 곳:
 
 ```js
+export function computeAssetVersions() {
+  const out = {}
   for (const dir of ['models', 'hdri']) {
+    for (const f of readdirSync(new URL(dir + '/', ROOT)).filter((n) => !n.startsWith('.')).sort()) {
+      out[`${dir}/${f}`] = createHash('sha256').update(readFileSync(new URL(`${dir}/${f}`, ROOT))).digest('hex').slice(0, 10)
+    }
+  }
 ```
 
 바꾼 글:
 
 ```js
-  for (const dir of ['models']) {
+/** root 아래 폴더마다 파일의 내용 해시 앞 10자. 폴더 이름을 적어 두지 않고 있는 폴더를 모두 훑는다 — 새 자료 폴더를 더했을 때 꼬리표 없이 나가 1년 캐시에 묶이는 일을 막는다 */
+export function computeAssetVersions(root = ROOT) {
+  const out = {}
+  const dirs = readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory() && !d.name.startsWith('.')).map((d) => d.name).sort()
+  for (const dir of dirs) {
+    for (const f of readdirSync(new URL(dir + '/', root)).filter((n) => !n.startsWith('.')).sort()) {
+      out[`${dir}/${f}`] = createHash('sha256').update(readFileSync(new URL(`${dir}/${f}`, root))).digest('hex').slice(0, 10)
+    }
+  }
 ```
 
-- [ ] **Step 9: 파일 지우고 꼬리표 다시 만들기**
+- [ ] **Step 9: 형 선언 고치기** — `scripts/build-asset-versions.d.mts`
+
+설명과 형을 스크립트에 맞춘다. 바꿀 곳:
+
+```ts
+/** public/assets/{models,hdri} 파일별 내용 해시 앞 10자('models/k3.glb' → 'ab12…') */
+export function computeAssetVersions(): Record<string, string>
+```
+
+바꾼 글:
+
+```ts
+/** public/assets 아래 폴더마다 파일별 내용 해시 앞 10자('models/k3.glb' → 'ab12…'). root: 훑을 폴더(기본 public/assets/ — 끝에 /가 붙은 URL) */
+export function computeAssetVersions(root?: URL): Record<string, string>
+```
+
+- [ ] **Step 10: 파일 지우고 꼬리표 다시 만들기**
 
 ```bash
 git rm public/assets/hdri/autoshop_01_1k.hdr
@@ -2700,7 +2773,7 @@ node scripts/build-asset-versions.mjs
 
 Expected: `asset versions 18`. `src/data/assetVersions.json`에서 마지막 `hdri/…` 줄이 빠지고 그 앞줄 끝의 쉼표가 없어진다(`git diff --stat src/data/assetVersions.json` → 1줄 추가, 2줄 삭제). `public/assets/hdri` 폴더가 없어진다.
 
-- [ ] **Step 10: 저작권 표에 적기** — `docs/design/docs/08_ASSET_AND_COPYRIGHT.md`
+- [ ] **Step 11: 저작권 표에 적기** — `docs/design/docs/08_ASSET_AND_COPYRIGHT.md`
 
 HDRI 줄의 맨 끝 칸(용도)만 바꾼다. 바꿀 곳:
 
@@ -2714,15 +2787,15 @@ HDRI 줄의 맨 끝 칸(용도)만 바꾼다. 바꿀 곳:
 | 0.3.2-demo까지 품질 '높음'의 반사·환경광으로 썼다. **0.3.3-demo부터 쓰지 않고 파일도 저장소에서 지웠다**(2026-11-11 — 반사광을 실습장 자체로 만든다. 깃 이력에는 남아 있다) |
 ```
 
-- [ ] **Step 11: 통과 확인**
+- [ ] **Step 12: 통과 확인**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
 Expected: 전체 PASS(`tests/lookWiring.test.ts` 19개), 형 검사 오류 없음
 
-- [ ] **Step 12: 커밋**
+- [ ] **Step 13: 커밋**
 
 ```bash
-git add src/app/intro.ts src/App.tsx src/app/assetUrl.ts scripts/build-asset-versions.mjs src/data/assetVersions.json docs/design/docs/08_ASSET_AND_COPYRIGHT.md tests/intro.test.ts tests/assetVersions.test.ts tests/lookWiring.test.ts
+git add src/app/intro.ts src/App.tsx src/app/assetUrl.ts scripts/build-asset-versions.mjs scripts/build-asset-versions.d.mts src/data/assetVersions.json docs/design/docs/08_ASSET_AND_COPYRIGHT.md tests/intro.test.ts tests/assetVersions.test.ts tests/lookWiring.test.ts
 git commit -m "chore(빛과 재질): 정비소 HDRI 걷어내기 — 미리 받기·파일·꼬리표에서 빼고 저작권 표에 기록(PC 내려받기 1.6 MB 줄어듦)" -m "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>"
 ```
 
@@ -2831,7 +2904,7 @@ git commit -m "chore(판): 앱 판 0.3.3-demo — 빛과 재질 다듬기부터(
 - [ ] **Step 1: 전체 시험과 형 검사**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: `Test Files 124 passed`, `Tests 1017 passed`, 형 검사 오류 없음
+Expected: `Test Files 124 passed`, `Tests 1018 passed`, 형 검사 오류 없음
 
 - [ ] **Step 2: 빌드**
 
