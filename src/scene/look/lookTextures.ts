@@ -33,9 +33,12 @@ export function epoxyColorAt(u: number, v: number): [number, number, number] {
   return [FLOOR_RGB[0] + d * 3, FLOOR_RGB[1] + d * 7, FLOOR_RGB[2] + d * 5]
 }
 
+/** 에폭시 바닥 광택 그림의 가운데 값(0~255). 바닥 재질(floorMaterial.ts)이 이 값으로 거칠기를 맞춘다 */
+export const EPOXY_ROUGH_MID = 118
+
 /** 에폭시 바닥 광택(0~255, 재질 거칠기에 곱해짐): 넓은 얼룩으로 조금씩 다르게 */
 export function epoxyRoughAt(u: number, v: number): number {
-  return 118 + drift(u, v, 5) * 34 + drift(u * 2, v * 2, 23) * 10
+  return EPOXY_ROUGH_MID + drift(u, v, 5) * 34 + drift(u * 2, v * 2, 23) * 10
 }
 
 /** 벽 세로 그늘(sRGB 회색 0~255, v = 0 아래 → 1 위). low: 바닥에 닿는 쪽이 어둡다. up: 위쪽 끝이 조금 어둡다 */

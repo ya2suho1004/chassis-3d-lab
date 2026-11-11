@@ -1,7 +1,7 @@
 // 빛·재질 그림(설계 2026-11-11 §4.5·§4.6): 점마다 계산해 만든다 — 값 범위, 이음매 없음, 같은 입력이면 같은 값
 import { describe, expect, test } from 'vitest'
 import * as THREE from 'three'
-import { drift, epoxyColorAt, epoxyColorTexture, epoxyRoughAt, epoxyRoughnessTexture, glowAt, glowTexture, hallFalloffAt, hallFalloffTexture, wallShadeAt, wallShadeTexture } from '../src/scene/look/lookTextures'
+import { EPOXY_ROUGH_MID, drift, epoxyColorAt, epoxyColorTexture, epoxyRoughAt, epoxyRoughnessTexture, glowAt, glowTexture, hallFalloffAt, hallFalloffTexture, wallShadeAt, wallShadeTexture } from '../src/scene/look/lookTextures'
 
 const grid = (n: number) => Array.from({ length: n }, (_, i) => i / (n - 1))
 
@@ -31,10 +31,14 @@ describe('에폭시 바닥', () => {
       expect(Math.abs(r - 34)).toBeLessThanOrEqual(3); expect(Math.abs(g - 119)).toBeLessThanOrEqual(7); expect(Math.abs(b - 76)).toBeLessThanOrEqual(5)
     }
   })
-  test('광택 값은 가운데 118 둘레에서 조금씩 다르다', () => {
+  test('광택 값은 가운데 값(118) 둘레에서 조금씩 다르고, 평균이 가운데 값 가까이다(바닥 재질이 이 값으로 거칠기를 맞춘다)', () => {
+    expect(EPOXY_ROUGH_MID).toBe(118)
     const vals = grid(17).flatMap((u) => grid(17).map((v) => epoxyRoughAt(u, v)))
-    expect(Math.min(...vals)).toBeGreaterThanOrEqual(118 - 44); expect(Math.max(...vals)).toBeLessThanOrEqual(118 + 44)
+    expect(Math.min(...vals)).toBeGreaterThanOrEqual(EPOXY_ROUGH_MID - 44); expect(Math.max(...vals)).toBeLessThanOrEqual(EPOXY_ROUGH_MID + 44)
     expect(Math.max(...vals) - Math.min(...vals)).toBeGreaterThan(10)
+    const cells = Array.from({ length: 64 }, (_, i) => (i + 0.5) / 64)
+    const mean = cells.reduce((sum, u) => sum + cells.reduce((s, v) => s + epoxyRoughAt(u, v), 0), 0) / (64 * 64)
+    expect(Math.abs(mean - EPOXY_ROUGH_MID)).toBeLessThan(4)
   })
 })
 
