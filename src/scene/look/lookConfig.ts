@@ -51,9 +51,10 @@ export const PALETTE = {
 export const PANEL_RGB = [2.6, 2.45, 2.2] as const
 export const FOG = { near: 20, far: 62 } as const
 export const SHADOW_MAP_SIZE = 2048
-/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m — 천장 4.2 m보다 높아야 한다), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m), 굽기 전 기다림(ms).
+/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m — 천장 4.2 m보다 높아야 한다), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m),
+ *  바닥의 점마다 가리는 물체를 찾는 점 수·가장자리를 푸는 점 수(태블릿에서 굽기가 길면 그림 크기와 함께 줄인다), 굽기 전 기다림(ms).
  *  처음은 로딩 화면이 걷히기 전(불러오기 끝 + 0.4초, LabScreen)에 굽도록 짧게, 다시 굽기는 리프트·차량 움직임이 끝나도록 길게 */
-export const BAKE = { size: 1024, depthSize: 2048, contactSize: 512, casterHeight: 4.4, contactFar: 2.2, minPenumbra: 0.02, maxPenumbra: 0.5, firstDelayMs: 150, rebakeDelayMs: 2500 } as const
+export const BAKE = { size: 1024, depthSize: 2048, contactSize: 512, casterHeight: 4.4, contactFar: 2.2, minPenumbra: 0.02, maxPenumbra: 0.5, searchTaps: 32, filterTaps: 64, firstDelayMs: 150, rebakeDelayMs: 2500 } as const
 
 export interface TierLook { realtimeShadows: boolean; postEffects: boolean; envResolution: number; hemi: number; halo: number; sunShadow: number; contactShadow: number }
 

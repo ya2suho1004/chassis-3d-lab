@@ -16,8 +16,8 @@ uniform vec4 uRect;
 const vec4 UNPACK = vec4( 255.0 / 256.0, 255.0 / 65536.0, 255.0 / 16777216.0, 1.0 / 16777216.0 );
 float depthAt( sampler2D t, vec2 uv ) { return dot( texture2D( t, uv ), UNPACK ); }
 vec3 floorPoint() { return vec3( uRect.x + vUv.x * uRect.z, 0.0, uRect.y + ( 1.0 - vUv.y ) * uRect.w ); }`
-/** 주된 빛 그림자: 가리는 물체를 찾고(32점), 물체가 멀수록 넓게 풀어(64점) 가려진 비율을 적는다 */
-const SUN = DEPTH + /* glsl */`
+/** 주된 빛 그림자: 가리는 물체를 찾고(SEARCH_TAPS점), 물체가 멀수록 넓게 풀어(FILTER_TAPS점) 가려진 비율을 적는다. 점 수는 값 표(BAKE)에서 받는다 */
+const SUN = `#define SEARCH_TAPS ${BAKE.searchTaps}\n#define FILTER_TAPS ${BAKE.filterTaps}\n` + DEPTH + /* glsl */`
 uniform sampler2D tDepth; uniform mat4 uLightVP; uniform float uRange; uniform vec2 uSpan; uniform float uTan; uniform float uMinPen; uniform float uMaxPen; uniform float uBias;
 float ign( vec2 p ) { return fract( 52.9829189 * fract( dot( p, vec2( 0.06711056, 0.00583715 ) ) ) ); }
 vec2 vogel( float i, float n, float phi ) { float r = sqrt( ( i + 0.5 ) / n ); float a = i * 2.39996323 + phi; return r * vec2( cos( a ), sin( a ) ); }
@@ -27,16 +27,16 @@ void main() {
   float phi = ign( gl_FragCoord.xy ) * 6.2831853;
   vec2 searchUV = uMaxPen / uSpan;
   float sum = 0.0; float cnt = 0.0;
-  for ( int i = 0; i < 32; i ++ ) {
-    float dz = depthAt( tDepth, c.xy + vogel( float( i ), 32.0, phi ) * searchUV );
+  for ( int i = 0; i < SEARCH_TAPS; i ++ ) {
+    float dz = depthAt( tDepth, c.xy + vogel( float( i ), float( SEARCH_TAPS ), phi ) * searchUV );
     if ( dz < c.z - uBias ) { sum += dz; cnt += 1.0; }
   }
   if ( cnt < 0.5 ) { gl_FragColor = vec4( 0.0 ); return; }
   float pen = clamp( ( c.z - sum / cnt ) * uRange * uTan, uMinPen, uMaxPen );
   vec2 penUV = pen / uSpan;
   float sh = 0.0;
-  for ( int i = 0; i < 64; i ++ ) sh += step( depthAt( tDepth, c.xy + vogel( float( i ), 64.0, phi + 1.7 ) * penUV ), c.z - uBias );
-  gl_FragColor = vec4( sh / 64.0 );
+  for ( int i = 0; i < FILTER_TAPS; i ++ ) sh += step( depthAt( tDepth, c.xy + vogel( float( i ), float( FILTER_TAPS ), phi + 1.7 ) * penUV ), c.z - uBias );
+  gl_FragColor = vec4( sh / float( FILTER_TAPS ) );
 }`
 /** 닿는 그늘: 바닥 바로 위에 물체가 있을수록(낮을수록) 짙게 */
 const CONTACT = DEPTH + /* glsl */`
@@ -76,15 +76,23 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
   // 굽는 때: 모델을 다 불러온 뒤(불러오는 동안은 굽지 않는다), 그리고 상태(리프트·시험 차량·품질)가 바뀌고 조금 뒤
   const [loads, setLoads] = useState(0)
   useEffect(() => { if (!active) setLoads((n) => n + 1) }, [active])
-  const want = `${loads}|${stateKey}|${sun}|${contact}`
+  const placed = `${loads}|${stateKey}|`
+  const want = `${placed}${sun}|${contact}`
   const [key, setKey] = useState('')
   useEffect(() => {
     if (active || loads === 0) return
-    const t = setTimeout(() => setKey(want), key === '' ? BAKE.firstDelayMs : BAKE.rebakeDelayMs)
+    // 물체가 움직이는 변화(리프트·차량)는 움직임이 끝나도록 길게 기다리고, 처음과 품질만 바뀐 때(그림자 세기만 다름)는 바로 굽는다 — 품질을 바꾼 뒤 그림자가 겹치거나 비는 시간을 줄인다
+    const t = setTimeout(() => setKey(want), key === '' || key.startsWith(placed) ? BAKE.firstDelayMs : BAKE.rebakeDelayMs)
     return () => clearTimeout(t)
   }, [want, active]) // eslint-disable-line react-hooks/exhaustive-deps
   const pending = useRef(false)
   useEffect(() => { if (key) pending.current = true }, [key])
+  // 그래픽 장치 연결이 끊겼다 돌아오면 구워 둔 그림이 비어 있다. 다시 굽는다
+  useEffect(() => {
+    const el = gl.domElement, again = () => { pending.current = true }
+    el.addEventListener('webglcontextrestored', again)
+    return () => el.removeEventListener('webglcontextrestored', again)
+  }, [gl])
   const [failed, setFailed] = useState(false)
 
   const out = useMemo(() => target(BAKE.size, false, THREE.LinearFilter), [])
@@ -114,6 +122,10 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
     const ca = target(BAKE.contactSize, false, THREE.LinearFilter), cb = target(BAKE.contactSize, false, THREE.LinearFilter)
     const prev = { rt: gl.getRenderTarget(), over: scene.overrideMaterial, bg: scene.background, auto: gl.shadowMap.autoUpdate, color: gl.getClearColor(new THREE.Color()), alpha: gl.getClearAlpha() }
     const hidden: THREE.Object3D[] = []
+    // 셰이더가 만들어지지 않아도 three.js는 예외를 던지지 않고 알리기만 한다. 굽는 동안에는 그 알림을 받아 두었다가 실패로 처리한다
+    let broken = false
+    const prevShaderError = gl.debug.onShaderError
+    gl.debug.onShaderError = (glc, program) => { broken = true; console.error('[look] 바닥 그림자 굽기 셰이더를 만들지 못했습니다', glc.getProgramInfoLog(program)) }
     const draw = (mat: THREE.ShaderMaterial, to: THREE.WebGLRenderTarget) => { quad.mesh.material = mat; gl.setRenderTarget(to); gl.clear(); gl.render(quad.scene, quad.cam) }
     const blur = (from: THREE.WebGLRenderTarget, tmp: THREE.WebGLRenderTarget, stepU: number, stepV: number) => {
       quad.blur.uniforms.tMap!.value = from.texture; quad.blur.uniforms.uStep!.value.set(stepU, 0); draw(quad.blur, tmp)
@@ -167,6 +179,7 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
       const m = quad.combine.uniforms
       m.tSun!.value = a.texture; m.tContact!.value = ca.texture; m.uSun!.value = sunDepth ? sun : 0; m.uContact!.value = contact
       draw(quad.combine, out)
+      if (broken || gl.getContext().isContextLost()) throw new Error('셰이더를 만들지 못했거나 그래픽 장치 연결이 끊겼습니다')
       if (failed) setFailed(false)
       if (import.meta.env.DEV) {
         // 개발 서버 전용: 화면 촬영 도구가 굽기가 됐는지 확인한다
@@ -184,6 +197,7 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
       for (const o of hidden) o.visible = true
       scene.overrideMaterial = prev.over; scene.background = prev.bg; gl.shadowMap.autoUpdate = prev.auto
       gl.setClearColor(prev.color, prev.alpha); gl.setRenderTarget(prev.rt)
+      gl.debug.onShaderError = prevShaderError
       sunDepth?.dispose(); upDepth.dispose(); a.dispose(); b.dispose(); ca.dispose(); cb.dispose()
     }
   })

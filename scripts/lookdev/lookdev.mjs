@@ -176,7 +176,7 @@ async function inst(base, outDir, name, quality, flow) {
 async function toggle(base, outDir, name, quality) {
   const b = await launch(outDir)
   const out = { name, quality, steps: [] }
-  const bakes = async () => ((await b.ev(`window.__lookdev ? window.__lookdev.bakes : null`)) ?? []).length
+  const bakes = () => bakeCount(b)
   const setLow = async (v) => {
     await b.ev(`(() => { if (!document.querySelector('.g-menu')) document.querySelector('button[aria-label="메뉴"]').click(); return true })()`); await sleep(300)
     await b.ev(`(() => { const c = document.querySelector('.g-menu .g-check input'); if (c && c.checked !== ${v}) c.click(); return true })()`); await sleep(200)
@@ -188,10 +188,62 @@ async function toggle(base, outDir, name, quality) {
     await setLow(quality !== 'low'); out.steps.push(['품질 바꿈', await bakes()])
     await hud(b, false); await sleep(300); await b.shot(join(outDir, `${name}-${quality}-toggled.png`)); await hud(b, true)
     await setLow(quality === 'low'); out.steps.push(['품질 되돌림', await bakes()])
+    await hud(b, false); await sleep(300); await b.shot(join(outDir, `${name}-${quality}-toggled-back.png`)); await hud(b, true)
     await b.click('button[aria-label="메뉴"]'); await sleep(300); await b.click('.g-menu button', '기본 화면(패널)으로'); await b.waitFor(`!!document.querySelector('main.lab')`); await sleep(3500)
     out.steps.push(['기본 화면', await bakes()])
     await b.click('button.link', '게임 화면으로'); await b.waitFor(`!!document.querySelector('main.game')`); await sleep(3500)
     out.steps.push(['게임 화면', await bakes()])
+  } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
+  console.log(JSON.stringify(out))
+}
+
+/** 반사광 그리기 횟수를 세게 한다: 정육면체 그림의 첫 면을 그리기 시작할 때마다 센다 */
+const ENV_HOOK = `(async () => { ${R3F} if (!window.__envCaptures) { const c = (window.__envCaptures = { n: 0 }), gl = st.gl, set = gl.setRenderTarget.bind(gl); gl.setRenderTarget = (rt, face, mip) => { if (rt && rt.isWebGLCubeRenderTarget && (face ?? 0) === 0) c.n++; return set(rt, face, mip) } } return true })()`
+const bakeCount = async (b) => ((await b.ev(`window.__lookdev ? window.__lookdev.bakes : null`)) ?? []).length
+
+/** 걷는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지 본다. 고정 구도 촬영으로는 드러나지 않는 부담이다 */
+async function walk(base, outDir, name, quality) {
+  const b = await launch(outDir)
+  const out = { name, quality }
+  const captures = () => b.ev(`window.__envCaptures.n`)
+  const bakes = () => bakeCount(b)
+  try {
+    await enterLab(b, base, quality)
+    await b.ev(ENV_HOOK)
+    const bake0 = await bakes()
+    await sleep(2000)
+    const idle = await captures(), t0 = Date.now()
+    out.envCaptures = { idle, walking: 0 }
+    // 빈 바닥 지점 세 곳(작업대 앞 두 곳, 최소회전반경 차량 앞)을 차례로 걸어간다
+    for (const [x, z] of [[16.6, 1.6], [16.6, 2.75], [2.6, 5.85]]) {
+      await walkTo(b, x, z)
+      out.envCaptures.walking = (await captures()) - idle
+      out.walkSeconds = +((Date.now() - t0) / 1000).toFixed(1)
+    }
+    out.bakes = { before: bake0, after: await bakes() }
+  } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
+  console.log(JSON.stringify(out))
+}
+
+/** 그래픽 장치 연결을 끊었다 되돌린다(기기 메모리가 모자랄 때 생기는 일). 한 번만 만들어 둔 것(반사광·구운 그림자)이 돌아오는지 본다 */
+async function ctx(base, outDir, name, quality) {
+  const b = await launch(outDir)
+  const out = { name, quality }
+  try {
+    await enterLab(b, base, quality)
+    await b.ev(ENV_HOOK)
+    await hud(b, false); await setCam(b, CAMS.hero); await sleep(700)
+    await b.shot(join(outDir, `${name}-${quality}-ctx-before.png`))
+    const bake0 = await bakeCount(b)
+    await b.ev(`(async () => { ${R3F} window.__ctxExt = st.gl.getContext().getExtension('WEBGL_lose_context'); window.__ctxExt.loseContext(); return true })()`)
+    await sleep(1500)
+    out.lost = await b.ev(`(async () => { ${R3F} return st.gl.getContext().isContextLost() })()`)
+    await b.ev(`(window.__ctxExt.restoreContext(), true)`)
+    await sleep(7000)
+    out.restored = !(await b.ev(`(async () => { ${R3F} return st.gl.getContext().isContextLost() })()`))
+    out.envCapturesAfter = await b.ev(`window.__envCaptures.n`)
+    out.bakes = { before: bake0, after: await bakeCount(b) }
+    await b.shot(join(outDir, `${name}-${quality}-ctx-after.png`))
   } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
   console.log(JSON.stringify(out))
 }
@@ -234,7 +286,9 @@ const dir = (p) => { const d = resolve(p); mkdirSync(d, { recursive: true }); re
 if (cmd === 'cams') await cams(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4] ?? 'all')
 else if (cmd === 'inst') await inst(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4] ?? 'disc')
 else if (cmd === 'toggle') await toggle(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
+else if (cmd === 'walk') await walk(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
+else if (cmd === 'ctx') await ctx(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
 else if (cmd === 'sheet') await sheet(dir(a[0]), a[1], a[2], a[3])
 else if (cmd === 'colors') await colors(dir(a[0]), a[1])
-else { console.log('사용: lookdev.mjs cams|inst|toggle|sheet|colors … (scripts/lookdev/README.md)'); process.exit(1) }
+else { console.log('사용: lookdev.mjs cams|inst|toggle|walk|ctx|sheet|colors … (scripts/lookdev/README.md)'); process.exit(1) }
 process.exit(0)
