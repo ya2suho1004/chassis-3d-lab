@@ -36,7 +36,7 @@
   - 형 검사: `node_modules/.bin/tsc -p tsconfig.json --noEmit`
   - 멈추면 앞에 `perl -e 'alarm 300; exec @ARGV'`를 붙인다.
 - **커밋 메시지:** 끝에 `-m "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>"`를 붙인다.
-- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1006개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
+- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1009개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
 - **"바꿀 곳 → 바꾼 글"의 뜻:** '바꿀 곳'의 글은 파일에 **한 번만** 나온다(두 번이라고 적힌 곳 제외). 그 글을 '바꾼 글'로 통째로 바꾼다. 줄의 나머지 부분이 보이지 않으면 그 부분은 그대로 둔다.
 
 ## 미리 재 둔 값(헤드리스 크롬, 이 맥 — 태블릿 값이 아님)
@@ -432,22 +432,25 @@ git commit -m "chore(촬영 도구): 고정 구도로 실습장을 찍어 겉모
 
 ```ts
 // 색 보정 곡선 '부드러운 꺾임'(설계 2026-11-11 §4.2): 꺾임 값까지는 그대로, 그 위만 눌러 준다 — 계측부·색 토큰이 원본대로 보이게
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import * as THREE from 'three'
 import { SOFT_CLIP_GLSL, TONE_ANCHOR, TONE_DESATURATION, TONE_KNEE, installToneCurve, softClip, type Rgb } from '../src/scene/look/toneCurve'
 
 const srgbToLinear = (v: number) => { const c = v / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
+const to8 = (c: number) => Math.round((c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055) * 255)
+/** 끼우기 전의 three.js 조각(이 파일의 어떤 시험보다 먼저 잡아 둔다) */
+const PRISTINE = THREE.ShaderChunk.tonemapping_pars_fragment
+/** 끼운 뒤에 있어야 할 함수 글 */
+const PATCHED_FN = `vec3 CustomToneMapping( vec3 color ) {\n  color *= toneMappingExposure;${SOFT_CLIP_GLSL}\n}`
 
 describe('부드러운 꺾임 곡선', () => {
   test('꺾임 값 이하의 색은 그대로 나온다', () => {
     for (const c of [[0, 0, 0], [0.2, 0.5, 0.1], [TONE_KNEE, 0.3, 0.3], [0.01, 0.02, TONE_KNEE]] as Rgb[]) expect(softClip(c)).toEqual(c)
   })
-  test('계기 화면 숫자 색(#ff4a3a)은 가장 밝은 채널만 조금 눌리고 색 비율이 유지된다', () => {
-    const red: Rgb = [srgbToLinear(255), srgbToLinear(74), srgbToLinear(58)]
-    const out = softClip(red)
-    expect(out[0]).toBeGreaterThan(0.93); expect(out[0]).toBeLessThan(1)
-    expect(out[1] / out[0]).toBeCloseTo(red[1] / red[0], 1)
-    expect(out[2] / out[0]).toBeCloseTo(red[2] / red[0], 1)
+  test('계기 화면 숫자 색(#ff4a3a)은 화면 값 (248, 76, 62)로 나온다 — 원본과 채널마다 10 이내(설계 §5·§10)', () => {
+    const out = softClip([srgbToLinear(255), srgbToLinear(74), srgbToLinear(58)]).map(to8)
+    expect(out).toEqual([248, 76, 62])
+    ;[255, 74, 58].forEach((v, i) => expect(Math.abs(out[i]! - v)).toBeLessThanOrEqual(10))
   })
   test('밝아질수록 커지되 1을 넘지 않는다', () => {
     let prev = 0
@@ -459,29 +462,71 @@ describe('부드러운 꺾임 곡선', () => {
     }
     expect(softClip([40, 40, 40])[0]).toBeGreaterThan(0.99)
   })
-  test('꺾이는 점에서 끊기지 않는다', () => {
+  test('꺾이는 점에서 끊기지 않는다(위로도 아래로도)', () => {
     const below = softClip([TONE_KNEE, 0, 0])[0], above = softClip([TONE_KNEE + 1e-6, 0, 0])[0]
-    expect(above - below).toBeLessThan(1e-5)
+    expect(Math.abs(above - below)).toBeLessThan(1e-5)
   })
   test('GLSL 글은 같은 상수로 만든다', () => {
     expect(SOFT_CLIP_GLSL).toContain(TONE_KNEE.toFixed(4))
     expect(SOFT_CLIP_GLSL).toContain(TONE_DESATURATION.toFixed(4))
     expect(SOFT_CLIP_GLSL).toContain((1 - TONE_KNEE).toFixed(4))
   })
+  test('GLSL 글을 글자 치환으로 JS로 옮겨 돌리면 JS 함수와 같은 값이 나온다(화면에 나가는 식을 지킨다)', () => {
+    const body = SOFT_CLIP_GLSL
+      .replace(/float /g, 'let ').replace(/max\(/g, 'Math.max(')
+      .replace(/color\.([rgb])/g, (_m, ch: string) => `color[${'rgb'.indexOf(ch)}]`)
+      .replace(/color \*= ([^;]+);/, 'color = color.map((v) => v * ($1));')
+      .replace(/return mix\( color, vec3\( (\w+) \), (\w+) \);/, 'return color.map((v) => v * (1 - $2) + $1 * $2);')
+    const glsl = new Function('color', body) as (c: number[]) => number[]
+    for (let p = 0; p <= 4; p += 0.01) {
+      for (const c of [[p, p, p], [p, 0.3 * p, 0.1 * p], [0.2 * p, p, 0.6 * p]] as Rgb[]) {
+        const a = glsl([...c]), b = softClip(c)
+        for (let i = 0; i < 3; i++) expect(a[i]).toBeCloseTo(b[i]!, 12)
+      }
+    }
+  })
 })
 
 describe('렌더러에 끼우기', () => {
-  test('설치된 three.js에 끼울 줄이 있다(없으면 three.js가 바뀐 것 — toneCurve.ts를 고친다)', () => {
-    expect(TONE_ANCHOR).toBe('vec3 CustomToneMapping( vec3 color ) { return color; }')
+  test('설치된 three.js에 끼울 줄이 꼭 한 번 있고, 곡선이 쓰는 노출 값 선언이 그 앞에 있다(아니면 three.js가 바뀐 것 — toneCurve.ts를 고친다)', () => {
+    expect(PRISTINE.split(TONE_ANCHOR).length - 1).toBe(1)
+    const exposure = PRISTINE.indexOf('uniform float toneMappingExposure;')
+    expect(exposure).toBeGreaterThanOrEqual(0)
+    expect(exposure).toBeLessThan(PRISTINE.indexOf(TONE_ANCHOR))
   })
-  test('한 번 끼우면 사용자 정의 색 보정이 곡선으로 바뀌고, 다시 불러도 그대로다', () => {
+  test('한 번 끼우면 빈 함수 줄만 곡선 함수로 바뀌고, 다시 불러도 그대로다', () => {
     expect(installToneCurve()).toBe(THREE.CustomToneMapping)
     const chunk = THREE.ShaderChunk.tonemapping_pars_fragment
-    expect(chunk).not.toContain(TONE_ANCHOR)
-    expect(chunk).toContain('color *= toneMappingExposure;')
-    expect(chunk).toContain(SOFT_CLIP_GLSL)
+    expect(chunk).toBe(PRISTINE.replace(TONE_ANCHOR, PATCHED_FN))
     expect(installToneCurve()).toBe(THREE.CustomToneMapping)
     expect(THREE.ShaderChunk.tonemapping_pars_fragment).toBe(chunk)
+  })
+  test('이 모듈만 다시 불려도(three.js에는 이미 끼워져 있음) 경고 없이 곡선을 그대로 쓴다', async () => {
+    installToneCurve()
+    const chunk = THREE.ShaderChunk.tonemapping_pars_fragment
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      vi.resetModules()
+      const fresh = await import('../src/scene/look/toneCurve')
+      // 전제: 모듈을 다시 불러도 three.js는 같은 것이다(다르면 이 시험이 뜻이 없다)
+      expect((await import('three')).ShaderChunk).toBe(THREE.ShaderChunk)
+      expect(fresh.installToneCurve()).toBe(THREE.CustomToneMapping)
+      expect(warn).not.toHaveBeenCalled()
+      expect(THREE.ShaderChunk.tonemapping_pars_fragment).toBe(chunk)
+    } finally { warn.mockRestore() }
+  })
+  test('끼울 줄이 없으면 한 번 경고하고 three.js 중립 곡선으로 돈다', async () => {
+    const saved = THREE.ShaderChunk.tonemapping_pars_fragment
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      THREE.ShaderChunk.tonemapping_pars_fragment = PRISTINE.replace(TONE_ANCHOR, 'vec3 CustomToneMapping( vec3 color ) {\n\treturn color;\n}')
+      vi.resetModules()
+      const fresh = await import('../src/scene/look/toneCurve')
+      expect(fresh.installToneCurve()).toBe(THREE.NeutralToneMapping)
+      expect(fresh.installToneCurve()).toBe(THREE.NeutralToneMapping)
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(THREE.ShaderChunk.tonemapping_pars_fragment).not.toContain(SOFT_CLIP_GLSL)
+    } finally { THREE.ShaderChunk.tonemapping_pars_fragment = saved; warn.mockRestore() }
   })
 })
 ```
@@ -497,11 +542,12 @@ Expected: FAIL — `../src/scene/look/toneCurve`를 찾을 수 없음
 // 색 보정 곡선 '부드러운 꺾임'(설계 2026-11-11 §4.2): 꺾임 값까지는 색을 그대로 내보내고, 그보다 밝은 부분만 흰색 쪽으로 눌러 준다.
 // 계측부와 화면 색 토큰이 원본대로 보이게 하려는 것이다. 식은 Khronos 중립 곡선의 꺾임 부분과 같고, 어두운 색을 깎는 앞부분이 없다.
 // 품질 낮음은 렌더러의 사용자 정의 색 보정으로, 품질 높음은 화면 효과(Effects.tsx)로 같은 식을 쓴다. GLSL 글과 시험용 JS 함수를 같은 상수에서 만든다.
+// 렌더러 쪽은 곡선 앞에서 노출 값(toneMappingExposure)을 곱하므로, 두 품질이 같은 색을 내려면 노출이 1이어야 한다(ToneSetup이 1로 둔다).
 import * as THREE from 'three'
 
-/** 이 밝기(선형 값)까지는 그대로 내보낸다 */
+/** 이 밝기(선형 값)까지는 그대로 내보낸다. 0보다 크고 1보다 작아야 한다. GLSL 글에는 소수 넷째 자리까지 적히므로 그보다 잘게 정하지 않는다 */
 export const TONE_KNEE = 0.88
-/** 눌린 밝은 색이 흰색 쪽으로 섞이는 세기 */
+/** 눌린 밝은 색이 흰색 쪽으로 섞이는 세기(GLSL 글에는 소수 넷째 자리까지 적힌다) */
 export const TONE_DESATURATION = 0.15
 
 export type Rgb = [number, number, number]
@@ -530,6 +576,8 @@ export const SOFT_CLIP_GLSL = `
 
 /** three.js 셰이더 조각에 있는 빈 사용자 정의 함수. 이 줄을 곡선으로 바꿔 끼운다 */
 export const TONE_ANCHOR = 'vec3 CustomToneMapping( vec3 color ) { return color; }'
+/** 끼운 뒤의 함수 글 */
+const TONE_PATCHED = `vec3 CustomToneMapping( vec3 color ) {\n  color *= toneMappingExposure;${SOFT_CLIP_GLSL}\n}`
 
 let installed: THREE.ToneMapping | null = null
 
@@ -537,12 +585,14 @@ let installed: THREE.ToneMapping | null = null
 export function installToneCurve(): THREE.ToneMapping {
   if (installed !== null) return installed
   const chunk = THREE.ShaderChunk.tonemapping_pars_fragment
+  // 이 모듈만 다시 불린 경우(개발 서버에서 이 파일을 다시 읽을 때 등): three.js에는 이미 끼워져 있으니 그대로 쓴다
+  if (chunk.includes(TONE_PATCHED)) { installed = THREE.CustomToneMapping; return installed }
   if (!chunk.includes(TONE_ANCHOR)) {
     console.warn('[look] 색 보정 곡선을 끼울 자리를 찾지 못해 three.js 중립 곡선으로 돌립니다')
     installed = THREE.NeutralToneMapping
     return installed
   }
-  THREE.ShaderChunk.tonemapping_pars_fragment = chunk.replace(TONE_ANCHOR, `vec3 CustomToneMapping( vec3 color ) {\n  color *= toneMappingExposure;${SOFT_CLIP_GLSL}\n}`)
+  THREE.ShaderChunk.tonemapping_pars_fragment = chunk.replace(TONE_ANCHOR, () => TONE_PATCHED)
   installed = THREE.CustomToneMapping
   return installed
 }
@@ -551,7 +601,7 @@ export function installToneCurve(): THREE.ToneMapping {
 - [ ] **Step 4: 통과 확인**
 
 Run: `npm test -- tests/toneCurve.test.ts && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: 7개 PASS, 형 검사 오류 없음
+Expected: 10개 PASS, 형 검사 오류 없음
 
 - [ ] **Step 5: 커밋**
 
@@ -2493,7 +2543,7 @@ git commit -m "chore(판): 앱 판 0.3.3-demo — 빛과 재질 다듬기부터(
 - [ ] **Step 1: 전체 시험과 형 검사**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: `Test Files 124 passed`, `Tests 1006 passed`, 형 검사 오류 없음
+Expected: `Test Files 124 passed`, `Tests 1009 passed`, 형 검사 오류 없음
 
 - [ ] **Step 2: 빌드**
 
