@@ -36,7 +36,7 @@
   - 형 검사: `node_modules/.bin/tsc -p tsconfig.json --noEmit`
   - 멈추면 앞에 `perl -e 'alarm 300; exec @ARGV'`를 붙인다.
 - **커밋 메시지:** 끝에 `-m "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>"`를 붙인다.
-- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1014개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
+- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1016개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
 - **"바꿀 곳 → 바꾼 글"의 뜻:** '바꿀 곳'의 글은 파일에 **한 번만** 나온다(두 번이라고 적힌 곳 제외). 그 글을 '바꾼 글'로 통째로 바꾼다. 줄의 나머지 부분이 보이지 않으면 그 부분은 그대로 둔다.
 
 ## 미리 재 둔 값(헤드리스 크롬, 이 맥 — 태블릿 값이 아님)
@@ -274,7 +274,7 @@ async function inst(base, outDir, name, quality, flow) {
 async function toggle(base, outDir, name, quality) {
   const b = await launch(outDir)
   const out = { name, quality, steps: [] }
-  const bakes = async () => ((await b.ev(`window.__lookdev ? window.__lookdev.bakes : null`)) ?? []).length
+  const bakes = () => bakeCount(b)
   const setLow = async (v) => {
     await b.ev(`(() => { if (!document.querySelector('.g-menu')) document.querySelector('button[aria-label="메뉴"]').click(); return true })()`); await sleep(300)
     await b.ev(`(() => { const c = document.querySelector('.g-menu .g-check input'); if (c && c.checked !== ${v}) c.click(); return true })()`); await sleep(200)
@@ -286,10 +286,62 @@ async function toggle(base, outDir, name, quality) {
     await setLow(quality !== 'low'); out.steps.push(['품질 바꿈', await bakes()])
     await hud(b, false); await sleep(300); await b.shot(join(outDir, `${name}-${quality}-toggled.png`)); await hud(b, true)
     await setLow(quality === 'low'); out.steps.push(['품질 되돌림', await bakes()])
+    await hud(b, false); await sleep(300); await b.shot(join(outDir, `${name}-${quality}-toggled-back.png`)); await hud(b, true)
     await b.click('button[aria-label="메뉴"]'); await sleep(300); await b.click('.g-menu button', '기본 화면(패널)으로'); await b.waitFor(`!!document.querySelector('main.lab')`); await sleep(3500)
     out.steps.push(['기본 화면', await bakes()])
     await b.click('button.link', '게임 화면으로'); await b.waitFor(`!!document.querySelector('main.game')`); await sleep(3500)
     out.steps.push(['게임 화면', await bakes()])
+  } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
+  console.log(JSON.stringify(out))
+}
+
+/** 반사광 그리기 횟수를 세게 한다: 정육면체 그림의 첫 면을 그리기 시작할 때마다 센다 */
+const ENV_HOOK = `(async () => { ${R3F} if (!window.__envCaptures) { const c = (window.__envCaptures = { n: 0 }), gl = st.gl, set = gl.setRenderTarget.bind(gl); gl.setRenderTarget = (rt, face, mip) => { if (rt && rt.isWebGLCubeRenderTarget && (face ?? 0) === 0) c.n++; return set(rt, face, mip) } } return true })()`
+const bakeCount = async (b) => ((await b.ev(`window.__lookdev ? window.__lookdev.bakes : null`)) ?? []).length
+
+/** 걷는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지 본다. 고정 구도 촬영으로는 드러나지 않는 부담이다 */
+async function walk(base, outDir, name, quality) {
+  const b = await launch(outDir)
+  const out = { name, quality }
+  const captures = () => b.ev(`window.__envCaptures.n`)
+  const bakes = () => bakeCount(b)
+  try {
+    await enterLab(b, base, quality)
+    await b.ev(ENV_HOOK)
+    const bake0 = await bakes()
+    await sleep(2000)
+    const idle = await captures(), t0 = Date.now()
+    out.envCaptures = { idle, walking: 0 }
+    // 빈 바닥 지점 세 곳(작업대 앞 두 곳, 최소회전반경 차량 앞)을 차례로 걸어간다
+    for (const [x, z] of [[16.6, 1.6], [16.6, 2.75], [2.6, 5.85]]) {
+      await walkTo(b, x, z)
+      out.envCaptures.walking = (await captures()) - idle
+      out.walkSeconds = +((Date.now() - t0) / 1000).toFixed(1)
+    }
+    out.bakes = { before: bake0, after: await bakes() }
+  } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
+  console.log(JSON.stringify(out))
+}
+
+/** 그래픽 장치 연결을 끊었다 되돌린다(기기 메모리가 모자랄 때 생기는 일). 한 번만 만들어 둔 것(반사광·구운 그림자)이 돌아오는지 본다 */
+async function ctx(base, outDir, name, quality) {
+  const b = await launch(outDir)
+  const out = { name, quality }
+  try {
+    await enterLab(b, base, quality)
+    await b.ev(ENV_HOOK)
+    await hud(b, false); await setCam(b, CAMS.hero); await sleep(700)
+    await b.shot(join(outDir, `${name}-${quality}-ctx-before.png`))
+    const bake0 = await bakeCount(b)
+    await b.ev(`(async () => { ${R3F} window.__ctxExt = st.gl.getContext().getExtension('WEBGL_lose_context'); window.__ctxExt.loseContext(); return true })()`)
+    await sleep(1500)
+    out.lost = await b.ev(`(async () => { ${R3F} return st.gl.getContext().isContextLost() })()`)
+    await b.ev(`(window.__ctxExt.restoreContext(), true)`)
+    await sleep(7000)
+    out.restored = !(await b.ev(`(async () => { ${R3F} return st.gl.getContext().isContextLost() })()`))
+    out.envCapturesAfter = await b.ev(`window.__envCaptures.n`)
+    out.bakes = { before: bake0, after: await bakeCount(b) }
+    await b.shot(join(outDir, `${name}-${quality}-ctx-after.png`))
   } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
   console.log(JSON.stringify(out))
 }
@@ -332,9 +384,11 @@ const dir = (p) => { const d = resolve(p); mkdirSync(d, { recursive: true }); re
 if (cmd === 'cams') await cams(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4] ?? 'all')
 else if (cmd === 'inst') await inst(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4] ?? 'disc')
 else if (cmd === 'toggle') await toggle(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
+else if (cmd === 'walk') await walk(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
+else if (cmd === 'ctx') await ctx(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
 else if (cmd === 'sheet') await sheet(dir(a[0]), a[1], a[2], a[3])
 else if (cmd === 'colors') await colors(dir(a[0]), a[1])
-else { console.log('사용: lookdev.mjs cams|inst|toggle|sheet|colors … (scripts/lookdev/README.md)'); process.exit(1) }
+else { console.log('사용: lookdev.mjs cams|inst|toggle|walk|ctx|sheet|colors … (scripts/lookdev/README.md)'); process.exit(1) }
 process.exit(0)
 ```
 
@@ -355,6 +409,8 @@ process.exit(0)
 node scripts/lookdev/lookdev.mjs cams   <주소> <출력폴더> <이름> <high|low> [구도,구도|all]
 node scripts/lookdev/lookdev.mjs inst   <주소> <출력폴더> <이름> <high|low> <disc|panel|turn>
 node scripts/lookdev/lookdev.mjs toggle <주소> <출력폴더> <이름> <high|low>
+node scripts/lookdev/lookdev.mjs walk   <주소> <출력폴더> <이름> <high|low>
+node scripts/lookdev/lookdev.mjs ctx    <주소> <출력폴더> <이름> <high|low>
 node scripts/lookdev/lookdev.mjs sheet  <출력폴더> <지금이름> <새이름> <구도>
 node scripts/lookdev/lookdev.mjs colors <출력폴더> <이름>
 ```
@@ -363,7 +419,9 @@ node scripts/lookdev/lookdev.mjs colors <출력폴더> <이름>
 |---|---|---|
 | `cams` | 고정 구도 10개(`hero top tester carclose lifttop turncar lifts graze north bench`)를 찍는다 | `<이름>-<품질>-<구도>.png`, `<이름>-<품질>-cams.json`(그리기 호출 수·삼각형 수·굽기 통계·오류) |
 | `inst` | 계측부 가까이 보기. `disc` 다이얼 게이지 2종, `panel` 계기 화면, `turn` 측정판 좌·우 | `<이름>-<품질>-inst-….png` |
-| `toggle` | 품질을 두 번 바꾸고 기본 화면에 다녀온다(부품이 붙고 떨어질 때 오류가 없는지, 그때마다 바닥 그림자를 다시 굽는지) | 표준 출력(JSON: 단계별 굽기 횟수·오류), `<이름>-<품질>-toggled.png` |
+| `toggle` | 품질을 두 번 바꾸고 기본 화면에 다녀온다(부품이 붙고 떨어질 때 오류가 없는지, 그때마다 바닥 그림자를 다시 굽는지) | 표준 출력(JSON: 단계별 굽기 횟수·오류), `<이름>-<품질>-toggled.png`(바꾼 뒤), `…-toggled-back.png`(되돌린 뒤) |
+| `walk` | 빈 바닥 세 곳을 걸어 다니는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지 센다 | 표준 출력(JSON: `envCaptures.walking`이 0, `bakes`가 그대로여야 한다) |
+| `ctx` | 그래픽 장치 연결을 끊었다 되돌린다(기기 메모리가 모자랄 때 생기는 일). 반사광과 구운 그림자가 돌아오는지 본다 | 표준 출력(JSON: `envCapturesAfter` 1, 굽기 횟수 +1), `<이름>-<품질>-ctx-before.png`, `…-ctx-after.png` |
 | `sheet` | 지금·새 판 × 높음·낮음 2×2 비교 그림 | `sheet-<새이름>-<구도>.png` |
 | `colors` | 계기 화면 숫자와 측정판 종이색을 재서 원본 색과 견준다 | 표준 출력(JSON) |
 
@@ -372,7 +430,8 @@ node scripts/lookdev/lookdev.mjs colors <출력폴더> <이름>
 1. 바꾸기 전 판을 `base`라는 이름으로 찍는다(두 품질, `cams`와 `inst` 세 가지).
 2. 바꾼 뒤 `new`라는 이름으로 같은 것을 찍는다.
 3. `sheet`로 비교 그림을 만들고 `colors`로 계측부 색을 잰다. `toggle`로 품질 바꾸기·화면 바꾸기에서 오류가 없는지 본다.
-4. 한도(빛과 재질 설계 §6): 품질 낮음의 그리기 호출 수는 바꾸기 전 값 + 2 이하, 품질 높음은 +8% 이내. 콘솔 오류와 막힌 쓰기 요청은 0건.
+4. `walk`와 `ctx`로, 고정 구도 촬영으로는 드러나지 않는 것(걷는 동안의 숨은 부담, 연결이 끊겼다 돌아온 뒤의 화면)을 본다.
+5. 한도(빛과 재질 설계 §6): 품질 낮음의 그리기 호출 수는 바꾸기 전 값 + 2 이하, 품질 높음은 +8% 이내. 콘솔 오류와 막힌 쓰기 요청은 0건.
 
 출력 폴더는 `scripts/lookdev/out/`(.gitignore에 있음)이나 저장소 밖에 둔다. 구도 좌표는 `lookdev.mjs`의 `CAMS`에 있고, 배치가 바뀌면 거기를 고친다.
 ````
@@ -785,9 +844,10 @@ export const PALETTE = {
 export const PANEL_RGB = [2.6, 2.45, 2.2] as const
 export const FOG = { near: 20, far: 62 } as const
 export const SHADOW_MAP_SIZE = 2048
-/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m — 천장 4.2 m보다 높아야 한다), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m), 굽기 전 기다림(ms).
+/** 구운 바닥 그림자: 그림 크기, 드리우는 물체 최고 높이(m — 천장 4.2 m보다 높아야 한다), 닿는 그늘을 보는 높이(m), 가장자리 폭 범위(m),
+ *  바닥의 점마다 가리는 물체를 찾는 점 수·가장자리를 푸는 점 수(태블릿에서 굽기가 길면 그림 크기와 함께 줄인다), 굽기 전 기다림(ms).
  *  처음은 로딩 화면이 걷히기 전(불러오기 끝 + 0.4초, LabScreen)에 굽도록 짧게, 다시 굽기는 리프트·차량 움직임이 끝나도록 길게 */
-export const BAKE = { size: 1024, depthSize: 2048, contactSize: 512, casterHeight: 4.4, contactFar: 2.2, minPenumbra: 0.02, maxPenumbra: 0.5, firstDelayMs: 150, rebakeDelayMs: 2500 } as const
+export const BAKE = { size: 1024, depthSize: 2048, contactSize: 512, casterHeight: 4.4, contactFar: 2.2, minPenumbra: 0.02, maxPenumbra: 0.5, searchTaps: 32, filterTaps: 64, firstDelayMs: 150, rebakeDelayMs: 2500 } as const
 
 export interface TierLook { realtimeShadows: boolean; postEffects: boolean; envResolution: number; hemi: number; halo: number; sunShadow: number; contactShadow: number }
 
@@ -1376,7 +1436,7 @@ export function ToneSetup() {
 
 ```tsx
 // 주된 빛 하나(설계 2026-11-11 §4.3): 남서쪽 위에서 드는 옅은 따뜻한 빛. 그림자 범위를 실습장 전체에 맞춘다.
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { BAKE, LOOK, PALETTE, SHADOW_MAP_SIZE, fitShadowFrustum, keyDirection, type Bounds } from './lookConfig'
 
@@ -1398,6 +1458,11 @@ export function KeyLight({ bounds, castShadow }: { bounds: Bounds; castShadow: b
     l.shadow.normalBias = LOOK.shadowNormalBias
     l.shadow.needsUpdate = true
   }, [fit])
+  // 실시간 그림자를 끄면(품질 낮음으로 바뀜) 그림자 그림(2048² 한 장)을 내려놓는다 — three.js는 꺼도 쥐고 있고, 다시 켜면 새로 만든다
+  useEffect(() => {
+    const l = ref.current
+    if (l && !castShadow && l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null }
+  }, [castShadow])
   return <directionalLight ref={ref} color={PALETTE.key} intensity={LOOK.key} castShadow={castShadow} />
 }
 ```
@@ -1408,7 +1473,8 @@ export function KeyLight({ bounds, castShadow }: { bounds: Bounds; castShadow: b
 // 실습장 반사광(설계 2026-11-11 §4.3): 정비소 사진 대신, 실습장 가운데에서 건물 껍데기(천장·조명판·벽·바닥)만 한 번 그려 쓴다.
 // 두 품질이 같은 반사광을 쓰고 내려받는 파일이 없다. 장비와 사람은 넣지 않는다.
 import { Environment, Lightformer } from '@react-three/drei'
-import { useMemo } from 'react'
+import { useThree } from '@react-three/fiber'
+import { memo, useEffect, useMemo, useState } from 'react'
 import * as THREE from 'three'
 import type { SceneLayout } from '../layoutModel'
 import { CEILING_H, hallBounds, lightPanels } from '../Surroundings'
@@ -1426,7 +1492,12 @@ export const ENV_SHELL = {
   ceiling: [0.55, 0.54, 0.51], wall: [0.74, 0.72, 0.68], wallFar: [0.36, 0.35, 0.33], hallFloor: [0.22, 0.21, 0.2], labFloor: [0.05, 0.12, 0.085],
 } as const
 
-export function WorkshopEnv({ layout, resolution }: { layout: SceneLayout; resolution: number }) {
+/**
+ * drei의 Environment는 넘겨받은 내용(children)이 새 것으로 바뀔 때마다 여섯 면을 다시 그리고 반사용 그림도 다시 만든다.
+ * 부모(LabScene)는 학생이 걷는 동안 초당 네 번쯤 다시 그려지므로, 내용이 그대로면 같은 것을 넘기도록 묶어 둔다(memo + useMemo).
+ * 다시 그리는 때는 배치나 해상도(품질)가 바뀔 때, 그리고 그래픽 장치 연결이 끊겼다 돌아온 때뿐이다 — 촬영 도구의 walk·ctx 검사가 본다.
+ */
+export const WorkshopEnv = memo(function WorkshopEnv({ layout, resolution }: { layout: SceneLayout; resolution: number }) {
   const b = useMemo(() => hallBounds(layout), [layout])
   const p = useMemo(() => probePoint(layout), [layout])
   const panels = useMemo(() => lightPanels(b), [b])
@@ -1435,11 +1506,11 @@ export function WorkshopEnv({ layout, resolution }: { layout: SceneLayout; resol
     const m = (c: readonly [number, number, number]) => new THREE.MeshBasicMaterial({ color: new THREE.Color().setRGB(c[0], c[1], c[2]), side: THREE.DoubleSide, toneMapped: false })
     return { ceiling: m(ENV_SHELL.ceiling), wall: m(ENV_SHELL.wall), wallFar: m(ENV_SHELL.wallFar), hallFloor: m(ENV_SHELL.hallFloor), labFloor: m(ENV_SHELL.labFloor) }
   }, [])
-  const mz = layout.mainZone
-  const w = b.xMax - b.xMin, d = b.zMax - b.zMin, cx = (b.xMin + b.xMax) / 2, cz = (b.zMin + b.zMax) / 2
-  return (
-    <Environment resolution={resolution} frames={1} near={0.1} far={200} environmentIntensity={LOOK.env}>
-      {/* 실제 좌표로 놓고 통째로 옮겨, 그리는 자리(p)가 원점에 오게 한다 */}
+  const shell = useMemo(() => {
+    const mz = layout.mainZone
+    const w = b.xMax - b.xMin, d = b.zMax - b.zMin, cx = (b.xMin + b.xMax) / 2, cz = (b.zMin + b.zMax) / 2
+    // 실제 좌표로 놓고 통째로 옮겨, 그리는 자리(p)가 원점에 오게 한다
+    return (
       <group position={[-p.x, -p.y, -p.z]}>
         <mesh material={mats.ceiling} rotation-x={Math.PI / 2} position={[cx, CEILING_H, cz]}><planeGeometry args={[w, d]} /></mesh>
         <mesh material={mats.hallFloor} rotation-x={-Math.PI / 2} position={[cx, -0.01, cz]}><planeGeometry args={[w, d]} /></mesh>
@@ -1451,9 +1522,18 @@ export function WorkshopEnv({ layout, resolution }: { layout: SceneLayout; resol
         <mesh material={mats.wallFar} position={[cx, CEILING_H / 2, b.zMax]}><planeGeometry args={[w, CEILING_H]} /></mesh>
         {panels.map(([x, z]) => <Lightformer key={`${x},${z}`} form="rect" map={glow} intensity={LOOK.envPanel} color="#fffaf0" position={[x, CEILING_H - 0.02, z]} rotation-x={Math.PI / 2} scale={[2.3, 0.95, 1]} />)}
       </group>
-    </Environment>
-  )
-}
+    )
+  }, [layout, b, p, panels, glow, mats])
+  // 그래픽 장치 연결이 끊겼다 돌아오면(기기 메모리가 모자랄 때 등) 그려 둔 반사광이 비어 있다. 새로 붙여 다시 그리게 한다
+  const gl = useThree((s) => s.gl)
+  const [restored, setRestored] = useState(0)
+  useEffect(() => {
+    const el = gl.domElement, again = () => setRestored((n) => n + 1)
+    el.addEventListener('webglcontextrestored', again)
+    return () => el.removeEventListener('webglcontextrestored', again)
+  }, [gl])
+  return <Environment key={restored} resolution={resolution} frames={1} near={0.1} far={200} environmentIntensity={LOOK.env}>{shell}</Environment>
+})
 ```
 
 - [ ] **Step 4: 구운 바닥 그림자** — `src/scene/look/FloorShadowBake.tsx`
@@ -1479,8 +1559,8 @@ uniform vec4 uRect;
 const vec4 UNPACK = vec4( 255.0 / 256.0, 255.0 / 65536.0, 255.0 / 16777216.0, 1.0 / 16777216.0 );
 float depthAt( sampler2D t, vec2 uv ) { return dot( texture2D( t, uv ), UNPACK ); }
 vec3 floorPoint() { return vec3( uRect.x + vUv.x * uRect.z, 0.0, uRect.y + ( 1.0 - vUv.y ) * uRect.w ); }`
-/** 주된 빛 그림자: 가리는 물체를 찾고(32점), 물체가 멀수록 넓게 풀어(64점) 가려진 비율을 적는다 */
-const SUN = DEPTH + /* glsl */`
+/** 주된 빛 그림자: 가리는 물체를 찾고(SEARCH_TAPS점), 물체가 멀수록 넓게 풀어(FILTER_TAPS점) 가려진 비율을 적는다. 점 수는 값 표(BAKE)에서 받는다 */
+const SUN = `#define SEARCH_TAPS ${BAKE.searchTaps}\n#define FILTER_TAPS ${BAKE.filterTaps}\n` + DEPTH + /* glsl */`
 uniform sampler2D tDepth; uniform mat4 uLightVP; uniform float uRange; uniform vec2 uSpan; uniform float uTan; uniform float uMinPen; uniform float uMaxPen; uniform float uBias;
 float ign( vec2 p ) { return fract( 52.9829189 * fract( dot( p, vec2( 0.06711056, 0.00583715 ) ) ) ); }
 vec2 vogel( float i, float n, float phi ) { float r = sqrt( ( i + 0.5 ) / n ); float a = i * 2.39996323 + phi; return r * vec2( cos( a ), sin( a ) ); }
@@ -1490,16 +1570,16 @@ void main() {
   float phi = ign( gl_FragCoord.xy ) * 6.2831853;
   vec2 searchUV = uMaxPen / uSpan;
   float sum = 0.0; float cnt = 0.0;
-  for ( int i = 0; i < 32; i ++ ) {
-    float dz = depthAt( tDepth, c.xy + vogel( float( i ), 32.0, phi ) * searchUV );
+  for ( int i = 0; i < SEARCH_TAPS; i ++ ) {
+    float dz = depthAt( tDepth, c.xy + vogel( float( i ), float( SEARCH_TAPS ), phi ) * searchUV );
     if ( dz < c.z - uBias ) { sum += dz; cnt += 1.0; }
   }
   if ( cnt < 0.5 ) { gl_FragColor = vec4( 0.0 ); return; }
   float pen = clamp( ( c.z - sum / cnt ) * uRange * uTan, uMinPen, uMaxPen );
   vec2 penUV = pen / uSpan;
   float sh = 0.0;
-  for ( int i = 0; i < 64; i ++ ) sh += step( depthAt( tDepth, c.xy + vogel( float( i ), 64.0, phi + 1.7 ) * penUV ), c.z - uBias );
-  gl_FragColor = vec4( sh / 64.0 );
+  for ( int i = 0; i < FILTER_TAPS; i ++ ) sh += step( depthAt( tDepth, c.xy + vogel( float( i ), float( FILTER_TAPS ), phi + 1.7 ) * penUV ), c.z - uBias );
+  gl_FragColor = vec4( sh / float( FILTER_TAPS ) );
 }`
 /** 닿는 그늘: 바닥 바로 위에 물체가 있을수록(낮을수록) 짙게 */
 const CONTACT = DEPTH + /* glsl */`
@@ -1539,15 +1619,23 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
   // 굽는 때: 모델을 다 불러온 뒤(불러오는 동안은 굽지 않는다), 그리고 상태(리프트·시험 차량·품질)가 바뀌고 조금 뒤
   const [loads, setLoads] = useState(0)
   useEffect(() => { if (!active) setLoads((n) => n + 1) }, [active])
-  const want = `${loads}|${stateKey}|${sun}|${contact}`
+  const placed = `${loads}|${stateKey}|`
+  const want = `${placed}${sun}|${contact}`
   const [key, setKey] = useState('')
   useEffect(() => {
     if (active || loads === 0) return
-    const t = setTimeout(() => setKey(want), key === '' ? BAKE.firstDelayMs : BAKE.rebakeDelayMs)
+    // 물체가 움직이는 변화(리프트·차량)는 움직임이 끝나도록 길게 기다리고, 처음과 품질만 바뀐 때(그림자 세기만 다름)는 바로 굽는다 — 품질을 바꾼 뒤 그림자가 겹치거나 비는 시간을 줄인다
+    const t = setTimeout(() => setKey(want), key === '' || key.startsWith(placed) ? BAKE.firstDelayMs : BAKE.rebakeDelayMs)
     return () => clearTimeout(t)
   }, [want, active]) // eslint-disable-line react-hooks/exhaustive-deps
   const pending = useRef(false)
   useEffect(() => { if (key) pending.current = true }, [key])
+  // 그래픽 장치 연결이 끊겼다 돌아오면 구워 둔 그림이 비어 있다. 다시 굽는다
+  useEffect(() => {
+    const el = gl.domElement, again = () => { pending.current = true }
+    el.addEventListener('webglcontextrestored', again)
+    return () => el.removeEventListener('webglcontextrestored', again)
+  }, [gl])
   const [failed, setFailed] = useState(false)
 
   const out = useMemo(() => target(BAKE.size, false, THREE.LinearFilter), [])
@@ -1577,6 +1665,10 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
     const ca = target(BAKE.contactSize, false, THREE.LinearFilter), cb = target(BAKE.contactSize, false, THREE.LinearFilter)
     const prev = { rt: gl.getRenderTarget(), over: scene.overrideMaterial, bg: scene.background, auto: gl.shadowMap.autoUpdate, color: gl.getClearColor(new THREE.Color()), alpha: gl.getClearAlpha() }
     const hidden: THREE.Object3D[] = []
+    // 셰이더가 만들어지지 않아도 three.js는 예외를 던지지 않고 알리기만 한다. 굽는 동안에는 그 알림을 받아 두었다가 실패로 처리한다
+    let broken = false
+    const prevShaderError = gl.debug.onShaderError
+    gl.debug.onShaderError = (glc, program) => { broken = true; console.error('[look] 바닥 그림자 굽기 셰이더를 만들지 못했습니다', glc.getProgramInfoLog(program)) }
     const draw = (mat: THREE.ShaderMaterial, to: THREE.WebGLRenderTarget) => { quad.mesh.material = mat; gl.setRenderTarget(to); gl.clear(); gl.render(quad.scene, quad.cam) }
     const blur = (from: THREE.WebGLRenderTarget, tmp: THREE.WebGLRenderTarget, stepU: number, stepV: number) => {
       quad.blur.uniforms.tMap!.value = from.texture; quad.blur.uniforms.uStep!.value.set(stepU, 0); draw(quad.blur, tmp)
@@ -1630,6 +1722,7 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
       const m = quad.combine.uniforms
       m.tSun!.value = a.texture; m.tContact!.value = ca.texture; m.uSun!.value = sunDepth ? sun : 0; m.uContact!.value = contact
       draw(quad.combine, out)
+      if (broken || gl.getContext().isContextLost()) throw new Error('셰이더를 만들지 못했거나 그래픽 장치 연결이 끊겼습니다')
       if (failed) setFailed(false)
       if (import.meta.env.DEV) {
         // 개발 서버 전용: 화면 촬영 도구가 굽기가 됐는지 확인한다
@@ -1647,6 +1740,7 @@ export function FloorShadowBake({ bounds, sun, contact, stateKey }: { bounds: Bo
       for (const o of hidden) o.visible = true
       scene.overrideMaterial = prev.over; scene.background = prev.bg; gl.shadowMap.autoUpdate = prev.auto
       gl.setClearColor(prev.color, prev.alpha); gl.setRenderTarget(prev.rt)
+      gl.debug.onShaderError = prevShaderError
       sunDepth?.dispose(); upDepth.dispose(); a.dispose(); b.dispose(); ca.dispose(); cb.dispose()
     }
   })
@@ -1774,6 +1868,22 @@ describe('그 밖의 배선', () => {
     expect(bake.indexOf('if (import.meta.env.DEV) {')).toBeGreaterThan(0)
     expect(bake.indexOf('if (import.meta.env.DEV) {')).toBeLessThan(bake.indexOf('__lookdev'))
   })
+  test('실습장 반사광은 한 번만 그린다: 내용이 그대로면 같은 것을 넘기고, 그래픽 장치 연결이 돌아오면 다시 그린다', () => {
+    const env = read('src/scene/look/WorkshopEnv.tsx')
+    expect(env).toMatch(/export const WorkshopEnv = memo\(function WorkshopEnv\(/)
+    expect(env).toMatch(/const shell = useMemo\(\(\) => \{/)
+    expect(env).toMatch(/<Environment key=\{restored\} resolution=\{resolution\} frames=\{1\} [^>]*>\{shell\}<\/Environment>/)
+    expect(env).toMatch(/addEventListener\('webglcontextrestored', again\)/)
+  })
+  test('바닥 그림자 굽기: 점 수는 값 표에서 받고, 셰이더가 만들어지지 않으면 실패로 처리하고, 연결이 돌아오면 다시 굽는다', () => {
+    const bake = read('src/scene/look/FloorShadowBake.tsx')
+    expect(bake).toContain('`#define SEARCH_TAPS ${BAKE.searchTaps}\\n#define FILTER_TAPS ${BAKE.filterTaps}\\n`')
+    expect(bake).not.toMatch(/i < (32|64);/)
+    expect(bake).toMatch(/gl\.debug\.onShaderError = \(glc, program\) => \{ broken = true;/)
+    expect(bake).toMatch(/if \(broken \|\| gl\.getContext\(\)\.isContextLost\(\)\) throw new Error\(/)
+    expect(bake).toMatch(/gl\.debug\.onShaderError = prevShaderError/)
+    expect(bake).toMatch(/addEventListener\('webglcontextrestored', again\)/)
+  })
   test('캐릭터 만들기 화면도 같은 색 보정 곡선', () => {
     expect(read('src/screens/AvatarScreen.tsx')).toMatch(/<SeeCharacters \/>\n\s+<ToneSetup \/>/)
   })
@@ -1793,7 +1903,7 @@ describe('그 밖의 배선', () => {
 - [ ] **Step 2: 실패 확인**
 
 Run: `npm test -- tests/lookWiring.test.ts`
-Expected: FAIL — 15개 가운데 9개 실패('실습장 장면' 5개, '화면 효과는 품질 높음에서만 따로 불러온다', '화면 효과 순서', '캐릭터 만들기 화면', '조명판과 빛 판'). 나머지 6개는 이미 통과한다
+Expected: FAIL — 17개 가운데 9개 실패('실습장 장면' 5개, '화면 효과는 품질 높음에서만 따로 불러온다', '화면 효과 순서', '캐릭터 만들기 화면', '조명판과 빛 판'). 나머지 8개는 이미 통과한다
 
 - [ ] **Step 3: 화면 효과 바꾸기** — `src/scene/Effects.tsx`를 통째로 아래로 바꾼다.
 
@@ -2279,7 +2389,7 @@ import { ToneSetup } from '../scene/look/ToneSetup'
 - [ ] **Step 9: 통과 확인**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: 전체 PASS(`tests/lookWiring.test.ts` 15개 포함), 형 검사 오류 없음
+Expected: 전체 PASS(`tests/lookWiring.test.ts` 17개 포함), 형 검사 오류 없음
 
 - [ ] **Step 10: 커밋**
 
@@ -2514,7 +2624,7 @@ HDRI 줄의 맨 끝 칸(용도)만 바꾼다. 바꿀 곳:
 - [ ] **Step 11: 통과 확인**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: 전체 PASS(`tests/lookWiring.test.ts` 16개), 형 검사 오류 없음
+Expected: 전체 PASS(`tests/lookWiring.test.ts` 18개), 형 검사 오류 없음
 
 - [ ] **Step 12: 커밋**
 
@@ -2628,7 +2738,7 @@ git commit -m "chore(판): 앱 판 0.3.3-demo — 빛과 재질 다듬기부터(
 - [ ] **Step 1: 전체 시험과 형 검사**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: `Test Files 124 passed`, `Tests 1014 passed`, 형 검사 오류 없음
+Expected: `Test Files 124 passed`, `Tests 1016 passed`, 형 검사 오류 없음
 
 - [ ] **Step 2: 빌드**
 
@@ -2670,7 +2780,7 @@ Expected: `?? tsconfig.tsbuildinfo`만(커밋하지 않는다)
 
 ```bash
 T=scripts/lookdev/lookdev.mjs; O=scripts/lookdev/out; U=http://localhost:4319/
-for q in high low; do node $T cams $U $O new $q; for f in disc panel turn; do node $T inst $U $O new $q $f; done; node $T toggle $U $O new $q; done
+for q in high low; do node $T cams $U $O new $q; for f in disc panel turn; do node $T inst $U $O new $q $f; done; node $T toggle $U $O new $q; node $T walk $U $O new $q; node $T ctx $U $O new $q; done
 node $T colors $O new
 ```
 
@@ -2683,6 +2793,8 @@ node $T colors $O new
 | 그리기 호출 수(높음) | 구도 10개 모두 `base` 값의 1.08배 이하 |
 | 구운 그림자 | `bakes`의 `mean`이 낮음 0.05~0.5, 높음 0.01~0.3 |
 | 품질 바꾸기 | `toggle`의 다섯 단계에서 굽기 횟수가 1 → 2 → 3 → 4 → 5로 늘고 오류 없음 |
+| 걷는 동안 | `walk`의 `envCaptures.walking`이 0(반사광을 다시 그리지 않음), `bakes`의 앞뒤가 같음(복사본에서는 고치기 전 26초에 85번, 지금 배포판 품질 낮음도 88번이었다) |
+| 연결이 끊겼다 돌아옴 | `ctx`의 `restored`가 true, `envCapturesAfter`가 1, 굽기 횟수가 1 늘고 오류 없음 |
 | 계기 화면 숫자 | `colors`의 `readoutDigits.max`가 낮음 `[255, 74, 58]`(= `base`), 높음은 원본과 채널마다 10 이내(복사본에서는 `[248, 76, 62]`) |
 | 측정판 종이색 | `turntablePaper.mean`이 두 품질 모두 원본 `[255, 248, 214]`와 채널마다 10 이내(복사본에서는 높음 `[246, 239, 208]`, 낮음 `[255, 247, 217]`) |
 
@@ -2699,7 +2811,9 @@ for c in hero top north lifttop tester turncar carclose graze inst-panel inst-di
   - 흰 차 표면에 점 무늬가 없다(`new-high-carclose.png`).
   - 바닥에 잔 그물 무늬가 없다(`new-low-graze.png`).
   - 은색 차가 은색이고, 벽이 누렇지 않다(`sheet-new-hero.png`).
-  - 품질을 바꾼 뒤에도 천장 조명 둘레에 옅은 빛이 있다(`new-high-toggled.png`).
+  - 품질을 바꾼 뒤에도 천장 조명 둘레에 옅은 빛이 있다(`new-high-toggled.png`). 되돌린 뒤 실시간 그림자가 다시 있다(`new-high-toggled-back.png`).
+  - 연결이 끊겼다 돌아온 뒤의 화면이 앞과 같다: 바닥 그림자와 차 표면 반사가 있다(`new-low-ctx-before.png`, `new-low-ctx-after.png`).
+  - 넓은 초록 바닥에 등고선 같은 옅은 줄이 없다(`new-low-graze.png`, `new-high-top.png`).
   - 다이얼 게이지 눈금·숫자·바늘, 계기 화면 숫자, 측정판 눈금이 '지금'만큼 읽힌다(`sheet-new-inst-….png`).
 
 - [ ] **Step 6: 값 조정(필요할 때만)**
