@@ -215,3 +215,44 @@ describe('Supabase submit — Apps Script 수신 계약과 같은 결과', () =>
   })
 })
 
+
+describe('기록 판 1.3.0 — 계산기 기록(계산기 설계 §4)', () => {
+  // 지금 앱이 만드는 기록을 1.3.0 모양으로 바꿔 서버 쪽만 먼저 시험한다(Task 5에서 앱이 직접 1.3.0을 만든다)
+  const base = (): Record<string, unknown> => {
+    const task = lv1 as ApprovedTask
+    const session = createDemoSession({ studentCode: 'D-03', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: 'south', task, difficultyMode: 'guided' })
+    const run = createTaskRun(task, { difficultyMode: 'guided', displayMode: 'threeD' })
+    const p = buildRecordPayload(run, session, { completedAtIso: new Date(run.startedAtMs + 5000).toISOString(), completionStatus: 'aborted' }) as unknown as Record<string, unknown>
+    return { ...p, schemaVersion: '1.3.0', calculatorLog: [], calculatorLogTruncated: false }
+  }
+  const line = (o: Record<string, unknown> = {}) => ({ sequence: 1, elapsedMs: 1000, stepId: 'calc', kind: 'basic', expression: '240-200/600*100', result: '6.666666667', ...o })
+  test('계산기 기록이 있는 1.3.0 기록과 빈 계산 기록의 1.3.0 기록을 받는다', async () => {
+    const { post, rows } = server()
+    const withLog = { ...base(), calculatorLog: [line(), { sequence: 2, elapsedMs: 2000, stepId: 'calc', kind: 'basic', expression: '5/0', error: 'divideByZero' }] }
+    expect(await post(reqOf(withLog))).toMatchObject({ ok: true, duplicate: false })
+    expect(await post(reqOf({ ...base(), recordId: '00000000-0000-4000-8000-0000000000b1' }))).toMatchObject({ ok: true, duplicate: false })
+    expect(rows).toHaveLength(2)
+  })
+  test('순번이 끊김·시간이 거꾸로·결과와 오류가 둘 다·둘 다 없음·과제와 다른 종류·단계는 거절한다', async () => {
+    const bad: unknown[][] = [
+      [line({ sequence: 2 })],
+      [line(), line({ sequence: 2, elapsedMs: 500 })],
+      [line({ error: 'syntax' })],
+      [{ sequence: 1, elapsedMs: 1000, stepId: 'calc', kind: 'basic', expression: '1+' }],
+      [line({ kind: 'scientific' })],
+      [line({ stepId: 'record' })],
+    ]
+    for (const [k, log] of bad.entries()) {
+      const { post, rows } = server()
+      expect(await post(reqOf({ ...base(), recordId: `00000000-0000-4000-8000-0000000000c${k}`, calculatorLog: log })), `경우 ${k}`).toMatchObject({ ok: false })
+      expect(rows).toHaveLength(0)
+    }
+  })
+  test('61줄과, 계산기 칸이 빠진 1.3.0은 거절한다', async () => {
+    const { post } = server()
+    const many = Array.from({ length: 61 }, (_, i) => line({ sequence: i + 1, elapsedMs: 1000 + i }))
+    expect(await post(reqOf({ ...base(), calculatorLog: many }))).toMatchObject({ ok: false })
+    const { calculatorLog: _c, ...missing } = base()
+    expect(await post(reqOf({ ...missing, recordId: '00000000-0000-4000-8000-0000000000d1' }))).toMatchObject({ ok: false })
+  })
+})
