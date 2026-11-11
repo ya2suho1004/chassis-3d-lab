@@ -36,7 +36,7 @@
   - 형 검사: `node_modules/.bin/tsc -p tsconfig.json --noEmit`
   - 멈추면 앞에 `perl -e 'alarm 300; exec @ARGV'`를 붙인다.
 - **커밋 메시지:** 끝에 `-m "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>"`를 붙인다.
-- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1016개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
+- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1017개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
 - **"바꿀 곳 → 바꾼 글"의 뜻:** '바꿀 곳'의 글은 파일에 **한 번만** 나온다(두 번이라고 적힌 곳 제외). 그 글을 '바꾼 글'로 통째로 바꾼다. 줄의 나머지 부분이 보이지 않으면 그 부분은 그대로 둔다.
 
 ## 미리 재 둔 값(헤드리스 크롬, 이 맥 — 태블릿 값이 아님)
@@ -129,9 +129,10 @@ const WRITE_BLOCK = `(() => { if (window.__writeBlock) return; const nf = window
   const open = XMLHttpRequest.prototype.open; XMLHttpRequest.prototype.open = function (method) { if (String(method).toUpperCase() !== 'GET') { window.__blocked.push(String(method)); throw new Error('blocked by lookdev: ' + method) } return open.apply(this, arguments) };
   window.__writeBlock = true })();`
 const PRESETS = `(() => { try { localStorage.setItem('chassis.intro.v1', JSON.stringify({ seen: true, off: true })); localStorage.setItem('lab.guide.v1', 'seen') } catch (e) {} })();`
-/** 한 화면의 WebGL 그리기 호출·삼각형 수 */
-const GL_STATS = `(() => { if (window.__glStats) return; const st = { frames: 0, last: { calls: 0, tris: 0 }, hist: [] }; window.__glStats = st; let fc = 0, ft = 0;
+/** 한 화면의 WebGL 그리기 호출·삼각형 수, 그리고 그래픽 장치에 새로 만든 것(그림·그림판·셰이더·버퍼)의 누적 수 */
+const GL_STATS = `(() => { if (window.__glStats) return; const st = { frames: 0, last: { calls: 0, tris: 0 }, hist: [], made: { textures: 0, framebuffers: 0, programs: 0, buffers: 0 } }; window.__glStats = st; let fc = 0, ft = 0;
   const wrap = (p) => { if (!p) return; const de = p.drawElements, da = p.drawArrays, dei = p.drawElementsInstanced, dai = p.drawArraysInstanced;
+    for (const [fn, key] of [['createTexture', 'textures'], ['createFramebuffer', 'framebuffers'], ['createProgram', 'programs'], ['createBuffer', 'buffers']]) { const orig = p[fn]; p[fn] = function () { st.made[key]++; return orig.apply(this, arguments) } }
     p.drawElements = function (mode, count) { fc++; if (mode === 4) ft += count / 3; return de.apply(this, arguments) };
     p.drawArrays = function (mode, first, count) { fc++; if (mode === 4) ft += count / 3; return da.apply(this, arguments) };
     if (dei) p.drawElementsInstanced = function (mode, count, type, off, n) { fc++; if (mode === 4) ft += (count / 3) * n; return dei.apply(this, arguments) };
@@ -312,12 +313,20 @@ async function walk(base, outDir, name, quality) {
     await sleep(2000)
     const idle = await captures(), t0 = Date.now()
     out.envCaptures = { idle, walking: 0 }
-    // 빈 바닥 지점 세 곳(작업대 앞 두 곳, 최소회전반경 차량 앞)을 차례로 걸어간다
-    for (const [x, z] of [[16.6, 1.6], [16.6, 2.75], [2.6, 5.85]]) {
-      await walkTo(b, x, z)
-      out.envCaptures.walking = (await captures()) - idle
-      out.walkSeconds = +((Date.now() - t0) / 1000).toFixed(1)
+    // 빈 바닥 지점 세 곳(작업대 앞 두 곳, 최소회전반경 차량 앞)을 차례로 두 바퀴 걷는다.
+    // 첫 바퀴는 처음 보이는 물체를 그래픽 장치에 올리느라 새로 만드는 것이 있다. 둘째 바퀴에서 새로 만든 것이 있으면 걷는 동안 무언가를 되풀이해 만드는 것이다
+    const made = () => b.ev(`({ ...window.__glStats.made })`)
+    let made1 = null
+    for (let lap = 1; lap <= 2; lap++) {
+      for (const [x, z] of [[16.6, 1.6], [16.6, 2.75], [2.6, 5.85]]) {
+        await walkTo(b, x, z)
+        out.envCaptures.walking = (await captures()) - idle
+        out.walkSeconds = +((Date.now() - t0) / 1000).toFixed(1)
+      }
+      if (lap === 1) made1 = await made()
     }
+    const made2 = await made()
+    out.madeSecondLap = Object.fromEntries(Object.keys(made2).map((k) => [k, made2[k] - made1[k]]))
     out.bakes = { before: bake0, after: await bakes() }
   } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
   console.log(JSON.stringify(out))
@@ -420,7 +429,7 @@ node scripts/lookdev/lookdev.mjs colors <출력폴더> <이름>
 | `cams` | 고정 구도 10개(`hero top tester carclose lifttop turncar lifts graze north bench`)를 찍는다 | `<이름>-<품질>-<구도>.png`, `<이름>-<품질>-cams.json`(그리기 호출 수·삼각형 수·굽기 통계·오류) |
 | `inst` | 계측부 가까이 보기. `disc` 다이얼 게이지 2종, `panel` 계기 화면, `turn` 측정판 좌·우 | `<이름>-<품질>-inst-….png` |
 | `toggle` | 품질을 두 번 바꾸고 기본 화면에 다녀온다(부품이 붙고 떨어질 때 오류가 없는지, 그때마다 바닥 그림자를 다시 굽는지) | 표준 출력(JSON: 단계별 굽기 횟수·오류), `<이름>-<품질>-toggled.png`(바꾼 뒤), `…-toggled-back.png`(되돌린 뒤) |
-| `walk` | 빈 바닥 세 곳을 걸어 다니는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지 센다 | 표준 출력(JSON: `envCaptures.walking`이 0, `bakes`가 그대로여야 한다) |
+| `walk` | 빈 바닥 세 곳을 두 바퀴 걷는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지, 둘째 바퀴에서 그래픽 장치에 새로 만드는 것(그림·그림판·셰이더·버퍼)이 없는지 센다 | 표준 출력(JSON: `envCaptures.walking`이 0, `bakes`가 그대로, `madeSecondLap`의 `textures`·`framebuffers`·`programs`가 0이고 `buffers`가 100 이하여야 한다) |
 | `ctx` | 그래픽 장치 연결을 끊었다 되돌린다(기기 메모리가 모자랄 때 생기는 일). 반사광과 구운 그림자가 돌아오는지 본다 | 표준 출력(JSON: `envCapturesAfter` 1, 굽기 횟수 +1), `<이름>-<품질>-ctx-before.png`, `…-ctx-after.png` |
 | `sheet` | 지금·새 판 × 높음·낮음 2×2 비교 그림 | `sheet-<새이름>-<구도>.png` |
 | `colors` | 계기 화면 숫자와 측정판 종이색을 재서 원본 색과 견준다 | 표준 출력(JSON) |
@@ -1810,9 +1819,16 @@ describe('실습장 장면', () => {
     expect(scene).not.toMatch(/LAB_HDRI|ContactShadows|BakedFloorShadows|epoxyFloorTexture|Lightformer/)
     expect(scene).toMatch(/makeFloorMaterial\(/)
   })
+  test('바닥은 다시 그릴 때마다 새로 만들지 않는다(장면 안쪽에서 정의한 부품이 아니라 함수로 그린다)', () => {
+    expect(scene).not.toMatch(/const Floor = \(|<Floor /)
+    expect(scene).toMatch(/\{floorOf\(mz, 'main'\)\}/)
+    expect(scene).toMatch(/\{ab && floorOf\(ab, 'abs'\)\}/)
+  })
   test('바닥 표시선은 조명을 받는 칠 색이다(형광 초록 아님)', () => {
     expect(scene).not.toMatch(/#1fbf6b/)
     expect(scene.match(/<meshStandardMaterial color=\{PALETTE\.line\} roughness=\{0\.5\} \/>/g)).toHaveLength(2)
+    expect(scene).toMatch(/0\.01, \(z1 \+ z2\) \/ 2\]\} receiveShadow>/)
+    expect(scene).toMatch(/0\.02, layout\.studentStart\.z\]\} receiveShadow>/)
   })
   test('품질 낮음의 계단 줄이기는 주소 인자로만 켠다', () => {
     expect(scene).toMatch(/antialias: !lowSpec \|\| antialias,/)
@@ -1823,9 +1839,11 @@ describe('실습장 장면', () => {
 })
 
 describe('태블릿 묶음 보호', () => {
-  test('postprocessing을 들여오는 파일은 Effects.tsx 하나뿐이다', () => {
-    const users = walk('src').filter((f) => /from '(@react-three\/)?postprocessing'/.test(read(f)))
+  test('화면 효과 패키지(postprocessing·n8ao)를 들여오는 파일은 Effects.tsx 하나뿐이고, 그 파일은 필요할 때만 따로 불러온다', () => {
+    const users = walk('src').filter((f) => /from ['"](@react-three\/postprocessing|postprocessing|n8ao)['"]/.test(read(f)))
     expect(users).toEqual([join('src', 'scene', 'Effects.tsx')])
+    // 바로 들여오면(import … from './Effects') 주 묶음에 섞인다. import('./Effects')로만 부른다
+    expect(walk('src').filter((f) => /from ['"][./]*(scene\/)?Effects['"]/.test(read(f)))).toEqual([])
   })
   test('화면 효과는 품질 높음에서만 따로 불러온다', () => {
     const scene = read('src/scene/LabScene.tsx')
@@ -1839,6 +1857,10 @@ describe('태블릿 묶음 보호', () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order)
     expect(fx).toMatch(/luminanceThreshold=\{LOOK\.bloomThreshold\}/)
     expect(fx).not.toMatch(/ToneMappingMode|ACES/)
+    expect(fx).toMatch(/<EffectComposer multisampling=\{0\}>/)
+    expect(fx).toMatch(/<primitive object=\{softClip\} dispose=\{null\} \/>/)
+    // 부모가 다시 그려져도 효과 묶음을 새로 만들지 않는다
+    expect(fx).toMatch(/export default memo\(Effects\)/)
   })
 })
 
@@ -1891,6 +1913,7 @@ describe('그 밖의 배선', () => {
     const sur = read('src/scene/Surroundings.tsx')
     expect(sur).toMatch(/new THREE\.InstancedMesh\(geometry, material, spots\.length\)/)
     expect(sur.match(/<CeilingInstances /g)).toHaveLength(2)
+    expect(sur).toMatch(/useEffect\(\(\) => \(\) => \{ haloMat\.dispose\(\) \}, \[haloMat\]\)/)
     expect(sur).not.toMatch(/panels\.map\(/)
   })
   test('그림은 캔버스 번짐·흐림 없이 만든다', () => {
@@ -1903,7 +1926,7 @@ describe('그 밖의 배선', () => {
 - [ ] **Step 2: 실패 확인**
 
 Run: `npm test -- tests/lookWiring.test.ts`
-Expected: FAIL — 17개 가운데 9개 실패('실습장 장면' 5개, '화면 효과는 품질 높음에서만 따로 불러온다', '화면 효과 순서', '캐릭터 만들기 화면', '조명판과 빛 판'). 나머지 8개는 이미 통과한다
+Expected: FAIL — 18개 가운데 10개 실패('실습장 장면' 6개, '화면 효과는 품질 높음에서만 따로 불러온다', '화면 효과 순서', '캐릭터 만들기 화면', '조명판과 빛 판'). 나머지 8개는 이미 통과한다
 
 - [ ] **Step 3: 화면 효과 바꾸기** — `src/scene/Effects.tsx`를 통째로 아래로 바꾼다.
 
@@ -1912,7 +1935,7 @@ Expected: FAIL — 17개 가운데 9개 실패('실습장 장면' 5개, '화면 
 // 첫 화면 내려받기를 줄이려고 따로 나눠 품질 높음일 때만 불러온다(태블릿 품질 낮음은 내려받지 않음). postprocessing을 들여오는 파일은 이것 하나여야 한다.
 import { Bloom, EffectComposer, N8AO, SMAA, Vignette } from '@react-three/postprocessing'
 import { Effect } from 'postprocessing'
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { LOOK, PALETTE } from './look/lookConfig'
 import { SOFT_CLIP_GLSL } from './look/toneCurve'
 
@@ -1926,7 +1949,7 @@ void mainImage( const in vec4 inputColor, const in vec2 uv, out vec4 outputColor
   }
 }
 
-export default function Effects() {
+function Effects() {
   // 이 효과는 GPU 자원을 따로 쥐지 않는다(셰이더는 효과 묶음이 갖는다). dispose={null}은 R3F가 이 객체를 건드리지 않게 하는 표시다
   const softClip = useMemo(() => new SoftClipEffect(), [])
   return (
@@ -1939,6 +1962,10 @@ export default function Effects() {
     </EffectComposer>
   )
 }
+
+// 부모(LabScene)는 학생이 걷는 동안 초당 네 번쯤 다시 그려진다. 이 부품까지 다시 그려지면 EffectComposer가 효과 묶음을 통째로 새로 만들고
+// 그림판(깊이·구석 그늘)을 다시 잡는다(걷는 25초에 그림 480장). 받는 값이 없으니 한 번만 그리게 묶는다 — 촬영 도구의 walk 검사가 본다
+export default memo(Effects)
 ```
 
 `<primitive … dispose={null} />`에 `softClip.dispose()`를 부르는 정리 코드를 더하지 않는다. R3F가 `dispose={null}`을 객체에 그대로 써넣어서, 화면이 바뀔 때 "dispose is not a function" 오류가 난다(복사본에서 확인).
@@ -2019,6 +2046,9 @@ export function Surroundings({ layout, halo }: { layout: SceneLayout; halo: numb
   }), [b, layout])
   // 조명판 둘레의 옅은 빛 판(더하기 섞기)
   const haloMat = useMemo(() => new THREE.MeshBasicMaterial({ map: glowTexture('alpha'), color: PALETTE.halo, transparent: true, opacity: halo, depthWrite: false, blending: THREE.AdditiveBlending }), [halo])
+  // 품질이나 배치가 바뀌어 재질을 새로 만들면 예전 것은 내려놓는다(그림은 여러 곳이 함께 쓰는 것이라 그대로 둔다)
+  useEffect(() => () => { haloMat.dispose() }, [haloMat])
+  useEffect(() => () => { for (const m of Object.values(mats)) m.dispose() }, [mats])
 ```
 
 (4) 빛 판 모양을 더한다. 바꿀 곳:
@@ -2293,6 +2323,69 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
       {tier.postEffects && <Suspense fallback={null}><Effects /></Suspense>}
 ```
 
+(15) 트인 변의 띠가 실시간 그림자를 받게 한다(조명을 받는 칠이 됐으므로. 품질 높음에서만 보인다). 바꿀 곳:
+
+```tsx
+            <mesh rotation-x={-Math.PI / 2} position={[(x1 + x2) / 2, 0.01, (z1 + z2) / 2]}>
+```
+
+바꾼 글:
+
+```tsx
+            <mesh rotation-x={-Math.PI / 2} position={[(x1 + x2) / 2, 0.01, (z1 + z2) / 2]} receiveShadow>
+```
+
+(16) 시작점 고리도 실시간 그림자를 받게 한다. 바꿀 곳:
+
+```tsx
+      <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry
+```
+
+바꾼 글:
+
+```tsx
+      <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]} receiveShadow><ringGeometry
+```
+
+(17) 바닥을 부품 대신 함수로 그린다(예전부터 있던 낭비를 고친다: 안쪽에서 정의한 부품은 다시 그릴 때마다 새 부품으로 여겨져, 걷는 동안 바닥 메시를 초당 네 번쯤 통째로 다시 만들었다). 바꿀 곳:
+
+```tsx
+  const Floor = ({ r }: { r: { xMin: number; xMax: number; zMin: number; zMax: number } }) => (
+    <mesh rotation-x={-Math.PI / 2} position={[(r.xMin + r.xMax) / 2, 0, (r.zMin + r.zMax) / 2]} onClick={onFloorTap} receiveShadow material={floorMat}>
+```
+
+바꾼 글:
+
+```tsx
+  // 바닥 한 구역. 장면 안쪽에서 정의한 부품으로 두면 LabScene이 다시 그려질 때마다 새 부품으로 여겨져 바닥 메시와 모양을 통째로 다시 만든다(학생이 걷는 동안 초당 네 번쯤). 그래서 그냥 함수로 부른다
+  const floorOf = (r: { xMin: number; xMax: number; zMin: number; zMax: number }, key: string) => (
+    <mesh key={key} rotation-x={-Math.PI / 2} position={[(r.xMin + r.xMax) / 2, 0, (r.zMin + r.zMax) / 2]} onClick={onFloorTap} receiveShadow material={floorMat}>
+```
+
+(18) 주 구역 바닥을 함수로 부른다. 바꿀 곳:
+
+```tsx
+      <Floor r={mz} />
+```
+
+바꾼 글:
+
+```tsx
+      {floorOf(mz, 'main')}
+```
+
+(19) ABS 구역 바닥도 함수로 부른다. 바꿀 곳:
+
+```tsx
+      {ab && <Floor r={ab} />}
+```
+
+바꾼 글:
+
+```tsx
+      {ab && floorOf(ab, 'abs')}
+```
+
 고친 뒤 `LabScene.tsx`에 `hdri`, `LAB_HDRI`, `assetUrl`, `Environment`, `Lightformer`, `ContactShadows`, `epoxyFloorTexture`라는 글자가 남아 있으면 안 된다(`grep -n "hdri\|LAB_HDRI\|assetUrl\|Lightformer\|ContactShadows\|epoxyFloorTexture" src/scene/LabScene.tsx` → 결과 없음). `useProgress`·`useState`·`useEffect`·`Suspense`는 다른 곳에서 쓰므로 import에 그대로 둔다.
 
 - [ ] **Step 7: 화면 쪽 고치기** — `src/screens/LabScreen.tsx`
@@ -2389,7 +2482,7 @@ import { ToneSetup } from '../scene/look/ToneSetup'
 - [ ] **Step 9: 통과 확인**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: 전체 PASS(`tests/lookWiring.test.ts` 17개 포함), 형 검사 오류 없음
+Expected: 전체 PASS(`tests/lookWiring.test.ts` 18개 포함), 형 검사 오류 없음
 
 - [ ] **Step 10: 커밋**
 
@@ -2476,7 +2569,7 @@ HDRI 주소 검사를 '모델만 있다' 검사로 바꾼다. 바꿀 곳:
 `'화면 효과 순서: …'` 시험 아래(`describe('태블릿 묶음 보호', …)`의 마지막)에 시험을 더한다. 바꿀 곳:
 
 ```ts
-    expect(fx).not.toMatch(/ToneMappingMode|ACES/)
+    expect(fx).toMatch(/export default memo\(Effects\)/)
   })
 })
 ```
@@ -2484,7 +2577,7 @@ HDRI 주소 검사를 '모델만 있다' 검사로 바꾼다. 바꿀 곳:
 바꾼 글:
 
 ```ts
-    expect(fx).not.toMatch(/ToneMappingMode|ACES/)
+    expect(fx).toMatch(/export default memo\(Effects\)/)
   })
   test('정비소 사진을 미리 받지 않는다', () => {
     expect(read('src/App.tsx')).not.toMatch(/useEnvironment|hdri/i)
@@ -2624,7 +2717,7 @@ HDRI 줄의 맨 끝 칸(용도)만 바꾼다. 바꿀 곳:
 - [ ] **Step 11: 통과 확인**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: 전체 PASS(`tests/lookWiring.test.ts` 18개), 형 검사 오류 없음
+Expected: 전체 PASS(`tests/lookWiring.test.ts` 19개), 형 검사 오류 없음
 
 - [ ] **Step 12: 커밋**
 
@@ -2738,7 +2831,7 @@ git commit -m "chore(판): 앱 판 0.3.3-demo — 빛과 재질 다듬기부터(
 - [ ] **Step 1: 전체 시험과 형 검사**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: `Test Files 124 passed`, `Tests 1016 passed`, 형 검사 오류 없음
+Expected: `Test Files 124 passed`, `Tests 1017 passed`, 형 검사 오류 없음
 
 - [ ] **Step 2: 빌드**
 
@@ -2793,7 +2886,7 @@ node $T colors $O new
 | 그리기 호출 수(높음) | 구도 10개 모두 `base` 값의 1.08배 이하 |
 | 구운 그림자 | `bakes`의 `mean`이 낮음 0.05~0.5, 높음 0.01~0.3 |
 | 품질 바꾸기 | `toggle`의 다섯 단계에서 굽기 횟수가 1 → 2 → 3 → 4 → 5로 늘고 오류 없음 |
-| 걷는 동안 | `walk`의 `envCaptures.walking`이 0(반사광을 다시 그리지 않음), `bakes`의 앞뒤가 같음(복사본에서는 고치기 전 26초에 85번, 지금 배포판 품질 낮음도 88번이었다) |
+| 걷는 동안 | `walk`의 `envCaptures.walking`이 0(반사광을 다시 그리지 않음), `bakes`의 앞뒤가 같음, `madeSecondLap`의 `textures`·`framebuffers`·`programs`가 0, `buffers`가 100 이하(복사본에서는 68. 지금 배포판은 두 바퀴에 반사광 165번, 둘째 바퀴에 품질 낮음 그림 158장·버퍼 1,016개, 품질 높음 그림 632장) |
 | 연결이 끊겼다 돌아옴 | `ctx`의 `restored`가 true, `envCapturesAfter`가 1, 굽기 횟수가 1 늘고 오류 없음 |
 | 계기 화면 숫자 | `colors`의 `readoutDigits.max`가 낮음 `[255, 74, 58]`(= `base`), 높음은 원본과 채널마다 10 이내(복사본에서는 `[248, 76, 62]`) |
 | 측정판 종이색 | `turntablePaper.mean`이 두 품질 모두 원본 `[255, 248, 214]`와 채널마다 10 이내(복사본에서는 높음 `[246, 239, 208]`, 낮음 `[255, 247, 217]`) |
