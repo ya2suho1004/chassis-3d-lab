@@ -3,7 +3,7 @@
 // durationSeconds는 이벤트 경과시간(단조시계)에서 오며 completedAt−startedAt으로 계산하지 않는다.
 // researchEligible은 승인 4종·runPurpose=research·completed·NPC passed가 모두 참일 때만 true다.
 import { summarizeResponses } from './grading'
-import type { DifficultyMode, StepEvent, TaskRun } from './taskEngine'
+import type { CalculatorEntry, DifficultyMode, StepEvent, TaskRun } from './taskEngine'
 
 export type UsagePhase = 'preview' | 'review' | 'other'
 
@@ -38,8 +38,8 @@ export interface FinalizeOptions {
 }
 
 export interface RecordPayload {
-  /** 제동력 1.1.0, 최소회전반경 1.2.0(taskId·계산 단위만 넓힌 계약) */
-  schemaVersion: '1.1.0' | '1.2.0'
+  /** 1.3.0(계산기 기록, 2026-11-11): 두 과제 모두. 이전 기록은 제동력 1.1.0, 최소회전반경 1.2.0 */
+  schemaVersion: '1.1.0' | '1.2.0' | '1.3.0'
   recordId: string
   anonymousStudentCode: string
   classConditionCode: string
@@ -85,12 +85,30 @@ export interface RecordPayload {
   npcInspectionResult: 'passed' | 'needsCorrection' | 'notCompleted'
   npcInspectionCount: number
   clientAppVersion: string
+  /** 계산기 기록(1.3.0부터, 계산기 설계 §3). 이전 판 기록에는 없다 */
+  calculatorLog?: CalculatorEntry[]
+  calculatorLogTruncated?: boolean
 }
 
 function lastInspection(run: TaskRun): 'passed' | 'needsCorrection' | 'notCompleted' {
   const ev = [...run.events].reverse().find((e) => e.type === 'npcInspected')
   if (!ev) return 'notCompleted'
   return ev.reasonCode === 'PASSED' ? 'passed' : 'needsCorrection'
+}
+
+/** 서버·앱의 정본 상한(CANONICAL_MAX_BYTES 32 KiB, src/delivery/submit.ts)보다 1 KiB 작게 잡은 기록 크기 예산.
+ *  넘으면 계산기 기록을 뒤에서부터 덜어 내고 넘침을 표시한다(사건 기록이 우선, 계산기 설계 §3.2) */
+export const RECORD_BYTES_BUDGET = 31 * 1024
+const payloadBytes = (p: RecordPayload) => new TextEncoder().encode(JSON.stringify(p)).length
+function fitBudget(p: RecordPayload): RecordPayload {
+  if (!p.calculatorLog || p.calculatorLog.length === 0 || payloadBytes(p) <= RECORD_BYTES_BUDGET) return p
+  let log = p.calculatorLog
+  while (log.length > 0) {
+    log = log.slice(0, -1)
+    const q: RecordPayload = { ...p, calculatorLog: log, calculatorLogTruncated: true }
+    if (payloadBytes(q) <= RECORD_BYTES_BUDGET) return q
+  }
+  return { ...p, calculatorLog: [], calculatorLogTruncated: true }
 }
 
 export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: FinalizeOptions): RecordPayload {
@@ -108,8 +126,8 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
   const lastEvent = run.events[run.events.length - 1]
   const durationSeconds = lastEvent ? Math.round(lastEvent.elapsedMs / 1000) : 0
 
-  return {
-    schemaVersion: run.task.taskId === 'min-turning-radius' ? '1.2.0' : '1.1.0',
+  return fitBudget({
+    schemaVersion: '1.3.0', // 계산기 기록(2026-11-11)부터 두 과제 모두. 서버는 1.0.0~1.3.0을 받는다
     recordId: session.recordId,
     anonymousStudentCode: session.anonymousStudentCode,
     classConditionCode: session.classConditionCode,
@@ -155,5 +173,7 @@ export function buildRecordPayload(run: TaskRun, session: SessionContext, fin: F
     npcInspectionResult: npc,
     npcInspectionCount: run.npcInspectionCount,
     clientAppVersion: session.clientAppVersion,
-  }
+    calculatorLog: run.calculatorLog,
+    calculatorLogTruncated: run.calculatorLogTruncated,
+  })
 }

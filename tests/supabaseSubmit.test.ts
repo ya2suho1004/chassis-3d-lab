@@ -5,7 +5,7 @@ import demo from '../docs/design/examples/submission.demo-request.json'
 import legacyRecord from '../docs/design/examples/legacy/1.0.0/record.demo-aborted.json'
 import lv1 from '../src/data/tasks/task.braking-force.case-lv1.json'
 import turn1 from '../src/data/tasks/task.min-turning-radius.case-lv1.json'
-import { submitResponse } from '../src/domain/taskEngine'
+import { logCalculation, submitResponse } from '../src/domain/taskEngine'
 import { inspectPerformance } from '../src/domain/npcInspection'
 import { createTaskRun, attempt } from '../src/domain/taskEngine'
 import { buildRecordPayload } from '../src/domain/record'
@@ -190,7 +190,7 @@ describe('Supabase submit — Apps Script 수신 계약과 같은 결과', () =>
     expect(b.ok).toBe(true); expect(a.receiptId).not.toBe(b.receiptId)
     expect(rows).toHaveLength(2)
   })
-  test('최소회전반경 완료 기록(1.2.0, 합성 코드 D-02)은 끝까지 수행·NPC 통과 뒤 접수된다', async () => {
+  test('최소회전반경 완료 기록(1.3.0, 합성 코드 D-02)은 끝까지 수행·NPC 통과 뒤 접수된다', async () => {
     const task = turn1 as unknown as ApprovedTask
     const session = createDemoSession({ studentCode: 'D-02', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: null, task, difficultyMode: 'unguided' })
     let run = createTaskRun(task, { difficultyMode: 'unguided', displayMode: 'threeD' })
@@ -199,9 +199,11 @@ describe('Supabase submit — Apps Script 수신 계약과 같은 결과', () =>
     for (const s of ['ppe', 'engineOff', 'turntable', 'direction', 'steer']) step(s)
     ans('leftAngle', '35'); ans('rightAngle', '30'); step('read'); step('return')
     ans('radius', '4.8'); ans('radius', '5.5'); ans('vehicleCondition', 'pass'); step('record')
+    run = logCalculation(run, { expression: '2.7/sin(30)+0.1', result: '5.5', error: null })
     run = inspectPerformance(run).run
     const payload = buildRecordPayload(run, session, { completedAtIso: new Date(run.startedAtMs + 60000).toISOString(), completionStatus: 'completed' })
-    expect(payload.schemaVersion).toBe('1.2.0')
+    expect(payload.schemaVersion).toBe('1.3.0')
+    expect(payload.calculatorLog).toEqual([{ sequence: 1, elapsedMs: expect.any(Number), stepId: 'record', kind: 'scientific', expression: '2.7/sin(30)+0.1', result: '5.5' }])
     expect(payload.taskId).toBe('min-turning-radius')
     expect(payload.calculationAnswers[0]).toMatchObject({ itemId: 'radius', unit: 'm', computedReferenceValue: 5.5, firstInput: '4.8', firstCorrect: false, finalInput: '5.5', finalCorrect: true })
     expect(payload.errorCount).toBe(1)
