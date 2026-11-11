@@ -56,7 +56,9 @@ describe('과제 패널의 기록 창(§3)', () => {
   })
   test('고치기로 다른 창으로 옮길 때 다시 확인할 목록을 남기고, 옮긴 직후엔 안내를 끌어오지 않으며, 장비가 멀면 창을 닫고 이동하라고 알린다', () => {
     expect(task).toMatch(/if \(!keepFixList \|\| !shown\?\.fixItems\) setShown\(null\)/)
-    expect(task).toMatch(/if \(record && shown && \(!switched \|\| revealOnOpen\.current\)\) revealInBody/)
+    expect(task).toMatch(/if \(record && shown && !switched\) reveal\(\)/)
+    // 창 밖 단계 버튼이 연 창의 경고: 창이 맨 위로 되돌린 뒤(개발 모드 StrictMode의 두 번째 효과 포함) 다음 그림 때 끌어온다(재확인 G4)
+    expect(task).toMatch(/else if \(record && shown && revealOnOpen\.current\) requestAnimationFrame\(reveal\)/)
     expect(task).toContain('창을 닫고 ${far} 접근점으로 이동한 뒤 다시 누르세요.')
   })
 })

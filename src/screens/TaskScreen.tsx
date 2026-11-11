@@ -358,16 +358,19 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   }
   /** 기록 창 칸: 작업 목록과 같은 값·제출 함수, id만 rec-(같은 화면에 함께 붙어 있어도 겹치지 않게) */
   const recIo: FieldIo = { ...listIo, idOf: recordInputId }
-  // 창 안 안내가 새로 뜨면 창 안에서 보이게 한다(키보드를 닫으면 안내는 칸 아래에 있다, 설계 §3.2).
-  // 다른 단계 창으로 옮긴 직후에는 하지 않는다(창 맨 위 제목부터 보이게, 남겨 둔 목록은 아래에 있다)
   /** 게임 화면 큰 버튼은 onContext 효과가 마지막으로 넘긴 함수를 부른다. 그 효과는 칸 글자(inputs)가 바뀌어도 다시 돌지 않으므로(키마다 3D 화면을 다시 그리지 않게) 늘 최신 doStep을 부르게 한다(재검토 Important) */
   const doStepRef = useRef(doStep)
   useEffect(() => { doStepRef.current = doStep })
+  // 창 안 안내가 새로 뜨면 창 안에서 보이게 한다(키보드를 닫으면 안내는 칸 아래에 있다, 설계 §3.2).
+  // 다른 단계 창으로 옮긴 직후에는 하지 않는다(창 맨 위 제목부터 보이게, 남겨 둔 목록은 아래에 있다).
+  // 단, 창 밖 단계 버튼이 창을 열며 띄운 경고는 끌어온다. 창은 열릴 때 맨 위로 되돌리고 개발 모드(StrictMode)는 그 효과를 한 번 더 돌리므로, 다음 그림 때 한다(재확인 G4)
   const prevRecordRef = useRef<string | null>(null)
   useEffect(() => {
     const switched = prevRecordRef.current !== record
     prevRecordRef.current = record
-    if (record && shown && (!switched || revealOnOpen.current)) revealInBody(document.querySelector('.g-record .rec-feedback'))
+    const reveal = () => revealInBody(document.querySelector('.g-record .rec-feedback'))
+    if (record && shown && !switched) reveal()
+    else if (record && shown && revealOnOpen.current) requestAnimationFrame(reveal)
     revealOnOpen.current = false
   }, [record, shown])
 
