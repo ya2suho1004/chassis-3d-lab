@@ -1,4 +1,5 @@
 // 계산기 화면(계산기 설계 §2) — 처음엔 닫힌 버튼, 일반·공학용 버튼 배치, 결과 줄 읽기
+import fs from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
@@ -29,5 +30,11 @@ describe('계산기 화면', () => {
     expect(h).toContain('DEG')
     for (const label of ['sin', '(', ')', '÷', '×', '=']) expect(h).toContain(`>${label}</button>`)
     expect(h).toContain('aria-label="사인"')
+  })
+  test('닫힌 상태에서는 없는 칸을 가리키지 않고, 길게 누름·단축키는 받지 않으며, 탭 확대를 막는다', () => {
+    const h = renderToStaticMarkup(createElement(CalculatorPanel, { kind: 'basic', onEvaluate: () => {} }))
+    expect(h).not.toContain('aria-controls')
+    expect(fs.readFileSync('src/screens/Calculator.tsx', 'utf8')).toMatch(/if \(e\.repeat \|\| e\.ctrlKey \|\| e\.metaKey \|\| e\.altKey\) return/)
+    expect(fs.readFileSync('src/styles.css', 'utf8')).toMatch(/\.calc-keys button \{ min-height:44px; padding:0; font-size:17px; touch-action:manipulation; \}/)
   })
 })

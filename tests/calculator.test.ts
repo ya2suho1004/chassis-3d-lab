@@ -64,6 +64,18 @@ describe('일반 계산기(제동력): 누르는 차례대로 바로 계산', ()
 })
 
 describe('공학용 계산기(최소회전반경): 식, 곱셈·나눗셈 먼저, 괄호·sin(도)', () => {
+  test('식 오류 뒤 고치지 않고 다시 누른 = 는 다시 남기지 않고, 고친 뒤에는 남긴다', () => {
+    expect(runSci('2 sin 3 0 = = =').ev).toHaveLength(1)
+    expect(runSci('2 sin 3 0 = BS 3 =').ev).toHaveLength(2)
+  })
+  test('자동으로 닫는 괄호까지 더해도 기록하는 식은 80자를 넘지 않는다', () => {
+    let st = sciInit()
+    for (let i = 0; i < 70; i++) st = sciPress(st, '(').state
+    st = sciPress(st, '1').state
+    const r = sciPress(st, '=')
+    expect(r.evaluated).not.toBeNull()
+    expect(r.evaluated!.expression.length).toBeLessThanOrEqual(80)
+  })
   test('2.7 ÷ sin(32) + 0.1 = 5.19511577, sin 30° = 0.5', () => {
     expect(runSci('2 . 7 / sin 3 2 ) + 0 . 1 =').ev).toEqual([{ expression: '2.7/sin(32)+0.1', result: '5.19511577', error: null }])
     expect(runSci('sin 3 0 ) =').ev[0]!.result).toBe('0.5')

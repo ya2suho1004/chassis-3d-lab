@@ -552,7 +552,7 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 
 /* 계산·판정 장면 전자계산기(계산기 설계 §2). 버튼은 누르기 크기 44px */
 .calc-panel { margin:6px 0 8px; }
-.calc-toggle { min-height:44px; }
+.calc-toggle { min-height:44px; touch-action:manipulation; }
 .calc { margin-top:6px; padding:8px; border:1px solid var(--line); border-radius:8px; background:#fff; max-width:360px; }
 .calc-disp { border:1px solid var(--line); border-radius:6px; padding:6px 8px; margin-bottom:6px; text-align:right; background:var(--bg); }
 .calc-proc { min-height:18px; font-size:13px; color:var(--mut); overflow-wrap:anywhere; }
@@ -561,6 +561,6 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .calc-keys { display:grid; gap:4px; }
 .calc.basic .calc-keys { grid-template-columns:repeat(4, minmax(0, 1fr)); }
 .calc.scientific .calc-keys { grid-template-columns:repeat(5, minmax(0, 1fr)); }
-.calc-keys button { min-height:44px; padding:0; font-size:17px; }
+.calc-keys button { min-height:44px; padding:0; font-size:17px; touch-action:manipulation; } /* 빠르게 두 번 눌러도 화면 확대로 먹히지 않게(iPad, 최종 검토 M-4) */
 .calc-keys .span2 { grid-column:span 2; }
 .calc-keys .span5 { grid-column:span 5; }

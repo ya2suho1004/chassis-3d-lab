@@ -433,7 +433,8 @@ export function calculatorStepOf(task: Pick<ApprovedTask, 'taskId'>): string {
 /** = 를 누를 때 한 줄을 남긴다. 멈춤 중이면 남기지 않고, 상한을 넘으면 넘침만 표시한다. 경과 시간은 거꾸로 가지 않는다.
  *  값이 없는 칸은 만들지 않는다(IndexedDB가 undefined 칸을 보존해 기록 모양이 달라지지 않게) */
 export function logCalculation(run: TaskRun, c: { expression: string; result: string | null; error: CalculatorError | null }): TaskRun {
-  if (run.paused) return run
+  // 빈 식이나 결과·오류가 모두 없는 줄은 남기지 않는다(그 한 줄로 기록 전체가 서버 검사에 걸리지 않게, 최종 검토 M-2)
+  if (run.paused || !c.expression || (!c.error && !c.result)) return run
   if (run.calculatorLog.length >= CALCULATOR_LOG_LIMIT) return run.calculatorLogTruncated ? run : carry(run, { ...run, calculatorLogTruncated: true })
   const prev = run.calculatorLog[run.calculatorLog.length - 1]
   const elapsedMs = Math.max(prev ? prev.elapsedMs : 0, Math.round(depsOf(run).now() - run.startedAtMs))

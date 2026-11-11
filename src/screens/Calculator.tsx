@@ -30,6 +30,7 @@ export function CalculatorPad({ kind, onEvaluate }: { kind: CalculatorKind; onEv
     }
   }
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return // 길게 누름·확대 단축키(Ctrl·Cmd)는 계산기 입력으로 받지 않는다(최종 검토 I-3·M-3)
     const k = /^[0-9]$/.test(e.key) ? (e.key as SciKey) : KEYBOARD[e.key]
     if (!k) return
     e.preventDefault() // Enter가 초점 버튼을 한 번 더 누르지 않게
@@ -61,7 +62,7 @@ export function CalculatorPanel({ kind, onEvaluate }: { kind: CalculatorKind; on
   const id = useId()
   return (
     <div className="calc-panel">
-      <button type="button" className="calc-toggle" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>{open ? '계산기 닫기' : '계산기'}</button>
+      <button type="button" className="calc-toggle" aria-expanded={open} aria-controls={open ? id : undefined} onClick={() => setOpen(!open)}>{open ? '계산기 닫기' : '계산기'}</button>
       {open && <div id={id}><CalculatorPad kind={kind} onEvaluate={onEvaluate} /></div>}
     </div>
   )

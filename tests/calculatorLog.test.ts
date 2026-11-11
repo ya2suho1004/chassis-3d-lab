@@ -19,6 +19,12 @@ const B = brake as unknown as ApprovedTask
 const T = turn as unknown as ApprovedTask
 
 describe('계산기 기록(§3)', () => {
+  test('빈 식이나 결과·오류가 모두 없는 줄은 남기지 않는다', () => {
+    const run = createTaskRun(B, { difficultyMode: 'guided' }, clockAt(0).deps)
+    expect(logCalculation(run, { expression: '', result: '1', error: null }).calculatorLog).toEqual([])
+    expect(logCalculation(run, { expression: '1+1', result: null, error: null }).calculatorLog).toEqual([])
+    expect(logCalculation(run, { expression: '1+1', result: '', error: null }).calculatorLog).toEqual([])
+  })
   test('과제마다 계산기 종류와 기록 단계가 정해져 있다', () => {
     expect(calculatorKindOf(B)).toBe('basic')
     expect(calculatorStepOf(B)).toBe('calc')

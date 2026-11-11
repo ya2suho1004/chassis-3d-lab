@@ -16,9 +16,13 @@ export const MAX_DIGITS = 10
 export const BASIC_MAX_CHARS = 80
 /** 공학용: 식 상한(자동으로 닫는 괄호 전) */
 export const SCI_MAX_CHARS = 60
+/** 공학용: 자동으로 닫는 괄호까지 더한 기록 식 상한(기록 칸 80자) */
+export const SCI_LOG_MAX_CHARS = 80
 
 const isDigit = (k: string): k is Digit => k.length === 1 && k >= '0' && k <= '9'
 const isOp = (k: string): k is CalcOp => k === '+' || k === '-' || k === '*' || k === '/'
+/** 아직 닫지 않은 괄호 수(sin( 포함) */
+const openParens = (pieces: readonly string[]) => pieces.filter((p) => p.endsWith('(')).length - pieces.filter((p) => p === ')').length
 
 /** 10자리 유효숫자로 반올림해 보이고 끝의 0은 지운다. 소수 첫째 자리에서 자르지 않는다(자르기는 학생 몫). 수가 아니면 null */
 export function formatCalc(x: number): string | null {
@@ -115,16 +119,18 @@ export function sciPress(s: SciState, k: SciKey): { state: SciState; evaluated: 
   if (k === 'AC') return { state: sciInit(), evaluated: null }
   if (k === 'BS') return { state: s.done ? s : { ...s, pieces: s.pieces.slice(0, -1), error: null }, evaluated: null }
   if (k === '=') {
-    if (s.done || s.pieces.length === 0) return { state: s, evaluated: null }
-    const open = s.pieces.filter((p) => p.endsWith('(')).length - s.pieces.filter((p) => p === ')').length
-    const expression = s.pieces.join('') + ')'.repeat(Math.max(0, open))
+    // 식 오류 뒤 고치지 않고 다시 누른 = 는 다시 계산·기록하지 않는다(같은 줄로 기록이 차지 않게, 최종 검토 I-3)
+    if (s.done || s.pieces.length === 0 || s.error !== null) return { state: s, evaluated: null }
+    const expression = s.pieces.join('') + ')'.repeat(Math.max(0, openParens(s.pieces)))
     const r = evaluateExpression(expression)
     if ('error' in r) return { state: { ...s, error: r.error }, evaluated: { expression, result: null, error: r.error } }
     return { state: { pieces: [], last: { value: r.value, expression }, done: true, error: null }, evaluated: { expression, result: formatCalc(r.value), error: null } }
   }
   const start = s.done ? (isOp(k) && s.last ? [formatCalc(s.last.value) ?? '0'] : []) : s.pieces
   const pieces = [...start, k === 'sin' ? 'sin(' : k]
-  if (pieces.join('').length > SCI_MAX_CHARS) return { state: s, evaluated: null }
+  const typed = pieces.join('')
+  // 자동으로 닫는 괄호까지 더해도 기록하는 식이 80자를 넘지 않게(계산기 설계 §2.3, 최종 검토 M-1)
+  if (typed.length > SCI_MAX_CHARS || typed.length + Math.max(0, openParens(pieces)) > SCI_LOG_MAX_CHARS) return { state: s, evaluated: null }
   return { state: { pieces, last: s.last, done: false, error: null }, evaluated: null }
 }
 
