@@ -67,6 +67,10 @@ describe('태블릿 묶음 보호', () => {
     // 부모가 다시 그려져도 효과 묶음을 새로 만들지 않는다
     expect(fx).toMatch(/export default memo\(Effects\)/)
   })
+  test('정비소 사진을 미리 받지 않는다', () => {
+    expect(read('src/App.tsx')).not.toMatch(/useEnvironment|hdri/i)
+    expect(read('src/app/intro.ts')).not.toMatch(/LAB_HDRI|hdri: /)
+  })
 })
 
 describe('계측부는 조명·색 보정과 무관한 재질 그대로', () => {

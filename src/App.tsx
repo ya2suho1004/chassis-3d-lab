@@ -16,7 +16,7 @@ import { AvatarScreen } from './screens/AvatarScreen'
 import { IntroScreen } from './screens/IntroScreen'
 import { introPlan, loadIntroPrefs, preloadPlan } from './app/intro'
 import { initialQuality } from './app/quality'
-import { useEnvironment, useGLTF } from '@react-three/drei'
+import { useGLTF } from '@react-three/drei'
 import { DEFAULT_PROFILE, loadAvatar, nicknameOf, randomNickname, saveAvatar, type AvatarProfile } from './app/avatar'
 import { assetUrl } from './app/assetUrl'
 
@@ -38,13 +38,12 @@ export function App() {
   // 인트로(설계 2026-11-03): 저장소는 뒤에서 열고, 인트로가 끝나면 원래 첫 화면을 보인다
   const [intro] = useState(() => introPlan(loadIntroPrefs(), typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))
   const [introDone, setIntroDone] = useState(intro === 'none')
-  // 실습장 3D 모델을 처음부터 미리 받아 둔다(인트로·코드 입력·캐릭터 만들기 동안). 실습장의 useGLTF·Environment가 같은 캐시를 쓴다
-  // 품질 높음이면 HDRI·화면 효과 코드도 함께(실습장과 같은 품질 판정 — app/quality.ts)
+  // 실습장 3D 모델을 처음부터 미리 받아 둔다(인트로·코드 입력·캐릭터 만들기 동안). 실습장의 useGLTF가 같은 캐시를 쓴다
+  // 품질 높음이면 화면 효과 코드도 함께(실습장과 같은 품질 판정 — app/quality.ts). 반사광은 실습장 자체로 만들어 받을 파일이 없다
   useEffect(() => {
     const q = initialQuality(window.location.search, !!window.matchMedia?.('(pointer: coarse)').matches)
     const plan = preloadPlan(q.low)
     for (const m of plan.models) useGLTF.preload(assetUrl(m), false, true)
-    if (plan.hdri) useEnvironment.preload({ files: assetUrl(plan.hdri) })
     if (plan.effects) void import('./scene/Effects').catch(() => {})
   }, [])
 

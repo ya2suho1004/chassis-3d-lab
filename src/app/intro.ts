@@ -42,13 +42,10 @@ export const PRELOAD_MODELS = [
   'disc-fixture', 'k3', 'pride', 'scissor-lift', 'shock-stand', 'test-car', 'tire-changer', 'transmission-simulator', 'wheel-balancer',
 ].map((n) => `${n}.glb`)
 
-/** 실습장 정비소 HDRI — 품질 높음에서만 쓴다(품질 낮음은 내려받기 없는 간단한 빛) */
-export const LAB_HDRI = 'hdri/autoshop_01_1k.hdr'
-
-/** 처음부터 미리 받을 것(첫 로딩 줄이기 2026-11-03). 품질 높음이면 HDRI·화면 효과 코드도 함께 받아 실습장 진입 뒤 대기를 없앤다.
- *  품질 낮음(터치 기기)은 둘 다 쓰지 않으므로 받지 않는다(태블릿 내려받기 보호) */
-export function preloadPlan(low: boolean): { models: string[]; hdri: string | null; effects: boolean } {
-  return { models: PRELOAD_MODELS.map((f) => `models/${f}`), hdri: low ? null : LAB_HDRI, effects: !low }
+/** 처음부터 미리 받을 것(첫 로딩 줄이기 2026-11-03). 품질 높음이면 화면 효과 코드도 함께 받아 실습장 진입 뒤 대기를 없앤다.
+ *  품질 낮음(터치 기기)은 화면 효과를 쓰지 않으므로 받지 않는다(태블릿 내려받기 보호). 반사광은 실습장 자체로 만들어 받을 파일이 없다(2026-11-11) */
+export function preloadPlan(low: boolean): { models: string[]; effects: boolean } {
+  return { models: PRELOAD_MODELS.map((f) => `models/${f}`), effects: !low }
 }
 
 /** 로딩 화면 팁. 일반 팁은 어느 모드에서나 보인다(작업 순서·장비 조작을 알려 주지 않음) */

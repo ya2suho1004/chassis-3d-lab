@@ -4,7 +4,7 @@ import versions from '../data/assetVersions.json'
 
 const V = versions as Record<string, string>
 
-/** rel 예: 'models/k3.glb', 'hdri/autoshop_01_1k.hdr' */
+/** rel 예: 'models/k3.glb' */
 export function assetUrl(rel: string): string {
   const v = V[rel]
   return `${import.meta.env.BASE_URL}assets/${rel}${v ? `?v=${v}` : ''}`

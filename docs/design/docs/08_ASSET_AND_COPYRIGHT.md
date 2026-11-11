@@ -138,7 +138,7 @@
 
 | 파일 | 출처 URL | 작성자 | 라이선스 | 받은 날 | 수정 | 용도 |
 |---|---|---|---|---|---|---|
-| `public/assets/hdri/autoshop_01_1k.hdr` (1.6MB) | https://polyhaven.com/a/autoshop_01 (파일: dl.polyhaven.org …/1k/autoshop_01_1k.hdr) | Oliksiy Yakovlyev (Poly Haven) | CC0 — https://polyhaven.com/license "Our assets are all licensed as CC0" (2026-10-28 원문 확인) | 2026-10-28 | 없음 | 품질 '높음'의 반사·환경광. '낮음'에서는 불러오지 않음 |
+| `public/assets/hdri/autoshop_01_1k.hdr` (1.6MB) | https://polyhaven.com/a/autoshop_01 (파일: dl.polyhaven.org …/1k/autoshop_01_1k.hdr) | Oliksiy Yakovlyev (Poly Haven) | CC0 — https://polyhaven.com/license "Our assets are all licensed as CC0" (2026-10-28 원문 확인) | 2026-10-28 | 없음 | 0.3.2-demo까지 품질 '높음'의 반사·환경광으로 썼다. **0.3.3-demo부터 쓰지 않고 파일도 저장소에서 지웠다**(2026-11-11 — 반사광을 실습장 자체로 만든다. 깃 이력에는 남아 있다) |
 | `public/assets/models/test-car.glb` (약 0.63MB, 삼각형 약 6.2만) | 외부 출처 없음. `scripts/blender/build_test_car.py`가 Blender 5.2로 만든다 | 이 프로젝트(Claude Code 작성 스크립트) | 자체 제작 | 2026-10-28(10-29 모닝 사진 반영) | — | 시험 차량(기아 모닝 3세대 모양, 사용자 제공 사진 참고: 넓은 벌집 그릴·쓸린 전조등·큰 아래 흡입구·노란 장식). 로고·글자 없음. 노란 장식은 재질 `Accent` 하나(실습장 차량이 일반 사양이면 색만 바꿈). 품질 '높음' 전용 |
 | `public/assets/models/brake-tester.glb` (약 0.27MB, 삼각형 약 1.2만) | 외부 출처 없음. `scripts/blender/build_brake_tester.py`가 Blender 5.2로 만든다 | 이 프로젝트(Claude Code 작성 스크립트) | 자체 제작 | 2026-10-28 | — | 제동력 시험기(빨간 틀·덮개 상자·리브 롤러 4개·리프트 판 2개). 품질 '높음'에서만 쓰고 '낮음'은 코드 시험기. 둘레 줄무늬 철판은 코드가 그림. meshopt 압축 |
 | `public/assets/models/scissor-lift.glb` (약 0.29MB, 삼각형 약 1.3만) | 외부 출처 없음. `scripts/blender/build_scissor_lift.py` | 이 프로젝트(Claude Code 작성 스크립트) | 자체 제작 | 2026-10-29 | — | 가위형 리프트(발판 2·경사로·가위 다리·유압 실린더). 발판·다리가 따로 움직여 오르내림(보기 전용). 다리 구조는 일반 가위형 리프트 참고 가정. 리프트 3대가 같은 모델 사용 |

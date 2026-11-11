@@ -10,9 +10,9 @@ describe('자료 버전 꼬리표', () => {
   test('저장된 꼬리표가 지금 파일 내용과 같다(모델을 바꾸면 npm run build 또는 node scripts/build-asset-versions.mjs)', () => {
     expect(versions).toEqual(computeAssetVersions())
   })
-  test('모델·HDRI 주소에 내용 해시 꼬리표가 붙는다', () => {
+  test('모델 주소에 내용 해시 꼬리표가 붙는다', () => {
     expect(assetUrl('models/k3.glb')).toMatch(/assets\/models\/k3\.glb\?v=[0-9a-f]{10}$/)
-    expect(assetUrl('hdri/autoshop_01_1k.hdr')).toMatch(/\?v=[0-9a-f]{10}$/)
+    expect(Object.keys(versions).every((k) => k.startsWith('models/'))).toBe(true)
     expect(assetUrl('models/없는파일.glb')).toMatch(/assets\/models\/없는파일\.glb$/)
   })
   test('소스에 꼬리표 없는 자료 주소(BASE_URL}assets/)가 남아 있지 않다', () => {
