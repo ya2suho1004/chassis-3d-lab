@@ -47,7 +47,7 @@ export function TestCarModel({ highlight, onWheels, brakeLights = false }: { hig
   }, [scene])
   useLayoutEffect(() => {
     if (!tail) return
-    // 너무 밝으면 색 보정(ACES)에서 주황으로 바래므로 진한 빨강을 적당히
+    // 너무 밝으면 색 보정이 밝은 부분을 흰색 쪽으로 눌러 색이 바래므로 진한 빨강을 적당히
     tail.emissive.set(brakeLights ? '#ff0000' : '#3d0005')
     tail.emissiveIntensity = brakeLights ? 1.6 : 1
   }, [tail, brakeLights])

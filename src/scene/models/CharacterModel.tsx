@@ -31,7 +31,7 @@ export const INSTRUCTOR_OUTFIT: Outfit = { top: '#24324a', bottom: '#1f2733', sh
 /** 보호구 착용 뒤 학생 신발(안전화 — 짙은 갈색) */
 export const SAFETY_SHOES = '#3b2a1e'
 
-/** 사람은 레이어 2에만 둔다: 바닥 그림자를 한 번 구울 때(ContactShadows, 레이어 0만 봄) 빠져 움직인 뒤 그림자가 남지 않게 한다.
+/** 사람은 레이어 2에만 둔다: 바닥 그림자를 한 번 구울 때(look/FloorShadowBake — 굽는 카메라는 레이어 0만 봄) 빠져 움직인 뒤 그림자가 남지 않게 한다.
  *  화면 카메라·클릭·조준 광선은 레이어 2도 켠다(LabScene LayerSetup) */
 export const CHARACTER_LAYER = 2
 
