@@ -28,7 +28,7 @@ import { NpcDialog, panelWorkOrder } from './NpcDialog'
 import { Icon } from './Icon'
 import { LabSound } from '../scene/sound'
 import { useProgress } from '@react-three/drei'
-import { initialQuality, shouldAutoLower } from '../app/quality'
+import { antialiasRequested, initialQuality, shouldAutoLower } from '../app/quality'
 import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '../scene/viewMode'
 import { LayoutReviewPanel } from './LayoutReviewPanel'
 import { LayoutSurveyPanel } from './LayoutSurveyPanel'
@@ -84,10 +84,11 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const [codex, setCodex] = useState<string[]>([])
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
-  /** 품질 단계(설계 07 §7-5): 터치 기기(태블릿·폰)는 '낮음'(그림자·환경광 끔, 해상도 1배)으로 시작, 교사·학생이 바꿀 수 있다 */
+  /** 품질 단계(설계 07 §7-5): 터치 기기(태블릿·폰)는 '낮음'(실시간 그림자·화면 효과 끔, 해상도 1배 — 빛과 구운 바닥 그림자는 그대로)으로 시작, 교사·학생이 바꿀 수 있다 */
   // ?q=high|low로 고정할 수 있고(시험·시연), 처음 4초가 느리면 한 번 자동으로 낮춘다(app/quality.ts)
   const [quality0] = useState(() => initialQuality(typeof window !== 'undefined' ? window.location.search : '', typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches))
   const [lowSpec, setLowSpecRaw] = useState(quality0.low)
+  const [antialias] = useState(() => typeof window !== 'undefined' && antialiasRequested(window.location.search))
   const userChoseQuality = useRef(false)
   const setLowSpec = (v: boolean) => { userChoseQuality.current = true; setLowSpecRaw(v) }
   const [qualityNote, setQualityNote] = useState<string | null>(null)
@@ -332,7 +333,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
     return (
       <main className={`game wa ${talking ? 'talking' : ''}`}>
         <div className="g-canvas">
-          <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
+          <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} npcNod={!!nodding} viewMode={viewMode} playerPos={pos} onAim={setAimId}
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
@@ -551,14 +552,14 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('review')}>배치 눈검토(교사)</button>}
           {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('survey')}>실측 입력(교사)</button>}
           {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}
-          <label className="inline" title="낮음: 그림자·화면 효과를 끄고 해상도를 낮춰 태블릿에서 부드럽게(모델은 같음)"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
+          <label className="inline" title="낮음: 실시간 그림자·화면 효과를 끄고 해상도를 낮춰 태블릿에서 부드럽게(모델·빛은 같음)"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
         </div>
       </header>
 
       <div className={`labgrid ${run || reviewOpen ? 'withtask' : ''} ${reviewOpen ? 'reviewing' : ''} ${displayMode === 'diagram' ? 'diagram' : ''}`}>
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
-            <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} raisedLiftIds={raisedLifts}
+            <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
               onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} />
             <div className="quicknav">
               <button onClick={() => goTo({ x: layout.npc.x - 1.0, z: layout.npc.z })}>교관에게 가기</button>
