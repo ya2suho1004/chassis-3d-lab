@@ -36,7 +36,7 @@
   - 형 검사: `node_modules/.bin/tsc -p tsconfig.json --noEmit`
   - 멈추면 앞에 `perl -e 'alarm 300; exec @ARGV'`를 붙인다.
 - **커밋 메시지:** 끝에 `-m "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>"`를 붙인다.
-- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1012개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
+- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1014개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
 - **"바꿀 곳 → 바꾼 글"의 뜻:** '바꿀 곳'의 글은 파일에 **한 번만** 나온다(두 번이라고 적힌 곳 제외). 그 글을 '바꾼 글'로 통째로 바꾼다. 줄의 나머지 부분이 보이지 않으면 그 부분은 그대로 둔다.
 
 ## 미리 재 둔 값(헤드리스 크롬, 이 맥 — 태블릿 값이 아님)
@@ -861,7 +861,7 @@ git commit -m "feat(빛과 재질): 값 표와 계산 — 품질별 구성, 주�
 // 빛·재질 그림(설계 2026-11-11 §4.5·§4.6): 점마다 계산해 만든다 — 값 범위, 이음매 없음, 같은 입력이면 같은 값
 import { describe, expect, test } from 'vitest'
 import * as THREE from 'three'
-import { drift, epoxyColorAt, epoxyColorTexture, epoxyRoughAt, epoxyRoughnessTexture, glowAt, glowTexture, hallFalloffAt, hallFalloffTexture, wallShadeAt, wallShadeTexture } from '../src/scene/look/lookTextures'
+import { EPOXY_ROUGH_MID, drift, epoxyColorAt, epoxyColorTexture, epoxyRoughAt, epoxyRoughnessTexture, glowAt, glowTexture, hallFalloffAt, hallFalloffTexture, wallShadeAt, wallShadeTexture } from '../src/scene/look/lookTextures'
 
 const grid = (n: number) => Array.from({ length: n }, (_, i) => i / (n - 1))
 
@@ -891,10 +891,14 @@ describe('에폭시 바닥', () => {
       expect(Math.abs(r - 34)).toBeLessThanOrEqual(3); expect(Math.abs(g - 119)).toBeLessThanOrEqual(7); expect(Math.abs(b - 76)).toBeLessThanOrEqual(5)
     }
   })
-  test('광택 값은 가운데 118 둘레에서 조금씩 다르다', () => {
+  test('광택 값은 가운데 값(118) 둘레에서 조금씩 다르고, 평균이 가운데 값 가까이다(바닥 재질이 이 값으로 거칠기를 맞춘다)', () => {
+    expect(EPOXY_ROUGH_MID).toBe(118)
     const vals = grid(17).flatMap((u) => grid(17).map((v) => epoxyRoughAt(u, v)))
-    expect(Math.min(...vals)).toBeGreaterThanOrEqual(118 - 44); expect(Math.max(...vals)).toBeLessThanOrEqual(118 + 44)
+    expect(Math.min(...vals)).toBeGreaterThanOrEqual(EPOXY_ROUGH_MID - 44); expect(Math.max(...vals)).toBeLessThanOrEqual(EPOXY_ROUGH_MID + 44)
     expect(Math.max(...vals) - Math.min(...vals)).toBeGreaterThan(10)
+    const cells = Array.from({ length: 64 }, (_, i) => (i + 0.5) / 64)
+    const mean = cells.reduce((sum, u) => sum + cells.reduce((s, v) => s + epoxyRoughAt(u, v), 0), 0) / (64 * 64)
+    expect(Math.abs(mean - EPOXY_ROUGH_MID)).toBeLessThan(4)
   })
 })
 
@@ -1034,9 +1038,12 @@ export function epoxyColorAt(u: number, v: number): [number, number, number] {
   return [FLOOR_RGB[0] + d * 3, FLOOR_RGB[1] + d * 7, FLOOR_RGB[2] + d * 5]
 }
 
+/** 에폭시 바닥 광택 그림의 가운데 값(0~255). 바닥 재질(floorMaterial.ts)이 이 값으로 거칠기를 맞춘다 */
+export const EPOXY_ROUGH_MID = 118
+
 /** 에폭시 바닥 광택(0~255, 재질 거칠기에 곱해짐): 넓은 얼룩으로 조금씩 다르게 */
 export function epoxyRoughAt(u: number, v: number): number {
-  return 118 + drift(u, v, 5) * 34 + drift(u * 2, v * 2, 23) * 10
+  return EPOXY_ROUGH_MID + drift(u, v, 5) * 34 + drift(u * 2, v * 2, 23) * 10
 }
 
 /** 벽 세로 그늘(sRGB 회색 0~255, v = 0 아래 → 1 위). low: 바닥에 닿는 쪽이 어둡다. up: 위쪽 끝이 조금 어둡다 */
@@ -1126,10 +1133,11 @@ git commit -m "feat(빛과 재질): 그림을 점마다 계산해 만들기 — 
 
 ```ts
 // 광택 에폭시 바닥(설계 2026-11-11 §4.5): three.js 반사 조각의 두 줄을 바꿔 끼운다 — 끼울 줄이 있는지, 끼운 결과가 맞는지
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import * as THREE from 'three'
-import { FLOOR_ANCHORS, makeFloorMaterial, patchedEnvChunk } from '../src/scene/look/floorMaterial'
+import { BOX_PROJECT, FLOOR_ANCHORS, makeFloorMaterial, patchedEnvChunk } from '../src/scene/look/floorMaterial'
 import { LOOK_DEFAULTS } from '../src/scene/look/lookConfig'
+import { EPOXY_ROUGH_MID } from '../src/scene/look/lookTextures'
 
 const count = (s: string, part: string) => s.split(part).length - 1
 
@@ -1139,17 +1147,23 @@ describe('바닥 반사 조각 고치기', () => {
     expect(count(stock, FLOOR_ANCHORS.reflect)).toBe(1)
     expect(count(stock, FLOOR_ANCHORS.radiance)).toBe(1)
   })
-  test('반사 방향을 건물 상자에 맞추는 줄과 반사 배수를 넣는다', () => {
+  test('두 줄만 바뀐다: 반사 방향 줄 뒤에 상자 맞춤 식이 붙고, 반사 밝기 줄에 반사 배수가 곱해진다', () => {
     const out = patchedEnvChunk(stock)!
-    expect(out).toContain('lookBoxMax - vLookWorldPos')
-    expect(out).toContain('- lookProbe')
-    expect(out).toContain('return envMapColor.rgb * envMapIntensity * lookReflect;')
-    expect(out.indexOf(FLOOR_ANCHORS.reflect)).toBeLessThan(out.indexOf('lookBoxMax - vLookWorldPos'))
+    expect(out).toBe(stock.replace(FLOOR_ANCHORS.reflect, FLOOR_ANCHORS.reflect + BOX_PROJECT).replace(FLOOR_ANCHORS.radiance, 'return envMapColor.rgb * envMapIntensity * lookReflect;'))
+    // 퍼진 빛(바닥 색을 밝히는 쪽) 줄은 그대로다
     expect(out).toContain('return PI * envMapColor.rgb * envMapIntensity;')
   })
-  test('끼울 줄이 없으면 고치지 않는다(null)', () => {
+  test('상자 맞춤 식: 축마다 두 면 가운데 먼 쪽, 세 축 가운데 가까운 쪽에서 상자와 만나고, 반사광을 그린 자리에서 그 점을 본다', () => {
+    expect(BOX_PROJECT).toContain('vec3 t1 = ( lookBoxMax - vLookWorldPos ) / rd;')
+    expect(BOX_PROJECT).toContain('vec3 t2 = ( lookBoxMin - vLookWorldPos ) / rd;')
+    expect(BOX_PROJECT).toContain('vec3 tm = max( t1, t2 );')
+    expect(BOX_PROJECT).toContain('float tt = min( min( tm.x, tm.y ), tm.z );')
+    expect(BOX_PROJECT).toContain('reflectVec = normalize( vLookWorldPos + rd * tt - lookProbe );')
+  })
+  test('끼울 줄이 하나라도 없으면 고치지 않는다(null)', () => {
     expect(patchedEnvChunk('void main() {}')).toBeNull()
     expect(patchedEnvChunk(stock.replace(FLOOR_ANCHORS.radiance, ''))).toBeNull()
+    expect(patchedEnvChunk(stock.replace(FLOOR_ANCHORS.reflect, ''))).toBeNull()
   })
 })
 
@@ -1158,7 +1172,7 @@ describe('바닥 재질', () => {
   const mat = makeFloorMaterial(box, new THREE.Vector3(9, 1.4, 7), [4, 3])
   test('색 그림과 광택 그림을 쓰고, 실제 거칠기가 값 표의 바닥 거칠기가 되게 맞춘다', () => {
     expect(mat.map).toBeTruthy(); expect(mat.roughnessMap).toBeTruthy()
-    expect(mat.roughness * (118 / 255)).toBeCloseTo(LOOK_DEFAULTS.floorRoughness, 6)
+    expect(mat.roughness * (EPOXY_ROUGH_MID / 255)).toBeCloseTo(LOOK_DEFAULTS.floorRoughness, 6)
     expect(mat.metalness).toBe(0)
     expect(mat.customProgramCacheKey()).toBe('look-floor')
   })
@@ -1175,6 +1189,18 @@ describe('바닥 재질', () => {
     expect((shader.uniforms.lookProbe!.value as THREE.Vector3).y).toBe(1.4)
     expect(shader.uniforms.lookReflect!.value).toBe(LOOK_DEFAULTS.floorReflect)
   })
+  test('끼울 줄이 없으면 한 번 경고하고, 셰이더를 고치지 않은 재질을 돌려준다(그림과 거칠기는 그대로)', () => {
+    const saved = THREE.ShaderChunk.envmap_physical_pars_fragment
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      THREE.ShaderChunk.envmap_physical_pars_fragment = saved.replace(FLOOR_ANCHORS.reflect, '')
+      const plain = makeFloorMaterial(box, new THREE.Vector3(9, 1.4, 7), [4, 3])
+      expect(warn).toHaveBeenCalledTimes(1)
+      expect(Object.hasOwn(plain, 'onBeforeCompile')).toBe(false)
+      expect(plain.customProgramCacheKey()).not.toBe('look-floor')
+      expect(plain.map).toBeTruthy(); expect(plain.roughness).toBe(mat.roughness)
+    } finally { THREE.ShaderChunk.envmap_physical_pars_fragment = saved; warn.mockRestore() }
+  })
 })
 ```
 
@@ -1190,14 +1216,15 @@ Expected: FAIL — `../src/scene/look/floorMaterial`을 찾을 수 없음
 // three.js 셰이더 조각의 두 줄을 바꿔 끼운다. 끼울 줄이 없으면(three.js가 바뀜) 고치지 않은 반사로 돌고 경고한다.
 import * as THREE from 'three'
 import { LOOK } from './lookConfig'
-import { epoxyColorTexture, epoxyRoughnessTexture } from './lookTextures'
+import { EPOXY_ROUGH_MID, epoxyColorTexture, epoxyRoughnessTexture } from './lookTextures'
 
 export const FLOOR_ANCHORS = {
   reflect: 'reflectVec = inverseTransformDirection( reflectVec, viewMatrix );',
   radiance: 'return envMapColor.rgb * envMapIntensity;',
 } as const
 
-const BOX_PROJECT = /* glsl */`
+/** 반사 방향 줄 뒤에 붙는 상자 맞춤 식: 바닥의 한 점에서 반사 방향으로 나간 선이 건물 상자와 만나는 점을, 반사광을 그린 자리(lookProbe)에서 본 방향으로 바꾼다 */
+export const BOX_PROJECT = /* glsl */`
 			{ vec3 rd = reflectVec + vec3( 1e-5 ); vec3 t1 = ( lookBoxMax - vLookWorldPos ) / rd; vec3 t2 = ( lookBoxMin - vLookWorldPos ) / rd; vec3 tm = max( t1, t2 ); float tt = min( min( tm.x, tm.y ), tm.z ); reflectVec = normalize( vLookWorldPos + rd * tt - lookProbe ); }`
 
 /** 고친 조각을 돌려준다. 끼울 줄이 하나라도 없으면 null */
@@ -1206,10 +1233,14 @@ export function patchedEnvChunk(chunk: string): string | null {
   return chunk.replace(FLOOR_ANCHORS.reflect, FLOOR_ANCHORS.reflect + BOX_PROJECT).replace(FLOOR_ANCHORS.radiance, 'return envMapColor.rgb * envMapIntensity * lookReflect;')
 }
 
-/** box: 반사를 맞출 건물 상자(바닥 0 ~ 천장), probe: 반사광을 그린 자리, repeat: 바닥 그림 반복 수 */
+/**
+ * box: 반사를 맞출 건물 상자(바닥 0 ~ 천장), probe: 반사광을 그린 자리, repeat: 바닥 그림 반복 수.
+ * 바닥은 상자 안에 있어야 한다(상자 밖의 점은 반사가 어긋난다). 값은 만들 때 정해지므로 바꾸려면 재질을 새로 만든다 — clone()은 고친 셰이더를 옮기지 않는다.
+ * 묶어 그리는 메시(InstancedMesh)에는 쓰지 않는다: 점의 자리를 modelMatrix만으로 구한다.
+ */
 export function makeFloorMaterial(box: { min: THREE.Vector3; max: THREE.Vector3 }, probe: THREE.Vector3, repeat: [number, number]): THREE.MeshStandardMaterial {
-  // 광택 그림의 가운데 값이 118/255라서, 재질 거칠기를 그만큼 키워 실제 거칠기가 LOOK.floorRoughness가 되게 한다
-  const mat = new THREE.MeshStandardMaterial({ map: epoxyColorTexture(repeat), roughnessMap: epoxyRoughnessTexture([repeat[0] * 0.77, repeat[1] * 0.77]), roughness: Math.min(1, LOOK.floorRoughness / (118 / 255)), metalness: 0 })
+  // 광택 그림의 가운데 값이 EPOXY_ROUGH_MID/255라서, 재질 거칠기를 그만큼 키워 실제 거칠기가 LOOK.floorRoughness가 되게 한다
+  const mat = new THREE.MeshStandardMaterial({ map: epoxyColorTexture(repeat), roughnessMap: epoxyRoughnessTexture([repeat[0] * 0.77, repeat[1] * 0.77]), roughness: Math.min(1, LOOK.floorRoughness / (EPOXY_ROUGH_MID / 255)), metalness: 0 })
   const chunk = patchedEnvChunk(THREE.ShaderChunk.envmap_physical_pars_fragment)
   if (!chunk) { console.warn('[look] 바닥 반사를 고칠 자리를 찾지 못해 기본 반사로 돌립니다'); return mat }
   mat.onBeforeCompile = (shader) => {
@@ -1232,7 +1263,7 @@ export function makeFloorMaterial(box: { min: THREE.Vector3; max: THREE.Vector3 
 - [ ] **Step 4: 통과 확인**
 
 Run: `npm test -- tests/floorMaterial.test.ts && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: 5개 PASS, 형 검사 오류 없음
+Expected: 7개 PASS, 형 검사 오류 없음
 
 - [ ] **Step 5: 커밋**
 
@@ -2597,7 +2628,7 @@ git commit -m "chore(판): 앱 판 0.3.3-demo — 빛과 재질 다듬기부터(
 - [ ] **Step 1: 전체 시험과 형 검사**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: `Test Files 124 passed`, `Tests 1012 passed`, 형 검사 오류 없음
+Expected: `Test Files 124 passed`, `Tests 1014 passed`, 형 검사 오류 없음
 
 - [ ] **Step 2: 빌드**
 
