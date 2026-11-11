@@ -5,7 +5,7 @@ import demo from '../docs/design/examples/submission.demo-request.json'
 import legacyRecord from '../docs/design/examples/legacy/1.0.0/record.demo-aborted.json'
 import lv1 from '../src/data/tasks/task.braking-force.case-lv1.json'
 import turn1 from '../src/data/tasks/task.min-turning-radius.case-lv1.json'
-import { submitResponse } from '../src/domain/taskEngine'
+import { logCalculation, submitResponse } from '../src/domain/taskEngine'
 import { inspectPerformance } from '../src/domain/npcInspection'
 import { createTaskRun, attempt } from '../src/domain/taskEngine'
 import { buildRecordPayload } from '../src/domain/record'
@@ -190,7 +190,7 @@ describe('Supabase submit — Apps Script 수신 계약과 같은 결과', () =>
     expect(b.ok).toBe(true); expect(a.receiptId).not.toBe(b.receiptId)
     expect(rows).toHaveLength(2)
   })
-  test('최소회전반경 완료 기록(1.2.0, 합성 코드 D-02)은 끝까지 수행·NPC 통과 뒤 접수된다', async () => {
+  test('최소회전반경 완료 기록(1.3.0, 합성 코드 D-02)은 끝까지 수행·NPC 통과 뒤 접수된다', async () => {
     const task = turn1 as unknown as ApprovedTask
     const session = createDemoSession({ studentCode: 'D-02', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: null, task, difficultyMode: 'unguided' })
     let run = createTaskRun(task, { difficultyMode: 'unguided', displayMode: 'threeD' })
@@ -199,9 +199,11 @@ describe('Supabase submit — Apps Script 수신 계약과 같은 결과', () =>
     for (const s of ['ppe', 'engineOff', 'turntable', 'direction', 'steer']) step(s)
     ans('leftAngle', '35'); ans('rightAngle', '30'); step('read'); step('return')
     ans('radius', '4.8'); ans('radius', '5.5'); ans('vehicleCondition', 'pass'); step('record')
+    run = logCalculation(run, { expression: '2.7/sin(30)+0.1', result: '5.5', error: null })
     run = inspectPerformance(run).run
     const payload = buildRecordPayload(run, session, { completedAtIso: new Date(run.startedAtMs + 60000).toISOString(), completionStatus: 'completed' })
-    expect(payload.schemaVersion).toBe('1.2.0')
+    expect(payload.schemaVersion).toBe('1.3.0')
+    expect(payload.calculatorLog).toEqual([{ sequence: 1, elapsedMs: expect.any(Number), stepId: 'record', kind: 'scientific', expression: '2.7/sin(30)+0.1', result: '5.5' }])
     expect(payload.taskId).toBe('min-turning-radius')
     expect(payload.calculationAnswers[0]).toMatchObject({ itemId: 'radius', unit: 'm', computedReferenceValue: 5.5, firstInput: '4.8', firstCorrect: false, finalInput: '5.5', finalCorrect: true })
     expect(payload.errorCount).toBe(1)
@@ -215,3 +217,51 @@ describe('Supabase submit — Apps Script 수신 계약과 같은 결과', () =>
   })
 })
 
+
+describe('기록 판 1.3.0 — 계산기 기록(계산기 설계 §4)', () => {
+  // 지금 앱이 만드는 기록을 1.3.0 모양으로 바꿔 서버 쪽만 먼저 시험한다(Task 5에서 앱이 직접 1.3.0을 만든다)
+  const base = (): Record<string, unknown> => {
+    const task = lv1 as ApprovedTask
+    const session = createDemoSession({ studentCode: 'D-03', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', vehicleEntryDirection: 'south', task, difficultyMode: 'guided' })
+    const run = createTaskRun(task, { difficultyMode: 'guided', displayMode: 'threeD' })
+    const p = buildRecordPayload(run, session, { completedAtIso: new Date(run.startedAtMs + 5000).toISOString(), completionStatus: 'aborted' }) as unknown as Record<string, unknown>
+    return { ...p, schemaVersion: '1.3.0', calculatorLog: [], calculatorLogTruncated: false }
+  }
+  const line = (o: Record<string, unknown> = {}) => ({ sequence: 1, elapsedMs: 1000, stepId: 'calc', kind: 'basic', expression: '240-200/600*100', result: '6.666666667', ...o })
+  test('계산기 기록이 있는 1.3.0 기록과 빈 계산 기록의 1.3.0 기록을 받는다', async () => {
+    const { post, rows } = server()
+    const withLog = { ...base(), calculatorLog: [line(), { sequence: 2, elapsedMs: 2000, stepId: 'calc', kind: 'basic', expression: '5/0', error: 'divideByZero' }] }
+    expect(await post(reqOf(withLog))).toMatchObject({ ok: true, duplicate: false })
+    expect(await post(reqOf({ ...base(), recordId: '00000000-0000-4000-8000-0000000000b1' }))).toMatchObject({ ok: true, duplicate: false })
+    expect(rows).toHaveLength(2)
+  })
+  test('순번이 끊김·시간이 거꾸로·결과와 오류가 둘 다·둘 다 없음·과제와 다른 종류·단계는 거절한다', async () => {
+    const bad: unknown[][] = [
+      [line({ sequence: 2 })],
+      [line(), line({ sequence: 2, elapsedMs: 500 })],
+      [line({ error: 'syntax' })],
+      [{ sequence: 1, elapsedMs: 1000, stepId: 'calc', kind: 'basic', expression: '1+' }],
+      [line({ kind: 'scientific' })],
+      [line({ stepId: 'record' })],
+    ]
+    for (const [k, log] of bad.entries()) {
+      const { post, rows } = server()
+      expect(await post(reqOf({ ...base(), recordId: `00000000-0000-4000-8000-0000000000c${k}`, calculatorLog: log })), `경우 ${k}`).toMatchObject({ ok: false })
+      expect(rows).toHaveLength(0)
+    }
+  })
+  test('식·결과에 계산기 글자가 아닌 것이 있으면 거절한다', async () => {
+    for (const [k, bad] of [line({ expression: 'hello' }), line({ result: 'abc' }), line({ expression: '1+1 ' })].entries()) {
+      const { post, rows } = server()
+      expect(await post(reqOf({ ...base(), recordId: `00000000-0000-4000-8000-0000000000e${k}`, calculatorLog: [bad] })), `경우 ${k}`).toMatchObject({ ok: false })
+      expect(rows).toHaveLength(0)
+    }
+  })
+  test('61줄과, 계산기 칸이 빠진 1.3.0은 거절한다', async () => {
+    const { post } = server()
+    const many = Array.from({ length: 61 }, (_, i) => line({ sequence: i + 1, elapsedMs: 1000 + i }))
+    expect(await post(reqOf({ ...base(), calculatorLog: many }))).toMatchObject({ ok: false })
+    const { calculatorLog: _c, ...missing } = base()
+    expect(await post(reqOf({ ...missing, recordId: '00000000-0000-4000-8000-0000000000d1' }))).toMatchObject({ ok: false })
+  })
+})

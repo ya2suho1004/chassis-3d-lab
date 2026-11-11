@@ -1,11 +1,11 @@
 // 대기열(outbox) 처리 — 설계 05 §6·§10, 15 §5
 // 확정 기록 중 acknowledged가 아닌 것을 순서대로 같은 ID·같은 원본으로 보낸다.
-//  - rejected·conflict는 자동 재전송하지 않는다(교사 점검). 예외: 서버에 간 적 없이 이전 판 버그로 거절된 기록(rejectedOnlyByUndefinedKeys)은 다시 보낸다.
+//  - rejected·conflict는 자동 재전송하지 않는다(교사 점검). 예외(resendableRejected): 서버에 간 적 없이 이전 판 버그로 거절된 기록과, 서버가 기록 판을 아직 몰라 저장 전에 거절한 기록은 다시 보낸다.
 //  - nextRetryAt이 아직 안 됐으면 건너뛴다(force는 교사 조작 전용).
 //  - 새로고침 뒤 남은 uploading은 confirmationPending으로 보고 재전송한다(서버 저장 여부를 추정하지 않음).
 //  - 보내기 직전 uploading으로 저장하고, 결과 patch 저장이 끝난 뒤에만 결과를 돌려준다.
 import type { Repository, StoredRecord } from '../records/repository'
-import { rejectedOnlyByUndefinedKeys, submitRecord, type SubmitDeps } from './submit'
+import { resendableRejected, submitRecord, type SubmitDeps } from './submit'
 
 export interface OutboxItemResult { recordId: string; outcome: 'acknowledged' | 'rejected' | 'conflict' | 'pending' | 'confirmationPending' | 'skipped' | 'saveFailed'; code: string | null }
 
@@ -15,7 +15,7 @@ export async function processOutbox(repo: Repository, deps: SubmitDeps, opts: { 
   const nowMs = deps.now().getTime()
   for (const item of items) {
     const env = item.envelope
-    if (env.uploadStatus === 'conflict' || (env.uploadStatus === 'rejected' && !rejectedOnlyByUndefinedKeys(item))) { out.push({ recordId: item.recordId, outcome: 'skipped', code: env.lastErrorCode }); continue }
+    if (env.uploadStatus === 'conflict' || (env.uploadStatus === 'rejected' && !resendableRejected(item))) { out.push({ recordId: item.recordId, outcome: 'skipped', code: env.lastErrorCode }); continue }
     if (!opts.force && env.nextRetryAt && Date.parse(env.nextRetryAt) > nowMs) { out.push({ recordId: item.recordId, outcome: 'skipped', code: 'RETRY_LATER' }); continue }
     const rec: StoredRecord = env.uploadStatus === 'uploading' ? { ...item, envelope: { ...env, uploadStatus: 'confirmationPending' } } : item
     const mark = await repo.updateEnvelope(item.recordId, { uploadStatus: 'uploading' })

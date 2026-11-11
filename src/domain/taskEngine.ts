@@ -17,6 +17,20 @@ export type EventType =
 
 export type DisplayMode = 'threeD' | 'diagram'
 
+/** 계산·판정 장면 계산기(설계 docs/superpowers/specs/2026-11-11-calculator-design.md). 제동력은 일반, 최소회전반경은 공학용 */
+export type CalculatorKind = 'basic' | 'scientific'
+export type CalculatorError = 'divideByZero' | 'syntax'
+/** 계산기 기록 한 줄: = 를 누를 때마다(사건과 따로, 채점·오류 수·피드백과 무관). result와 error 중 하나만 있다 */
+export interface CalculatorEntry {
+  sequence: number
+  elapsedMs: number
+  stepId: string
+  kind: CalculatorKind
+  expression: string
+  result?: string
+  error?: CalculatorError
+}
+
 export interface StepEvent {
   eventId: string
   sequence: number
@@ -70,6 +84,9 @@ export interface TaskRun {
   experiencedDisplayModes: DisplayMode[]
   /** 중복 집계 방지용 */
   countedActionIds: string[]
+  /** 계산기 기록(계산기 설계 §3). CALCULATOR_LOG_LIMIT을 넘으면 더 적지 않고 넘침만 표시 */
+  calculatorLog: CalculatorEntry[]
+  calculatorLogTruncated: boolean
 }
 
 export type Attempt =
@@ -88,6 +105,8 @@ export interface AttemptResult {
 }
 
 export const EVENT_LIMIT = 200
+/** 계산기 기록 상한(계산기 설계 §3.2). 사건 한도와 따로 */
+export const CALCULATOR_LOG_LIMIT = 60
 
 /** 선행 조건형 안전 조건: 단계 진행 전에 참이어야 한다. */
 const PRECONDITIONS = new Set(['s-ppe', 's-lift', 's-motor', 's-engine'])
@@ -193,6 +212,8 @@ export function createTaskRun(task: ApprovedTask, opts: { difficultyMode: Diffic
     displayMode: opts.displayMode ?? 'threeD',
     experiencedDisplayModes: [opts.displayMode ?? 'threeD'],
     countedActionIds: [],
+    calculatorLog: [],
+    calculatorLogTruncated: false,
   }
   depsByRun.set(base, deps)
   return appendEvent(base, { type: 'taskStarted' }).run
@@ -367,7 +388,10 @@ export type RunSnapshot = Omit<TaskRun, 'startedAtMs' | 'pausedAtMs'> & { lastEl
 
 export function serializeRun(run: TaskRun): RunSnapshot {
   const { startedAtMs: _s, pausedAtMs: _p, ...rest } = run
-  const lastElapsedMs = run.events.length ? run.events[run.events.length - 1]!.elapsedMs : 0
+  // 복원 시계는 마지막 사건과 마지막 계산 중 늦은 쪽에서 이어 간다(계산기 기록 시간이 거꾸로 가지 않게, 계산기 설계 §3.2)
+  const lastEventMs = run.events.length ? run.events[run.events.length - 1]!.elapsedMs : 0
+  const lastCalcMs = run.calculatorLog.length ? run.calculatorLog[run.calculatorLog.length - 1]!.elapsedMs : 0
+  const lastElapsedMs = Math.max(lastEventMs, lastCalcMs)
   return { ...rest, lastElapsedMs, snapshotVersion: 1, serializedAtWallMs: depsOf(run).now() }
 }
 
@@ -380,7 +404,7 @@ export function rehydrateRun(snap: RunSnapshot, deps: EngineDeps = defaultDeps()
   const noWallClock = typeof serializedAtWallMs !== 'number'
   const clockWentBack = !noWallClock && now < serializedAtWallMs
   const timeQuality: TaskRun['timeQuality'] = rest.timeQuality === 'uncertain' || clockWentBack || noWallClock ? 'uncertain' : 'resumed'
-  const base: TaskRun = { ...rest, offProgress: rest.offProgress ?? [], startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality }
+  const base: TaskRun = { ...rest, offProgress: rest.offProgress ?? [], calculatorLog: rest.calculatorLog ?? [], calculatorLogTruncated: rest.calculatorLogTruncated ?? false, startedAtMs: now - lastElapsedMs, pausedAtMs: null, paused: false, motorOn: false, resumeCount: rest.resumeCount + 1, timeQuality }
   depsByRun.set(base, deps)
   return appendEvent(base, { type: 'resumed', reasonCode: 'restored' }).run
 }
@@ -392,4 +416,35 @@ export function changeDisplayMode(run: TaskRun, to: DisplayMode, reason: 'userCh
   if (!ev.ok) return { run: ev.run, outcome: 'eventLimit', reasonCode: 'EVENT_LIMIT', feedbackKey: null }
   const experienced = ev.run.experiencedDisplayModes.includes(to) ? ev.run.experiencedDisplayModes : [...ev.run.experiencedDisplayModes, to]
   return { run: carry(ev.run, { ...ev.run, displayMode: to, experiencedDisplayModes: experienced }), outcome: 'confirmed', reasonCode: null, feedbackKey: null }
+}
+
+// ---------- 계산기 기록(계산기 설계 §3) ----------
+
+/** 과제별 계산기 종류: 최소회전반경은 sin이 있어 공학용, 제동력은 일반 */
+export function calculatorKindOf(task: Pick<ApprovedTask, 'taskId'>): CalculatorKind {
+  return task.taskId === 'min-turning-radius' ? 'scientific' : 'basic'
+}
+
+/** 계산기를 쓰는 기록 단계: 제동력 계산·판정(calc), 최소회전반경 반경·판정(record) */
+export function calculatorStepOf(task: Pick<ApprovedTask, 'taskId'>): string {
+  return task.taskId === 'min-turning-radius' ? 'record' : 'calc'
+}
+
+/** = 를 누를 때 한 줄을 남긴다. 멈춤 중이면 남기지 않고, 상한을 넘으면 넘침만 표시한다. 경과 시간은 거꾸로 가지 않는다.
+ *  값이 없는 칸은 만들지 않는다(IndexedDB가 undefined 칸을 보존해 기록 모양이 달라지지 않게) */
+export function logCalculation(run: TaskRun, c: { expression: string; result: string | null; error: CalculatorError | null }): TaskRun {
+  // 빈 식이나 결과·오류가 모두 없는 줄은 남기지 않는다(그 한 줄로 기록 전체가 서버 검사에 걸리지 않게, 최종 검토 M-2)
+  if (run.paused || !c.expression || (!c.error && !c.result)) return run
+  if (run.calculatorLog.length >= CALCULATOR_LOG_LIMIT) return run.calculatorLogTruncated ? run : carry(run, { ...run, calculatorLogTruncated: true })
+  const prev = run.calculatorLog[run.calculatorLog.length - 1]
+  const elapsedMs = Math.max(prev ? prev.elapsedMs : 0, Math.round(depsOf(run).now() - run.startedAtMs))
+  const entry: CalculatorEntry = {
+    sequence: run.calculatorLog.length + 1,
+    elapsedMs,
+    stepId: calculatorStepOf(run.task),
+    kind: calculatorKindOf(run.task),
+    expression: c.expression.slice(0, 80),
+    ...(c.error ? { error: c.error } : { result: (c.result ?? '').slice(0, 24) }),
+  }
+  return carry(run, { ...run, calculatorLog: [...run.calculatorLog, entry] })
 }

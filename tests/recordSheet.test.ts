@@ -15,7 +15,7 @@ const io = (run: TaskRun, hold = true): FieldIo => ({ value: () => '', change: (
 const gauge: BrakeGauge = { axle: '600 kg', lr: 'L 240   R 200  (kg)', hold: true, measuring: false }
 type SheetProps = Parameters<typeof RecordSheet>[0]
 const sheet = (run: TaskRun, stepId: string, over: Partial<SheetProps> = {}) =>
-  renderToStaticMarkup(createElement(RecordSheet, { run, stepId, io: io(run), gauge, needles: STRAIGHT, reviewing: false, canReview: false, onToggleReview: () => {}, note: '', onNote: () => {}, ...over }))
+  renderToStaticMarkup(createElement(RecordSheet, { run, stepId, io: io(run), gauge, needles: STRAIGHT, reviewing: false, canReview: false, onToggleReview: () => {}, note: '', onNote: () => {}, onCalc: () => {}, ...over }))
 const ids = (h: string) => [...h.matchAll(/id="rec-([A-Za-z]+)"/g)].map((m) => m[1])
 
 const textOutsideSvg = (h: string) => h.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ')

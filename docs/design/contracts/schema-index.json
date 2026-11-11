@@ -28,7 +28,12 @@
     "recordTurning": {
       "schemaId": "urn:chassis-3d-lab:record:1.2.0",
       "path": "record.schema.v1.2.0.json",
-      "note": "최소회전반경 과제 기록(2026-11-02). 제동력은 current.record(1.1.0)"
+      "note": "최소회전반경 과제 기록(2026-11-02~11-10). 2026-11-11(앱 0.3.2-demo)부터는 두 과제 모두 recordCalculator(1.3.0)로 기록한다"
+    },
+    "recordCalculator": {
+      "schemaId": "urn:chassis-3d-lab:record:1.3.0",
+      "path": "record.schema.v1.3.0.json",
+      "note": "계산기 기록(calculatorLog) 추가(2026-11-11). 두 과제 모두 앱 0.3.2-demo부터 1.3.0으로 기록. 서버는 1.0.0~1.3.0을 받는다"
     }
   },
   "legacy": {
@@ -48,10 +53,7 @@
       "vocabulary": "legacy/1.1.0/task-vocabulary.v1.1.0.json"
     }
   },
-  "recordIngestionVersions": [
-    "1.0.0",
-    "1.1.0"
-  ],
+  "recordIngestionVersions": ["1.0.0", "1.1.0", "1.2.0", "1.3.0"],
   "rules": [
     "Select by schemaVersion before validation; no silent payload upgrade.",
     "Keep frozen record bytes and payloadHash; never inject usagePhase into legacy outbox.",

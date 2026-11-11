@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import Ajv2020 from 'ajv/dist/2020'
 import addFormats from 'ajv-formats'
-import recordSchema from '../docs/design/contracts/record.schema.json'
+import recordSchema from '../docs/design/contracts/record.schema.v1.3.0.json'
 import lv2 from '../src/data/tasks/task.braking-force.case-lv2.json'
-import { createTaskRun, attempt, submitResponse } from '../src/domain/taskEngine'
+import { createTaskRun, attempt, submitResponse, appendEvent, logCalculation } from '../src/domain/taskEngine'
 import { inspectPerformance } from '../src/domain/npcInspection'
-import { buildRecordPayload, type SessionContext } from '../src/domain/record'
+import { buildRecordPayload, RECORD_BYTES_BUDGET, type SessionContext } from '../src/domain/record'
+import { CANONICAL_MAX_BYTES } from '../src/delivery/submit'
 import type { ApprovedTask } from '../src/domain/types'
 
 const task = lv2 as ApprovedTask
@@ -61,10 +62,12 @@ const ajv = new Ajv2020({ allErrors: true, strict: false })
 addFormats(ajv)
 const validate = ajv.compile(recordSchema)
 
-describe('기록 payload — 계약 1.1.0 형식', () => {
-  test('완료 수행은 record.schema.json(1.1.0) 검사를 통과하고 usagePhase를 담는다', () => {
+describe('기록 payload — 계약 1.3.0 형식', () => {
+  test('완료 수행은 record.schema.v1.3.0.json 검사를 통과하고 usagePhase와 빈 계산기 기록을 담는다', () => {
     const payload = buildRecordPayload(fullRun(), demoSession, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'completed' })
-    expect(payload.schemaVersion).toBe('1.1.0')
+    expect(payload.schemaVersion).toBe('1.3.0')
+    expect(payload.calculatorLog).toEqual([])
+    expect(payload.calculatorLogTruncated).toBe(false)
     expect(payload.usagePhase).toBe('preview')
     const ok = validate(payload)
     expect(validate.errors ?? []).toEqual([])
@@ -113,5 +116,38 @@ describe('기록 payload — 계약 1.1.0 형식', () => {
     expect(validate(p)).toBe(true)
     const notYet: SessionContext = { ...researchSession, configurationApproval: { ...researchSession.configurationApproval, layoutConfirmed: false } }
     expect(() => buildRecordPayload(fullRun(), notYet, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'completed' })).toThrow(/research/)
+  })
+})
+
+describe('계산기 기록(계산기 설계 §3·§4)', () => {
+  const bytes = (p: unknown) => new TextEncoder().encode(JSON.stringify(p)).length
+  test('= 기록이 기록에 들어가고 1.3.0 검사를 통과한다', () => {
+    let run = fullRun()
+    run = logCalculation(run, { expression: '250-190/600*100', result: '10', error: null })
+    run = logCalculation(run, { expression: '1/0', result: null, error: 'divideByZero' })
+    const p = buildRecordPayload(run, demoSession, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'completed' })
+    expect(p.calculatorLog).toHaveLength(2)
+    expect(p.calculatorLog![1]).toMatchObject({ sequence: 2, error: 'divideByZero' })
+    expect(validate(p)).toBe(true)
+  })
+  test('크기 예산은 서버·앱 정본 상한보다 작다', () => {
+    expect(RECORD_BYTES_BUDGET).toBeLessThan(CANONICAL_MAX_BYTES)
+  })
+  test('예산을 넘으면 계산 기록을 뒤에서부터 덜고 넘침을 표시한다(사건은 그대로)', () => {
+    let run = fullRun()
+    while (run.events.length < 120) run = appendEvent(run, { type: 'feedbackShown', feedbackKind: 'guidance', feedbackKey: 'guidance_padding' }).run
+    for (let i = 0; i < 60; i++) run = logCalculation(run, { expression: `${'1'.repeat(70)}+${i}`, result: '1111111111', error: null })
+    const p = buildRecordPayload(run, demoSession, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'completed' })
+    expect(bytes(p)).toBeLessThanOrEqual(RECORD_BYTES_BUDGET)
+    expect(p.stepEvents).toHaveLength(run.events.length)
+    expect(p.calculatorLogTruncated).toBe(true)
+    expect(p.calculatorLog!.length).toBeLessThan(60)
+    expect(p.calculatorLog).toEqual(run.calculatorLog.slice(0, p.calculatorLog!.length))
+  })
+  test('작은 기록은 덜지 않는다', () => {
+    const run = logCalculation(fullRun(), { expression: '1+1', result: '2', error: null })
+    const p = buildRecordPayload(run, demoSession, { completedAtIso: '2026-10-21T13:10:00Z', completionStatus: 'completed' })
+    expect(p.calculatorLog).toHaveLength(1)
+    expect(p.calculatorLogTruncated).toBe(false)
   })
 })

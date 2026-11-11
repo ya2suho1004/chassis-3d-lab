@@ -68,4 +68,16 @@ describe('대기열(outbox) 처리', () => {
     const res = await processOutbox(repo, { fetch: f, endpointUrl: 'https://x/exec', now: () => NOW }, { force: true })
     expect(res.map((r) => [r.recordId, r.outcome])).toEqual([[id(9), 'acknowledged'], [id(10), 'skipped']])
   })
+  test('서버가 기록 판을 몰라 거절한(UNSUPPORTED_SCHEMA) 기록은 교사가 보내면 다시 보낸다(다른 거절은 그대로 건너뜀)', async () => {
+    const p = withId(20); await repo.freezeRecord(p)
+    await repo.updateEnvelope(id(20), { uploadStatus: 'rejected', lastErrorCode: 'UNSUPPORTED_SCHEMA', nextRetryAt: null })
+    await repo.freezeRecord(withId(21))
+    await repo.updateEnvelope(id(21), { uploadStatus: 'rejected', lastErrorCode: 'SESSION_NOT_ALLOWED', nextRetryAt: null })
+    const sent: string[] = []
+    const f = (async (_u: string, init: RequestInit) => { sent.push(JSON.parse(init.body as string).payload.recordId); return ok(p) }) as unknown as typeof fetch
+    const res = await processOutbox(repo, { fetch: f, endpointUrl: 'https://x/exec', now: () => NOW })
+    expect(sent).toEqual([id(20)])
+    expect(res.find((r) => r.recordId === id(20))).toEqual({ recordId: id(20), outcome: 'acknowledged', code: null })
+    expect(res.find((r) => r.recordId === id(21))?.outcome).toBe('skipped')
+  })
 })

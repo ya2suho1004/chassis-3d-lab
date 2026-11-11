@@ -129,6 +129,20 @@ function validateRecordSemantics_(p) {
     }
     if (p.judgmentCorrect !== expected) errors.push('judgmentCorrect != allOrNull(judgmentAnswers.firstCorrect)');
   }
+  // 계산기 기록(1.3.0, 계산기 설계 §4.2): 순번 1부터 차례, 시간 순서, 결과·오류 중 하나만, 과제별 단계·종류
+  if (Array.isArray(p.calculatorLog)) {
+    var calcKind = p.taskId === 'min-turning-radius' ? 'scientific' : 'basic';
+    var calcStep = p.taskId === 'min-turning-radius' ? 'record' : 'calc';
+    var lastCalcMs = -1;
+    for (var ci = 0; ci < p.calculatorLog.length; ci++) {
+      var ce = p.calculatorLog[ci];
+      if (ce.sequence !== ci + 1) errors.push('calculatorLog: sequence gap at ' + ci);
+      if (typeof ce.elapsedMs === 'number') { if (ce.elapsedMs < lastCalcMs) errors.push('calculatorLog: elapsedMs decreases at ' + ci); lastCalcMs = ce.elapsedMs; }
+      if ((typeof ce.result === 'string') === (typeof ce.error === 'string')) errors.push('calculatorLog: result xor error at ' + ci);
+      if (ce.kind !== calcKind || ce.stepId !== calcStep) errors.push('calculatorLog: kind or stepId does not match task at ' + ci);
+    }
+    if (p.calculatorLog.length > 60) errors.push('calculatorLog: too many lines');
+  }
   if (p.researchEligible !== false) errors.push('researchEligible must be false for test intake');
   return errors;
 }
