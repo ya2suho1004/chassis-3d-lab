@@ -36,7 +36,7 @@
   - 형 검사: `node_modules/.bin/tsc -p tsconfig.json --noEmit`
   - 멈추면 앞에 `perl -e 'alarm 300; exec @ARGV'`를 붙인다.
 - **커밋 메시지:** 끝에 `-m "Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>"`를 붙인다.
-- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1009개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
+- **코드는 글자 그대로:** 이 계획의 코드는 저장소 복사본(커밋 e1d36c2의 `src`)에 그대로 넣어 돌려 본 것이다(시험 1012개 통과, 형 검사 통과, 두 품질 화면 확인. 과제를 하나씩 차례로 넣은 중간 상태도 돌려 봤다). 값·이름·셰이더 글을 고치지 말고 그대로 옮긴다. 막히면 고치지 말고 멈춰서 알린다.
 - **"바꿀 곳 → 바꾼 글"의 뜻:** '바꿀 곳'의 글은 파일에 **한 번만** 나온다(두 번이라고 적힌 곳 제외). 그 글을 '바꾼 글'로 통째로 바꾼다. 줄의 나머지 부분이 보이지 않으면 그 부분은 그대로 둔다.
 
 ## 미리 재 둔 값(헤드리스 크롬, 이 맥 — 태블릿 값이 아님)
@@ -933,16 +933,41 @@ describe('둥근 빛', () => {
 })
 
 describe('그림 만들기(캔버스 없이)', () => {
-  test('바닥 색 그림: sRGB, 반복, 밉맵', () => {
+  test('바닥 색 그림: sRGB, 반복, 밉맵, 비스듬히 볼 때 선명도 4', () => {
     const t = epoxyColorTexture([4, 3])
     expect(t).toBeInstanceOf(THREE.DataTexture)
     expect(t.colorSpace).toBe(THREE.SRGBColorSpace)
-    expect(t.wrapS).toBe(THREE.RepeatWrapping); expect(t.repeat.x).toBe(4); expect(t.repeat.y).toBe(3)
-    expect(t.generateMipmaps).toBe(true)
+    expect(t.wrapS).toBe(THREE.RepeatWrapping); expect(t.wrapT).toBe(THREE.RepeatWrapping); expect(t.repeat.x).toBe(4); expect(t.repeat.y).toBe(3)
+    expect(t.generateMipmaps).toBe(true); expect(t.minFilter).toBe(THREE.LinearMipmapLinearFilter)
+    expect(t.anisotropy).toBe(4)
     expect(epoxyColorTexture([4, 3])).toBe(t)
   })
   test('광택 그림은 색 공간 없이(값 그대로)', () => {
-    expect(epoxyRoughnessTexture([2, 2]).colorSpace).toBe(THREE.NoColorSpace)
+    const t = epoxyRoughnessTexture([2, 2])
+    expect(t.colorSpace).toBe(THREE.NoColorSpace); expect(t.anisotropy).toBe(4)
+  })
+  test('만든 바닥 그림을 이어 붙여도 이음매가 없다(맞닿는 끝 줄의 차이가 안쪽 이웃 점의 차이만큼)', () => {
+    for (const [t, ch] of [[epoxyColorTexture([1, 1]), 1], [epoxyRoughnessTexture([1, 1]), 0]] as Array<[THREE.DataTexture, number]>) {
+      const d = t.image.data as Uint8Array, n = 256
+      const at = (x: number, y: number) => d[(y * n + x) * 4 + ch]!
+      let wrap = 0, inside = 0
+      for (let i = 0; i < n; i++) {
+        wrap = Math.max(wrap, Math.abs(at(0, i) - at(n - 1, i)), Math.abs(at(i, 0) - at(i, n - 1)))
+        for (let j = 1; j < n; j++) inside = Math.max(inside, Math.abs(at(j, i) - at(j - 1, i)), Math.abs(at(i, j) - at(i, j - 1)))
+      }
+      expect(wrap).toBeLessThanOrEqual(inside + 1)
+    }
+  })
+  test('모든 그림은 그래픽 장치로 올라가게 표시돼 있다(안 그러면 빈 그림으로 보인다)', () => {
+    const hall = { xMin: -10, xMax: 18, zMin: 0, zMax: 30 }
+    for (const t of [epoxyColorTexture([4, 3]), epoxyRoughnessTexture([2, 2]), wallShadeTexture('low'), wallShadeTexture('up'), hallFalloffTexture(hall, [hall]), glowTexture('alpha'), glowTexture('rgb')]) expect(t.version).toBeGreaterThan(0)
+  })
+  test('이어 붙이지 않는 그림: 가장자리에서 멈추고, 선명도 보정은 쓰지 않는다. 밝기를 곱하는 그림은 sRGB, 투명도 그림은 값 그대로', () => {
+    const hall = { xMin: -10, xMax: 18, zMin: 0, zMax: 30 }
+    const srgb = [wallShadeTexture('low'), wallShadeTexture('up'), hallFalloffTexture(hall, [hall]), glowTexture('rgb')], plain = [glowTexture('alpha')]
+    for (const t of [...srgb, ...plain]) { expect(t.wrapS).toBe(THREE.ClampToEdgeWrapping); expect(t.wrapT).toBe(THREE.ClampToEdgeWrapping); expect(t.anisotropy).toBe(1) }
+    for (const t of srgb) expect(t.colorSpace).toBe(THREE.SRGBColorSpace)
+    for (const t of plain) expect(t.colorSpace).toBe(THREE.NoColorSpace)
   })
   test('벽 그늘 그림은 아래 줄이 v = 0', () => {
     const d = wallShadeTexture('low').image.data as Uint8Array
@@ -976,6 +1001,7 @@ Expected: FAIL — `../src/scene/look/lookTextures`를 찾을 수 없음
 ```ts
 // 빛·재질 다듬기에 쓰는 그림(설계 2026-11-11 §4.5·§4.6). 그림 파일 없이, 점마다 계산해서 만든다.
 // 캔버스의 번짐(gradient)·흐림(filter)은 쓰지 않는다: 크롬은 번짐에 미세한 점을 섞어 바닥에 잔 그물 무늬가 보였고, 흐림은 일부 사파리에서 안 된다.
+// 만든 그림은 한 번만 만들어 여러 곳이 함께 쓴다. 받은 쪽에서 설정(반복 수 등)을 바꾸지 않는다.
 import * as THREE from 'three'
 import { PALETTE, type Bounds } from './lookConfig'
 
@@ -1036,7 +1062,8 @@ export function glowAt(u: number, v: number): number {
 }
 
 const cache = new Map<string, THREE.DataTexture>()
-function build(key: string, w: number, h: number, at: (u: number, v: number) => [number, number, number, number], opts: { srgb: boolean; repeat?: [number, number] }): THREE.DataTexture {
+/** anisotropy: 비스듬히 볼 때의 선명도 보정(넓게 깔리는 바닥 그림에만 쓴다 — 태블릿 부담을 줄이려고 나머지는 1) */
+function build(key: string, w: number, h: number, at: (u: number, v: number) => [number, number, number, number], opts: { srgb: boolean; repeat?: [number, number]; anisotropy?: number }): THREE.DataTexture {
   const hit = cache.get(key)
   if (hit) return hit
   const data = new Uint8Array(w * h * 4)
@@ -1048,17 +1075,17 @@ function build(key: string, w: number, h: number, at: (u: number, v: number) => 
   if (opts.srgb) t.colorSpace = THREE.SRGBColorSpace
   if (opts.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(opts.repeat[0], opts.repeat[1]) }
   t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true
-  t.anisotropy = 8
+  t.anisotropy = opts.anisotropy ?? 1
   t.needsUpdate = true
   cache.set(key, t)
   return t
 }
 
 export function epoxyColorTexture(repeat: [number, number]): THREE.DataTexture {
-  return build(`epoxy-color-${repeat.join('x')}`, 256, 256, (u, v) => [...epoxyColorAt(u, v), 255], { srgb: true, repeat })
+  return build(`epoxy-color-${repeat.join('x')}`, 256, 256, (u, v) => [...epoxyColorAt(u, v), 255], { srgb: true, repeat, anisotropy: 4 })
 }
 export function epoxyRoughnessTexture(repeat: [number, number]): THREE.DataTexture {
-  return build(`epoxy-rough-${repeat.join('x')}`, 256, 256, (u, v) => { const r = epoxyRoughAt(u, v); return [r, r, r, 255] }, { srgb: false, repeat })
+  return build(`epoxy-rough-${repeat.join('x')}`, 256, 256, (u, v) => { const r = epoxyRoughAt(u, v); return [r, r, r, 255] }, { srgb: false, repeat, anisotropy: 4 })
 }
 export function wallShadeTexture(kind: 'low' | 'up'): THREE.DataTexture {
   return build(`wall-shade-${kind}`, 4, 64, (_u, v) => { const g = wallShadeAt(kind, v); return [g, g, g, 255] }, { srgb: true })
@@ -1068,7 +1095,8 @@ export function hallFalloffTexture(hall: Bounds, zones: Bounds[]): THREE.DataTex
   const key = `hall-${[hall, ...zones].map((r) => [r.xMin, r.xMax, r.zMin, r.zMax].join(',')).join('|')}`
   return build(key, 128, 128, (u, v) => { const g = hallFalloffAt(hall.xMin + u * (hall.xMax - hall.xMin), hall.zMax - v * (hall.zMax - hall.zMin), zones); return [g, g, g, 255] }, { srgb: true })
 }
-/** 둥근 빛 그림. alpha: 흰색에 투명도로(더하기 섞기 빛 판용), rgb: 밝기로(반사광 속 조명판용) */
+/** 둥근 빛 그림. alpha: 흰색에 투명도로(더하기 섞기 빛 판용), rgb: 밝기로(반사광 속 조명판용).
+ *  rgb는 색 그림(sRGB)으로 읽혀서 빛 값으로는 alpha보다 빨리 어두워진다(가운데가 또렷한 반사 — 시안에서 이 모양으로 맞췄다) */
 export function glowTexture(mode: 'alpha' | 'rgb'): THREE.DataTexture {
   return build(`glow-${mode}`, 64, 64, (u, v) => { const g = glowAt(u, v) * 255; return mode === 'alpha' ? [255, 255, 255, g] : [g, g, g, 255] }, { srgb: mode === 'rgb' })
 }
@@ -1077,7 +1105,7 @@ export function glowTexture(mode: 'alpha' | 'rgb'): THREE.DataTexture {
 - [ ] **Step 4: 통과 확인**
 
 Run: `npm test -- tests/lookTextures.test.ts && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: 15개 PASS, 형 검사 오류 없음
+Expected: 18개 PASS, 형 검사 오류 없음
 
 - [ ] **Step 5: 커밋**
 
@@ -2569,7 +2597,7 @@ git commit -m "chore(판): 앱 판 0.3.3-demo — 빛과 재질 다듬기부터(
 - [ ] **Step 1: 전체 시험과 형 검사**
 
 Run: `npm test && node_modules/.bin/tsc -p tsconfig.json --noEmit`
-Expected: `Test Files 124 passed`, `Tests 1009 passed`, 형 검사 오류 없음
+Expected: `Test Files 124 passed`, `Tests 1012 passed`, 형 검사 오류 없음
 
 - [ ] **Step 2: 빌드**
 
