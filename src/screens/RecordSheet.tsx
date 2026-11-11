@@ -1,10 +1,12 @@
 // 기록 창 안 내용(설계 2026-11-10 §4): 단계마다 계기 그림과 그 단계의 칸만 보인다.
 // 표시창 값은 작업 목록의 숫자식 계기와 같다(새로 보여 주는 값 없음). 계산 단계에는 실제 값 대신 학생이 제출한 값
 // (내가 적은 값)을 보인다 — 판독 실수를 화면이 몰래 고쳐 주지 않게. 비채점 칸(조치·산출 근거)은 점수·기록이 없다.
-import type { TaskRun } from '../domain/taskEngine'
+import { calculatorKindOf, type TaskRun } from '../domain/taskEngine'
 import type { TurningRig } from '../scene/turningRig'
 import { NumberField, VerdictField, type FieldIo } from './RecordFields'
 import { dialCaption, ReviewToggle, TurningDialPicture } from './TurningDialPicture'
+import type { CalcEvaluation } from '../app/calculator'
+import { CalculatorPanel } from './Calculator'
 
 /** 제동력 표시창(TaskScreen의 gauge와 같은 값) */
 export interface BrakeGauge { axle: string; lr: string; hold: boolean; measuring: boolean }
@@ -13,7 +15,7 @@ const DIR_LABEL = { left: '좌회전', right: '우회전' } as const
 /** 창의 판정 라디오 이름(작업 목록의 'verdict'와 따로) */
 const RADIO = 'rec-verdict'
 
-export function RecordSheet({ run, stepId, io, gauge, needles, reviewing, canReview, onToggleReview, note, onNote }: {
+export function RecordSheet({ run, stepId, io, gauge, needles, reviewing, canReview, onToggleReview, note, onNote, onCalc }: {
   run: TaskRun
   stepId: string
   io: FieldIo
@@ -26,6 +28,8 @@ export function RecordSheet({ run, stepId, io, gauge, needles, reviewing, canRev
   /** 비채점 칸(정비 및 조치할 사항·산출 근거) */
   note: string
   onNote: (v: string) => void
+  /** 계산기에서 = 를 누를 때(계산기 기록, 계산기 설계 §3) */
+  onCalc: (e: CalcEvaluation) => void
 }) {
   const task = run.task
   const m = task.measurement
@@ -56,6 +60,7 @@ export function RecordSheet({ run, stepId, io, gauge, needles, reviewing, canRev
       <p className="rec-mine">내가 적은 값: 축중 {mine('axleWeight')} · 좌 {mine('left')} · 우 {mine('right')} ({m.unit})</p>
       <p className="small">산출식: 편차 = (큰 값 − 작은 값) ÷ 축중 × 100, 합 = (좌 + 우) ÷ 축중 × 100. 소수 첫째 자리까지 적고 둘째 자리는 버립니다.</p>
       <p className="small">기준: 편차 {task.ruleset.deviationMaxPercent}% 이내 · 합 뒤축 {task.ruleset.sumMinRearPercent}% 이상 · 둘 다 기준 안이면 양호</p>
+      <CalculatorPanel kind={calculatorKindOf(task)} onEvaluate={onCalc} />
       <NumberField itemId="deviation" io={io} decimal />
       <NumberField itemId="sum" io={io} decimal />
       <VerdictField io={io} radioName={RADIO} />
@@ -81,6 +86,7 @@ export function RecordSheet({ run, stepId, io, gauge, needles, reviewing, canRev
       <p className="small">산출식: R = L ÷ sin α + r (α = 회전할 때 바깥쪽 앞바퀴의 최대 조향각). 소수 첫째 자리까지 적고 둘째 자리는 버립니다.</p>
       {m.sinTable && <p className="small sintable">{Object.entries(m.sinTable).map(([a, v]) => `sin ${a}° = ${v}`).join(' · ')}</p>}
       <p className="small">기준: {task.ruleset.radiusMaxM} m 이하이면 양호</p>
+      <CalculatorPanel kind={calculatorKindOf(task)} onEvaluate={onCalc} />
       <NumberField itemId="radius" io={io} decimal />
       <VerdictField io={io} radioName={RADIO} />
       <label className="rec-note">산출 근거 <span className="small">(채점·기록 없음)</span>

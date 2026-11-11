@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { feedbackFor, guidanceFor } from '../app/session'
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
 import type { RecordPayload, SessionContext } from '../domain/record'
-import { attempt, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, OFF_SUBSTEPS, type OffSubStep, type TaskRun } from '../domain/taskEngine'
+import { attempt, calculatorKindOf, logCalculation, markFeedbackShown, pauseRun, requestHint, resumeRun, serializeRun, submitResponse, OFF_SUBSTEPS, type OffSubStep, type TaskRun } from '../domain/taskEngine'
 import { buildRecordPayload } from '../domain/record'
 import type { Repository } from '../records/repository'
 import { createSaveTracker, type SaveState } from '../app/saveRecovery'
@@ -22,6 +22,8 @@ import { focusRecordField, RecordWindow, revealInBody } from './RecordWindow'
 import { steeredRig, turningRigState } from '../scene/turningRig'
 import { dialCaption, ReviewToggle, TurningDialPicture } from './TurningDialPicture'
 import { NumberField, type FieldIo } from './RecordFields'
+import { CalculatorPanel } from './Calculator'
+import type { CalcEvaluation } from '../app/calculator'
 
 const newId = () => newUuid()
 
@@ -322,6 +324,10 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
     setShown({ kind: 'guidance', title: `${ITEM_LABEL[itemId]} 입력 확인`, text: null, plain: '맞습니다. 다음으로 진행하세요.' })
   }
 
+  // 계산기(계산기 설계 §2·§3): 과제별 종류, = 는 계산 기록으로(채점·사건과 무관)
+  const calcKind = calculatorKindOf(task)
+  const logCalc = (e: CalcEvaluation) => setRun((r) => logCalculation(r, e))
+
   const hint = () => {
     const res = requestHint(run, newId())
     if (res.outcome === 'eventLimit') { setRun(res.run); return setShown({ kind: 'guidance', title: '기록 한도', text: null, plain: '이벤트 기록 한도(200개)에 닿아 힌트를 기록할 수 없습니다. ‘중단하고 끝내기’로 저장하고 교사에게 알리세요.' }) }
@@ -480,6 +486,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
           </table>
           <p className="small">산출식: R = L ÷ sin α + r (α = 회전할 때 바깥쪽 앞바퀴의 최대 조향각). 소수 첫째 자리까지 적고 둘째 자리는 버립니다.</p>
           {m.sinTable && <p className="small sintable">{Object.entries(m.sinTable).map(([a, v]) => `sin ${a}° = ${v}`).join(' · ')}</p>}
+          <CalculatorPanel kind={calcKind} onEvaluate={logCalc} />
         </section>
         ) : (
         <section className="card">
@@ -509,6 +516,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
             </tbody>
           </table>
           <p className="small">산출식: 편차 = (큰 값 − 작은 값) ÷ 축중 × 100, 합 = (좌 + 우) ÷ 축중 × 100. 소수 첫째 자리까지 적고 둘째 자리는 버립니다.</p>
+          <CalculatorPanel kind={calcKind} onEvaluate={logCalc} />
         </section>
         )}
       </div>
@@ -531,7 +539,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         <RecordWindow title={recordLabel(task, record) ?? '기록'} onClose={requestClose} onAskAi={onAskAi}
           footer={done(record) ? <button type="button" onClick={requestClose}>닫기</button> : <button type="button" className="primary" onClick={() => { if (!warnUnsaved(record)) doStep(record) }}>단계 완료</button>}>
           <p className="small rec-sub">{task.steps.find((s) => s.stepId === record)?.instruction}</p>
-          <RecordSheet run={run} stepId={record} io={recIo} gauge={gauge} needles={needles} reviewing={reviewing} canReview={canReview} onToggleReview={() => setReview(!reviewing)} note={action} onNote={setAction} />
+          <RecordSheet run={run} stepId={record} io={recIo} gauge={gauge} needles={needles} reviewing={reviewing} canReview={canReview} onToggleReview={() => setReview(!reviewing)} note={action} onNote={setAction} onCalc={logCalc} />
           {shown && <FeedbackBox className={`rec-feedback feedback ${shown.kind}`} shown={shown} onClose={() => { setShown(null); document.getElementById('rec-title')?.focus({ preventScroll: true }) }} onFocusItem={(id) => focusRecordField(document, id)} onFix={openRecordFor} />}
         </RecordWindow>,
         recordHost,
