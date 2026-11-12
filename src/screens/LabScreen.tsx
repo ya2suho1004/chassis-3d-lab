@@ -29,6 +29,7 @@ import { saveBadge, type SaveState } from '../app/saveRecovery'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog, panelWorkOrder } from './NpcDialog'
 import { Icon } from './Icon'
+import { ProgressDots } from './ProgressDots'
 import type { LabSound } from '../scene/sound'
 import { useProgress } from '@react-three/drei'
 import { antialiasRequested, initialQuality, shouldAutoLower } from '../app/quality'
@@ -418,7 +419,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
-              {run && ctx && <p key={fx.on.checkPop?.seq ?? 'p'} className={`g-progress ${fx.on.checkPop ? 'pop' : ''}`}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
+              {run && ctx && <ProgressDots done={ctx.doneCount} total={ctx.total} pop={!!fx.on.checkPop} />}
               <div className="g-quest-btns" data-feel="press">
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
                 <button onClick={() => goTo(npcSpot, true)}>교관에게</button>

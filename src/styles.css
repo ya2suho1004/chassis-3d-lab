@@ -446,9 +446,8 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .g-ppe { background:#fff; color:var(--wa-navy); border-radius:10px; padding:1px 8px; font-size:12px; font-weight:700; }
 .g-ppe.spark { animation:g-spark .6s ease-out; }
 @keyframes g-spark { 0% { box-shadow:0 0 0 0 rgba(255,213,74,.9) } 100% { box-shadow:0 0 0 12px rgba(255,213,74,0) } }
-.g-progress.pop { display:inline-block; transform-origin:left center; animation:g-pop .3s ease-out; }
 @keyframes g-pop { 0% { transform:scale(1.25) } 100% { transform:scale(1) } }
-@media (prefers-reduced-motion: reduce) { .g-ppe.spark, .g-progress.pop { animation:none } }
+@media (prefers-reduced-motion: reduce) { .g-ppe.spark { animation:none } }
 .game.wa .g-gaugebtn.on { background:#c62828; }
 @media (max-width:420px) { .wl-arrow { display:none } }
 
@@ -570,3 +569,14 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .g-chip { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:10px; background:var(--wa-navy); color:#fff; font-size:12px; font-weight:700; white-space:nowrap; animation:g-chip .25s ease-out; }
 @keyframes g-chip { from { transform:scale(.6); opacity:0 } to { transform:scale(1); opacity:1 } }
 @media (prefers-reduced-motion: reduce) { .g-codex.pop, .g-chip { animation:none } }
+
+/* 손맛(설계 2026-11-12 §4.3): 진행 점 줄 — 끝난 수만큼 왼쪽부터 채운다. 주황은 쓰지 않는다(안전 경고와 헷갈리지 않게) */
+.g-progress { display:flex; align-items:center; gap:8px; }
+.g-dots { display:inline-flex; gap:4px; }
+.g-dots i { width:8px; height:8px; border-radius:50%; box-sizing:border-box; border:1.5px solid currentColor; opacity:.55; }
+.g-dots i.on { background:var(--wa-navy); border-color:var(--wa-navy); opacity:1; }
+.g-dots i.new { animation:g-dot .3s ease-out; }
+@keyframes g-dot { 0% { transform:scale(1.9) } 100% { transform:scale(1) } }
+@media (prefers-reduced-motion: reduce) { .g-dots i.new { animation:none } }
+/* 화면에는 보이지 않고 화면 낭독에만 읽히는 글 */
+.sr-only { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0; }
