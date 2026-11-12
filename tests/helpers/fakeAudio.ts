@@ -3,7 +3,8 @@
 export class FakeParam {
   value = 0
   events: Array<{ kind: 'set' | 'exp' | 'lin' | 'cancel'; v: number; t: number }> = []
-  setValueAtTime(v: number, t: number): this { this.events.push({ kind: 'set', v, t }); this.value = v; return this }
+  // 진짜 장치에서 예약한 값은 그 시각이 되어야 value에 나타난다(브라우저에 따라서는 끝내 나타나지 않는다). 그래서 예약은 value를 바꾸지 않는다 — 엔진이 '지금 값'을 읽어 쓰면 시험에서 드러난다
+  setValueAtTime(v: number, t: number): this { this.events.push({ kind: 'set', v, t }); return this }
   exponentialRampToValueAtTime(v: number, t: number): this {
     // 진짜 장치도 0 이하로 가는 지수 곡선은 오류를 낸다
     if (!(v > 0)) throw new RangeError('exponentialRampToValueAtTime: 값은 0보다 커야 한다')
@@ -24,21 +25,29 @@ export class FakeNode {
   threshold = new FakeParam(); ratio = new FakeParam(); attack = new FakeParam(); release = new FakeParam()
   constructor(readonly kind: string) {}
   connect<T extends FakeNode | FakeParam>(n: T): T { this.to.push(n); return n }
+  disconnect(): void { this.to = [] }
   start(t = 0, _offset = 0, duration?: number): void {
     if (this.startedAt !== null) throw new Error('InvalidStateError: 이미 시작한 소리를 다시 시작했다')
     this.startedAt = t
     if (duration !== undefined) this.endsAt = t + duration
   }
-  stop(t = 0): void { this.endsAt = t }
+  stop(t = 0): void {
+    if (this.startedAt === null) throw new Error('InvalidStateError: 시작하지 않은 소리를 멈췄다')
+    this.endsAt = t
+  }
 }
 
 export class FakeAudioContext {
   currentTime = 0
   sampleRate = 44100
-  state: 'running' | 'suspended' = 'running'
+  state: 'running' | 'suspended' | 'interrupted' = 'running'
   destination = new FakeNode('destination')
   nodes: FakeNode[] = []
   resumes = 0
+  /** 깨우기를 거절하게 한다(브라우저가 누름 밖에서 부른 깨우기를 들어주지 않을 때) */
+  failResume = false
+  /** 재우기가 조금 뒤에 끝나게 한다. 그동안 state는 running으로 남는다(그런 브라우저가 있다) */
+  lateSuspend = false
   private make(kind: string): FakeNode { const n = new FakeNode(kind); this.nodes.push(n); return n }
   createOscillator(): FakeNode { return this.make('osc') }
   createGain(): FakeNode { const n = this.make('gain'); n.gain.value = 1; return n }
@@ -51,8 +60,16 @@ export class FakeAudioContext {
     return { length, sampleRate, getChannelData: () => data }
   }
   /** 진짜 장치처럼 조금 뒤에(다음 순서에) 깨어난다 */
-  resume(): Promise<void> { this.resumes++; return Promise.resolve().then(() => { this.state = 'running' }) }
-  suspend(): Promise<void> { this.state = 'suspended'; return Promise.resolve() }
+  resume(): Promise<void> {
+    this.resumes++
+    if (this.failResume) return Promise.reject(new Error('NotAllowedError'))
+    return Promise.resolve().then(() => { this.state = 'running' })
+  }
+  suspend(): Promise<void> {
+    if (this.lateSuspend) return Promise.resolve().then(() => { this.state = 'suspended' })
+    this.state = 'suspended'
+    return Promise.resolve()
+  }
   /** 소리를 내는 부품(발진기·소음 재생기) */
   sources(): FakeNode[] { return this.nodes.filter((n) => n.kind === 'osc' || n.kind === 'source') }
 }

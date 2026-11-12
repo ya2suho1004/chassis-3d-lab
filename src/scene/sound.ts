@@ -19,10 +19,16 @@ export type CueName = (typeof CUE_NAMES)[number]
 /** 같은 소리를 다시 낼 수 있는 가장 짧은 간격(초) — 연달아 눌러도 쌓이지 않게 */
 export const MIN_GAP = 0.04
 
+/** 소리를 끌 때 줄이는 시간(초). 울리던 소리도 예약만 해 둔 소리도 이 안에 사라진다 */
+export const OFF_FADE = 0.05
+
 /** 소리를 그릴 곳: 오디오 장치, 나갈 곳, 소음 재료. 화면 밖 장치(OfflineAudioContext)도 같은 모양이라 세기·길이를 잴 수 있다 */
 export interface SoundOut { ctx: BaseAudioContext; out: AudioNode; noise: AudioBuffer }
 
-/** 나가는 길: 전체 세기 → 압축기(여러 소리가 겹쳐 한꺼번에 커지는 것을 눌러 준다) → 스피커. 소리는 돌려주는 부품에 꽂는다 */
+/**
+ * 나가는 길: 전체 세기 → 압축기(여러 소리가 겹쳐 한꺼번에 커지는 것을 눌러 준다) → 스피커. 소리는 돌려주는 부품에 꽂는다.
+ * 브라우저의 압축기는 누른 만큼 전체를 조금 키우기도 한다. 그래서 실제로 나가는 세기는 이 길을 지난 뒤에 잰다(촬영 도구의 sound 명령).
+ */
 export function makeOutput(ctx: BaseAudioContext): AudioNode {
   const out = ctx.createGain()
   out.gain.value = 0.9
@@ -181,6 +187,17 @@ export const CUES: Record<CueName, (o: SoundOut, t: number) => void> = {
   step: (o, t) => stepCue(o, t),
 }
 
+/**
+ * 지수 곡선 a→b(dur초에 걸쳐)가 시작 dt초 뒤에 이른 값.
+ * 이어지는 소리를 멈출 때 '지금 세기'를 장치에서 읽지 않고 이것으로 계산한다 — 예약한 값이 읽히는지는 브라우저마다 다르고,
+ * 읽히지 않으면 기본값(세기 1)에서 내려오며 크게 터진다.
+ */
+function expAt(a: number, b: number, dur: number, dt: number): number {
+  if (dt <= 0) return a
+  if (dt >= dur) return b
+  return a * Math.pow(b / a, dt / dur)
+}
+
 /** 롤러 회전음: 서서히 올라와 이어진다. 측정값이 무엇이든 늘 같은 소리다. 돌려주는 함수를 부르면 fade초에 걸쳐 잦아든 뒤 끝난다 */
 export function startRollers(o: SoundOut, t: number): (at: number, fade?: number) => void {
   const c = o.ctx
@@ -217,12 +234,14 @@ export function startRollers(o: SoundOut, t: number): (at: number, fade?: number
   const all: AudioScheduledSourceNode[] = [...tones.map(([osc]) => osc), lfo, n]
   for (const x of all) x.start(t)
   return (at, fade = 0.8) => {
+    // 시작하기도 전에 멈추면 울리지 않고 끝낸다
+    if (at <= t) { for (const x of all) x.stop(t); return }
     g.gain.cancelScheduledValues(at)
-    g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), at)
+    g.gain.setValueAtTime(expAt(0.0001, 0.05, 0.7, at - t), at)
     g.gain.exponentialRampToValueAtTime(0.0001, at + fade)
     for (const [osc, f] of tones) {
       osc.frequency.cancelScheduledValues(at)
-      osc.frequency.setValueAtTime(Math.max(osc.frequency.value, 1), at)
+      osc.frequency.setValueAtTime(f * expAt(0.45, 1, 0.9, at - t), at)
       osc.frequency.exponentialRampToValueAtTime(f * 0.4, at + fade)
     }
     for (const x of all) x.stop(at + fade + 0.05)
@@ -256,8 +275,9 @@ export function startAmbience(o: SoundOut, t: number): (at: number) => void {
   lfo.connect(lfoG).connect(air.level.gain)
   lfo.start(t)
   return (at) => {
+    if (at <= t) { for (const x of [hum.src, air.src, lfo]) x.stop(t); return }
     g.gain.cancelScheduledValues(at)
-    g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), at)
+    g.gain.setValueAtTime(expAt(0.0001, 1, 1.2, at - t), at)
     g.gain.exponentialRampToValueAtTime(0.0001, at + 0.3)
     for (const x of [hum.src, air.src, lfo]) x.stop(at + 0.35)
   }
@@ -286,20 +306,26 @@ function browserAudio(): AudioContext | null {
 }
 
 export class LabSound {
-  private ctx: AudioContext | null = null
+  /** 오디오 장치와 거기 딸린 것(나가는 길, 소음 재료). 처음 켤 때 한 번 만든다 */
+  private dev: { ctx: AudioContext; main: AudioNode; noise: AudioBuffer } | null = null
+  /** 이번 '켬' 동안 소리가 모이는 단자. 끄면 줄이고, 다시 켜면 새로 단다 — 끄기 전에 낸 소리(예약만 해 둔 것 포함)가 돌아오지 않는다 */
+  private bus: GainNode | null = null
   private o: SoundOut | null = null
   private stopRollers: ((at: number, fade?: number) => void) | null = null
   private stopAmbience: ((at: number) => void) | null = null
   private wantRollers = false
   private wantAmbience = false
+  /** 먼 공구 소리를 기다리는 타이머 */
   private timer: ReturnType<typeof setTimeout> | null = null
+  /** 끈 뒤 장치를 재우려고 기다리는 타이머 */
+  private sleepTimer: ReturnType<typeof setTimeout> | null = null
   private last: Partial<Record<CueName, number>> = {}
   enabled = false
 
   /** create: 오디오 장치를 만드는 함수(시험에서는 가짜 장치를 넣는다) */
   constructor(private readonly create: () => AudioContext | null = browserAudio) {}
 
-  /** 켜기·끄기. 켜기는 버튼을 누른 순간(사용자 동작) 불러야 브라우저가 소리를 허락한다. 켜지면 '딸깍'이 한 번 난다 */
+  /** 켜기·끄기. 켜기는 버튼을 누른 순간(사용자 동작) 불러야 브라우저가 소리를 허락한다. 켜지면 '딸깍'이 한 번 난다. 장치를 못 만들면 켜지지 않는다(enabled가 false로 남는다) */
   setEnabled(on: boolean): void {
     if (on === this.enabled) return
     this.enabled = on
@@ -341,21 +367,27 @@ export class LabSound {
     draw(o, now + 0.01 + delay)
   }
 
+  /** 멈춘 장치를 깨운다. 누름 안에서 부른 것만 브라우저가 들어주는 일이 있어서, 진행 중인 깨우기가 있어도 요청마다 다시 부른다 */
   private wake(): void {
-    const ctx = this.ctx
-    if (ctx && this.enabled) void ctx.resume().then(() => this.sync(), () => undefined)
+    const dev = this.dev
+    if (dev && this.enabled) void dev.ctx.resume().then(() => this.sync(), () => undefined)
   }
 
   private start(): void {
-    if (!this.ctx) {
+    if (this.sleepTimer) { clearTimeout(this.sleepTimer); this.sleepTimer = null }
+    if (!this.dev) {
       const ctx = this.create()
-      if (!ctx) return
-      this.ctx = ctx
-      this.o = { ctx, out: makeOutput(ctx), noise: makeNoise(ctx) }
+      if (!ctx) { this.enabled = false; return }
+      this.dev = { ctx, main: makeOutput(ctx), noise: makeNoise(ctx) }
     }
-    const ctx = this.ctx
+    const { ctx, main, noise } = this.dev
+    this.bus?.disconnect()
+    const bus = ctx.createGain()
+    bus.connect(main)
+    this.bus = bus
+    this.o = { ctx, out: bus, noise }
     const ready = (): void => {
-      if (!this.enabled) return
+      if (!this.enabled || this.bus !== bus) return
       this.play('press')
       this.sync()
     }
@@ -365,8 +397,17 @@ export class LabSound {
 
   private stop(): void {
     this.sync()
-    const ctx = this.ctx
-    if (ctx) setTimeout(() => { if (!this.enabled) void ctx.suspend() }, 400)
+    const dev = this.dev, bus = this.bus
+    if (!dev || !bus) return
+    // 이번 '켬' 동안 낸 소리를 한꺼번에 줄인다. 길게 울리던 소리(리프트·차량)도, 예약만 해 둔 소리도 남지 않는다
+    const now = dev.ctx.currentTime
+    bus.gain.setValueAtTime(1, now)
+    bus.gain.linearRampToValueAtTime(0, now + OFF_FADE)
+    this.sleepTimer = setTimeout(() => {
+      this.sleepTimer = null
+      // 재우기가 늦게 끝나는 브라우저에서는 그 사이에 다시 켜질 수 있다. 그러면 끝나는 대로 깨운다
+      void dev.ctx.suspend().then(() => { if (this.enabled) this.wake() }, () => undefined)
+    }, 400)
   }
 
   /** 이어지는 소리를 지금 상태(켬·롤러·실습장)에 맞춘다 */

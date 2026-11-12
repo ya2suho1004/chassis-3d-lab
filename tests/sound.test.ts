@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { REACTION_CUES } from '../src/app/reactions'
-import { CUE_NAMES, CUES, LabSound, makeNoise, makeOutput, MIN_GAP, startAmbience, startRollers, type CueName, type SoundOut } from '../src/scene/sound'
+import { CUE_NAMES, CUES, LabSound, makeNoise, makeOutput, MIN_GAP, OFF_FADE, startAmbience, startRollers, type CueName, type SoundOut } from '../src/scene/sound'
 import { FakeAudioContext, FakeNode, feedsParam, flush, reaches } from './helpers/fakeAudio'
 
 const rig = () => {
@@ -67,7 +67,7 @@ describe('한 번 나는 소리 — 예약', () => {
     }
     // 압축기를 건너뛰어 스피커에 바로 꽂는 부품이 없다
     for (const n of made) expect(n.to.includes(ctx.destination)).toBe(false)
-    // 층 하나의 세기는 0.5를 넘지 않는다
+    // 세기 곡선의 꼭대기 값은 0.5를 넘지 않는다(조립값이 실수로 커지는 것을 막는 안전선이다. 실제로 나가는 세기는 압축기를 지난 뒤라 브라우저에서 잰다)
     for (const n of made.filter((x) => x.kind === 'gain')) for (const e of n.gain.events) expect(e.v).toBeLessThanOrEqual(0.5)
   })
   it('긴 리프트 소리는 짧은 것과 같은 조립이고 길이만 다르다', () => {
@@ -111,6 +111,62 @@ describe('이어지는 소리', () => {
     stop(3)
     for (const s of made.filter((n) => n.kind === 'osc' || n.kind === 'source')) expect(s.endsAt).toBeCloseTo(3.35, 6)
   })
+
+  /** 이어지는 소리의 마지막 세기 부품(나가는 길에 꽂힌 것) */
+  const lastGain = (ctx: FakeAudioContext, from: number, out: FakeNode) => ctx.nodes.slice(from).find((n) => n.kind === 'gain' && n.to.includes(out))!
+  it('멈출 때의 세기와 음높이는 장치에서 읽지 않고 계산한다: 다 올라온 뒤에는 그 값에서, 오르는 중에는 그때 값에서 줄인다', () => {
+    const a = rig(), na = a.ctx.nodes.length
+    startRollers(a.o, 1)(5)
+    const up = lastGain(a.ctx, na, a.out).gain.events.slice(0, 2)
+    // 올라오는 길: 0.7초에 걸쳐 0.0001 → 0.05. 멈출 때의 계산이 이 숫자를 따른다(한쪽만 고치면 아래가 어긋난다)
+    expect(up.map((e) => [e.kind, e.v])).toEqual([['set', 0.0001], ['exp', 0.05]])
+    expect(up[1]!.t - up[0]!.t).toBeCloseTo(0.7, 9)
+    const ea = lastGain(a.ctx, na, a.out).gain.events.slice(-3)
+    expect(ea.map((e) => e.kind)).toEqual(['cancel', 'set', 'exp'])
+    expect([ea[1]!.v, ea[1]!.t]).toEqual([0.05, 5])
+    expect(ea[2]!.v).toBe(0.0001)
+    expect(ea[2]!.t).toBeCloseTo(5.8, 9)
+    const b = rig(), nb = b.ctx.nodes.length
+    startRollers(b.o, 1)(1.35) // 0.7초에 걸쳐 오르는 길의 한가운데
+    const eb = lastGain(b.ctx, nb, b.out).gain.events.slice(-2)
+    expect([eb[0]!.kind, eb[0]!.t]).toEqual(['set', 1.35])
+    expect(eb[0]!.v).toBeCloseTo(Math.sqrt(0.0001 * 0.05), 9)
+    const rise = b.ctx.nodes.slice(nb).find((n) => n.kind === 'osc')!.frequency.events.slice(0, 2) // 첫 음(62 Hz): 0.9초에 걸쳐 0.45배 → 제 음높이
+    expect(rise.map((e) => [e.kind, e.v])).toEqual([['set', 62 * 0.45], ['exp', 62]])
+    expect(rise[1]!.t - rise[0]!.t).toBeCloseTo(0.9, 9)
+    const tone = b.ctx.nodes.slice(nb).find((n) => n.kind === 'osc')!.frequency.events.slice(-2)
+    expect([tone[0]!.kind, tone[0]!.t]).toEqual(['set', 1.35])
+    expect(tone[0]!.v).toBeCloseTo(62 * 0.45 * Math.pow(1 / 0.45, 0.35 / 0.9), 6)
+    expect(tone[1]!.v).toBeCloseTo(62 * 0.4, 9)
+    const c = rig(), nc = c.ctx.nodes.length
+    startAmbience(c.o, 1)(1.6) // 1.2초에 걸쳐 오르는 길의 한가운데
+    const amb = lastGain(c.ctx, nc, c.out).gain.events
+    expect(amb.slice(0, 2).map((e) => [e.kind, e.v])).toEqual([['set', 0.0001], ['exp', 1]]) // 1.2초에 걸쳐 올라온다
+    expect(amb[1]!.t - amb[0]!.t).toBeCloseTo(1.2, 9)
+    const ec = amb.slice(-2)
+    expect([ec[0]!.kind, ec[0]!.t]).toEqual(['set', 1.6])
+    expect(ec[0]!.v).toBeCloseTo(0.01, 9)
+  })
+  it('회전음의 마지막 세기는 언제 멈추든 0.05를 넘지 않는다(교실에서 갑자기 커지지 않는다)', () => {
+    for (const at of [0.5, 1, 1.004, 1.35, 1.7, 5]) {
+      const { ctx, o, out } = rig()
+      const before = ctx.nodes.length
+      startRollers(o, 1)(at)
+      for (const e of lastGain(ctx, before, out).gain.events) expect(e.v, `멈춘 시각 ${at}`).toBeLessThanOrEqual(0.05)
+    }
+  })
+  it('시작 시각보다 먼저 멈추면 울리지 않고 끝난다(올라오는 곡선을 지워 세기가 기본값에서 내려오는 일이 없다)', () => {
+    for (const startIt of [startRollers, startAmbience]) {
+      const { ctx, o, out } = rig()
+      const before = ctx.nodes.length
+      startIt(o, 1)(0.995)
+      for (const s of ctx.nodes.slice(before).filter((n) => n.kind === 'osc' || n.kind === 'source')) expect(s.endsAt).toBe(1)
+      expect(lastGain(ctx, before, out).gain.events.map((e) => e.kind)).toEqual(['set', 'exp'])
+    }
+  })
+  it('엔진은 부품의 지금 값을 읽지 않는다(값은 쓰기만 한다 — 브라우저마다 읽히는 값이 다르다)', () => {
+    expect(readFileSync('src/scene/sound.ts', 'utf8').match(/\.value\b(?!\s*=[^=])/g)).toBeNull()
+  })
 })
 
 describe('LabSound — 켜기·끄기', () => {
@@ -130,9 +186,10 @@ describe('LabSound — 켜기·끄기', () => {
     sound.play('tap'); sound.step(); sound.setRollers(true); sound.setAmbience(true)
     expect(made()).toBe(0)
   })
-  it('브라우저가 아니면(장치를 못 만들면) 켜도 아무 일도 없다', () => {
+  it('브라우저가 아니면(장치를 못 만들면) 켜지지 않고 아무 일도 없다 — 화면의 켬 표시가 이 값을 따른다', () => {
     const sound = new LabSound(() => null)
     sound.setEnabled(true)
+    expect(sound.enabled).toBe(false)
     expect(() => { sound.play('tap'); sound.setRollers(true); sound.setEnabled(false) }).not.toThrow()
   })
   it("켜면 장치를 한 번 만들고 '딸깍'을 한 번 낸다(켜졌다는 확인)", () => {
@@ -168,6 +225,102 @@ describe('LabSound — 켜기·끄기', () => {
     sound.setEnabled(true); sound.setEnabled(false); sound.setEnabled(true)
     vi.advanceTimersByTime(450)
     expect(ctx.state).toBe('running')
+  })
+  it('껐다 켰다 다시 끄면 마지막으로 끈 때부터 0.4초 뒤에 재운다(앞선 타이머가 일찍 재우지 않는다)', () => {
+    const { ctx, sound } = make()
+    sound.setEnabled(true); sound.setEnabled(false)
+    vi.advanceTimersByTime(300)
+    sound.setEnabled(true)
+    vi.advanceTimersByTime(50)
+    sound.setEnabled(false)
+    vi.advanceTimersByTime(100) // 처음 끈 때부터 0.45초
+    expect(ctx.state).toBe('running')
+    vi.advanceTimersByTime(300) // 마지막으로 끈 때부터 0.4초
+    expect(ctx.state).toBe('suspended')
+  })
+  it('재우는 도중에 다시 켜면(재우기가 늦게 끝나는 브라우저) 재우기가 끝나는 대로 깨운다', async () => {
+    const { ctx, sound } = make()
+    ctx.lateSuspend = true
+    sound.setEnabled(true); sound.setEnabled(false)
+    vi.advanceTimersByTime(400) // 재우기를 불렀지만 장치는 아직 running이다
+    expect(ctx.state).toBe('running')
+    sound.setEnabled(true)
+    await flush()
+    expect(ctx.state).toBe('running')
+    expect(ctx.resumes).toBe(1)
+  })
+  it('켜는 도중(장치가 깨어나기 전)에 끄면 확인음도 배경 소음도 나지 않는다', async () => {
+    const { ctx, sound } = make()
+    ctx.state = 'suspended'
+    sound.setAmbience(true)
+    sound.setEnabled(true); sound.setEnabled(false)
+    await flush()
+    expect(started(ctx)).toBe(0)
+  })
+  it('깨우기를 브라우저가 거절해도 오류 없이 조용하고, 다음 요청 때 다시 깨운다', async () => {
+    const { ctx, sound } = make()
+    sound.setEnabled(true)
+    const n = started(ctx)
+    ctx.state = 'interrupted'
+    ctx.failResume = true
+    sound.play('tap')
+    await flush()
+    expect(started(ctx)).toBe(n)
+    ctx.failResume = false
+    sound.play('tap')
+    await flush()
+    expect(ctx.state).toBe('running')
+    sound.play('tap')
+    expect(started(ctx)).toBe(n + 2)
+  })
+})
+
+describe('LabSound — 끄면 예약해 둔 소리까지 사라진다', () => {
+  beforeEach(() => { vi.useFakeTimers() })
+  afterEach(() => { vi.useRealTimers() })
+  const on = () => {
+    const ctx = new FakeAudioContext()
+    const sound = new LabSound(() => ctx as unknown as AudioContext)
+    sound.setEnabled(true)
+    const main = ctx.nodes.find((n) => n.to.some((x) => x instanceof FakeNode && x.kind === 'compressor'))!
+    /** 나가는 길에 꽂힌 부품들 */
+    const buses = () => ctx.nodes.filter((n) => n.to.includes(main))
+    return { ctx, sound, main, buses }
+  }
+  it("소리는 모두 이번 '켬'의 모음 단자 하나를 거쳐 나간다", () => {
+    const { ctx, sound, buses } = on()
+    ctx.currentTime = 1
+    sound.play('liftLong'); sound.setRollers(true); sound.setAmbience(true)
+    expect(buses().map((n) => n.kind)).toEqual(['gain'])
+    const bus = buses()[0]!
+    for (const s of ctx.sources()) expect(reaches(s, bus) || feedsParam(s)).toBe(true)
+  })
+  it(`끄면 그 단자를 ${OFF_FADE}초에 걸쳐 0으로 줄인다 — 울리던 소리도, 예약만 해 둔 소리도 함께`, () => {
+    const { ctx, sound, buses } = on()
+    ctx.currentTime = 1
+    sound.play('liftLong'); sound.play('celebrate', 0.55)
+    ctx.currentTime = 1.5
+    sound.setEnabled(false)
+    const ev = buses()[0]!.gain.events
+    expect(ev.map((e) => e.kind)).toEqual(['set', 'lin'])
+    expect(ev[0]).toEqual({ kind: 'set', v: 1, t: 1.5 })
+    expect(ev[1]!.v).toBe(0)
+    expect(ev[1]!.t).toBeCloseTo(1.5 + OFF_FADE, 9)
+  })
+  it('다시 켜면 새 단자를 달고 옛 단자는 떼어 낸다 — 끄기 전에 낸 소리가 돌아오지 않는다', () => {
+    const { ctx, sound, main, buses } = on()
+    ctx.currentTime = 1
+    sound.play('liftLong')
+    const old = buses()[0]!
+    const before = ctx.sources()
+    expect(before.every((s) => reaches(s, main))).toBe(true)
+    sound.setEnabled(false)
+    ctx.currentTime = 9
+    sound.setEnabled(true)
+    expect(buses().length).toBe(1)
+    expect(buses()[0]).not.toBe(old)
+    expect(before.some((s) => reaches(s, main))).toBe(false)
+    expect(ctx.sources().filter((s) => reaches(s, main)).length).toBe(2) // 새로 난 확인음뿐
   })
 })
 
