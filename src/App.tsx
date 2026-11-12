@@ -1,5 +1,5 @@
 import type { RecordPayload } from './domain/record'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { SessionContext } from './domain/record'
 import { createTaskRun, rehydrateRun, serializeRun, type DifficultyMode, type TaskRun } from './domain/taskEngine'
 import type { ApprovedTask } from './domain/types'
@@ -40,12 +40,18 @@ export function App() {
   const [intro] = useState(() => introPlan(loadIntroPrefs(), typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))
   const [introDone, setIntroDone] = useState(intro === 'none')
   // 소리(설계 2026-11-12 §4.7): 엔진과 켬 상태는 실습 화면에서 결과 화면까지 이어지고, 그 밖의 화면에서는 꺼진다. 기기에 저장하지 않는다
-  const sound = useMemo(() => new LabSound(), [])
+  const [sound] = useState(() => new LabSound())
   const [soundOn, setSoundOn] = useState(false)
   // 화면의 켬 표시는 엔진을 따른다: 오디오 장치를 못 만들면 켜지지 않는다
   const changeSound = useCallback((on: boolean) => { sound.setEnabled(on); setSoundOn(sound.enabled) }, [sound])
   const inRun = screen.name === 'lab' || screen.name === 'result'
   useEffect(() => { if (!inRun) changeSound(false) }, [inRun, changeSound])
+  // 화면이 가려지면(다른 앱·탭으로 가거나 화면이 꺼지면) 소리를 끈다. 돌아와도 꺼진 채로 둔다 — 뒤로 보낸 태블릿이 교실에서 소리를 내지 않게(설계 2026-11-12 §4.7)
+  useEffect(() => {
+    const onHide = () => { if (document.hidden) changeSound(false) }
+    document.addEventListener('visibilitychange', onHide)
+    return () => document.removeEventListener('visibilitychange', onHide)
+  }, [changeSound])
   // 실습장 3D 모델을 처음부터 미리 받아 둔다(인트로·코드 입력·캐릭터 만들기 동안). 실습장의 useGLTF가 같은 캐시를 쓴다
   // 품질 높음이면 화면 효과 코드도 함께(실습장과 같은 품질 판정 — app/quality.ts). 반사광은 실습장 자체로 만들어 받을 파일이 없다
   useEffect(() => {

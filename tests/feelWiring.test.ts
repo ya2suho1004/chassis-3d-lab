@@ -10,7 +10,8 @@ describe('소리 엔진과 켬 상태는 앱이 갖는다(실습 화면 → 결�
   test('엔진은 앱에서 한 번만 만든다', () => {
     expect(app).toContain("import { LabSound } from './scene/sound'")
     expect(app.match(/new LabSound\(\)/g)).toHaveLength(1)
-    expect(app).toContain('const sound = useMemo(() => new LabSound(), [])')
+    // 엔진은 장치와 타이머를 가진 객체라 useMemo(값을 버릴 수 있다)가 아니라 useState의 처음 값으로 한 번만 만든다
+    expect(app).toContain('const [sound] = useState(() => new LabSound())')
     expect(lab).not.toMatch(/new LabSound\(/)
     expect(lab).toContain("import type { LabSound } from '../scene/sound'")
   })
@@ -21,7 +22,13 @@ describe('소리 엔진과 켬 상태는 앱이 갖는다(실습 화면 → 결�
     expect(app).toContain("const inRun = screen.name === 'lab' || screen.name === 'result'")
     expect(app).toContain('useEffect(() => { if (!inRun) changeSound(false) }, [inRun, changeSound])')
     expect(app).toMatch(/const \[soundOn, setSoundOn\] = useState\(false\)/)
-    expect(app).not.toMatch(/localStorage[^\n]*sound/i)
+    // 켬 상태는 기기에 저장하지 않는다: 엔진은 저장소를 건드리지 않고, 앱에서 soundOn은 상태 선언과 실습 화면에 넘기는 속성에만 나온다
+    expect(read('src/scene/sound.ts')).not.toMatch(/localStorage|sessionStorage|indexedDB/)
+    expect(app.match(/\bsoundOn\b/g)).toHaveLength(3)
+  })
+  test('화면이 가려지면(다른 앱·탭으로 가거나 화면이 꺼지면) 소리를 끄고, 돌아와도 꺼진 채로 둔다 — 뒤로 보낸 태블릿이 교실에서 소리를 내지 않게', () => {
+    expect(app).toContain("    const onHide = () => { if (document.hidden) changeSound(false) }\n    document.addEventListener('visibilitychange', onHide)\n    return () => document.removeEventListener('visibilitychange', onHide)\n  }, [changeSound])")
+    expect(app).not.toMatch(/visibilitychange[\s\S]{0,200}changeSound\(true\)/) // 돌아왔다고 다시 켜지 않는다
   })
   test('실습 화면에 엔진·상태·바꾸는 함수를 넘긴다', () => {
     expect(app).toMatch(/<LabScreen\n\s+sound=\{sound\} soundOn=\{soundOn\} onSoundChange=\{changeSound\}/)

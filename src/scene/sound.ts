@@ -198,6 +198,10 @@ function expAt(a: number, b: number, dur: number, dt: number): number {
   return a * Math.pow(b / a, dt / dur)
 }
 
+/** 이어지는 소리가 올라오는 길. 예약하는 곳과 멈출 때 '지금 값'을 계산하는 곳(expAt)이 같은 숫자를 쓴다 — 한쪽만 고쳐 어긋나는 일이 없게 */
+const ROLLERS_UP = { from: 0.0001, peak: 0.05, sec: 0.7, pitchFrom: 0.45, pitchSec: 0.9 } as const
+const AMBIENCE_UP = { from: 0.0001, peak: 1, sec: 1.2 } as const
+
 /** 롤러 회전음: 서서히 올라와 이어진다. 측정값이 무엇이든 늘 같은 소리다. 돌려주는 함수를 부르면 fade초에 걸쳐 잦아든 뒤 끝난다 */
 export function startRollers(o: SoundOut, t: number): (at: number, fade?: number) => void {
   const c = o.ctx
@@ -208,8 +212,8 @@ export function startRollers(o: SoundOut, t: number): (at: number, fade?: number
   for (const [type, f, level] of [['sawtooth', 62, 0.3], ['square', 124, 0.25], ['triangle', 248, 1], ['triangle', 372, 0.7]] as const) {
     const osc = c.createOscillator(), og = c.createGain()
     osc.type = type
-    osc.frequency.setValueAtTime(f * 0.45, t)
-    osc.frequency.exponentialRampToValueAtTime(f, t + 0.9)
+    osc.frequency.setValueAtTime(f * ROLLERS_UP.pitchFrom, t)
+    osc.frequency.exponentialRampToValueAtTime(f, t + ROLLERS_UP.pitchSec)
     og.gain.value = level
     osc.connect(og).connect(mix)
     tones.push([osc, f])
@@ -229,19 +233,19 @@ export function startRollers(o: SoundOut, t: number): (at: number, fade?: number
   ng.gain.value = 1.1
   n.connect(nf).connect(ng).connect(trem)
   mix.connect(lp).connect(trem).connect(g).connect(o.out)
-  g.gain.setValueAtTime(0.0001, t)
-  g.gain.exponentialRampToValueAtTime(0.05, t + 0.7)
+  g.gain.setValueAtTime(ROLLERS_UP.from, t)
+  g.gain.exponentialRampToValueAtTime(ROLLERS_UP.peak, t + ROLLERS_UP.sec)
   const all: AudioScheduledSourceNode[] = [...tones.map(([osc]) => osc), lfo, n]
   for (const x of all) x.start(t)
   return (at, fade = 0.8) => {
     // 시작하기도 전에 멈추면 울리지 않고 끝낸다
     if (at <= t) { for (const x of all) x.stop(t); return }
     g.gain.cancelScheduledValues(at)
-    g.gain.setValueAtTime(expAt(0.0001, 0.05, 0.7, at - t), at)
+    g.gain.setValueAtTime(expAt(ROLLERS_UP.from, ROLLERS_UP.peak, ROLLERS_UP.sec, at - t), at)
     g.gain.exponentialRampToValueAtTime(0.0001, at + fade)
     for (const [osc, f] of tones) {
       osc.frequency.cancelScheduledValues(at)
-      osc.frequency.setValueAtTime(f * expAt(0.45, 1, 0.9, at - t), at)
+      osc.frequency.setValueAtTime(f * expAt(ROLLERS_UP.pitchFrom, 1, ROLLERS_UP.pitchSec, at - t), at)
       osc.frequency.exponentialRampToValueAtTime(f * 0.4, at + fade)
     }
     for (const x of all) x.stop(at + fade + 0.05)
@@ -251,8 +255,8 @@ export function startRollers(o: SoundOut, t: number): (at: number, fade?: number
 /** 실습장 배경 소음: 낮은 웅웅거림 + 환풍기 바람(작은 스피커에서도 들리는 띠). 돌려주는 함수를 부르면 0.3초에 걸쳐 잦아든다 */
 export function startAmbience(o: SoundOut, t: number): (at: number) => void {
   const c = o.ctx, g = c.createGain()
-  g.gain.setValueAtTime(0.0001, t)
-  g.gain.exponentialRampToValueAtTime(1, t + 1.2)
+  g.gain.setValueAtTime(AMBIENCE_UP.from, t)
+  g.gain.exponentialRampToValueAtTime(AMBIENCE_UP.peak, t + AMBIENCE_UP.sec)
   g.connect(o.out)
   const layer = (type: BiquadFilterType, f: number, q: number, level: number, offset: number): { src: AudioBufferSourceNode; level: GainNode } => {
     const src = c.createBufferSource(), bf = c.createBiquadFilter(), lg = c.createGain()
@@ -277,7 +281,7 @@ export function startAmbience(o: SoundOut, t: number): (at: number) => void {
   return (at) => {
     if (at <= t) { for (const x of [hum.src, air.src, lfo]) x.stop(t); return }
     g.gain.cancelScheduledValues(at)
-    g.gain.setValueAtTime(expAt(0.0001, 1, 1.2, at - t), at)
+    g.gain.setValueAtTime(expAt(AMBIENCE_UP.from, AMBIENCE_UP.peak, AMBIENCE_UP.sec, at - t), at)
     g.gain.exponentialRampToValueAtTime(0.0001, at + 0.3)
     for (const x of [hum.src, air.src, lfo]) x.stop(at + 0.35)
   }
@@ -319,6 +323,8 @@ export class LabSound {
   private timer: ReturnType<typeof setTimeout> | null = null
   /** 끈 뒤 장치를 재우려고 기다리는 타이머 */
   private sleepTimer: ReturnType<typeof setTimeout> | null = null
+  /** 끄면서 모음 단자를 줄이기 시작한 시각(장치의 시계) */
+  private offAt = 0
   private last: Partial<Record<CueName, number>> = {}
   enabled = false
 
@@ -376,12 +382,16 @@ export class LabSound {
   private start(): void {
     if (this.sleepTimer) { clearTimeout(this.sleepTimer); this.sleepTimer = null }
     if (!this.dev) {
-      const ctx = this.create()
+      // 장치를 못 만들거나 만들다 오류가 나면(장치 수 한도 등) 켜지지 않는다. 오류를 버튼 누름으로 흘리지 않는다
+      let ctx: AudioContext | null = null
+      try { ctx = this.create() } catch { ctx = null }
       if (!ctx) { this.enabled = false; return }
       this.dev = { ctx, main: makeOutput(ctx), noise: makeNoise(ctx) }
     }
     const { ctx, main, noise } = this.dev
-    this.bus?.disconnect()
+    // 다 줄어든 옛 단자는 떼어 낸다. 줄이는 도중(끈 지 OFF_FADE초 안)이면 그대로 둔다 — 떼면 뚝 끊기는 소리가 나고, 두면 스스로 0이 된다.
+    // 멈춰 있는 장치에서는 줄일 시간이 흐르지 않으므로 바로 뗀다
+    if (this.bus && (ctx.state !== 'running' || ctx.currentTime >= this.offAt + OFF_FADE)) this.bus.disconnect()
     const bus = ctx.createGain()
     bus.connect(main)
     this.bus = bus
@@ -401,6 +411,7 @@ export class LabSound {
     if (!dev || !bus) return
     // 이번 '켬' 동안 낸 소리를 한꺼번에 줄인다. 길게 울리던 소리(리프트·차량)도, 예약만 해 둔 소리도 남지 않는다
     const now = dev.ctx.currentTime
+    this.offAt = now
     bus.gain.setValueAtTime(1, now)
     bus.gain.linearRampToValueAtTime(0, now + OFF_FADE)
     this.sleepTimer = setTimeout(() => {

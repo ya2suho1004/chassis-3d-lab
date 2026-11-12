@@ -192,6 +192,16 @@ describe('LabSound — 켜기·끄기', () => {
     expect(sound.enabled).toBe(false)
     expect(() => { sound.play('tap'); sound.setRollers(true); sound.setEnabled(false) }).not.toThrow()
   })
+  it('장치를 만들다 오류가 나도(장치 수 한도 등) 켜지지 않을 뿐이다 — 오류가 버튼 누름으로 새지 않고, 다음에 누르면 다시 만들어 본다', () => {
+    let tries = 0
+    const ctx = new FakeAudioContext()
+    const sound = new LabSound(() => { tries++; if (tries === 1) throw new Error('NotSupportedError'); return ctx as unknown as AudioContext })
+    expect(() => sound.setEnabled(true)).not.toThrow()
+    expect(sound.enabled).toBe(false)
+    sound.setEnabled(true)
+    expect(sound.enabled).toBe(true)
+    expect(tries).toBe(2)
+  })
   it("켜면 장치를 한 번 만들고 '딸깍'을 한 번 낸다(켜졌다는 확인)", () => {
     const { ctx, sound, made } = make()
     sound.setEnabled(true)
@@ -257,6 +267,23 @@ describe('LabSound — 켜기·끄기', () => {
     await flush()
     expect(started(ctx)).toBe(0)
   })
+  it('장치가 멈춰 있고 깨우기가 거절되는 동안 켜면: 켬 상태가 되지만 확인음은 없고, 다음 요청이 깨운 뒤에 이어지는 소리가 시작된다', async () => {
+    const { ctx, sound } = make()
+    sound.setEnabled(true); sound.setEnabled(false)
+    const n = started(ctx)
+    ctx.state = 'interrupted'
+    ctx.failResume = true
+    sound.setAmbience(true)
+    sound.setEnabled(true)
+    await flush()
+    expect(sound.enabled).toBe(true)
+    expect(started(ctx)).toBe(n) // 확인음도 배경 소음도 아직 없다
+    ctx.failResume = false
+    sound.play('tap') // 이 소리는 버리지만 장치를 깨운다
+    await flush()
+    expect(ctx.state).toBe('running')
+    expect(started(ctx)).toBe(n + 3) // 배경 소음(소음 두 줄 + 느린 떨림)만 시작된다. 버린 누름 소리와 놓친 확인음은 뒤늦게 나지 않는다
+  })
   it('깨우기를 브라우저가 거절해도 오류 없이 조용하고, 다음 요청 때 다시 깨운다', async () => {
     const { ctx, sound } = make()
     sound.setEnabled(true)
@@ -306,6 +333,31 @@ describe('LabSound — 끄면 예약해 둔 소리까지 사라진다', () => {
     expect(ev[0]).toEqual({ kind: 'set', v: 1, t: 1.5 })
     expect(ev[1]!.v).toBe(0)
     expect(ev[1]!.t).toBeCloseTo(1.5 + OFF_FADE, 9)
+  })
+  it('줄이는 도중(끈 지 0.05초 안)에 다시 켜면 옛 단자를 떼어 내지 않는다 — 떼면 뚝 끊기는 소리가 난다. 그대로 두면 스스로 0이 된다', () => {
+    const { ctx, sound, main, buses } = on()
+    ctx.currentTime = 1
+    sound.play('liftLong')
+    const old = buses()[0]!
+    sound.setEnabled(false) // 1초에 줄이기 시작해 1.05초에 0
+    ctx.currentTime = 1.02
+    sound.setEnabled(true)
+    expect(old.to).toContain(main)
+    expect(old.gain.events.map((e) => [e.kind, e.v])).toEqual([['set', 1], ['lin', 0]])
+    expect(buses().length).toBe(2)
+    expect(buses()[1]).not.toBe(old)
+  })
+  it('멈춰 있는 장치에서 끈 뒤 다시 켜면(줄일 시간이 흐르지 않았다) 옛 단자를 바로 떼어 낸다', async () => {
+    const { ctx, sound, main, buses } = on()
+    ctx.currentTime = 1
+    sound.play('liftLong')
+    const old = buses()[0]!
+    ctx.state = 'suspended'
+    sound.setEnabled(false)
+    sound.setEnabled(true) // 시계는 그대로 1초다
+    expect(old.to).not.toContain(main)
+    await flush()
+    expect(buses().length).toBe(1)
   })
   it('다시 켜면 새 단자를 달고 옛 단자는 떼어 낸다 — 끄기 전에 낸 소리가 돌아오지 않는다', () => {
     const { ctx, sound, main, buses } = on()
