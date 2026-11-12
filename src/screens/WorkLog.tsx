@@ -7,7 +7,7 @@ import type { TaskRun } from '../domain/taskEngine'
 import { summarizeResponses } from '../domain/grading'
 import { requestCopy } from '../app/requests'
 import { workLogGroups } from '../app/workLog'
-import { prefersReducedMotion, reactionsFor } from '../app/reactions'
+import { prefersReducedMotion, resultReaction } from '../app/reactions'
 import type { LabSound } from '../scene/sound'
 
 /** 종이 조각 수 */
@@ -15,7 +15,8 @@ const CONFETTI = 14
 
 /** k번째 종이 조각: 자리·늦춤·길이·옆으로 흐르는 폭을 조각마다 다르게(늦춤 + 길이는 1.5초 이하). 짝수는 네모, 홀수는 동그라미 */
 function confettiStyle(k: number): CSSProperties {
-  return { left: `${3 + k * 7}%`, animationDelay: `${(k % 5) * 0.05}s`, animationDuration: `${1 + (k % 3) * 0.15}s`, '--dx': `${((k * 37) % 41) - 20}px` } as CSSProperties
+  const style: CSSProperties & { '--dx': string } = { left: `${3 + k * 7}%`, animationDelay: `${(k % 5) * 0.05}s`, animationDuration: `${1 + (k % 3) * 0.15}s`, '--dx': `${((k * 37) % 41) - 20}px` }
+  return style
 }
 
 export function WorkLog({ run, passed, nickname, sound }: {
@@ -27,7 +28,8 @@ export function WorkLog({ run, passed, nickname, sound }: {
 }) {
   const copy = requestCopy(run.task.taskId)
   const groups = workLogGroups(summarizeResponses(run.responses))
-  const reaction = useMemo(() => (passed ? reactionsFor('inspectionPassed', { reducedMotion: prefersReducedMotion(), sound: !!sound?.enabled }) : null), [passed, sound])
+  // 결과 화면에는 소리 버튼이 없어서 켬 상태가 이 화면에서는 바뀌지 않는다. 그래서 처음 그릴 때의 값을 한 번 읽어 쓴다(설계 2026-11-12 §4.6)
+  const reaction = useMemo(() => resultReaction(passed, { reducedMotion: prefersReducedMotion(), sound: !!sound?.enabled }), [passed, sound])
   const fx = reaction?.effects ?? []
   // 도장 소리와 축하음: 이 화면이 뜰 때 한 번만 낸다(통과가 아니면 아무 소리도 없다)
   const played = useRef(false)

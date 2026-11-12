@@ -2,7 +2,8 @@
 import { readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { resultReaction } from '../src/app/reactions'
 import { listTasks } from '../src/app/session'
 import { createTaskRun } from '../src/domain/taskEngine'
 import { WorkLog } from '../src/screens/WorkLog'
@@ -42,18 +43,52 @@ describe('WorkLog — 통과 연출', () => {
   })
 })
 
+describe('WorkLog — 움직임 줄이기', () => {
+  afterEach(() => { vi.unstubAllGlobals() })
+  it('통과: 도장은 찍혀 있고(정지 표시) 내려앉는 움직임과 종이 조각은 없다', () => {
+    vi.stubGlobal('window', { matchMedia: () => ({ matches: true }) })
+    const h = html(true)
+    expect(h).toContain('>의뢰 완료</span>')
+    expect(h).toContain('<span class="wl-stamp ">')
+    expect(h).not.toContain('wl-stamp anim')
+    expect(h).not.toContain('wl-confetti')
+  })
+})
+
+describe('resultReaction — 결과 화면에서 낼 반응(값으로)', () => {
+  const motion = { reducedMotion: false }
+  it('통과가 아니면 아무것도 없다: 연출도 소리도(아쉬움을 알리는 소리는 넣지 않는다)', () => {
+    expect(resultReaction(false, { ...motion, sound: true })).toBeNull()
+    expect(resultReaction(false, { ...motion, sound: false })).toBeNull()
+  })
+  it('통과이고 소리를 켠 채 넘어왔으면 도장 소리(0.3초 뒤)와 축하음(0.55초 뒤)', () => {
+    const r = resultReaction(true, { ...motion, sound: true })!
+    expect(r.cues).toEqual([{ name: 'stamp', delay: 0.3 }, { name: 'celebrate', delay: 0.55 }])
+    expect(r.effects).toEqual(['stamp', 'confetti'])
+  })
+  it('통과여도 소리가 꺼져 있으면 소리는 없고 연출만 있다', () => {
+    const r = resultReaction(true, { ...motion, sound: false })!
+    expect(r.cues).toEqual([])
+    expect(r.effects).toEqual(['stamp', 'confetti'])
+  })
+  it('움직임 줄이기에서는 도장만 남는다. 소리는 움직임 줄이기와 무관하게 켬 상태만 따른다', () => {
+    const r = resultReaction(true, { reducedMotion: true, sound: true })!
+    expect(r.effects).toEqual(['stamp'])
+    expect(r.cues.map((c) => c.name)).toEqual(['stamp', 'celebrate'])
+  })
+})
+
 describe('결과 화면의 소리 — 켠 채 넘어왔을 때만, 화면이 뜰 때 한 번', () => {
   const log = read('src/screens/WorkLog.tsx')
   it('규칙표에 소리 켬을 넘기고, 규칙표가 준 소리를 그대로 낸다(도장 0.3초, 축하음 0.55초)', () => {
-    expect(log).toContain("reactionsFor('inspectionPassed', { reducedMotion: prefersReducedMotion(), sound: !!sound?.enabled })")
+    expect(log).toContain('const reaction = useMemo(() => resultReaction(passed, { reducedMotion: prefersReducedMotion(), sound: !!sound?.enabled }), [passed, sound])')
     expect(log).toContain('for (const c of reaction.cues) sound.play(c.name, c.delay)')
     expect(log.match(/sound\.play\(/g)).toHaveLength(1)
   })
   it('통과가 아니면 소리를 부르지 않고, 다시 그려져도 한 번만 낸다', () => {
     expect(log).toContain('if (played.current || !reaction || !sound) return')
     expect(log).toContain('played.current = true')
-    expect(log).toContain('const reaction = useMemo(() => (passed ? reactionsFor(')
-    expect(log).toContain(') : null), [passed, sound])')
+    expect(log.match(/useEffect\(/g)).toHaveLength(1) // 소리를 내는 효과 하나뿐
   })
   it('앱이 결과 화면에 소리 엔진을 넘기고, 결과 화면이 정비 일지에 넘긴다', () => {
     expect(read('src/App.tsx')).toMatch(/<ResultScreen sound=\{sound\} /)

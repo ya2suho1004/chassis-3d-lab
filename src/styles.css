@@ -576,8 +576,8 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 
 /* 손맛(설계 2026-11-12 §4.3): 진행 점 줄 — 끝난 수만큼 왼쪽부터 채운다. 주황은 쓰지 않는다(안전 경고와 헷갈리지 않게) */
 .g-progress { display:flex; align-items:center; gap:8px; }
-.g-dots { display:inline-flex; gap:4px; }
-.g-dots i { width:8px; height:8px; border-radius:50%; box-sizing:border-box; border:1.5px solid currentColor; opacity:.55; }
+.g-dots { display:inline-flex; gap:4px; flex-wrap:wrap; }
+.g-dots i { width:8px; height:8px; border-radius:50%; box-sizing:border-box; border:1.5px solid currentColor; opacity:.85; }
 .g-dots i.on { background:var(--wa-navy); border-color:var(--wa-navy); opacity:1; }
 .g-dots i.new { animation:g-dot .3s ease-out; }
 @keyframes g-dot { 0% { transform:scale(1.9) } 100% { transform:scale(1) } }

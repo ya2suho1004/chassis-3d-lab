@@ -38,6 +38,11 @@ export function reactionsFor(ev: ReactionEvent, o: { reducedMotion: boolean; sou
   return { effects: o.reducedMotion ? r.still : r.effects, cues: o.sound ? r.cues : [] }
 }
 
+/** 결과 화면의 반응: 검사 통과일 때만 있다. 통과가 아니면 연출도 소리도 없다 — 아쉬움을 알리는 반응은 넣지 않는다(설계 2026-11-12 §4.6) */
+export function resultReaction(passed: boolean, o: { reducedMotion: boolean; sound: boolean }): Reaction | null {
+  return passed ? reactionsFor('inspectionPassed', o) : null
+}
+
 /** 새로 끝난 단계 하나 → 사건들. advanced는 끝난 단계 수가 늘었는지(종료 단계의 하위 행동은 늘지 않는다) */
 export function eventsForStep(stepId: string, advanced: boolean): ReactionEvent[] {
   const out: ReactionEvent[] = []

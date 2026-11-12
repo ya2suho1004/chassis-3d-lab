@@ -19,6 +19,9 @@ describe('ProgressDots', () => {
     expect(h).toContain('<span class="g-dots" aria-hidden="true">')
     expect(h).toContain('<span class="g-count">3/12<span class="sr-only"> 단계 완료</span></span>')
   })
+  it('끝난 수가 단계 수를 넘어도 마지막 점 하나만 튄다', () => {
+    expect(dots(html(99, 4, true))).toEqual(['on', 'on', 'on', 'on new'])
+  })
   it('새로 채워진 점 하나만 튄다', () => {
     expect(dots(html(3, 12, true))).toEqual(['on', 'on', 'on new', '', '', '', '', '', '', '', '', ''])
     expect(dots(html(3, 12, false)).filter((c) => c.includes('new'))).toEqual([])
@@ -49,6 +52,9 @@ describe('진행 점 줄의 배선과 모양', () => {
   })
   it('채운 점은 남색이다. 주황은 쓰지 않는다(안전 경고와 헷갈리지 않게)', () => {
     expect(css).toContain('.g-dots i.on { background:var(--wa-navy); border-color:var(--wa-navy); opacity:1; }')
+    // 빈 점도 바탕과 구분된다(테두리의 불투명도 .85 — 크림 바탕에서 대비 3:1 이상). 단계가 많은 과제에서는 줄이 넘어간다
+    expect(css).toContain('.g-dots i { width:8px; height:8px; border-radius:50%; box-sizing:border-box; border:1.5px solid currentColor; opacity:.85; }')
+    expect(css).toContain('.g-dots { display:inline-flex; gap:4px; flex-wrap:wrap; }')
     const rules = css.split('\n').filter((l) => l.startsWith('.g-dots'))
     expect(rules.length).toBe(4)
     for (const l of rules) expect(l).not.toMatch(/orange|#f28c28|#b45f12/)

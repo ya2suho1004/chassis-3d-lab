@@ -317,7 +317,9 @@ async function finishPpe(b) {
  * 두 경우 모두 소리를 켜기 전에는 소리 장치를 만들지 않는지, 켠 뒤 첫 단계를 끝내는 동안 소리 부품을 몇 번 시작하는지 적는다(두 도움 방식에서 같아야 한다).
  */
 async function goal(base, outDir, name, quality, mode) {
-  const guided = mode !== 'unguided'
+  // 오타가 조용히 '안내 있음'으로 돌지 않게 한다
+  if (mode !== 'guided' && mode !== 'unguided') { console.log(`goal의 다섯째 인자는 guided 또는 unguided입니다(받은 값: ${mode})`); process.exit(1) }
+  const guided = mode === 'guided'
   const b = await launch(outDir)
   const out = { name, quality, mode: guided ? 'guided' : 'unguided', beacons: {}, arrows: [], shots: [] }
   const snap = async (tag, withHud) => { if (!withHud) await hud(b, false); await sleep(500); const f = `${name}-${quality}-goal-${guided ? '' : 'unguided-'}${tag}.png`; await b.shot(join(outDir, f)); out.shots.push(f); if (!withHud) await hud(b, true) }
@@ -386,15 +388,15 @@ const SOUND_MEASURE = `const fft = (re, im) => { const n = re.length; for (let i
  * 울리던 소리(긴 리프트)와 예약만 해 둔 소리(1.5초의 축하음)가 함께 사라져야 한다.
  * 화면 밖 장치는 예약을 모두 받은 뒤에 그리므로, 오르는 중에 멈춘 줄의 beforeDb는 실제(오르던 세기)보다 작게 나온다. 한도는 afterDb로 본다.
  */
-const SOUND_STOPS = `const sr = 44100, dur = 3.6
+const SOUND_STOPS = `const sr = 44100, dur = 3.6, START = 0.05
   const render = async (draw) => { const off = new OfflineAudioContext(2, sr * dur, sr), main = m.makeOutput(off); draw(off, main, m.makeNoise(off)); const buf = await off.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1)
     return (a, b) => { let p = 0; for (let i = Math.max(0, Math.round(a * sr)); i < Math.min(L.length, Math.round(b * sr)); i++) p = Math.max(p, Math.abs(L[i]), Math.abs(R[i])); return +(20 * Math.log10(p || 1e-9)).toFixed(1) } }
   const out = []
   for (const [name, stopAt, fade] of [['rollers', 2, 0.8], ['rollers', 2, 0.25], ['rollers', 0.4, 0.8], ['rollers', 0.045, 0.8], ['ambience', 2, 0.3], ['ambience', 0.65, 0.3], ['ambience', 0.045, 0.3]]) {
-    const peak = await render((ctx, main, noise) => { const o = { ctx, out: main, noise }; if (name === 'rollers') m.startRollers(o, 0.05)(stopAt, fade); else m.startAmbience(o, 0.05)(stopAt) })
-    out.push({ name, stopAt, fade, beforeDb: peak(0, stopAt), afterDb: peak(stopAt, dur), goneDb: peak(stopAt + fade + 0.1, dur) }) }
-  const peak = await render((ctx, main, noise) => { const bus = ctx.createGain(); bus.connect(main); const o = { ctx, out: bus, noise }; m.CUES.liftLong(o, 0.05); m.CUES.celebrate(o, 1.5); bus.gain.setValueAtTime(1, 0.5); bus.gain.linearRampToValueAtTime(0, 0.5 + m.OFF_FADE) })
-  out.push({ name: 'off', stopAt: 0.5, fade: m.OFF_FADE, beforeDb: peak(0, 0.5), afterDb: peak(0.5, dur), goneDb: peak(0.5 + m.OFF_FADE + 0.1, dur) })
+    const peak = await render((ctx, main, noise) => { const o = { ctx, out: main, noise }; if (name === 'rollers') m.startRollers(o, START)(stopAt, fade); else m.startAmbience(o, START)(stopAt) })
+    out.push({ name, startAt: START, stopAt, fade, beforeDb: peak(0, stopAt), afterDb: peak(stopAt, dur), goneDb: peak(stopAt + fade + 0.1, dur) }) }
+  const peak = await render((ctx, main, noise) => { const bus = ctx.createGain(); bus.connect(main); const o = { ctx, out: bus, noise }; m.CUES.liftLong(o, START); m.CUES.celebrate(o, 1.5); bus.gain.setValueAtTime(1, 0.5); bus.gain.linearRampToValueAtTime(0, 0.5 + m.OFF_FADE) })
+  out.push({ name: 'off', startAt: START, stopAt: 0.5, fade: m.OFF_FADE, beforeDb: peak(0, 0.5), afterDb: peak(0.5, dur), goneDb: peak(0.5 + m.OFF_FADE + 0.1, dur) })
   return out`
 /** 한도(설계 §4.4): 도장만 크고(−12~−9 dBFS) 나머지는 −16 dBFS 이하. 누름 계열 0.1초, 도장 0.15초, 완료 계열 0.2초, 축하음 0.7초 이하 */
 const SOUND_MS_LIMIT = { tap: 100, press: 100, pedal: 100, tick: 100, ppe: 100, step: 100, stamp: 150, stepDone: 200, codex: 200, celebrate: 700 }
@@ -414,11 +416,13 @@ async function sound(base, outDir, name) {
     const steady = Object.fromEntries(out.cues.map((c) => [c.name, c.peakDb]))
     for (const s of out.stops) {
       const what = `${s.name} 멈춤(${s.stopAt}초, 줄임 ${s.fade}초)`
-      const cap = s.stopAt < 0.05 ? -80 : (s.name === 'off' ? s.beforeDb : steady[s.name]) + 1
+      const cap = s.stopAt < s.startAt ? -80 : (s.name === 'off' ? s.beforeDb : steady[s.name]) + 1
       if (s.afterDb > cap) out.violations.push(`${what}: 멈춘 뒤 ${s.afterDb} dBFS(한도 ${cap})`)
       if (s.goneDb > -60) out.violations.push(`${what}: 줄인 뒤에도 ${s.goneDb} dBFS가 남음`)
     }
   } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
+  // 이 명령은 첫 화면만 열어 소리 모듈을 불러 쓴다. 그래도 쓰기 요청이 나갔다면(막았더라도) 알린다
+  if (out.blockedWrites?.length) out.violations.push(`쓰기 요청 ${out.blockedWrites.length}건을 막음`)
   writeFileSync(join(outDir, `${name}-sound.json`), JSON.stringify(out, null, 1))
   console.log(JSON.stringify(out))
   if (out.error || out.violations.length) process.exit(1)
