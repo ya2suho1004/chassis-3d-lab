@@ -153,7 +153,8 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   /** 소리(발소리·실습장 소음). 교실에서 여러 대가 함께 켜지므로 처음엔 끔 */
   const sound = useMemo(() => new LabSound(), [])
   const [soundOn, setSoundOn] = useState(false)
-  useEffect(() => () => sound.setEnabled(false), [sound])
+  // 배경 소음은 실습장에 있는 동안에만 깔린다(소리를 켰을 때)
+  useEffect(() => { sound.setAmbience(true); return () => { sound.setAmbience(false); sound.setEnabled(false) } }, [sound])
   const toggleSound = () => { const on = !soundOn; sound.setEnabled(on); setSoundOn(on) }
   const onStep = useCallback(() => sound.step(), [sound])
   /** 손맛 반응(설계 2026-11-06 §5, 2026-11-12 §4): 이미 일어난 일에 대한 연출만. 연출마다 켠 차례 번호가 바뀌면 CSS 애니메이션을 다시 건다 */
@@ -185,7 +186,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
     const firedAt = performance.now() // 상태 갱신 함수 안에서 시각을 읽지 않는다(갱신 함수는 두 번 돌 수 있다)
     for (const ev of eventsForStep(step, advanced)) {
       const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: soundOn })
-      if (r.cues.some((c) => c.name === 'tick')) sound.tick()
+      for (const c of r.cues) sound.play(c.name, c.delay)
       setFx((f) => addEffects(f, r.effects, firedAt))
     }
     const action = actionForStep(step)
