@@ -18,6 +18,10 @@ describe('nextHighlightId — 3D 다음 장비 강조', () => {
     expect(nextHighlightId(runOf(turning, 'unguided'))).toBeNull()
     expect(nextHighlightId(runOf(braking, 'unguided'))).toBeNull()
   })
+  it('시간 제한 평가에서도 강조하지 않는다(목적지 표식은 안내 있음에서만 — 설계 2026-11-12 §4.5)', () => {
+    expect(nextHighlightId(createTaskRun(turning, { difficultyMode: 'timedAssessment' }))).toBeNull()
+    expect(nextHighlightId(createTaskRun(braking, { difficultyMode: 'timedAssessment' }))).toBeNull()
+  })
   it('과제 전이면 강조 없음', () => {
     expect(nextHighlightId(null)).toBeNull()
   })

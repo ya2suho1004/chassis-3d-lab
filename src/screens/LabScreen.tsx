@@ -1,6 +1,6 @@
 // 실습장 화면 — 3D 장면 + HUD(도감·장비 카드·NPC 대화) + 과제 패널(TaskScreen) 연결
 import type { RecordPayload } from '../domain/record'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import rawLayout from '../data/layout/layout.dev-provisional.json'
 import type { SessionContext } from '../domain/record'
 import { changeDisplayMode, type TaskRun } from '../domain/taskEngine'
@@ -16,6 +16,8 @@ import { eventsForStep, prefersReducedMotion, reactionsFor, type ReactionEvent }
 import { rigEvents, type RigLook } from '../app/feelEvents'
 import { isPressTarget } from '../app/feelZones'
 import { NPC_TAP_RADIUS, nextPulse, tapSpotOf, type TapPulse, type TapSpot } from '../scene/feel/tapPulse'
+import { buildTrack, type ArrowTrack } from '../scene/feel/edgeArrow'
+import { ARROW_PART_NAME, hudBoxes } from '../app/hudLayout'
 import { addEffects, dropExpired, EMPTY_FX, nextExpiry, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
 import { createFinishGate, type FinishGate } from '../app/finishGate'
 import { NOD_LINE } from '../app/requests'
@@ -61,6 +63,17 @@ const NOD_SCREEN_MS = 2300
 
 /** 안내 줄용 장비 이름: 괄호 설명을 빼서 한 줄에 들어가게 한다(3D 이름표에는 전체 이름이 있다) */
 const shortLabel = (label: string | undefined) => (label ?? '').replace(/\(.*\)/, '').trim()
+
+/**
+ * 목적지 방향 화살표가 다닐 띠(설계 2026-11-12 §4.5): 함께 떠 있는 HUD 부품(app/hudLayout.ts의 목록)의 자리를 재서 만든다.
+ * 화살표 자신은 뺀다. 화면을 덮는 창(작업 목록·질문 창·대화)이 열려 있으면 화살표를 그리지 않으므로 재지 않는다.
+ */
+function measureTrack(root: HTMLElement | null): ArrowTrack | null {
+  if (!root) return null
+  const r = root.getBoundingClientRect()
+  const boxes = hudBoxes(root).filter((b) => b.name !== ARROW_PART_NAME).map((b) => ({ x0: b.left - r.left, y0: b.top - r.top, x1: b.right - r.left, y1: b.bottom - r.top }))
+  return buildTrack({ w: r.width, h: r.height }, boxes)
+}
 
 export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
   /** 소리 엔진과 켬 상태(설계 2026-11-12 §4.7): App이 갖고 있어 결과 화면까지 이어진다. 교실에서 여러 대가 함께 켜지므로 처음엔 끔 */
@@ -283,6 +296,12 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   const selected = layout.equipment.find((e) => e.id === selectedId) ?? null
   /** 다음 단계 장비 강조 — 안내 있음일 때만(app/labGuide) */
   const requiredNow = nextHighlightId(run)
+  /** 목적지 방향 화살표(안내 있음): 요소와 띠. 띠는 화살표가 그려져 있을 때, 화면을 다시 그릴 때와 창 크기가 바뀔 때만 잰다 — 3D의 매 화면마다 재지 않는다 */
+  const goalArrow = useRef<HTMLDivElement>(null)
+  const arrowTrack = useRef<ArrowTrack | null>(null)
+  const [, setResized] = useState(0)
+  useEffect(() => { const on = () => setResized((n) => n + 1); window.addEventListener('resize', on); return () => window.removeEventListener('resize', on) }, [])
+  useLayoutEffect(() => { arrowTrack.current = measureTrack(goalArrow.current?.parentElement ?? null) })
   const displayMode = run?.displayMode ?? 'threeD'
   /** 이름표: 게임 화면 기본은 '가까운 것만'(먼 작동 장비는 ◆), 기본 화면은 둘러보기 전체·과제 중 필요한 것만 */
   const labelMode: LabelMode = labelChoice ?? (uiStyle === 'game' ? 'near' : run ? 'focus' : 'all')
@@ -377,11 +396,13 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} npcNod={!!nodding} viewMode={viewMode} playerPos={pos} onAim={setAimId}
-            glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep} tapPulse={tapPulse}
+            glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep} tapPulse={tapPulse} goalArrow={goalArrow} arrowTrack={arrowTrack}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
             onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording} />
         </div>
+        {/* 목적지 방향 화살표(안내 있음): 걷기 조작이 되는 상태에서만 그린다. 자리와 방향은 3D 쪽(GoalBeacon)이 매 화면 정한다 */}
+        {requiredNow && !talking && !viewing && !practicing && !recording && !drawerOpen && !chatOpen && <div ref={goalArrow} className="g-goalarrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 4l15 8-15 8 4-8z" fill="currentColor" /></svg></div>}
 
         {!talking && (
           <>

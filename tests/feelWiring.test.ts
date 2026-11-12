@@ -167,3 +167,73 @@ describe('도감(설계 §4.1·§4.3)', () => {
     expect(read('src/styles.css')).toContain('@media (prefers-reduced-motion: reduce) { .g-codex.pop, .g-chip { animation:none } }')
   })
 })
+
+describe('목적지 표식(설계 §4.5) — 안내 있음에서만', () => {
+  const scene = read('src/scene/LabScene.tsx')
+  const beacon = read('src/scene/feel/GoalBeacon.tsx')
+  const css = read('src/styles.css')
+  test('실습 화면은 표식에 쓸 장비를 nextHighlightId에서만 얻는다(안내 없음·시간 제한 평가·둘러보기에서는 값이 없다)', () => {
+    expect(lab).toContain('const requiredNow = nextHighlightId(run)')
+    expect(lab.match(/highlightIds=\{requiredNow \? \[requiredNow\] : \[\]\}/g)).toHaveLength(2)
+    expect(lab.match(/highlightIds=/g)).toHaveLength(2)
+  })
+  test('장면은 그 값으로만 표식을 붙인다. 값이 없으면 표식 물체가 장면에 없다', () => {
+    expect(scene).toContain('const goalId = highlightIds[0] ?? null')
+    expect(scene).toContain('const goal = useMemo(() => goalSpotOf(layout.equipment, goalId), [layout, goalId])')
+    expect(scene).toContain('{goal && <GoalBeacon x={goal.x} z={goal.z} w={goal.w} d={goal.d} h={goal.h} hidden={camBusy} arrow={goalArrow} track={arrowTrack} />}')
+    expect(scene.match(/<GoalBeacon /g)).toHaveLength(1)
+  })
+  test('파랑은 목적지 표식에만 쓴다: 예전 파란 바닥 테두리를 떼고, 시험기 선택 테두리는 다른 장비처럼 주황', () => {
+    expect(scene).not.toContain('#2d6cdf')
+    expect(scene).toContain('{selected && <FootprintFrame w={w} d={d} color="#ff9800" />}')
+    expect(scene).toContain('{testerSelected && <FootprintFrame w={tester.w} d={tester.d} color="#ff9800" />}')
+    expect(scene).toContain('testerSelected={selectedId === tester.id}')
+    expect(scene).not.toContain('testerHighlight')
+    expect(beacon).toContain("const GOAL_COLOR = '#2d6cdf'")
+  })
+  test('가까이 보기 중에는 표식과 화살표를 숨긴다(눈금을 가리지 않게)', () => {
+    expect(beacon).toContain('<group name="goalBeacon" position={[x, 0, z]} visible={!hidden}>')
+    expect(beacon).toContain('if (hidden || !tr) { hideArrow(el); last.current = null; return }')
+    expect(beacon).toContain("const hideArrow = (el: HTMLDivElement): void => { if (el.style.visibility !== 'hidden') { el.style.opacity = '0'; el.style.visibility = 'hidden' } }")
+  })
+  test('표식의 부품은 미리 만들어 두고 매 화면에는 값만 바꾼다. 바닥 테두리 도형만 목적지 크기가 바뀔 때 새로 만들고 앞의 것은 버린다', () => {
+    expect(beacon).toMatch(/const fixed = useMemo\(\(\) => \(\{\n[\s\S]+?\n  \}\), \[\]\)/)
+    expect(beacon).toMatch(/const frameGeo = useMemo\(\(\) => \{\n[\s\S]+?\n  \}, \[w, d\]\)/)
+    expect(beacon).toContain('useEffect(() => () => frameGeo.dispose(), [frameGeo])')
+    expect(beacon).toContain('useEffect(() => () => { for (const p of Object.values(fixed)) p.dispose() }, [fixed])')
+    const frame = beacon.slice(beacon.indexOf('useFrame('), beacon.indexOf('return ('))
+    expect(frame).not.toMatch(/new THREE|useMemo|useState/)
+    expect(frame).not.toMatch(/placeEdgeArrow\(\{/) // 화면 좌표를 담는 그릇도 화면마다 새로 만들지 않는다
+  })
+  test('표식은 색 보정·그림자·깊이 기록에서 빠진다(그림자를 만들지도 받지도 않는다)', () => {
+    expect(beacon.match(/toneMapped: false/g)).toHaveLength(4)
+    expect(beacon).not.toMatch(/castShadow|receiveShadow/)
+  })
+  test('움직임 줄이기에서는 표식이 멈춰 있다', () => {
+    expect(beacon).toContain('const still = prefersReducedMotion()')
+    expect(beacon).toMatch(/still \? /)
+  })
+  test('방향 화살표: 게임 화면이 요소와 띠를 주고, 3D의 매 화면에는 모양 값만 바꾼다(React 상태를 쓰지 않는다)', () => {
+    expect(lab).toContain('const goalArrow = useRef<HTMLDivElement>(null)')
+    expect(lab).toContain('const arrowTrack = useRef<ArrowTrack | null>(null)')
+    expect(lab).toContain('goalArrow={goalArrow} arrowTrack={arrowTrack}')
+    expect(lab.match(/goalArrow=\{goalArrow\}/g)).toHaveLength(1) // 게임 화면에서만. 기본 화면에는 "다음 단계 장비로 이동" 글이 있다
+    expect(beacon).toContain('el.style.transform = `translate(${a.x.toFixed(1)}px, ${a.y.toFixed(1)}px) translate(-50%, -50%) rotate(${a.angle.toFixed(3)}rad)`')
+    // 앞 화면의 자리를 이어받는다: 경계에서 깜빡이거나 가운데 요소의 양 끝을 오가지 않게(계산은 tests/edgeArrow.test.ts)
+    expect(beacon).toContain('const a = placeEdgeArrow(probe, tr, last.current)\n    last.current = a')
+    expect(beacon).toContain('if (!el) { last.current = null; return }')
+    expect(beacon).toContain('useEffect(() => { last.current = null }, [x, z])') // 목적지가 바뀌면 비운다
+  })
+  test('화살표는 걷기 조작이 되는 상태에서만 그린다(대화·가까이 보기·연습·기록 창·작업 목록·질문 창에서는 없다). 누를 수 없고 낭독에서 뺀다', () => {
+    expect(lab).toContain('{requiredNow && !talking && !viewing && !practicing && !recording && !drawerOpen && !chatOpen && <div ref={goalArrow} className="g-goalarrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 4l15 8-15 8 4-8z" fill="currentColor" /></svg></div>}')
+    expect(css).toMatch(/\.g-goalarrow \{[^}]*pointer-events:none; visibility:hidden; opacity:0;[^}]*\}/)
+    expect(css).toMatch(/\.g-goalarrow \{[^}]*z-index:3;[^}]*\}/) // 캔버스(0) 위, HUD(4 이상) 아래
+  })
+  test('띠는 화살표가 그려져 있을 때, 화면을 다시 그릴 때와 창 크기가 바뀔 때만 잰다. 함께 떠 있는 HUD 부품을 재고 화살표 자신은 뺀다', () => {
+    expect(lab).toContain('useLayoutEffect(() => { arrowTrack.current = measureTrack(goalArrow.current?.parentElement ?? null) })')
+    expect(lab).toMatch(/window\.addEventListener\('resize', on\)/)
+    const fn = lab.slice(lab.indexOf('function measureTrack('), lab.indexOf('export function LabScreen('))
+    expect(fn).toContain('const boxes = hudBoxes(root).filter((b) => b.name !== ARROW_PART_NAME).map((b) => ({ x0: b.left - r.left, y0: b.top - r.top, x1: b.right - r.left, y1: b.bottom - r.top }))')
+    expect(fn).toContain('return buildTrack({ w: r.width, h: r.height }, boxes)')
+  })
+})
