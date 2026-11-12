@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>손맛 소리 시안</title>
+<style>
+  :root { --bg:#f6f1ea; --card:#fffdf9; --ink:#2b2622; --sub:#6d635a; --line:#e2d8cc; --btn:#fff; --btn-on:#ffe9c7; --accent:#b45f12; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1e1b18; --card:#28241f; --ink:#f1ebe3; --sub:#b3a797; --line:#3a342d; --btn:#322d27; --btn-on:#5a4424; --accent:#f0b469; } }
+  * { box-sizing:border-box } body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+  main { max-width:860px; margin:0 auto; padding:20px 16px 48px; }
+  h1 { font-size:22px; margin:4px 0 6px } h2 { font-size:16px; margin:0 0 4px } p { margin:6px 0 } .sub { color:var(--sub); font-size:14px }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 14px 10px; margin-top:14px }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:10px; margin-top:10px }
+  button { font:inherit; color:var(--ink); background:var(--btn); border:1px solid var(--line); border-radius:10px; padding:12px 12px 10px; text-align:left; cursor:pointer; min-height:64px }
+  button b { display:block } button span { display:block; color:var(--sub); font-size:13px; margin-top:2px }
+  button:active, button.on { background:var(--btn-on); border-color:var(--accent) }
+  .bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap } input[type=range] { flex:1; min-width:160px; accent-color:var(--accent) }
+  ul { margin:6px 0 0; padding-left:20px } li { margin:2px 0 }
+</style></head><body><main>
+<h1>손맛 소리 시안</h1>
+<p>버튼을 누르면 그 소리가 납니다. 녹음 파일 없이 모두 코드로 만든 소리이고, 실습장에서는 지금처럼 <b>소리 버튼을 켠 사람에게만</b> 들립니다.</p>
+<p class="sub">기기 음량을 중간쯤에 두고, 태블릿 스피커와 이어폰에서 각각 들어 보시면 좋습니다. 거슬리는 소리, 너무 크거나 작은 소리, 장난감 같은 소리를 알려 주세요.</p>
+<section><div class="bar"><b>전체 음량</b><input id="vol" type="range" min="0" max="100" value="80" aria-label="전체 음량"><span id="volv" class="sub">80</span></div></section>
+<section><h2>누름</h2><p class="sub">"눌렸다"까지만 알립니다. 안내 있음·안내 없음에서 똑같이 납니다.</p><div class="grid">
+  <button data-cue="tap"><b>장비를 누름</b><span>3D 장비를 눌러 고를 때</span></button>
+  <button data-cue="press"><b>화면 버튼</b><span>작업 버튼, 계기 보기 등을 누를 때</span></button>
+</div></section>
+<section><h2>움직이는 장비</h2><p class="sub">화면에 보이는 움직임에 붙습니다. 측정값이 무엇이든 늘 같은 소리입니다.</p><div class="grid">
+  <button data-cue="lift"><b>리프트</b><span>올리거나 내릴 때(끝에 '탁')</span></button>
+  <button data-cue="vehicle"><b>차량 이동</b><span>시험기로 들어오거나 나갈 때</span></button>
+  <button id="rollers"><b>롤러 회전 — 켜기</b><span>모터를 켠 동안 이어지고, 끄면 서서히 멈춤</span></button>
+  <button data-cue="pedal"><b>브레이크 페달</b><span>페달 밟기 단계를 했을 때</span></button>
+  <button data-cue="tick"><b>핸들 끝 '딸깍'</b><span>핸들이 조작 한계에 닿을 때(지금 있는 소리를 부드럽게)</span></button>
+</div></section>
+<section><h2>끝났을 때</h2><p class="sub">지금도 화면이 알려 주는 그 순간에만 납니다. 정답인지 아닌지는 알려 주지 않습니다(도장은 교관 검사를 통과한 결과 화면에서만).</p><div class="grid">
+  <button data-cue="stepDone"><b>단계 완료</b><span>진행 표시가 한 칸 오를 때</span></button>
+  <button data-cue="ppe"><b>보호구 착용</b><span>보호구를 썼을 때</span></button>
+  <button data-cue="codex"><b>도감 등록</b><span>장비를 처음 살펴봤을 때</span></button>
+  <button data-cue="stamp"><b>'의뢰 완료' 도장</b><span>결과 화면, 검사 통과일 때만</span></button>
+  <button data-cue="celebrate"><b>도장 뒤 축하</b><span>종이 조각이 날릴 때</span></button>
+  <button id="finale"><b>도장 + 축하 이어서</b><span>결과 화면에서 실제로 나는 순서</span></button>
+</div></section>
+<section><h2>걷기와 배경</h2><div class="grid">
+  <button id="steps"><b>발소리 네 걸음</b><span>걸을 때(지금 있는 소리를 태블릿에서 들리게)</span></button>
+  <button id="amb"><b>실습장 배경 소음 — 켜기</b><span>낮은 웅웅거림, 환풍기, 가끔 먼 공구 소리</span></button>
+</div></section>
+<section><h2>넣지 않는 것</h2><ul class="sub">
+  <li>정답·오답에 따라 달라지는 소리</li><li>다음에 갈 장비를 알려 주는 소리</li><li>측정값(좌우 제동력 등)에 따라 달라지는 소리</li><li>음악</li>
+</ul></section>
+</main>
+<script>
+// 손맛 소리 시안(묶음 다, 2026-11-12): 녹음 파일 없이 Web Audio로 만든다. 구현 때 src로 옮길 바탕.
+// 규칙: 소리는 '이미 일어난 일'에만 붙고, 측정값·정답·다음 단계에 따라 달라지지 않는다. 모두 짧고 작다(도장만 크다).
+(function (root) {
+  const env = (g, t, peak, a, d) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d) }
+  class FeelSound {
+    constructor(ctx) {
+      this.ctx = ctx
+      this.out = ctx.createGain(); this.out.gain.value = 0.9
+      // 여러 소리가 겹쳐도 찢어지지 않게 눌러 준다
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15
+      this.out.connect(comp).connect(ctx.destination)
+      const len = Math.floor(ctx.sampleRate * 2); this.noise = ctx.createBuffer(1, len, ctx.sampleRate)
+      const d = this.noise.getChannelData(0); let s = 12345
+      for (let i = 0; i < len; i++) { s = (s * 16807) % 2147483647; d[i] = (s / 2147483647) * 2 - 1 }
+      this.loops = {}
+    }
+    blip(t, o) {
+      const c = this.ctx, osc = c.createOscillator(), g = c.createGain(), a = o.a ?? 0.004
+      osc.type = o.type ?? 'sine'; osc.frequency.setValueAtTime(o.f0, t); if (o.f1) osc.frequency.exponentialRampToValueAtTime(o.f1, t + a + o.d)
+      env(g, t, o.peak, a, o.d)
+      let node = osc
+      if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; osc.connect(f); node = f }
+      node.connect(g).connect(this.out); osc.start(t); osc.stop(t + a + o.d + 0.03)
+    }
+    burst(t, o) {
+      const c = this.ctx, src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), a = o.a ?? 0.002
+      src.buffer = this.noise; f.type = o.type ?? 'bandpass'; f.Q.value = o.q ?? 1
+      f.frequency.setValueAtTime(o.f0, t); if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, t + a + o.d)
+      env(g, t, o.peak, a, o.d); src.connect(f).connect(g)
+      if (o.pan !== undefined && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = o.pan; g.connect(p).connect(this.out) } else g.connect(this.out)
+      src.start(t, (o.at ?? 0.37) % 1.5, a + o.d + 0.05)
+    }
+    /** 이름으로 한 번 내는 소리 */
+    play(name, when) {
+      const t = when ?? this.ctx.currentTime + 0.01
+      const C = CUES[name]; if (!C) throw new Error('모르는 소리: ' + name)
+      C.call(this, t)
+    }
+    /** 이어지는 소리(롤러 회전). 켜면 서서히 올라가고 끄면 서서히 멈춘다 */
+    startLoop(name) {
+      if (name !== 'rollers' || this.loops.rollers) return
+      const c = this.ctx, t = c.currentTime + 0.01
+      const o1 = c.createOscillator(), o2 = c.createOscillator(), mix = c.createGain(), lp = c.createBiquadFilter(), trem = c.createGain(), lfo = c.createOscillator(), lfoG = c.createGain(), g = c.createGain()
+      const o3 = c.createOscillator(), o4 = c.createOscillator(); o1.type = 'sawtooth'; o2.type = 'square'; o3.type = 'triangle'; o4.type = 'triangle'; lp.type = 'lowpass'; lp.frequency.value = 1200
+      for (const [o, f] of [[o1, 62], [o2, 124], [o3, 248], [o4, 372]]) { o.frequency.setValueAtTime(f * 0.45, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.9) }
+      const g1 = c.createGain(), g2 = c.createGain(), g3 = c.createGain(), g4 = c.createGain(); g1.gain.value = 0.3; g2.gain.value = 0.25; g3.gain.value = 1.0; g4.gain.value = 0.7
+      o1.connect(g1).connect(mix); o2.connect(g2).connect(mix); o3.connect(g3).connect(mix); o4.connect(g4).connect(mix)
+      lfo.frequency.value = 9; lfoG.gain.value = 0.22; trem.gain.value = 0.78; lfo.connect(lfoG).connect(trem.gain)
+      const n = c.createBufferSource(), nf = c.createBiquadFilter(), ng = c.createGain(); n.buffer = this.noise; n.loop = true; nf.type = 'bandpass'; nf.frequency.value = 620; nf.Q.value = 0.7; ng.gain.value = 1.1
+      n.connect(nf).connect(ng).connect(trem)
+      mix.connect(lp).connect(trem).connect(g).connect(this.out)
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.7)
+      for (const x of [o1, o2, o3, o4, lfo, n]) x.start(t)
+      this.loops.rollers = { o1, o2, o3, o4, lfo, n, g }
+    }
+    /** 실습장 배경 소음: 낮은 웅웅거림 + 환풍기 바람 + 가끔 멀리서 공구 부딪는 소리 */
+    setAmbience(on) {
+      const c = this.ctx
+      if (on && !this.amb) {
+        const t = c.currentTime + 0.01, g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1, t + 1.2); g.connect(this.out)
+        const mk = (type, f, q, gain) => { const n = c.createBufferSource(), bf = c.createBiquadFilter(), ng = c.createGain(); n.buffer = this.noise; n.loop = true; bf.type = type; bf.frequency.value = f; bf.Q.value = q; ng.gain.value = gain; n.connect(bf).connect(ng).connect(g); n.start(t, Math.random()); return { n, ng } }
+        const hum = mk('lowpass', 260, 0.7, 0.05), air = mk('bandpass', 650, 0.5, 0.016)
+        const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.13; lg.gain.value = 0.006; lfo.connect(lg).connect(air.ng.gain); lfo.start(t)
+        const clank = () => { if (!this.amb) return; const tt = c.currentTime + 0.01, pan = Math.random() * 1.6 - 0.8
+          for (const f of [1750 + Math.random() * 300, 2650 + Math.random() * 300]) { const o = c.createOscillator(), og = c.createGain(), p = c.createStereoPanner(); o.frequency.value = f; p.pan.value = pan; env(og, tt, 0.012, 0.005, 0.7); o.connect(og).connect(p).connect(this.out); o.start(tt); o.stop(tt + 0.75) }
+          this.amb.timer = setTimeout(clank, 9000 + Math.random() * 11000) }
+        this.amb = { g, nodes: [hum.n, air.n, lfo], timer: setTimeout(clank, 4000 + Math.random() * 4000) }
+      } else if (!on && this.amb) {
+        const a = this.amb, t = c.currentTime; this.amb = null; clearTimeout(a.timer)
+        a.g.gain.cancelScheduledValues(t); a.g.gain.setValueAtTime(Math.max(a.g.gain.value, 0.0001), t); a.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3)
+        for (const n of a.nodes) n.stop(t + 0.35)
+      }
+    }
+    stopLoop(name) {
+      const L = this.loops[name]; if (!L) return
+      const c = this.ctx, t = c.currentTime
+      L.g.gain.cancelScheduledValues(t); L.g.gain.setValueAtTime(Math.max(L.g.gain.value, 0.0001), t); L.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8)
+      for (const [o, f] of [[L.o1, 62], [L.o2, 124], [L.o3, 248], [L.o4, 372]]) { o.frequency.cancelScheduledValues(t); o.frequency.setValueAtTime(o.frequency.value, t); o.frequency.exponentialRampToValueAtTime(f * 0.4, t + 0.8) }
+      for (const x of [L.o1, L.o2, L.o3, L.o4, L.lfo, L.n]) x.stop(t + 0.85)
+      this.loops[name] = null
+    }
+  }
+  const CUES = {
+    // ── 누름(모든 모드에서 같다: "눌렸다"까지만)
+    tap(t) { this.burst(t, { f0: 1700, q: 0.9, peak: 0.10, d: 0.03 }); this.blip(t, { f0: 380, f1: 250, peak: 0.10, d: 0.06 }) },
+    press(t) { this.burst(t, { f0: 2100, q: 1.2, peak: 0.2, d: 0.016 }); this.burst(t + 0.06, { f0: 1300, q: 1.2, peak: 0.13, d: 0.022, at: 0.9 }) },
+    // ── 움직이는 장비(보이는 움직임에 붙는다. 측정값과 무관하게 늘 같다)
+    lift(t) {
+      const c = this.ctx, dur = 1.1, lp = c.createBiquadFilter(), g = c.createGain(); lp.type = 'lowpass'; lp.frequency.value = 1400
+      for (const f of [98, 147, 294]) { const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t); o.frequency.linearRampToValueAtTime(f * 1.08, t + dur); o.connect(lp); o.start(t); o.stop(t + dur + 0.15) }
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.04, t + 0.08); g.gain.setValueAtTime(0.04, t + dur - 0.1); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.05)
+      lp.connect(g).connect(this.out)
+      this.blip(t, { type: 'triangle', f0: 410, f1: 460, peak: 0.03, a: 0.1, d: dur - 0.1 }); this.blip(t, { f0: 820, f1: 920, peak: 0.01, a: 0.1, d: dur - 0.1 })
+      this.blip(t + dur, { f0: 230, f1: 120, peak: 0.14, d: 0.09 }); this.burst(t + dur, { f0: 900, q: 0.8, peak: 0.09, d: 0.03 })
+    },
+    vehicle(t) {
+      const c = this.ctx, dur = 1.5, n = c.createBufferSource(), nf = c.createBiquadFilter(), ng = c.createGain()
+      n.buffer = this.noise; nf.type = 'bandpass'; nf.frequency.value = 650; nf.Q.value = 0.6
+      ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.07, t + 0.25); ng.gain.setValueAtTime(0.07, t + dur - 0.5); ng.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+      n.connect(nf).connect(ng).connect(this.out); n.start(t, 0.2, dur + 0.05)
+      const lp = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain(); lp.type = 'lowpass'; lp.frequency.value = 800
+      for (const f of [78, 156, 234, 312]) { const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start(t); o.stop(t + dur + 0.05) }
+      lfo.frequency.value = 13; lg.gain.value = 0.012; lfo.connect(lg).connect(g.gain); lfo.start(t); lfo.stop(t + dur + 0.05)
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.03, t + 0.2); g.gain.setValueAtTime(0.03, t + dur - 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+      lp.connect(g).connect(this.out)
+    },
+    pedal(t) { this.blip(t, { type: 'triangle', f0: 520, f1: 330, peak: 0.09, d: 0.05 }); this.blip(t, { f0: 270, f1: 170, peak: 0.09, d: 0.07 }); this.burst(t, { f0: 900, q: 1, peak: 0.1, d: 0.03 }) },
+    tick(t) { this.blip(t, { type: 'triangle', f0: 1900, peak: 0.06, d: 0.03 }); this.blip(t + 0.045, { type: 'triangle', f0: 1450, peak: 0.05, d: 0.035 }) },
+    // ── 끝났음을 알리는 소리(지금도 화면이 알려 주는 그 순간에만)
+    stepDone(t) { this.blip(t, { type: 'triangle', f0: 659.26, peak: 0.09, d: 0.11, lp: 2400 }); this.blip(t + 0.085, { type: 'triangle', f0: 880, peak: 0.08, d: 0.16, lp: 2600 }) },
+    ppe(t) { this.burst(t, { f0: 2600, q: 3, peak: 0.08, d: 0.02 }); this.blip(t, { f0: 1180, peak: 0.05, d: 0.09 }); this.burst(t + 0.07, { f0: 1800, q: 2, peak: 0.05, d: 0.02, at: 0.8 }) },
+    codex(t) { this.burst(t, { f0: 3200, f1: 1400, q: 0.8, peak: 0.06, a: 0.01, d: 0.07 }); this.blip(t + 0.05, { f0: 1318.5, peak: 0.045, d: 0.22 }) },
+    stamp(t) { this.blip(t, { type: 'triangle', f0: 640, f1: 380, peak: 0.32, a: 0.003, d: 0.1 }); this.blip(t, { f0: 230, f1: 110, peak: 0.14, a: 0.003, d: 0.14 }); this.blip(t, { f0: 115, f1: 55, peak: 0.1, a: 0.003, d: 0.18 }); this.burst(t, { f0: 1100, q: 0.5, peak: 0.45, d: 0.07 }); this.burst(t + 0.012, { f0: 2600, q: 1, peak: 0.1, d: 0.03, at: 1.1 }) },
+    celebrate(t) {
+      for (const [dt, f] of [[0, 783.99], [0.11, 987.77], [0.22, 1174.66]]) this.blip(t + dt, { type: 'triangle', f0: f, peak: 0.07, d: 0.25, lp: 3000 })
+      this.blip(t + 0.33, { f0: 783.99, peak: 0.03, d: 0.5 }); this.blip(t + 0.33, { f0: 1174.66, peak: 0.025, d: 0.5 })
+      for (let k = 0; k < 6; k++) this.burst(t + 0.05 + k * 0.1, { f0: 4000, q: 2, peak: 0.02, d: 0.03, pan: (k % 2 ? 1 : -1) * (0.3 + 0.1 * k), at: 0.11 * k })
+    },
+    // ── 걷기(지금 있는 소리 그대로)
+    step(t) { this.burst(t, { f0: 520, q: 1.1, peak: 0.22, a: 0.008, d: 0.08 }); this.burst(t, { f0: 1100, q: 1.5, peak: 0.1, d: 0.035, at: 0.6 }); this.blip(t, { f0: 110, peak: 0.04, a: 0.01, d: 0.06 }) },
+  }
+  FeelSound.CUES = Object.keys(CUES)
+  root.FeelSound = FeelSound
+})(typeof window !== 'undefined' ? window : globalThis)
+
+</script>
+<script>
+let fs = null
+function engine() { if (!fs) { const AC = window.AudioContext || window.webkitAudioContext; fs = new FeelSound(new AC()); fs.out.gain.value = vol.value / 100 * 1.1 } if (fs.ctx.state === 'suspended') fs.ctx.resume(); return fs }
+const vol = document.getElementById('vol'), volv = document.getElementById('volv')
+vol.addEventListener('input', () => { volv.textContent = vol.value; if (fs) fs.out.gain.value = vol.value / 100 * 1.1 })
+for (const b of document.querySelectorAll('button[data-cue]')) b.addEventListener('click', () => engine().play(b.dataset.cue))
+document.getElementById('finale').addEventListener('click', () => { const e = engine(), t = e.ctx.currentTime + 0.02; e.play('stamp', t); e.play('celebrate', t + 0.28) })
+document.getElementById('steps').addEventListener('click', () => { const e = engine(), t = e.ctx.currentTime + 0.02; for (let k = 0; k < 4; k++) e.play('step', t + k * 0.42) })
+const toggle = (id, onLabel, offLabel, fn) => { const b = document.getElementById(id); let on = false; b.addEventListener('click', () => { on = !on; fn(engine(), on); b.classList.toggle('on', on); b.querySelector('b').textContent = on ? offLabel : onLabel }) }
+toggle('rollers', '롤러 회전 — 켜기', '롤러 회전 — 끄기', (e, on) => on ? e.startLoop('rollers') : e.stopLoop('rollers'))
+toggle('amb', '실습장 배경 소음 — 켜기', '실습장 배경 소음 — 끄기', (e, on) => e.setAmbience(on))
+</script>
+</body></html>
