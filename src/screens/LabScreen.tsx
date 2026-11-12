@@ -343,15 +343,19 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   /** 질문 창 닫기: 기록 창 위에서 열었으면 창 머리의 AI 질문 단추로 초점을 돌린다(Esc·Tab이 창 안에 머물게) */
   const closeChat = () => { setChatOpen(false); if (recording) setTimeout(() => document.querySelector<HTMLElement>('.g-record .rec-ai')?.focus({ preventScroll: true }), 0) }
 
+  /** 가까이 보기·연습·기록 창이 열린 동안에는 장면 누름에 반응하지 않는다 — 답을 읽고 적는 곳은 조용하다(설계 2026-11-12 §5-3·§5-9). 고르기와 도감 등록은 그대로 한다 */
+  const sceneQuiet = viewing || practicing || recording
   const selectEquipment = (id: string | null) => {
     setSelectedId(id)
     if (!id) return
     const e = layout.equipment.find((x) => x.id === id)
-    fire('sceneTap', e ? tapSpotOf(e) : undefined)
-    if (!codex.includes(id)) { setCodex([...codex, id]); fire('codexNew') }
+    if (!sceneQuiet) fire('sceneTap', e ? tapSpotOf(e) : undefined)
+    if (!codex.includes(id)) { setCodex([...codex, id]); if (!sceneQuiet) fire('codexNew') }
   }
   /** 교관을 눌렀다(3D에서 누르거나 1인칭 조준 버튼으로): 장면 누름 사건 */
-  const tapNpc = () => fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS })
+  const tapNpc = () => { if (!sceneQuiet) fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS }) }
+  /** '도감에 등록' 꼬리표: 둘러보기에서, 방금 등록한 그 장비의 카드에만 */
+  const chipOn = !!fx.on.codexChip && !run && !!selected && codex[codex.length - 1] === selected.id
   const toggleDisplay = () => {
     if (!run) return
     const r = changeDisplayMode(run, displayMode === 'threeD' ? 'diagram' : 'threeD', 'userChoice')
@@ -410,6 +414,8 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         {!talking && (
           <>
             <div className="g-status" data-feel="press">
+              {/* 화면 낭독용 알림 칸: 늘 있고 글자만 들어왔다 나간다(카드와 함께 새로 생기는 알림 칸은 읽히지 않는 일이 많다) */}
+              <span className="sr-only" role="status">{chipOn ? '도감에 등록' : ''}</span>
               <div className="g-badgecol">
               <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}{run && ctx && (() => {
                 const sb = saveBadge(ctx.saveStatus, noRecord)
@@ -461,7 +467,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               <div className="g-info" data-feel="press">
                 <button className="g-x" aria-label="닫기" onClick={() => setSelectedId(null)}>✕</button>
                 <b>{selected.label}</b> <span className="small">[{BASIS_LABEL[selected.basis] ?? selected.basis}]</span>
-                <span className="g-chipbox" role="status">{fx.on.codexChip && !run && codex[codex.length - 1] === selected.id && <span key={fx.on.codexChip.seq} className="g-chip">도감에 등록</span>}</span>
+                {chipOn && <span key={fx.on.codexChip?.seq} className="g-chip" aria-hidden="true">도감에 등록</span>}
                 <p>{selected.info}</p>
                 {selected.kind === 'lift' && <p><button onClick={() => toggleLift(selected.id)}>{raisedLifts.includes(selected.id) ? '리프트 내리기' : '리프트 올리기'}</button> <span className="small">보기 전용(기록 없음). 실제로는 올리기 전 주변 확인, 올린 뒤 안전 고리.</span></p>}
               </div>

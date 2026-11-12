@@ -346,6 +346,10 @@ describe('LabSound — 끄면 예약해 둔 소리까지 사라진다', () => {
     expect(old.gain.events.map((e) => [e.kind, e.v])).toEqual([['set', 1], ['lin', 0]])
     expect(buses().length).toBe(2)
     expect(buses()[1]).not.toBe(old)
+    // 다 줄어든 뒤에는 떼어 낸다(껐다 켰다를 되풀이해도 단자가 쌓이지 않는다)
+    vi.advanceTimersByTime(150)
+    expect(old.to).not.toContain(main)
+    expect(buses().length).toBe(1)
   })
   it('멈춰 있는 장치에서 끈 뒤 다시 켜면(줄일 시간이 흐르지 않았다) 옛 단자를 바로 떼어 낸다', async () => {
     const { ctx, sound, main, buses } = on()

@@ -389,9 +389,13 @@ export class LabSound {
       this.dev = { ctx, main: makeOutput(ctx), noise: makeNoise(ctx) }
     }
     const { ctx, main, noise } = this.dev
-    // 다 줄어든 옛 단자는 떼어 낸다. 줄이는 도중(끈 지 OFF_FADE초 안)이면 그대로 둔다 — 떼면 뚝 끊기는 소리가 나고, 두면 스스로 0이 된다.
+    // 다 줄어든 옛 단자는 떼어 낸다. 줄이는 도중(끈 지 OFF_FADE초 안)이면 지금 떼지 않고 다 줄어든 뒤에 뗀다 — 지금 떼면 뚝 끊기는 소리가 난다.
     // 멈춰 있는 장치에서는 줄일 시간이 흐르지 않으므로 바로 뗀다
-    if (this.bus && (ctx.state !== 'running' || ctx.currentTime >= this.offAt + OFF_FADE)) this.bus.disconnect()
+    const old = this.bus
+    if (old) {
+      if (ctx.state !== 'running' || ctx.currentTime >= this.offAt + OFF_FADE) old.disconnect()
+      else setTimeout(() => old.disconnect(), OFF_FADE * 1000 + 50)
+    }
     const bus = ctx.createGain()
     bus.connect(main)
     this.bus = bus

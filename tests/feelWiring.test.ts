@@ -82,12 +82,21 @@ describe('누름 고리(설계 §4.3)', () => {
   /** 고리 부품이 화면마다 하는 일 */
   const frame = ring.slice(ring.indexOf('useFrame('), ring.indexOf('return <mesh'))
   test('장비를 고르면 그 자리에서, 교관을 누르면 교관 자리에서 장면 누름 사건을 낸다. 고르기를 풀 때는 내지 않는다', () => {
-    expect(lab).toContain("    setSelectedId(id)\n    if (!id) return\n    const e = layout.equipment.find((x) => x.id === id)\n    fire('sceneTap', e ? tapSpotOf(e) : undefined)")
-    expect(lab).toContain("const tapNpc = () => fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS })")
+    expect(lab).toContain("    setSelectedId(id)\n    if (!id) return\n    const e = layout.equipment.find((x) => x.id === id)\n    if (!sceneQuiet) fire('sceneTap', e ? tapSpotOf(e) : undefined)")
+    expect(lab).toContain("const tapNpc = () => { if (!sceneQuiet) fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS }) }")
     expect(lab).toContain('onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }}')
     expect(lab).toContain('if (aimId === NPC_AIM) { tapNpc(); setNpcOpen(true) } else selectEquipment(aimId)')
     // 기본 화면의 장면에서도 같다(소리는 꺼져 있어 고리만 뜬다)
     expect(lab).toContain('onNpcTap={() => { tapNpc(); setNpcOpen(true) }}')
+  })
+  test('가까이 보기·연습·기록 창이 열린 동안에는 장면 누름에 반응하지 않는다(고리도 소리도 도감 반응도 없다 — 답을 읽고 적는 곳은 조용하다, 설계 §5-3·§5-9). 고르기와 도감 등록은 그대로 한다', () => {
+    expect(lab).toContain('const sceneQuiet = viewing || practicing || recording')
+    expect(lab.match(/fire\('sceneTap'/g)).toHaveLength(2)
+    expect(lab.match(/if \(!sceneQuiet\) fire\('sceneTap'/g)).toHaveLength(2)
+    expect(lab).toContain("    if (!codex.includes(id)) { setCodex([...codex, id]); if (!sceneQuiet) fire('codexNew') }")
+    // 그 값들은 장비 선택 함수보다 먼저 정해진다
+    for (const name of ['const viewing = ', 'const practicing = ', 'const recording = ']) expect(lab.indexOf(name), name).toBeLessThan(lab.indexOf('const sceneQuiet = '))
+    expect(lab.indexOf('const sceneQuiet = ')).toBeLessThan(lab.indexOf('const selectEquipment = '))
   })
   test('fire는 규칙표가 고리를 내라고 할 때만 고리를 보낸다(움직임 줄이기면 없다). 고리는 장면으로 가고, CSS 연출 상태는 고리를 담지 않는다(tests/cozyState.test.ts)', () => {
     // 시각은 상태 갱신 함수 밖에서 읽고, fire는 엔진만 따른다
@@ -174,15 +183,18 @@ describe('버튼 누름 소리의 허용 구역(설계 §4.1)', () => {
 
 describe('도감(설계 §4.1·§4.3)', () => {
   test("처음 누른 장비면 'codexNew'를 낸다", () => {
-    expect(lab).toContain("    if (!codex.includes(id)) { setCodex([...codex, id]); fire('codexNew') }")
+    expect(lab).toContain("{ setCodex([...codex, id]); if (!sceneQuiet) fire('codexNew') }")
     expect(lab.match(/fire\('codexNew'\)/g)).toHaveLength(1)
   })
   test('도감 숫자는 처음 누른 장비일 때 튄다(끄는 것은 연출 수명이 맡는다)', () => {
     expect(lab).toContain("<span key={fx.on.codexPop?.seq ?? 'codex'} className={`g-codex ${fx.on.codexPop ? 'pop' : ''}`}>도감 {codex.length}/{layout.equipment.length}</span>")
   })
   test("'도감에 등록' 꼬리표는 둘러보기에서, 방금 등록한 그 장비의 카드에만 붙는다. 1.6초 뒤 사라지는 것은 연출 수명이 맡는다(움직임 줄이기에서도 같다)", () => {
-    // 알림 칸(role="status")은 카드에 늘 있고 글자만 들어왔다 나간다 — 내용과 함께 새로 붙는 알림 칸은 화면 낭독기가 읽지 않는 일이 많다
-    expect(lab).toContain("<span className=\"g-chipbox\" role=\"status\">{fx.on.codexChip && !run && codex[codex.length - 1] === selected.id && <span key={fx.on.codexChip.seq} className=\"g-chip\">도감에 등록</span>}</span>")
+    expect(lab).toContain("const chipOn = !!fx.on.codexChip && !run && !!selected && codex[codex.length - 1] === selected.id")
+    expect(lab).toContain("{chipOn && <span key={fx.on.codexChip?.seq} className=\"g-chip\" aria-hidden=\"true\">도감에 등록</span>}")
+    // 낭독용 알림 칸(role="status")은 상태 막대에 늘 있고 글자만 들어왔다 나간다 — 카드와 함께 새로 붙는 알림 칸은 화면 낭독기가 읽지 않는 일이 많다
+    expect(lab).toContain("<span className=\"sr-only\" role=\"status\">{chipOn ? '도감에 등록' : ''}</span>")
+    expect(lab).not.toMatch(/className="g-chip"[^>]*role="status"/) // 꼬리표 자신은 알림 칸이 아니다(보이기만 한다)
     expect(read('src/app/cozyState.ts')).toContain('codexChip: 1600')
   })
   test('움직임 줄이기에서는 숫자 튐과 꼬리표의 움직임이 없다', () => {
