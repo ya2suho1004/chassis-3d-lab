@@ -158,11 +158,15 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const onStep = useCallback(() => sound.step(), [sound])
   /** 손맛 반응(설계 2026-11-06 §5, 2026-11-12 §4): 이미 일어난 일에 대한 연출만. 연출마다 켠 차례 번호가 바뀌면 CSS 애니메이션을 다시 건다 */
   const [fx, setFx] = useState<Fx>(EMPTY_FX)
-  // 연출은 정해진 시간이 지나면 끈다. CSS 움직임이 끝났다는 신호에 기대지 않는다 — 요소가 화면에 없으면 그 신호가 오지 않아 연출이 남았다가 뒤늦게 터진다
+  // 연출은 정해진 시간이 지나면 끈다. CSS 움직임이 끝났다는 신호에 기대지 않는다 — 요소가 화면에 없으면 그 신호가 오지 않아 연출이 남았다가 뒤늦게 터진다.
+  // 타이머가 조금 일찍 울려도 가장 먼저 꺼질 연출은 반드시 끄도록 시각을 at 이상으로 잡는다
   useEffect(() => {
     const at = nextExpiry(fx)
     if (at === null) return
-    const t = setTimeout(() => setFx((f) => dropExpired(f, Math.max(performance.now(), at))), Math.max(0, at - performance.now()))
+    const t = setTimeout(() => {
+      const now = Math.max(performance.now(), at)
+      setFx((f) => dropExpired(f, now))
+    }, Math.max(0, at - performance.now()))
     return () => clearTimeout(t)
   }, [fx])
   /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
@@ -178,10 +182,11 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
     const step = newCue(cuePrev.current, now)
     cuePrev.current = now
     if (!step) return
+    const firedAt = performance.now() // 상태 갱신 함수 안에서 시각을 읽지 않는다(갱신 함수는 두 번 돌 수 있다)
     for (const ev of eventsForStep(step, advanced)) {
       const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: soundOn })
       if (r.cues.some((c) => c.name === 'tick')) sound.tick()
-      setFx((f) => addEffects(f, r.effects, performance.now()))
+      setFx((f) => addEffects(f, r.effects, firedAt))
     }
     const action = actionForStep(step)
     if (!action) return

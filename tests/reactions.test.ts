@@ -1,7 +1,7 @@
 // tests/reactions.test.ts — 손맛 반응 규칙표(설계 2026-11-12 §4.1·§5, 앞선 설계 2026-11-06 §5)
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { eventsForStep, reactionsFor, REACTION_CUES, REACTION_EVENTS, type ReactionEvent } from '../src/app/reactions'
+import { EFFECTS, eventsForStep, reactionsFor, REACTION_CUES, REACTION_EVENTS, type ReactionEvent } from '../src/app/reactions'
 
 const on = { reducedMotion: false, sound: true }
 
@@ -50,6 +50,11 @@ describe('reactionsFor — 소리와 움직임 줄이기', () => {
   it('규칙표가 부르는 소리는 모두 소리 목록에 있고, 목록의 소리는 모두 쓰인다', () => {
     const used = new Set(REACTION_EVENTS.flatMap((ev) => reactionsFor(ev, on).cues.map((c) => c.name)))
     expect([...used].sort()).toEqual([...REACTION_CUES].sort())
+  })
+  it('보이는 반응은 일곱 가지이고, 목록의 반응은 모두 어느 사건에선가 쓰인다', () => {
+    expect([...EFFECTS]).toEqual(['tapRing', 'checkPop', 'sparkle', 'codexPop', 'codexChip', 'stamp', 'confetti'])
+    const used = new Set(REACTION_EVENTS.flatMap((ev) => [...reactionsFor(ev, on).effects]))
+    expect([...used].sort()).toEqual([...EFFECTS].sort())
   })
   it('늦춤은 0초 이상 1초 미만이다(반응은 조작과 함께 시작한다)', () => {
     for (const ev of REACTION_EVENTS) for (const c of reactionsFor(ev, on).cues) {

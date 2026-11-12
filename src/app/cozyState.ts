@@ -4,10 +4,12 @@ import type { Effect } from './reactions'
 /**
  * 실습 화면의 CSS 연출과 그 수명(ms). 연출은 이 시간이 지나면 끈다 — CSS 움직임이 끝났다는 신호에 기대지 않는다.
  * 요소가 화면에 없으면(세로 폰의 보호구 꼬리표, 가까이 보기 중의 의뢰 패널) 그 신호가 오지 않아, 연출이 남았다가 요소가 다시 보일 때 뒤늦게 터지기 때문이다.
- * 수명은 CSS 움직임(src/styles.css)보다 0.1초 길다. '도감에 등록' 꼬리표는 붙어 있는 시간이 곧 수명이다.
+ * 수명은 CSS 움직임(src/styles.css)보다 0.2초 길다 — 느린 태블릿에서 움직임이 늦게 시작해도 끝자락이 잘리지 않게. '도감에 등록' 꼬리표는 붙어 있는 시간이 곧 수명이다.
  */
-export const EFFECT_MS = { checkPop: 400, sparkle: 700, codexPop: 400, codexChip: 1600 } as const
+export const EFFECT_MS = { checkPop: 500, sparkle: 800, codexPop: 500, codexChip: 1600 } as const
 export type TimedEffect = keyof typeof EFFECT_MS
+/** 수명 표에 없는 연출 — 다른 곳이 맡는다: 3D 누름 고리(장면), 결과 화면의 도장·종이 조각(정비 일지). 모든 연출은 수명 표나 이 목록 가운데 한쪽에 있어야 한다(시험이 확인) */
+export const UNTIMED_EFFECTS: readonly Effect[] = ['tapRing', 'stamp', 'confetti']
 
 /** 켜져 있는 연출: 이름 → 켠 차례 번호(같은 연출을 다시 켜면 번호가 바뀌어 CSS 움직임을 처음부터 다시 건다)와 꺼질 시각(ms) */
 export type Fx = { on: Partial<Record<TimedEffect, { seq: number; until: number }>>; seq: number }
@@ -26,7 +28,7 @@ export function isRequestPassed(completionStatus: 'completed' | 'aborted', paylo
 const isTimed = (e: Effect): e is TimedEffect => e in EFFECT_MS
 
 /**
- * 연출을 켠다. now는 지금 시각(ms). 수명이 정해진 연출만 담는다 — 3D의 누름 고리와 결과 화면의 도장·종이 조각은 다른 곳이 맡는다.
+ * 연출을 켠다. now는 지금 시각(ms). 수명이 정해진 연출만 담는다 — 수명 표에 없는 연출(UNTIMED_EFFECTS)은 다른 곳이 맡는다.
  * 켤 것이 없으면 같은 객체를 돌려 불필요한 렌더를 막는다.
  */
 export function addEffects(f: Fx, effects: readonly Effect[], now: number): Fx {

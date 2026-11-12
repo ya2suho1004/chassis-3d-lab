@@ -8,7 +8,8 @@ export const REACTION_EVENTS = ['sceneTap', 'uiPress', 'liftMove', 'bigLiftMove'
 export type ReactionEvent = (typeof REACTION_EVENTS)[number]
 
 /** 보이는 반응 */
-export type Effect = 'tapRing' | 'checkPop' | 'sparkle' | 'codexPop' | 'codexChip' | 'stamp' | 'confetti'
+export const EFFECTS = ['tapRing', 'checkPop', 'sparkle', 'codexPop', 'codexChip', 'stamp', 'confetti'] as const
+export type Effect = (typeof EFFECTS)[number]
 
 /** 규칙표가 부르는 소리 이름(만드는 쪽은 src/scene/sound.ts). liftLong은 lift를 길게 낸 것 */
 export const REACTION_CUES = ['tap', 'press', 'lift', 'liftLong', 'vehicle', 'pedal', 'tick', 'stepDone', 'ppe', 'codex', 'stamp', 'celebrate'] as const
