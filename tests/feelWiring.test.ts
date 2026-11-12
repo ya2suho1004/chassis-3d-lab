@@ -105,3 +105,65 @@ describe('누름 고리(설계 §4.3)', () => {
     expect(ring).toContain("new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false, toneMapped: false })")
   })
 })
+
+describe('버튼 누름 소리의 허용 구역(설계 §4.1)', () => {
+  const npc = read('src/screens/NpcDialog.tsx')
+  test("게임 화면 맨 위에서 누름을 한 번만 듣고, 허용 구역의 버튼이면 'uiPress'를 낸다", () => {
+    expect(lab).toContain("<main className={`game wa ${talking ? 'talking' : ''}`} onClickCapture={(e) => { if (isPressTarget(e.target as Element)) fire('uiPress') }}>")
+    expect(lab.match(/fire\('uiPress'\)/g)).toHaveLength(1)
+  })
+  test('소리가 나는 곳: 상태 막대와 메뉴, 의뢰 패널의 버튼, 장비 정보 카드, 작업 버튼, 작업 목록의 닫기 버튼, 여는 버튼 다섯, 교관 대화', () => {
+    for (const s of [
+      '<div className="g-status" data-feel="press">',
+      '<div className="g-quest-btns" data-feel="press">',
+      '<div className="g-info" data-feel="press">',
+      '<div className="g-actions" data-feel="press">',
+      '<button className="g-x" data-feel="press" aria-label="작업 목록 닫기" onClick={() => setDrawerOpen(false)}>✕</button>',
+      '<button className="g-gaugebtn" data-feel="press" onClick={() => setCloseUp(true)}>',
+      '<button className="g-gaugebtn" data-feel="press" onClick={() => setTtSide(\'left\')}>',
+      '<button className="g-gaugebtn" data-feel="press" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}>',
+      '<button className="g-gaugebtn" data-feel="press" onClick={() => { setBlOpen(true); setBlMsg(null) }}>',
+      '<button className="g-chatbtn" data-feel="press" onClick={() => setChatOpen(true)}>',
+    ]) expect(lab, s).toContain(s)
+    expect(lab.match(/data-feel="press"/g)).toHaveLength(10)
+    expect(npc).toContain('<div className="g-dialog" role="dialog" aria-label="교관과 대화" data-feel="press">')
+  })
+  test('소리 버튼은 허용 구역 안에 있어도 조용하다(켜졌다는 확인음은 엔진이 한 번 낸다. 끌 때는 소리가 없다)', () => {
+    expect(lab).toMatch(/<button className="g-icon" data-feel="none" aria-label=\{soundOn \? '소리 끄기' : '소리 켜기'\}/)
+    expect(lab.match(/data-feel="none"/g)).toHaveLength(1)
+  })
+  test('작업 목록 서랍은 통째로 허용 구역이 아니다: 단계 줄(수행·힌트 버튼)만 소리가 나고, 같은 서랍의 판독·기록 칸과 계산기는 조용하다(답을 적고 내는 곳 — 설계 §5-3)', () => {
+    const task = read('src/screens/TaskScreen.tsx')
+    expect(lab).toContain("<aside className={`g-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>")
+    expect(task).toContain('<section className="card" data-feel="press">\n          <h2>검사 작업 순서</h2>')
+    expect(task.match(/data-feel/g)).toHaveLength(1)
+  })
+  test('조용한 곳: 기록 창, 계산기, 기록 칸, 질문 창, 알림창에는 표시가 없다', () => {
+    for (const f of ['RecordWindow', 'RecordSheet', 'RecordFields', 'RecordCheck', 'Calculator', 'FeedbackBox']) expect(read(`src/screens/${f}.tsx`), f).not.toContain('data-feel')
+    expect(read('src/chat/ChatPanel.tsx')).not.toContain('data-feel')
+  })
+  test('조용한 곳: 연습 창, 측정판 보기 막대, 계기 닫기, 알림, 조작 안내에는 표시가 없다', () => {
+    for (const s of ['className="g-practice"', 'className="g-ttbar"', 'className="g-gaugebtn on"', 'className="g-guide"', 'className={`g-toast']) {
+      const line = lab.split('\n').find((l) => l.includes(s))
+      expect(line, s).toBeDefined()
+      expect(line!.slice(line!.indexOf(s), line!.indexOf(s) + s.length + 60), s).not.toContain('data-feel')
+    }
+  })
+})
+
+describe('도감(설계 §4.1·§4.3)', () => {
+  test("처음 누른 장비면 'codexNew'를 낸다", () => {
+    expect(lab).toContain("    if (!codex.includes(id)) { setCodex([...codex, id]); fire('codexNew') }")
+    expect(lab.match(/fire\('codexNew'\)/g)).toHaveLength(1)
+  })
+  test('도감 숫자는 처음 누른 장비일 때 튄다(끄는 것은 연출 수명이 맡는다)', () => {
+    expect(lab).toContain("<span key={fx.on.codexPop?.seq ?? 'codex'} className={`g-codex ${fx.on.codexPop ? 'pop' : ''}`}>도감 {codex.length}/{layout.equipment.length}</span>")
+  })
+  test("'도감에 등록' 꼬리표는 둘러보기에서, 방금 등록한 그 장비의 카드에만 붙는다. 1.6초 뒤 사라지는 것은 연출 수명이 맡는다(움직임 줄이기에서도 같다)", () => {
+    expect(lab).toContain("{fx.on.codexChip && !run && codex[codex.length - 1] === selected.id && <span key={fx.on.codexChip.seq} className=\"g-chip\" role=\"status\">도감에 등록</span>}")
+    expect(read('src/app/cozyState.ts')).toContain('codexChip: 1600')
+  })
+  test('움직임 줄이기에서는 숫자 튐과 꼬리표의 움직임이 없다', () => {
+    expect(read('src/styles.css')).toContain('@media (prefers-reduced-motion: reduce) { .g-codex.pop, .g-chip { animation:none } }')
+  })
+})

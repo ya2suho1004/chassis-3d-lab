@@ -434,7 +434,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
       </section>
 
       <div className="columns">
-        <section className="card">
+        <section className="card" data-feel="press">
           <h2>검사 작업 순서</h2>
           <ol className="steps">
             {task.steps.map((s, i) => {

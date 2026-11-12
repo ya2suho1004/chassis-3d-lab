@@ -31,7 +31,7 @@ export function NpcDialog({ near, running, taskTitle, taskId, nickname, aiAvaila
   const text = after ?? lines[i]
 
   return (
-    <div className="g-dialog" role="dialog" aria-label="교관과 대화">
+    <div className="g-dialog" role="dialog" aria-label="교관과 대화" data-feel="press">
       <button className="g-bubble" onClick={() => { if (!last && !after) setPage(page + 1) }} aria-label={last || after ? '교관 대사' : '교관 대사 — 눌러서 다음'}>
         <span className="g-name">교관</span>
         <span className="g-say">{text}</span>

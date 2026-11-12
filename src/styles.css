@@ -564,3 +564,9 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .calc-keys button { min-height:44px; padding:0; font-size:17px; touch-action:manipulation; } /* 빠르게 두 번 눌러도 화면 확대로 먹히지 않게(iPad, 최종 검토 M-4) */
 .calc-keys .span2 { grid-column:span 2; }
 .calc-keys .span5 { grid-column:span 5; }
+
+/* 손맛(설계 2026-11-12 §4.3): 처음 누른 장비 — 도감 숫자 튐, 정보 카드의 '도감에 등록' 꼬리표(둘러보기에서만) */
+.g-codex.pop { display:inline-block; animation:g-pop .3s ease-out; }
+.g-chip { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:10px; background:var(--wa-navy); color:#fff; font-size:12px; font-weight:700; white-space:nowrap; animation:g-chip .25s ease-out; }
+@keyframes g-chip { from { transform:scale(.6); opacity:0 } to { transform:scale(1); opacity:1 } }
+@media (prefers-reduced-motion: reduce) { .g-codex.pop, .g-chip { animation:none } }

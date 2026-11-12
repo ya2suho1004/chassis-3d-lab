@@ -86,7 +86,7 @@ describe('게임 화면 연결(§3.3·§6)', () => {
   test('창이 열린 동안 조이스틱·행동 버튼·가운데 버튼·바깥 질문 버튼을 숨기고 3D 장면에 멈춤을 알린다', () => {
     expect(lab).toMatch(/const recording = !!ctx\?\.recordOpen/)
     expect(lab).toMatch(/\{!viewing && !practicing && !recording && <Joystick/)
-    expect(lab).toMatch(/\{!ttSide && !recording && <div className="g-actions">/)
+    expect(lab).toMatch(/\{!ttSide && !recording && <div className="g-actions"/)
     expect(lab).toMatch(/!noRecord && !recording && <button className="g-chatbtn"/)
     expect(lab).toMatch(/holdStill=\{recording\}/)
     expect(lab).toMatch(/joystickRef\.current = \{ x: 0, y: 0 \}/)
