@@ -13,7 +13,7 @@ import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRuno
 import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
 import { eventsForStep, prefersReducedMotion, reactionsFor } from '../app/reactions'
-import { addEffects, dropEffect, EMPTY_FX, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
+import { addEffects, dropExpired, EMPTY_FX, nextExpiry, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
 import { createFinishGate, type FinishGate } from '../app/finishGate'
 import { NOD_LINE } from '../app/requests'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
@@ -156,8 +156,15 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   useEffect(() => () => sound.setEnabled(false), [sound])
   const toggleSound = () => { const on = !soundOn; sound.setEnabled(on); setSoundOn(on) }
   const onStep = useCallback(() => sound.step(), [sound])
-  /** 손맛 반응(설계 2026-11-06 §5): 방금 끝난 단계에 대한 연출만. seq가 바뀌면 CSS 애니메이션을 다시 건다 */
+  /** 손맛 반응(설계 2026-11-06 §5, 2026-11-12 §4): 이미 일어난 일에 대한 연출만. 연출마다 켠 차례 번호가 바뀌면 CSS 애니메이션을 다시 건다 */
   const [fx, setFx] = useState<Fx>(EMPTY_FX)
+  // 연출은 정해진 시간이 지나면 끈다. CSS 움직임이 끝났다는 신호에 기대지 않는다 — 요소가 화면에 없으면 그 신호가 오지 않아 연출이 남았다가 뒤늦게 터진다
+  useEffect(() => {
+    const at = nextExpiry(fx)
+    if (at === null) return
+    const t = setTimeout(() => setFx((f) => dropExpired(f, Math.max(performance.now(), at))), Math.max(0, at - performance.now()))
+    return () => clearTimeout(t)
+  }, [fx])
   /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
   const [avatarCue, setAvatarCue] = useState<AvatarCue | null>(null)
   const cuePrev = useRef<{ completed: string[]; off: string[] } | null>(null)
@@ -174,7 +181,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
     for (const ev of eventsForStep(step, advanced)) {
       const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: soundOn })
       if (r.cues.some((c) => c.name === 'tick')) sound.tick()
-      setFx((f) => addEffects(f, r.effects))
+      setFx((f) => addEffects(f, r.effects, performance.now()))
     }
     const action = actionForStep(step)
     if (!action) return
@@ -350,7 +357,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}{run && ctx && (() => {
                 const sb = saveBadge(ctx.saveStatus, noRecord)
                 return sb && sb.tone !== 'bad' ? <span className={`g-save ${sb.tone}`}>{sb.text}</span> : null
-              })()}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.on.sparkle ?? 'ppe'} className={`g-ppe ${fx.on.sparkle ? 'spark' : ''}`} onAnimationEnd={() => setFx((f) => dropEffect(f, 'sparkle'))}>보호구 착용</span>}</div>
+              })()}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.on.sparkle?.seq ?? 'ppe'} className={`g-ppe ${fx.on.sparkle ? 'spark' : ''}`}>보호구 착용</span>}</div>
               {/* 저장 실패(D4)는 배지 아래 줄에 따로 — 배지가 길어져 오른쪽 의뢰 카드와 겹치지 않게 */}
               {run && ctx && saveBadge(ctx.saveStatus, noRecord)?.tone === 'bad' && <button className="g-save bad" role="alert" onClick={ctx.retrySave}>저장 실패 · 다시 저장</button>}
               </div>
@@ -379,7 +386,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
-              {run && ctx && <p key={fx.on.checkPop ?? 'p'} className={`g-progress ${fx.on.checkPop ? 'pop' : ''}`} onAnimationEnd={() => setFx((f) => dropEffect(f, 'checkPop'))}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
+              {run && ctx && <p key={fx.on.checkPop?.seq ?? 'p'} className={`g-progress ${fx.on.checkPop ? 'pop' : ''}`}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
               <div className="g-quest-btns">
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
                 <button onClick={() => goTo(npcSpot, true)}>교관에게</button>

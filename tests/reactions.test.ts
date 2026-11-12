@@ -66,7 +66,7 @@ describe('규칙표가 받지 않는 것(설계 §5-1)', () => {
     expect(src).toContain('export function reactionsFor(ev: ReactionEvent, o: { reducedMotion: boolean; sound: boolean }): Reaction {')
   })
   it('아무것도 들여오지 않는다(과제 상태·채점·기록을 볼 길이 없다)', () => {
-    expect(src).not.toMatch(/^import /m)
+    expect(src).not.toMatch(/\bimport\b|\bfrom\s+['"]|\brequire\(/)
   })
   it('모드·다음 단계·정답·채점·판독값을 가리키는 이름이 없다', () => {
     expect(src).not.toMatch(/difficultyMode|guided|nextStep|correct|grading|firstAnswer|firstInput|readout|measurement/i)
@@ -82,5 +82,6 @@ describe('eventsForStep — 새로 끝난 단계 → 사건들', () => {
   it('끝난 단계 수가 늘지 않으면(종료 단계의 하위 행동) 단계 완료가 없다', () => {
     expect(eventsForStep('off', false)).toEqual([])
     expect(eventsForStep('steer', false)).toEqual(['steerLimit'])
+    expect(eventsForStep('ppe', false)).toEqual(['ppeOn'])
   })
 })

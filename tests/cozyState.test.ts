@@ -2,7 +2,8 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { addEffects, dropEffect, EMPTY_FX, isRequestPassed, NOD_SECONDS, nodAngle, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone } from '../src/app/cozyState'
+import { addEffects, dropExpired, EFFECT_MS, EMPTY_FX, isRequestPassed, nextExpiry, NOD_SECONDS, nodAngle, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone } from '../src/app/cozyState'
+import { readFileSync } from 'node:fs'
 import { listTasks } from '../src/app/session'
 import { requestCopy } from '../src/app/requests'
 import { createTaskRun } from '../src/domain/taskEngine'
@@ -26,26 +27,62 @@ describe('isRequestPassed (도장·교관 한마디 조건)', () => {
   })
 })
 
-describe('fx 상태(켜져 있는 연출: 이름 → 켠 차례 번호)', () => {
-  it('켜기: 차례 번호가 하나 오르고 그 번호가 붙는다. 켜져 있던 다른 연출은 번호가 그대로다', () => {
-    const a = addEffects(EMPTY_FX, ['sparkle'])
-    expect(a).toEqual({ on: { sparkle: 1 }, seq: 1 })
-    expect(addEffects(a, ['checkPop'])).toEqual({ on: { sparkle: 1, checkPop: 2 }, seq: 2 })
+describe('fx 상태(켜져 있는 연출: 이름 → 켠 차례 번호와 꺼질 시각)', () => {
+  it('연출의 수명: 튐 0.4초, 반짝임 0.7초, 도감 꼬리표 1.6초', () => {
+    expect(EFFECT_MS).toEqual({ checkPop: 400, sparkle: 700, codexPop: 400, codexChip: 1600 })
   })
-  it('같은 연출을 다시 켜면 번호가 바뀐다(CSS 움직임을 처음부터 다시 건다)', () => {
-    expect(addEffects({ on: { checkPop: 1 }, seq: 1 }, ['checkPop'])).toEqual({ on: { checkPop: 2 }, seq: 2 })
+  it('켜기: 차례 번호가 하나 오르고, 꺼질 시각은 지금 + 수명이다. 켜져 있던 다른 연출은 그대로다', () => {
+    const a = addEffects(EMPTY_FX, ['sparkle'], 1000)
+    expect(a).toEqual({ on: { sparkle: { seq: 1, until: 1700 } }, seq: 1 })
+    expect(addEffects(a, ['checkPop'], 1100)).toEqual({ on: { sparkle: { seq: 1, until: 1700 }, checkPop: { seq: 2, until: 1500 } }, seq: 2 })
   })
-  it('켤 것이 없으면 같은 객체', () => {
-    const a = addEffects(EMPTY_FX, ['sparkle'])
-    expect(addEffects(a, [])).toBe(a)
+  it('같은 연출을 다시 켜면 번호가 바뀌고 수명이 새로 시작한다(CSS 움직임을 처음부터 다시 건다)', () => {
+    const a = addEffects(EMPTY_FX, ['checkPop'], 0)
+    expect(addEffects(a, ['checkPop'], 250)).toEqual({ on: { checkPop: { seq: 2, until: 650 } }, seq: 2 })
   })
-  it('onAnimationEnd: 끝난 연출 하나만 끄고 다른 연출과 seq는 그대로. 꺼져 있던 것이면 같은 객체', () => {
-    const a = addEffects(addEffects(EMPTY_FX, ['sparkle']), ['checkPop'])
-    expect(dropEffect(a, 'checkPop')).toEqual({ on: { sparkle: 1 }, seq: 2 })
-    expect(dropEffect(a, 'codexPop')).toBe(a)
+  it('한 번에 여럿을 켜면 같은 번호를 받는다', () => {
+    expect(addEffects(EMPTY_FX, ['codexPop', 'codexChip'], 0)).toEqual({ on: { codexPop: { seq: 1, until: 400 }, codexChip: { seq: 1, until: 1600 } }, seq: 1 })
+  })
+  it('수명이 정해지지 않은 연출(3D 누름 고리, 결과 화면의 도장·종이 조각)은 담지 않는다. 켤 것이 없으면 같은 객체', () => {
+    const a = addEffects(EMPTY_FX, ['sparkle'], 0)
+    expect(addEffects(a, [], 10)).toBe(a)
+    expect(addEffects(a, ['tapRing'], 10)).toBe(a)
+    expect(addEffects(a, ['stamp', 'confetti'], 10)).toBe(a)
+    expect(addEffects(EMPTY_FX, ['tapRing', 'checkPop'], 0)).toEqual({ on: { checkPop: { seq: 1, until: 400 } }, seq: 1 })
+  })
+  it('가장 먼저 꺼질 시각을 알려 준다(켜진 것이 없으면 null)', () => {
+    expect(nextExpiry(EMPTY_FX)).toBeNull()
+    expect(nextExpiry(addEffects(addEffects(EMPTY_FX, ['sparkle'], 1000), ['checkPop'], 1100))).toBe(1500)
+  })
+  it('수명이 다한 연출만 끄고 다른 연출과 seq는 그대로. 끌 것이 없으면 같은 객체', () => {
+    const a = addEffects(addEffects(EMPTY_FX, ['sparkle'], 1000), ['checkPop'], 1100)
+    expect(dropExpired(a, 1499)).toBe(a)
+    expect(dropExpired(a, 1500)).toEqual({ on: { sparkle: { seq: 1, until: 1700 } }, seq: 2 })
+    expect(dropExpired(a, 1700)).toEqual({ on: {}, seq: 2 })
+  })
+  it('끄는 것은 시간뿐이다 — CSS 움직임이 끝났다는 신호(animationend)에 기대지 않는다(요소가 화면에 없으면 그 신호가 오지 않는다)', () => {
+    const lab = readFileSync('src/screens/LabScreen.tsx', 'utf8')
+    expect(lab).not.toMatch(/onAnimationEnd/)
+    expect(lab).toContain('const t = setTimeout(() => setFx((f) => dropExpired(f, Math.max(performance.now(), at))), Math.max(0, at - performance.now()))')
+  })
+  it('연출의 수명은 그 CSS 움직임보다 길다(움직임이 끝나기 전에 끄지 않는다)', () => {
+    const css = readFileSync('src/styles.css', 'utf8')
+    const rules: Array<[keyof typeof EFFECT_MS, RegExp]> = [
+      ['sparkle', /\.g-ppe\.spark \{[^}]*animation:g-spark ([\d.]+)s/],
+      ['checkPop', /\.g-progress\.pop \{[^}]*animation:g-pop ([\d.]+)s|\.g-dots i\.new \{[^}]*animation:g-dot ([\d.]+)s/],
+      ['codexPop', /\.g-codex\.pop \{[^}]*animation:g-pop ([\d.]+)s/],
+    ]
+    let found = 0
+    for (const [e, re] of rules) {
+      const m = re.exec(css)
+      if (!m) continue // 뒤 과제에서 생기는 규칙
+      found++
+      expect(Number(m[1] ?? m[2]) * 1000, e).toBeLessThan(EFFECT_MS[e])
+    }
+    expect(found).toBeGreaterThanOrEqual(2)
   })
   it('run이 null이면 초기화, 이미 비었으면 같은 객체', () => {
-    expect(resetFxIfIdle({ on: { sparkle: 2 }, seq: 2 })).toEqual(EMPTY_FX)
+    expect(resetFxIfIdle(addEffects(EMPTY_FX, ['sparkle'], 0))).toEqual(EMPTY_FX)
     expect(resetFxIfIdle({ on: {}, seq: 2 })).toEqual(EMPTY_FX)
     expect(resetFxIfIdle(EMPTY_FX)).toBe(EMPTY_FX)
   })

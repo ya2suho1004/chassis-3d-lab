@@ -1,8 +1,16 @@
 // src/app/cozyState.ts — '따뜻한 정비 공방' 연출의 판단 로직(순수 함수). 컴포넌트는 이것만 쓴다.
 import type { Effect } from './reactions'
 
-/** 켜져 있는 연출: 이름 → 켠 차례 번호. 같은 연출을 다시 켜면 번호가 바뀌어 CSS 움직임을 처음부터 다시 건다 */
-export type Fx = { on: Partial<Record<Effect, number>>; seq: number }
+/**
+ * 실습 화면의 CSS 연출과 그 수명(ms). 연출은 이 시간이 지나면 끈다 — CSS 움직임이 끝났다는 신호에 기대지 않는다.
+ * 요소가 화면에 없으면(세로 폰의 보호구 꼬리표, 가까이 보기 중의 의뢰 패널) 그 신호가 오지 않아, 연출이 남았다가 요소가 다시 보일 때 뒤늦게 터지기 때문이다.
+ * 수명은 CSS 움직임(src/styles.css)보다 0.1초 길다. '도감에 등록' 꼬리표는 붙어 있는 시간이 곧 수명이다.
+ */
+export const EFFECT_MS = { checkPop: 400, sparkle: 700, codexPop: 400, codexChip: 1600 } as const
+export type TimedEffect = keyof typeof EFFECT_MS
+
+/** 켜져 있는 연출: 이름 → 켠 차례 번호(같은 연출을 다시 켜면 번호가 바뀌어 CSS 움직임을 처음부터 다시 건다)와 꺼질 시각(ms) */
+export type Fx = { on: Partial<Record<TimedEffect, { seq: number; until: number }>>; seq: number }
 export const EMPTY_FX: Fx = { on: {}, seq: 0 }
 
 /** 완료 단계 수가 '늘어날 때만' true. 같거나 줄면(되돌림·재마운트 0) false */
@@ -15,20 +23,35 @@ export function isRequestPassed(completionStatus: 'completed' | 'aborted', paylo
   return completionStatus === 'completed' && payload.ok && payload.value.npcInspectionResult === 'passed'
 }
 
-/** 연출을 켠다(켤 것이 없으면 같은 객체를 돌려 불필요한 렌더 방지) */
-export function addEffects(f: Fx, effects: readonly Effect[]): Fx {
-  if (!effects.length) return f
+const isTimed = (e: Effect): e is TimedEffect => e in EFFECT_MS
+
+/**
+ * 연출을 켠다. now는 지금 시각(ms). 수명이 정해진 연출만 담는다 — 3D의 누름 고리와 결과 화면의 도장·종이 조각은 다른 곳이 맡는다.
+ * 켤 것이 없으면 같은 객체를 돌려 불필요한 렌더를 막는다.
+ */
+export function addEffects(f: Fx, effects: readonly Effect[], now: number): Fx {
+  const timed = effects.filter(isTimed)
+  if (!timed.length) return f
   const seq = f.seq + 1
   const on = { ...f.on }
-  for (const e of effects) on[e] = seq
+  for (const e of timed) on[e] = { seq, until: now + EFFECT_MS[e] }
   return { on, seq }
 }
 
-/** onAnimationEnd: 끝난 연출 하나만 끈다. 함께 켜진 다른 연출은 끝까지 간다(꺼져 있던 것이면 같은 객체) */
-export function dropEffect(f: Fx, e: Effect): Fx {
-  if (f.on[e] === undefined) return f
-  const on = { ...f.on }
-  delete on[e]
+/** 가장 먼저 꺼질 시각(ms). 켜진 연출이 없으면 null */
+export function nextExpiry(f: Fx): number | null {
+  let at: number | null = null
+  for (const v of Object.values(f.on)) if (v && (at === null || v.until < at)) at = v.until
+  return at
+}
+
+/** 수명이 다한 연출을 끈다. 함께 켜진 다른 연출은 제 수명까지 간다(끌 것이 없으면 같은 객체) */
+export function dropExpired(f: Fx, now: number): Fx {
+  const names = Object.keys(f.on) as TimedEffect[]
+  const keep = names.filter((e) => (f.on[e]?.until ?? 0) > now)
+  if (keep.length === names.length) return f
+  const on: Fx['on'] = {}
+  for (const e of keep) on[e] = f.on[e]
   return { on, seq: f.seq }
 }
 
