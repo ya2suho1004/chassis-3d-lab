@@ -26,7 +26,7 @@ import { saveBadge, type SaveState } from '../app/saveRecovery'
 import { Joystick, type MoveInput } from '../scene/Joystick'
 import { NpcDialog, panelWorkOrder } from './NpcDialog'
 import { Icon } from './Icon'
-import { LabSound } from '../scene/sound'
+import type { LabSound } from '../scene/sound'
 import { useProgress } from '@react-three/drei'
 import { antialiasRequested, initialQuality, shouldAutoLower } from '../app/quality'
 import { DEFAULT_VIEW, NPC_AIM, VIEW_LABEL, VIEW_MODES, type ViewMode } from '../scene/viewMode'
@@ -58,7 +58,11 @@ const NOD_SCREEN_MS = 2300
 /** 안내 줄용 장비 이름: 괄호 설명을 빼서 한 줄에 들어가게 한다(3D 이름표에는 전체 이름이 있다) */
 const shortLabel = (label: string | undefined) => (label ?? '').replace(/\(.*\)/, '').trim()
 
-export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
+export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
+  /** 소리 엔진과 켬 상태(설계 2026-11-12 §4.7): App이 갖고 있어 결과 화면까지 이어진다. 교실에서 여러 대가 함께 켜지므로 처음엔 끔 */
+  sound: LabSound
+  soundOn: boolean
+  onSoundChange: (on: boolean) => void
   repo: Repository
   /** 비기록 모드(설계 2026-11-02): repo는 메모리 저장소, AI 교관을 숨기고 "기록 안 됨"을 표시한다 */
   noRecord?: boolean
@@ -150,12 +154,9 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
   const nextView = () => setViewMode(VIEW_MODES[(VIEW_MODES.indexOf(viewMode) + 1) % VIEW_MODES.length] ?? 'overview')
   /** 1인칭 가운데 조준점이 가리키는 장비(교관은 NPC_AIM) */
   const [aimId, setAimId] = useState<string | null>(null)
-  /** 소리(발소리·실습장 소음). 교실에서 여러 대가 함께 켜지므로 처음엔 끔 */
-  const sound = useMemo(() => new LabSound(), [])
-  const [soundOn, setSoundOn] = useState(false)
-  // 배경 소음은 실습장에 있는 동안에만 깔린다(소리를 켰을 때)
-  useEffect(() => { sound.setAmbience(true); return () => { sound.setAmbience(false); sound.setEnabled(false) } }, [sound])
-  const toggleSound = () => { const on = !soundOn; sound.setEnabled(on); setSoundOn(on) }
+  // 배경 소음은 실습장에 있는 동안에만 깔린다(소리를 켰을 때). 떠날 때는 이어지는 소리만 멈추고, 켬 상태는 결과 화면으로 이어진다
+  useEffect(() => { sound.setAmbience(true); return () => { sound.setAmbience(false); sound.setRollers(false) } }, [sound])
+  const toggleSound = () => onSoundChange(!soundOn)
   const onStep = useCallback(() => sound.step(), [sound])
   /** 손맛 반응(설계 2026-11-06 §5, 2026-11-12 §4): 이미 일어난 일에 대한 연출만. 연출마다 켠 차례 번호가 바뀌면 CSS 애니메이션을 다시 건다 */
   const [fx, setFx] = useState<Fx>(EMPTY_FX)
