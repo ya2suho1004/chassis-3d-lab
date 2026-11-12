@@ -15,3 +15,8 @@ export const AUTO_LOW_FPS = 30
 export function shouldAutoLower(p: { low: boolean; locked: boolean; userChose: boolean; fps: number }): boolean {
   return !p.low && !p.locked && !p.userChose && p.fps < AUTO_LOW_FPS
 }
+
+/** 주소의 ?aa=1: 품질 낮음에서도 계단 줄이기(안티에일리어싱)를 켠다. 학교 태블릿에서 켠 것과 끈 것을 비교하려는 것이고 기본은 끔(설계 2026-11-11 §4.11) */
+export function antialiasRequested(search: string): boolean {
+  return new URLSearchParams(search).get('aa') === '1'
+}

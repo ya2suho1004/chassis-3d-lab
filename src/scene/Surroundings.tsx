@@ -2,8 +2,10 @@
 // 1인칭에서 트인 쪽을 보면 빈 회색이 보이던 것을 메운다. 실제 이웃 구역 재현이 아니며(장비 없음) 걸어 들어갈 수 없다(이동 격자 밖).
 // 천장 높이는 미측정 가정값. 천장·조명판은 아래쪽만 보이는 면이라 위에서 내려다보면 가리지 않는다.
 import * as THREE from 'three'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { SceneLayout } from './layoutModel'
+import { PALETTE, PANEL_RGB, labZones } from './look/lookConfig'
+import { glowTexture, hallFalloffTexture, wallShadeTexture } from './look/lookTextures'
 
 /** 천장 높이(m, 가정 — 미측정). 실습장 벽(3.4 m) 위는 흰 벽으로 이어 붙인다 */
 export const CEILING_H = 4.2
@@ -66,6 +68,20 @@ export function lightPanels(b: HallBounds, step = 3): Array<[number, number]> {
   return out
 }
 
+/** 같은 판 여러 장을 한 번에 그린다(조명판·빛 판 — 아래를 보는 면). 재질이나 자리가 바뀌면 묶음을 새로 만든다 */
+function CeilingInstances({ spots, y, geometry, material }: { spots: Array<[number, number]>; y: number; geometry: THREE.BufferGeometry; material: THREE.Material }) {
+  const mesh = useMemo(() => {
+    const im = new THREE.InstancedMesh(geometry, material, spots.length)
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)), one = new THREE.Vector3(1, 1, 1)
+    spots.forEach(([x, z], i) => im.setMatrixAt(i, m.compose(new THREE.Vector3(x, y, z), q, one)))
+    im.instanceMatrix.needsUpdate = true
+    im.frustumCulled = false
+    return im
+  }, [spots, y, geometry, material])
+  useEffect(() => () => { mesh.dispose() }, [mesh])
+  return <primitive object={mesh} />
+}
+
 /** 안쪽을 보는 벽 한 면(바깥에서는 보이지 않음) */
 function InnerWall({ x1, z1, x2, z2, y0, y1, inward, mat }: { x1: number; z1: number; x2: number; z2: number; y0: number; y1: number; inward: [number, number]; mat: THREE.Material }) {
   const len = Math.hypot(x2 - x1, z2 - z1)
@@ -76,19 +92,27 @@ function InnerWall({ x1, z1, x2, z2, y0, y1, inward, mat }: { x1: number; z1: nu
   )
 }
 
-export function Surroundings({ layout }: { layout: SceneLayout }) {
+export function Surroundings({ layout, halo }: { layout: SceneLayout; halo: number }) {
   const b = useMemo(() => hallBounds(layout), [layout])
   const mats = useMemo(() => ({
-    floor: new THREE.MeshStandardMaterial({ color: '#a39a8f', roughness: 0.85 }),
-    wall: new THREE.MeshStandardMaterial({ color: '#f3ece2', roughness: 0.9 }),
-    wallLow: new THREE.MeshStandardMaterial({ color: '#b8a58f', roughness: 0.9 }),
+    // 바깥 바닥은 실습장에서 멀수록 어둡게(시선이 실습장에 모이게)
+    floor: new THREE.MeshStandardMaterial({ color: PALETTE.hallFloor, map: hallFalloffTexture(b, labZones(layout)), roughness: 0.82 }),
+    wall: new THREE.MeshStandardMaterial({ color: PALETTE.hallWall, map: wallShadeTexture('up'), roughness: 0.9 }),
+    wallLow: new THREE.MeshStandardMaterial({ color: PALETTE.hallWallLow, map: wallShadeTexture('low'), roughness: 0.9 }),
     // 천장은 조명 영향 없이 밝은 회색(반구광의 바닥색이 아래 보는 면을 초록으로 물들이지 않게)
-    ceiling: new THREE.MeshBasicMaterial({ color: '#e6ded3' }),
-    panel: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
-  }), [])
+    ceiling: new THREE.MeshBasicMaterial({ color: PALETTE.ceiling }),
+    // 조명판: 밝기 1을 넘는 흰색(품질 높음에서 빛 번짐이 걸린다)
+    panel: new THREE.MeshBasicMaterial({ color: new THREE.Color().setRGB(PANEL_RGB[0], PANEL_RGB[1], PANEL_RGB[2]) }),
+  }), [b, layout])
+  // 조명판 둘레의 옅은 빛 판(더하기 섞기)
+  const haloMat = useMemo(() => new THREE.MeshBasicMaterial({ map: glowTexture('alpha'), color: PALETTE.halo, transparent: true, opacity: halo, depthWrite: false, blending: THREE.AdditiveBlending }), [halo])
+  // 품질이나 배치가 바뀌어 재질을 새로 만들면 예전 것은 내려놓는다(그림은 여러 곳이 함께 쓰는 것이라 그대로 둔다)
+  useEffect(() => () => { haloMat.dispose() }, [haloMat])
+  useEffect(() => () => { for (const m of Object.values(mats)) m.dispose() }, [mats])
   const panels = useMemo(() => lightPanels(b), [b])
   const decor = useMemo(() => decorSpots(b, layout), [b, layout])
   const panelGeo = useMemo(() => new THREE.PlaneGeometry(1.2, 0.3), [])
+  const haloGeo = useMemo(() => new THREE.PlaneGeometry(2.0, 0.95), [])
   const w = b.xMax - b.xMin, d = b.zMax - b.zMin
   const cx = (b.xMin + b.xMax) / 2, cz = (b.zMin + b.zMax) / 2
   return (
@@ -112,7 +136,8 @@ export function Surroundings({ layout }: { layout: SceneLayout }) {
       })}
       {/* 천장(아래를 보는 면) + 조명판 */}
       <mesh rotation-x={Math.PI / 2} position={[cx, CEILING_H, cz]} material={mats.ceiling}><planeGeometry args={[w, d]} /></mesh>
-      {panels.map(([x, z]) => <mesh key={`${x},${z}`} rotation-x={Math.PI / 2} position={[x, CEILING_H - 0.01, z]} geometry={panelGeo} material={mats.panel} />)}
+      <CeilingInstances spots={panels} y={CEILING_H - 0.01} geometry={panelGeo} material={mats.panel} />
+      <CeilingInstances spots={panels} y={CEILING_H - 0.02} geometry={haloGeo} material={haloMat} />
       {decor.map((d) => <Decor key={d.kind} d={d} />)}
     </group>
   )

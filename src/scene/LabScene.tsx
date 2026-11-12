@@ -1,7 +1,7 @@
-// 3D 실습장 장면 — 사진 기준 장비 모델(models/), 품질 2단계(낮음: 그림자·화면 효과 끔, 해상도 1배, 반사광은 간단한 빛 — 모델은 두 품질 같음), 바닥 탭 이동, 시점 3단계
+// 3D 실습장 장면 — 사진 기준 장비 모델(models/), 품질 2단계(낮음: 실시간 그림자·화면 효과 끔, 해상도 1배 — 모델·빛·반사광은 두 품질 같고 바닥 그림자는 구워서 깐다, look/), 바닥 탭 이동, 시점 3단계
 // 이 장면은 '개발용 임시 배치'를 그린다. 실제 학교 재현 완료가 아니다(layoutConfirmed=false).
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
-import { ContactShadows, Environment, Html, Lightformer, OrbitControls, useProgress } from '@react-three/drei'
+import { Html, OrbitControls, useProgress } from '@react-three/drei'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -9,7 +9,6 @@ import { distanceToFootprint, footprintOf, labelState, type LabelMode, type Pt, 
 import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
 import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, StaticCar, Stand, ToeGauge, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
-import { epoxyFloorTexture } from './models/textures'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
 import { BrakeTesterModel, fitsBrakeTester } from './models/BrakeTesterModel'
 import { AbsPanelModel, fitsAbsPanel } from './models/AbsPanelModel'
@@ -29,8 +28,13 @@ import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aim
 import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction, type CharacterLook } from './models/CharacterModel'
 import { bodyScale } from '../app/avatar'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
-import { assetUrl } from '../app/assetUrl'
-import { LAB_HDRI } from '../app/intro'
+import { CEILING_H, hallBounds } from './Surroundings'
+import { FOG, PALETTE, labBounds, lookFor } from './look/lookConfig'
+import { WorkshopEnv, probePoint } from './look/WorkshopEnv'
+import { makeFloorMaterial } from './look/floorMaterial'
+import { KeyLight } from './look/KeyLight'
+import { ToneSetup } from './look/ToneSetup'
+import { FloorShadowBake } from './look/FloorShadowBake'
 
 const Effects = lazy(() => import('./Effects'))
 const WALK_SPEED = 1.6 // m/s
@@ -42,6 +46,8 @@ export interface LabSceneProps {
   selectedId: string | null
   highlightIds: string[]
   lowSpec: boolean
+  /** 품질 낮음에서도 계단 줄이기를 켠다(주소 ?aa=1 — 실기기 비교용, app/quality.ts) */
+  antialias?: boolean
   /** 올려 둔 리프트 ID(표시 전용, 과제 기록과 무관) */
   raisedLiftIds?: string[]
   onSelectEquipment: (id: string | null) => void
@@ -536,20 +542,6 @@ function LayerSetup() {
   return null
 }
 
-/**
- * 바닥 그림자 굽기: 장비·차량 그림자를 위에서 한 번(20프레임) 계산해 바닥에 깐다. 품질 낮음(폰·태블릿)도 거의 공짜로 그림자가 생긴다.
- * 모델을 다 불러온 뒤·리프트를 올리고 내린 뒤·시험 차량 자세가 바뀐 뒤 2.5초 기다렸다 다시 굽는다. 사람은 레이어 2라 빠진다.
- */
-function BakedFloorShadows({ bounds, stateKey, strong }: { bounds: { xMin: number; xMax: number; zMin: number; zMax: number }; stateKey: string; strong: boolean }) {
-  const { active } = useProgress()
-  const want = `${active ? 'loading' : 'ready'}|${stateKey}`
-  const [key, setKey] = useState(want)
-  useEffect(() => { const t = setTimeout(() => setKey(want), 2500); return () => clearTimeout(t) }, [want])
-  const w = bounds.xMax - bounds.xMin, d = bounds.zMax - bounds.zMin
-  return <ContactShadows key={key} frames={20} position={[(bounds.xMin + bounds.xMax) / 2, 0.006, (bounds.zMin + bounds.zMax) / 2]} scale={[w, d]}
-    resolution={1024} blur={2.4} far={3.2} opacity={strong ? 0.6 : 0.38} color="#0b1a12" />
-}
-
 /** 계기 화면 가까이 보기: 조작부 앞면(바라보는 쪽) 0.8 m에서 계기 높이를 비춘다. 끝나면 원래 자리로 */
 function PanelCamera({ panel, facing }: { panel: SceneEquipment; facing: number }) {
   const { camera, controls } = useThree() as unknown as { camera: THREE.PerspectiveCamera; controls: OrbitControlsImpl | null }
@@ -806,7 +798,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} look={look} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, antialias = false, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -855,15 +847,19 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
   }
   const floorMat = useMemo(() => {
     const repeat: [number, number] = [Math.max(1, Math.round((mz.xMax - mz.xMin) / 4)), Math.max(1, Math.round((mz.zMax - mz.zMin) / 4))]
-    return new THREE.MeshStandardMaterial({ map: epoxyFloorTexture(repeat), roughness: 0.38, metalness: 0.02, envMapIntensity: 0.35 })
-  }, [mz.xMax, mz.xMin, mz.zMax, mz.zMin])
+    const hall = hallBounds(layout)
+    return makeFloorMaterial({ min: new THREE.Vector3(hall.xMin, 0, hall.zMin), max: new THREE.Vector3(hall.xMax, CEILING_H, hall.zMax) }, probePoint(layout), repeat)
+  }, [layout, mz.xMax, mz.xMin, mz.zMax, mz.zMin])
+  const tier = useMemo(() => lookFor(lowSpec), [lowSpec])
+  const shadowBounds = useMemo(() => labBounds(layout), [layout])
   /** 조작부는 시험기를 바라보게 둔다(앞면 = 지역 -z) */
   const facingOf = (e: SceneEquipment): number | null => {
     if (e.kind !== 'panel' || !tester) return null
     return Math.atan2(-(tester.x - e.x), -(tester.z - e.z))
   }
-  const Floor = ({ r }: { r: { xMin: number; xMax: number; zMin: number; zMax: number } }) => (
-    <mesh rotation-x={-Math.PI / 2} position={[(r.xMin + r.xMax) / 2, 0, (r.zMin + r.zMax) / 2]} onClick={onFloorTap} receiveShadow material={floorMat}>
+  // 바닥 한 구역. 장면 안쪽에서 정의한 부품으로 두면 LabScene이 다시 그려질 때마다 새 부품으로 여겨져 바닥 메시와 모양을 통째로 다시 만든다(학생이 걷는 동안 초당 네 번쯤). 그래서 그냥 함수로 부른다
+  const floorOf = (r: { xMin: number; xMax: number; zMin: number; zMax: number }, key: string) => (
+    <mesh key={key} rotation-x={-Math.PI / 2} position={[(r.xMin + r.xMax) / 2, 0, (r.zMin + r.zMax) / 2]} onClick={onFloorTap} receiveShadow material={floorMat}>
       <planeGeometry args={[r.xMax - r.xMin, r.zMax - r.zMin]} />
     </mesh>
   )
@@ -876,29 +872,22 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
     const len = Math.hypot(nx, nz) || 1
     return [(s * nx) / len, (s * nz) / len]
   }
-  const hdri = assetUrl(LAB_HDRI)
   return (
-    <Canvas shadows={!lowSpec} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
-      <color attach="background" args={['#efe4d6']} />
-      <fog attach="fog" args={['#efe4d6', 24, 60]} />
-      <Surroundings layout={layout} />
-      <hemisphereLight args={['#fff1dc', '#4f6b4c', lowSpec ? 1.1 : 0.7]} />
-      <directionalLight color="#ffe9cf" position={[mz.xMax * 0.6, 14, mz.zMax * 0.3]} intensity={lowSpec ? 1.0 : 1.4} castShadow={!lowSpec}
-        shadow-mapSize-width={1024} shadow-mapSize-height={1024} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={14} shadow-camera-bottom={-14} shadow-bias={-0.0005} />
-      {/* 반사광: 품질 높음은 정비소 HDRI(1.6 MB), 낮음은 내려받기 없이 천장 조명판 모양의 간단한 빛으로 만든다 */}
-      {!lowSpec ? <Suspense fallback={null}><Environment files={hdri} environmentIntensity={0.45} /></Suspense> : (
-        <Environment resolution={32} environmentIntensity={0.6}>
-          <Lightformer form="rect" intensity={2} position={[0, 5, 0]} rotation-x={Math.PI / 2} scale={[10, 10, 1]} />
-          <Lightformer form="rect" intensity={0.6} position={[0, 1, -8]} scale={[20, 3, 1]} />
-          <Lightformer form="rect" intensity={0.6} position={[0, 1, 8]} rotation-y={Math.PI} scale={[20, 3, 1]} />
-        </Environment>
-      )}
+    <Canvas shadows={tier.realtimeShadows ? 'percentage' : false} dpr={lowSpec ? 1 : [1, 1.5]} camera={{ position: [start.x + 4, 5.5, start.z + 6], fov: 50, near: 0.08, far: 120 }} gl={{ antialias: !lowSpec || antialias, powerPreference: lowSpec ? 'low-power' : 'default' }} style={{ touchAction: 'none' }}>
+      {/* 빛과 재질(설계 2026-11-11): 색 보정 곡선 · 주된 빛 하나 · 낮춘 주변광 · 실습장 자체로 만든 반사광. 두 품질이 같은 빛을 쓴다 */}
+      <ToneSetup />
+      <color attach="background" args={[PALETTE.background]} />
+      <fog attach="fog" args={[PALETTE.background, FOG.near, FOG.far]} />
+      <Surroundings layout={layout} halo={tier.halo} />
+      <hemisphereLight args={[PALETTE.sky, PALETTE.ground, tier.hemi]} />
+      <KeyLight bounds={shadowBounds} castShadow={tier.realtimeShadows} />
+      <WorkshopEnv layout={layout} resolution={tier.envResolution} />
       <LayerSetup />
       {onFps && <FpsProbe onFps={onFps} />}
-      <Floor r={mz} />
-      <BakedFloorShadows bounds={{ xMin: mz.xMin, xMax: mz.xMax, zMin: mz.zMin, zMax: Math.max(mz.zMax, ab?.zMax ?? mz.zMax) }}
-        stateKey={`${raisedLiftIds.join(',')}|${rig.vehicle}|${rig.liftUp}`} strong={lowSpec} />
-      {ab && <Floor r={ab} />}
+      {floorOf(mz, 'main')}
+      {/* 바닥 그림자: 낮음은 주된 빛 그림자 + 닿는 그늘, 높음은 닿는 그늘만 굽는다(주된 빛 그림자는 실시간) */}
+      <FloorShadowBake bounds={shadowBounds} sun={tier.sunShadow} contact={tier.contactShadow} stateKey={`${raisedLiftIds.join(',')}|${rig.vehicle}|${rig.liftUp}`} />
+      {ab && floorOf(ab, 'abs')}
       {/* 시험 차로 흰 차선(사진 27·28) */}
       {tester && [-1, 1].map((s) => (
         <mesh key={s} rotation-x={-Math.PI / 2} position={[tester.x + s * (tester.w / 2 + 0.25), 0.003, tester.z]}>
@@ -915,9 +904,9 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         const horizontal = Math.abs(z2 - z1) < 1e-6
         return (
           <group key={o.id}>
-            <mesh rotation-x={-Math.PI / 2} position={[(x1 + x2) / 2, 0.01, (z1 + z2) / 2]}>
+            <mesh rotation-x={-Math.PI / 2} position={[(x1 + x2) / 2, 0.01, (z1 + z2) / 2]} receiveShadow>
               <planeGeometry args={horizontal ? [len, 0.3] : [0.3, len]} />
-              <meshBasicMaterial color="#1fbf6b" />
+              <meshStandardMaterial color={PALETTE.line} roughness={0.5} />
             </mesh>
             <Html position={[(x1 + x2) / 2, 0.6, (z1 + z2) / 2]} center style={{ pointerEvents: 'none' }}><div className="label3d open">→ {o.connectsTo}</div></Html>
           </group>
@@ -949,7 +938,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
         {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">{npcLabel === 'full' ? 'NPC 교관 — 탭하여 대화' : '교관'}</div></Html>}
       </group>
       {/* 시작점 표시 */}
-      <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]}><ringGeometry args={[0.3, 0.45, 24]} /><meshBasicMaterial color="#1fbf6b" /></mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]} receiveShadow><ringGeometry args={[0.3, 0.45, 24]} /><meshStandardMaterial color={PALETTE.line} roughness={0.5} /></mesh>
       <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} holdStill={holdStill} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}
@@ -961,7 +950,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, rai
       {first && !camBusy && onAim && <AimProbe layout={layout} onAim={onAim} />}
       <OrbitControls makeDefault enabled={!camBusy && !first} enablePan={false} minDistance={orbit.minDistance} maxDistance={orbit.maxDistance} minPolarAngle={orbit.minPolar} maxPolarAngle={orbit.maxPolar} />
       {/* 품질 높음: 구석 그늘(AO)·색 보정·가장자리 어둡게. 태블릿(품질 낮음)은 끈다 */}
-      {!lowSpec && <Suspense fallback={null}><Effects /></Suspense>}
+      {tier.postEffects && <Suspense fallback={null}><Effects /></Suspense>}
     </Canvas>
   )
 }

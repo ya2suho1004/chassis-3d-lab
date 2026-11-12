@@ -23,21 +23,6 @@ function canvasTexture(key: string, w: number, h: number, draw: (g: CanvasRender
 /** 결정적 의사 난수(매번 같은 무늬) */
 function rng(seed: number) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647) }
 
-/** 초록 에폭시 바닥: 매끈한 광택 바탕에 아주 옅은 얼룩·긁힘 (사진 21·27) */
-export function epoxyFloorTexture(repeat: [number, number]): THREE.Texture {
-  return canvasTexture(`epoxy-${repeat.join('x')}`, 512, 512, (g) => {
-    g.fillStyle = '#1e7d4b'; g.fillRect(0, 0, 512, 512)
-    const r = rng(7)
-    for (let i = 0; i < 140; i++) {
-      const a = 0.012 + r() * 0.025
-      g.fillStyle = r() < 0.6 ? `rgba(0,30,10,${a})` : `rgba(255,255,255,${a})`
-      g.beginPath(); g.ellipse(r() * 512, r() * 512, 20 + r() * 90, 10 + r() * 40, r() * Math.PI, 0, Math.PI * 2); g.fill()
-    }
-    g.strokeStyle = 'rgba(255,255,255,0.05)'; g.lineWidth = 1
-    for (let i = 0; i < 25; i++) { const x = r() * 512, y = r() * 512; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (r() - 0.5) * 60, y + (r() - 0.5) * 12); g.stroke() }
-  }, repeat)
-}
-
 /** 줄무늬(체크) 철판: 마름모 돌기 (사진 27 왼쪽 아래, 3 리프트 발판) */
 export function checkerPlateTexture(base: string, repeat: [number, number]): THREE.Texture {
   return canvasTexture(`checker-${base}-${repeat.join('x')}`, 256, 256, (g) => {

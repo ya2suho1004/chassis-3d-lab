@@ -166,6 +166,11 @@ describe('설명서와 건수 대조', () => {
     expect(b.counts).toMatchObject({ received: 0, usable: 0, problem: 0 })
   })
 
+  test('겉모습이 달라진 판(0.3.3-demo)을 알린다 — 채점·기록은 같음', async () => {
+    const readme = file(await bundle([]), 'README.txt')
+    expect(readme).toContain('0.3.3-demo부터 실습장 조명·바닥 겉모습이 달라짐(채점·기록은 같음)')
+  })
+
   test('수식으로 실행될 입력은 csv 규칙대로 막고 원본 파일은 그대로 둔다', async () => {
     const p = makePayload()
     p.measurementInputs[0]!.firstInput = '=1+1'

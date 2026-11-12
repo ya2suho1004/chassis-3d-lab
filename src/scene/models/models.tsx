@@ -4,6 +4,8 @@ import { RoundedBox } from '@react-three/drei'
 import { forwardRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { absTesterFaceTexture, cabinetPlateTexture, checkerPlateTexture, dangerSignTexture, rollerTexture, woodTexture } from './textures'
+import { PALETTE } from '../look/lookConfig'
+import { wallShadeTexture } from '../look/lookTextures'
 
 // ---------- 공통 재질 ----------
 export function useMaterials() {
@@ -39,9 +41,10 @@ export function useMaterials() {
     stoolGreen: new THREE.MeshStandardMaterial({ color: '#3fb79a', roughness: 0.4 }),
     spring: new THREE.MeshStandardMaterial({ color: '#2b2b2b', metalness: 0.5, roughness: 0.4 }),
     orange: new THREE.MeshStandardMaterial({ color: '#ff7a1a', roughness: 0.5 }),
-    wallWhite: new THREE.MeshStandardMaterial({ color: '#eceff1', roughness: 0.9, side: THREE.FrontSide }),
-    wallGrey: new THREE.MeshStandardMaterial({ color: '#9aa2a7', roughness: 0.85, side: THREE.FrontSide }),
-    pillarWhite: new THREE.MeshStandardMaterial({ color: '#f1f3f4', roughness: 0.85 }),
+    // 벽·기둥 아래 띠: 바닥에 닿는 쪽이 어두운 세로 그늘 그림을 곱한다(설계 2026-11-11 §4.6). 천장에 닿는 쪽 그늘은 Surroundings의 윗벽이 맡는다
+    wallWhite: new THREE.MeshStandardMaterial({ color: PALETTE.wallUp, roughness: 0.9, side: THREE.FrontSide }),
+    wallGrey: new THREE.MeshStandardMaterial({ color: PALETTE.wallLow, map: wallShadeTexture('low'), roughness: 0.85, side: THREE.FrontSide }),
+    pillarWhite: new THREE.MeshStandardMaterial({ color: PALETTE.wallUp, roughness: 0.85 }),
     sign: new THREE.MeshStandardMaterial({ map: dangerSignTexture(), roughness: 0.6 }),
   }), [])
 }
