@@ -1,8 +1,9 @@
 // src/app/cozyState.ts — '따뜻한 정비 공방' 연출의 판단 로직(순수 함수). 컴포넌트는 이것만 쓴다.
 import type { Effect } from './reactions'
 
-export type Fx = { effects: Effect[]; seq: number }
-export const EMPTY_FX: Fx = { effects: [], seq: 0 }
+/** 켜져 있는 연출: 이름 → 켠 차례 번호. 같은 연출을 다시 켜면 번호가 바뀌어 CSS 움직임을 처음부터 다시 건다 */
+export type Fx = { on: Partial<Record<Effect, number>>; seq: number }
+export const EMPTY_FX: Fx = { on: {}, seq: 0 }
 
 /** 완료 단계 수가 '늘어날 때만' true. 같거나 줄면(되돌림·재마운트 0) false */
 export function shouldPopOnDone(prevDone: number, nextDone: number): boolean {
@@ -14,14 +15,26 @@ export function isRequestPassed(completionStatus: 'completed' | 'aborted', paylo
   return completionStatus === 'completed' && payload.ok && payload.value.npcInspectionResult === 'passed'
 }
 
-/** onAnimationEnd: 연출 클래스만 지우고 seq는 유지 */
-export function clearEffects(f: Fx): Fx {
-  return { ...f, effects: [] }
+/** 연출을 켠다(켤 것이 없으면 같은 객체를 돌려 불필요한 렌더 방지) */
+export function addEffects(f: Fx, effects: readonly Effect[]): Fx {
+  if (!effects.length) return f
+  const seq = f.seq + 1
+  const on = { ...f.on }
+  for (const e of effects) on[e] = seq
+  return { on, seq }
+}
+
+/** onAnimationEnd: 끝난 연출 하나만 끈다. 함께 켜진 다른 연출은 끝까지 간다(꺼져 있던 것이면 같은 객체) */
+export function dropEffect(f: Fx, e: Effect): Fx {
+  if (f.on[e] === undefined) return f
+  const on = { ...f.on }
+  delete on[e]
+  return { on, seq: f.seq }
 }
 
 /** run이 null이 되면 연출 상태 초기화(이미 비어 있으면 같은 객체를 돌려 불필요한 렌더 방지) */
 export function resetFxIfIdle(f: Fx): Fx {
-  return f.effects.length || f.seq ? EMPTY_FX : f
+  return Object.keys(f.on).length || f.seq ? EMPTY_FX : f
 }
 
 /** 검사 통과 뒤 결과 화면 전에 교관이 고개를 끄덕일지(설계 §4 대화창).

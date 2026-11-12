@@ -12,8 +12,8 @@ import { backlashTravel, checkBacklash, initialBacklashState, randomBacklashCase
 import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRunout'
 import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
-import { prefersReducedMotion, reactionEventForStep, reactionsFor } from '../app/reactions'
-import { clearEffects, EMPTY_FX, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
+import { eventsForStep, prefersReducedMotion, reactionsFor } from '../app/reactions'
+import { addEffects, dropEffect, EMPTY_FX, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
 import { createFinishGate, type FinishGate } from '../app/finishGate'
 import { NOD_LINE } from '../app/requests'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
@@ -171,9 +171,11 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
     const step = newCue(cuePrev.current, now)
     cuePrev.current = now
     if (!step) return
-    const effects = reactionsFor(reactionEventForStep(step), { mode: run.difficultyMode, reducedMotion: prefersReducedMotion(), sound: soundOn }).filter((e) => e !== 'checkPop' || advanced)
-    if (effects.includes('tick')) sound.tick()
-    setFx((f) => ({ effects, seq: f.seq + 1 }))
+    for (const ev of eventsForStep(step, advanced)) {
+      const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: soundOn })
+      if (r.cues.some((c) => c.name === 'tick')) sound.tick()
+      setFx((f) => addEffects(f, r.effects))
+    }
     const action = actionForStep(step)
     if (!action) return
     const eqId = actionTarget(step, task.steps.find((st) => st.stepId === step)?.equipmentId ?? null)
@@ -348,7 +350,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}{run && ctx && (() => {
                 const sb = saveBadge(ctx.saveStatus, noRecord)
                 return sb && sb.tone !== 'bad' ? <span className={`g-save ${sb.tone}`}>{sb.text}</span> : null
-              })()}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.effects.includes('sparkle') ? fx.seq : 'ppe'} className={`g-ppe ${fx.effects.includes('sparkle') ? 'spark' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>보호구 착용</span>}</div>
+              })()}<span>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.on.sparkle ?? 'ppe'} className={`g-ppe ${fx.on.sparkle ? 'spark' : ''}`} onAnimationEnd={() => setFx((f) => dropEffect(f, 'sparkle'))}>보호구 착용</span>}</div>
               {/* 저장 실패(D4)는 배지 아래 줄에 따로 — 배지가 길어져 오른쪽 의뢰 카드와 겹치지 않게 */}
               {run && ctx && saveBadge(ctx.saveStatus, noRecord)?.tone === 'bad' && <button className="g-save bad" role="alert" onClick={ctx.retrySave}>저장 실패 · 다시 저장</button>}
               </div>
@@ -377,7 +379,7 @@ export function LabScreen({ repo, noRecord = false, profile = DEFAULT_PROFILE, o
               {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
-              {run && ctx && <p key={fx.effects.includes('checkPop') ? fx.seq : 'p'} className={`g-progress ${fx.effects.includes('checkPop') ? 'pop' : ''}`} onAnimationEnd={() => setFx(clearEffects)}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
+              {run && ctx && <p key={fx.on.checkPop ?? 'p'} className={`g-progress ${fx.on.checkPop ? 'pop' : ''}`} onAnimationEnd={() => setFx((f) => dropEffect(f, 'checkPop'))}>{ctx.doneCount > 0 && <span aria-hidden="true">✓ </span>}{ctx.doneCount}/{ctx.total} 단계 완료</p>}
               <div className="g-quest-btns">
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
                 <button onClick={() => goTo(npcSpot, true)}>교관에게</button>

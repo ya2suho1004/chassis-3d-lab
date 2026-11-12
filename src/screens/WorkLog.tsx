@@ -11,7 +11,7 @@ import { prefersReducedMotion, reactionsFor } from '../app/reactions'
 export function WorkLog({ run, passed, nickname }: { run: TaskRun; passed: boolean; nickname?: string }) {
   const copy = requestCopy(run.task.taskId)
   const groups = workLogGroups(summarizeResponses(run.responses))
-  const fx = useMemo(() => (passed ? reactionsFor('inspectionPassed', { mode: run.difficultyMode, reducedMotion: prefersReducedMotion(), sound: false }) : []), [passed, run.difficultyMode])
+  const fx = useMemo(() => (passed ? reactionsFor('inspectionPassed', { reducedMotion: prefersReducedMotion(), sound: false }).effects : []), [passed])
   return (
     <section className={`card worklog ${fx.includes('stamp') ? 'stamped' : ''}`} aria-label="정비 일지">
       <div className="wl-head"><span className="wl-tag">정비 일지</span><b>“{copy.complaint}”</b>{nickname && <span className="wl-who">정비: {nickname}</span>}</div>

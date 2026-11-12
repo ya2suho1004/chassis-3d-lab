@@ -2,7 +2,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { clearEffects, EMPTY_FX, isRequestPassed, NOD_SECONDS, nodAngle, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone } from '../src/app/cozyState'
+import { addEffects, dropEffect, EMPTY_FX, isRequestPassed, NOD_SECONDS, nodAngle, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone } from '../src/app/cozyState'
 import { listTasks } from '../src/app/session'
 import { requestCopy } from '../src/app/requests'
 import { createTaskRun } from '../src/domain/taskEngine'
@@ -26,13 +26,27 @@ describe('isRequestPassed (도장·교관 한마디 조건)', () => {
   })
 })
 
-describe('fx 상태', () => {
-  it('onAnimationEnd: 연출만 지우고 seq 유지', () => {
-    expect(clearEffects({ effects: ['checkPop', 'tick'], seq: 3 })).toEqual({ effects: [], seq: 3 })
+describe('fx 상태(켜져 있는 연출: 이름 → 켠 차례 번호)', () => {
+  it('켜기: 차례 번호가 하나 오르고 그 번호가 붙는다. 켜져 있던 다른 연출은 번호가 그대로다', () => {
+    const a = addEffects(EMPTY_FX, ['sparkle'])
+    expect(a).toEqual({ on: { sparkle: 1 }, seq: 1 })
+    expect(addEffects(a, ['checkPop'])).toEqual({ on: { sparkle: 1, checkPop: 2 }, seq: 2 })
+  })
+  it('같은 연출을 다시 켜면 번호가 바뀐다(CSS 움직임을 처음부터 다시 건다)', () => {
+    expect(addEffects({ on: { checkPop: 1 }, seq: 1 }, ['checkPop'])).toEqual({ on: { checkPop: 2 }, seq: 2 })
+  })
+  it('켤 것이 없으면 같은 객체', () => {
+    const a = addEffects(EMPTY_FX, ['sparkle'])
+    expect(addEffects(a, [])).toBe(a)
+  })
+  it('onAnimationEnd: 끝난 연출 하나만 끄고 다른 연출과 seq는 그대로. 꺼져 있던 것이면 같은 객체', () => {
+    const a = addEffects(addEffects(EMPTY_FX, ['sparkle']), ['checkPop'])
+    expect(dropEffect(a, 'checkPop')).toEqual({ on: { sparkle: 1 }, seq: 2 })
+    expect(dropEffect(a, 'codexPop')).toBe(a)
   })
   it('run이 null이면 초기화, 이미 비었으면 같은 객체', () => {
-    expect(resetFxIfIdle({ effects: ['sparkle'], seq: 2 })).toEqual(EMPTY_FX)
-    expect(resetFxIfIdle({ effects: [], seq: 2 })).toEqual(EMPTY_FX)
+    expect(resetFxIfIdle({ on: { sparkle: 2 }, seq: 2 })).toEqual(EMPTY_FX)
+    expect(resetFxIfIdle({ on: {}, seq: 2 })).toEqual(EMPTY_FX)
     expect(resetFxIfIdle(EMPTY_FX)).toBe(EMPTY_FX)
   })
 })
