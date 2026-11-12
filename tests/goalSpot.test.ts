@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest'
 import raw from '../src/data/layout/layout.dev-provisional.json'
 import { loadSceneLayout } from '../src/scene/layoutModel'
 import { goalSpotOf } from '../src/scene/feel/goalSpot'
+import { nextHighlightId } from '../src/app/labGuide'
+import { listTasks } from '../src/app/session'
+import { createTaskRun } from '../src/domain/taskEngine'
 
 const layout = loadSceneLayout(raw)
 const eq = (id: string) => layout.equipment.find((e) => e.id === id)!
@@ -56,5 +59,19 @@ describe('goalSpotOf', () => {
       expect(s, id).not.toBeNull()
       expect(s!.h, id).toBeGreaterThan(0)
     }
+  })
+})
+
+describe('표식은 안내 있음에서만 설 자리가 있다(설계 §5-6) — 장면이 실제로 쓰는 길 그대로', () => {
+  const spotFor = (mode: 'guided' | 'unguided' | 'timedAssessment', task: ReturnType<typeof listTasks>[number]) => goalSpotOf(layout.equipment, nextHighlightId(createTaskRun(task, { difficultyMode: mode })))
+  it('안내 없음과 시간 제한 평가에서는 어느 과제든 자리가 없다(표식 물체를 장면에 붙이지 않는다)', () => {
+    for (const task of listTasks()) for (const mode of ['unguided', 'timedAssessment'] as const) expect(spotFor(mode, task), `${task.taskId} ${mode}`).toBeNull()
+  })
+  it('둘러보기(과제 전)에도 없다', () => {
+    expect(goalSpotOf(layout.equipment, nextHighlightId(null))).toBeNull()
+  })
+  it('안내 있음에서는 첫 단계에 장비가 있는 과제면 자리가 나온다', () => {
+    const withGear = listTasks().filter((t) => t.steps[0]?.equipmentId)
+    for (const task of withGear) expect(spotFor('guided', task), task.taskId).not.toBeNull()
   })
 })

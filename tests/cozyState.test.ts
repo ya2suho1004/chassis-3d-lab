@@ -68,7 +68,7 @@ describe('fx 상태(켜져 있는 연출: 이름 → 켠 차례 번호와 꺼질
   })
   it('끄는 것은 시간뿐이다 — CSS 움직임이 끝났다는 신호(animationend)에 기대지 않는다(요소가 화면에 없으면 그 신호가 오지 않는다)', () => {
     const lab = readFileSync('src/screens/LabScreen.tsx', 'utf8')
-    expect(lab).not.toMatch(/onAnimationEnd=\{\(\) => setFx/)
+    expect(lab).not.toMatch(/onAnimationEnd=\{[^}]*setFx/)
     // 타이머: 가장 먼저 꺼질 시각에 울리고, 조금 일찍 울려도 그 연출은 반드시 끈다. 연출 상태가 바뀌거나 화면을 떠나면 앞 타이머를 거둔다
     expect(lab).toContain('    const at = nextExpiry(fx)\n    if (at === null) return\n    const t = setTimeout(() => {\n      const now = Math.max(performance.now(), at)\n      setFx((f) => dropExpired(f, now))\n    }, Math.max(0, at - performance.now()))\n    return () => clearTimeout(t)\n  }, [fx])')
     // 상태 갱신 함수 안에서 시각을 읽지 않는다(갱신 함수는 두 번 돌 수 있다)

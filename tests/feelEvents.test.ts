@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { rigEvents, type RigLook } from '../src/app/feelEvents'
 import type { OffSubStep } from '../src/domain/taskEngine'
 import { brakeRigState } from '../src/scene/brakeRig'
+import turning from '../src/data/tasks/task.min-turning-radius.case-lv1.json'
 
 const outside: RigLook = { vehicle: 'outside', liftUp: true, braking: false }
 
@@ -55,6 +56,21 @@ describe('rigEvents — 제동력 과제의 실제 흐름(brakeRigState가 만�
     for (const [name, next, want] of flow) {
       expect(rigEvents(prev, next), name).toEqual(want)
       prev = next
+    }
+  })
+})
+
+describe('rigEvents — 최소회전반경 과제에서는 제동 장치가 움직이지 않는다', () => {
+  it('그 과제의 단계를 차례로 끝내도 사건이 없다(제동력 과제와 단계 이름이 일부 겹쳐도 — ppe, read)', () => {
+    const steps = turning.steps.map((s) => s.stepId)
+    expect(steps).toContain('read')
+    for (const dir of ['north', null] as const) {
+      let prev: RigLook = brakeRigState({ completedSteps: [], offProgress: [], motorOn: false }, dir)
+      for (let k = 1; k <= steps.length; k++) {
+        const next = brakeRigState({ completedSteps: steps.slice(0, k), offProgress: [], motorOn: false }, dir)
+        expect(rigEvents(prev, next), `${steps[k - 1]} (진입 방향 ${dir})`).toEqual([])
+        prev = next
+      }
     }
   })
 })

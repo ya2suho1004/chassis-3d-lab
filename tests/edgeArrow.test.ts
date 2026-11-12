@@ -75,9 +75,9 @@ describe('placeEdgeArrow — 어디에 서고 어디를 가리키나(HUD 없음)
     expect(a.angle).toBeCloseTo(Math.PI / 2, 9)
   })
   it('가리키는 방향은 화면에서 본 방향이다: 화면 가운데에서 화살표 자리로 가는 방향과 같다(가로로 긴 화면에서도 어긋나지 않는다)', () => {
-    for (const [nx, ny] of [[-2, -1], [1.5, 1.2], [0.3, -2], [-1.1, 0.4]] as const) {
-      const a = placeEdgeArrow({ nx, ny, behind: false }, open)!
-      expect(a.angle, `${nx}, ${ny}`).toBeCloseTo(Math.atan2(a.y - 400, a.x - 640), 9)
+    for (const behind of [false, true]) for (const [nx, ny] of [[-2, -1], [1.5, 1.2], [0.3, -2], [-1.1, 0.4]] as const) {
+      const a = placeEdgeArrow({ nx, ny, behind }, open)!
+      expect(a.angle, `${nx}, ${ny}, ${behind ? '뒤' : '앞'}`).toBeCloseTo(Math.atan2(a.y - 400, a.x - 640), 9)
     }
   })
 })
@@ -131,6 +131,11 @@ describe('placeEdgeArrow — HUD가 차지한 구간에는 서지 않는다', ()
     expect(back.x).toBe(930) // 되돌아올 때도 같은 폭만큼 머문다
     expect(placeEdgeArrow(toward(620), t, back)!.x).toBe(350)
     expect(placeEdgeArrow(toward(650), t)!.x).toBe(930) // 앞 화면이 없으면 가까운 쪽
+    // 앞 화면에 다른 변(오른쪽 띠)에 서 있었으면 머무는 규칙이 걸리지 않는다
+    expect(placeEdgeArrow(toward(650), t, { x: 0.95 * 1280, y: 400, angle: 0 })!.x).toBe(930)
+    // HUD가 바뀌어 띠가 다시 만들어지면(구간이 [300, 980]으로) 옛 끝에 머물지 않고 가까운 쪽으로 간다
+    const wider = buildTrack(view, [{ x0: 330, y0: 640, x1: 950, y1: 704 }])
+    expect(placeEdgeArrow(toward(650), wider, first)!.x).toBe(980)
   })
   it('그 변에 빈 자리가 없으면 제자리에 둔다', () => {
     const t = buildTrack(view, [{ x0: 1100, y0: 0, x1: 1280, y1: 800 }])

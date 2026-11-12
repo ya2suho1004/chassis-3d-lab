@@ -10,10 +10,16 @@ describe('tapSpotOf — 누른 장비의 고리 자리', () => {
   it('가운데는 장비 자리, 반지름은 바닥 네모의 대각선 절반', () => {
     expect(tapSpotOf({ x: 4, z: 7, w: 3, d: 4 })).toEqual({ x: 4, z: 7, r: 2.5 })
   })
-  it('장비를 어느 쪽으로 돌려 놓아도 반지름은 같다(대각선은 돌려도 그대로라 회전 값을 쓰지 않는다)', () => {
-    for (const rotation of [0, 45, 90, 180, 270]) {
-      const turned = { x: 0, z: 0, w: 3, d: 4, rotation }
-      expect(tapSpotOf(turned).r, `${rotation}°`).toBe(2.5)
+  it('장비를 어느 쪽으로 돌려 놓아도 고리는 바닥 네모의 네 꼭짓점을 지난다(그래서 회전 값을 쓰지 않는다)', () => {
+    const e = { x: 2, z: 5, w: 3, d: 4 }
+    const { r } = tapSpotOf(e)
+    for (const deg of [0, 30, 45, 90, 200]) {
+      const a = (deg * Math.PI) / 180
+      for (const [sx, sz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
+        const cx = (sx * e.w) / 2, cz = (sz * e.d) / 2
+        const px = e.x + cx * Math.cos(a) - cz * Math.sin(a), pz = e.z + cx * Math.sin(a) + cz * Math.cos(a)
+        expect(Math.hypot(px - e.x, pz - e.z), `${deg}°`).toBeCloseTo(r, 9)
+      }
     }
   })
   it('실제 배치의 모든 장비에서 고리는 장비 자리에서, 짧은 변의 절반보다 크게 시작한다', () => {

@@ -1,5 +1,5 @@
 // tests/feelWiring.test.ts — 손맛 배선(설계 2026-11-12 §4.2·§4.7·§5): 소리와 반응이 정해진 길로만 나는지 원본 글로 확인한다
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 
 const read = (p: string) => readFileSync(p, 'utf8')
@@ -65,6 +65,8 @@ describe('장비 움직임의 소리', () => {
   })
   test('보기용 리프트를 올리거나 내리면 사건을 낸다', () => {
     expect(lab).toMatch(/const toggleLift = \(id: string\) => \{ setRaisedLifts\([^\n]+\); fire\('bigLiftMove'\) \}/)
+    // fire를 쓰는 함수는 fire보다 아래에 둔다(선언하기 전에 불리는 일이 없게)
+    expect(lab.indexOf('const toggleLift = ')).toBeGreaterThan(lab.indexOf('const fire = useCallback('))
   })
 })
 
@@ -116,7 +118,7 @@ describe('누름 고리(설계 §4.3)', () => {
 describe('버튼 누름 소리의 허용 구역(설계 §4.1)', () => {
   const npc = read('src/screens/NpcDialog.tsx')
   test("게임 화면 맨 위에서 누름을 한 번만 듣고, 허용 구역의 버튼이면 'uiPress'를 낸다", () => {
-    expect(lab).toContain("<main className={`game wa ${talking ? 'talking' : ''}`} onClickCapture={(e) => { if (isPressTarget(e.target as Element)) fire('uiPress') }}>")
+    expect(lab).toContain("<main className={`game wa ${talking ? 'talking' : ''}`} onClickCapture={(e) => { if (isPressTarget(e.target instanceof Element ? e.target : null)) fire('uiPress') }}>")
     expect(lab.match(/fire\('uiPress'\)/g)).toHaveLength(1)
   })
   test('소리가 나는 곳: 상태 막대와 메뉴, 의뢰 패널의 버튼, 장비 정보 카드, 작업 버튼, 작업 목록의 닫기 버튼, 여는 버튼 다섯, 교관 대화', () => {
@@ -134,6 +136,18 @@ describe('버튼 누름 소리의 허용 구역(설계 §4.1)', () => {
     ]) expect(lab, s).toContain(s)
     expect(lab.match(/data-feel="press"/g)).toHaveLength(10)
     expect(npc).toContain('<div className="g-dialog" role="dialog" aria-label="교관과 대화" data-feel="press">')
+  })
+  test('표시(data-feel)를 다는 파일은 실습 화면·교관 대화·과제 패널 셋뿐이다(판정 파일은 표시의 이름만 안다). 다른 화면에 표시가 붙으면 여기서 걸린다', () => {
+    const found: string[] = []
+    const walk = (dir: string): void => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = `${dir}/${e.name}`
+        if (e.isDirectory()) walk(p)
+        else if (/\.(ts|tsx|css)$/.test(e.name) && read(p).includes('data-feel')) found.push(p)
+      }
+    }
+    walk('src')
+    expect(found.sort()).toEqual(['src/app/feelZones.ts', 'src/screens/LabScreen.tsx', 'src/screens/NpcDialog.tsx', 'src/screens/TaskScreen.tsx'])
   })
   test('소리 버튼은 허용 구역 안에 있어도 조용하다(켜졌다는 확인음은 엔진이 한 번 낸다. 끌 때는 소리가 없다)', () => {
     expect(lab).toMatch(/<button className="g-icon" data-feel="none" aria-label=\{soundOn \? '소리 끄기' : '소리 켜기'\}/)
@@ -167,7 +181,8 @@ describe('도감(설계 §4.1·§4.3)', () => {
     expect(lab).toContain("<span key={fx.on.codexPop?.seq ?? 'codex'} className={`g-codex ${fx.on.codexPop ? 'pop' : ''}`}>도감 {codex.length}/{layout.equipment.length}</span>")
   })
   test("'도감에 등록' 꼬리표는 둘러보기에서, 방금 등록한 그 장비의 카드에만 붙는다. 1.6초 뒤 사라지는 것은 연출 수명이 맡는다(움직임 줄이기에서도 같다)", () => {
-    expect(lab).toContain("{fx.on.codexChip && !run && codex[codex.length - 1] === selected.id && <span key={fx.on.codexChip.seq} className=\"g-chip\" role=\"status\">도감에 등록</span>}")
+    // 알림 칸(role="status")은 카드에 늘 있고 글자만 들어왔다 나간다 — 내용과 함께 새로 붙는 알림 칸은 화면 낭독기가 읽지 않는 일이 많다
+    expect(lab).toContain("<span className=\"g-chipbox\" role=\"status\">{fx.on.codexChip && !run && codex[codex.length - 1] === selected.id && <span key={fx.on.codexChip.seq} className=\"g-chip\">도감에 등록</span>}</span>")
     expect(read('src/app/cozyState.ts')).toContain('codexChip: 1600')
   })
   test('움직임 줄이기에서는 숫자 튐과 꼬리표의 움직임이 없다', () => {

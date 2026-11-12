@@ -101,7 +101,6 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   const [selectedId, setSelectedId] = useState<string | null>(null)
   /** 올려 둔 리프트(보기 전용 — 과제 기록·판정과 무관) */
   const [raisedLifts, setRaisedLifts] = useState<string[]>([])
-  const toggleLift = (id: string) => { setRaisedLifts((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id])); fire('bigLiftMove') }
   const [codex, setCodex] = useState<string[]>([])
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
@@ -198,6 +197,8 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     const now = performance.now() // 상태 갱신 함수 안에서 시각을 읽지 않는다(갱신 함수는 두 번 돌 수 있다)
     setFx((f) => addEffects(f, r.effects, now))
   }, [sound])
+  /** 보기용 리프트(정보 카드의 '리프트 올리기·내리기'): 누른 그 자리에서 사건을 낸다 */
+  const toggleLift = (id: string) => { setRaisedLifts((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id])); fire('bigLiftMove') }
   /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
   const [avatarCue, setAvatarCue] = useState<AvatarCue | null>(null)
   const cuePrev = useRef<{ completed: string[]; off: string[] } | null>(null)
@@ -297,6 +298,8 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   /** 다음 단계 장비 강조 — 안내 있음일 때만(app/labGuide) */
   const requiredNow = nextHighlightId(run)
   /** 목적지 방향 화살표(안내 있음): 요소와 띠. 띠는 화살표가 그려져 있을 때, 화면을 다시 그릴 때와 창 크기가 바뀔 때만 잰다 — 3D의 매 화면마다 재지 않는다 */
+  // 다시 그릴 때마다 재는 까닭: HUD 자리를 바꾸는 값(선택, 가까운 장비, 안내 글, 알림 …)을 의존 목록으로 적다가 하나라도 빠뜨리면 띠가 낡아 화살표가 HUD와 겹친다.
+  // 재는 비용은 작다 — CPU를 12배 늦춘 헤드리스 크롬에서 한 번에 0.24~0.43 ms(보이는 HUD 상자 7개, 2026-11-12 측정)
   const goalArrow = useRef<HTMLDivElement>(null)
   const arrowTrack = useRef<ArrowTrack | null>(null)
   const [, setResized] = useState(0)
@@ -392,7 +395,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     const discPractice: DiscPractice = { ctl: discCtl, disc: discCase, bezelDeg: discBezel, open: discOpen && !talking }
     const backlashPractice: BacklashPractice = { st: blSt, bl: blCase, bezelDeg: blBezel, held: blHeld, open: blOpen && !talking }
     return (
-      <main className={`game wa ${talking ? 'talking' : ''}`} onClickCapture={(e) => { if (isPressTarget(e.target as Element)) fire('uiPress') }}>
+      <main className={`game wa ${talking ? 'talking' : ''}`} onClickCapture={(e) => { if (isPressTarget(e.target instanceof Element ? e.target : null)) fire('uiPress') }}>
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} npcNod={!!nodding} viewMode={viewMode} playerPos={pos} onAim={setAimId}
@@ -458,7 +461,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               <div className="g-info" data-feel="press">
                 <button className="g-x" aria-label="닫기" onClick={() => setSelectedId(null)}>✕</button>
                 <b>{selected.label}</b> <span className="small">[{BASIS_LABEL[selected.basis] ?? selected.basis}]</span>
-                {fx.on.codexChip && !run && codex[codex.length - 1] === selected.id && <span key={fx.on.codexChip.seq} className="g-chip" role="status">도감에 등록</span>}
+                <span className="g-chipbox" role="status">{fx.on.codexChip && !run && codex[codex.length - 1] === selected.id && <span key={fx.on.codexChip.seq} className="g-chip">도감에 등록</span>}</span>
                 <p>{selected.info}</p>
                 {selected.kind === 'lift' && <p><button onClick={() => toggleLift(selected.id)}>{raisedLifts.includes(selected.id) ? '리프트 내리기' : '리프트 올리기'}</button> <span className="small">보기 전용(기록 없음). 실제로는 올리기 전 주변 확인, 올린 뒤 안전 고리.</span></p>}
               </div>
