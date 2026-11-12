@@ -405,9 +405,13 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .wl-confetti { position:absolute; inset:0; pointer-events:none; }
 .wl-confetti i { position:absolute; top:-10px; width:8px; height:12px; border-radius:2px; background:var(--wa-orange); animation:wl-fall 1.1s ease-in forwards; }
 .wl-confetti i:nth-child(3n) { background:var(--wa-navy); } .wl-confetti i:nth-child(3n+1) { background:#8fbf7a; }
-@keyframes wl-fall { to { transform:translateY(160px) rotate(260deg); opacity:0 } }
+@keyframes wl-fall { to { transform:translate(var(--dx, 0), 160px) rotate(260deg); opacity:0 } }
+.wl-confetti i.dot { width:8px; height:8px; border-radius:50%; }
+/* 도장이 내려앉을 때 잉크 고리가 한 번 퍼진다(설계 2026-11-12 §4.6) */
+.wl-stamp.anim::after { content:''; position:absolute; inset:-6px; border:2px solid var(--wa-stamp); border-radius:12px; opacity:0; pointer-events:none; animation:wl-ink .45s ease-out .3s both; }
+@keyframes wl-ink { 0% { transform:scale(.9); opacity:.55 } 100% { transform:scale(1.5); opacity:0 } }
 .wl-closing { margin:10px 0 0; }
-@media (prefers-reduced-motion: reduce) { .wl-stamp.anim, .wl-confetti i { animation:none } }
+@media (prefers-reduced-motion: reduce) { .wl-stamp.anim, .wl-stamp.anim::after, .wl-confetti i { animation:none } }
 /* 글자가 노을 바탕 위에 바로 놓이는 곳은 진한 글자(대비) */
 .wa.start footer.small { color:var(--wa-ink); }
 /* 노을 바탕 아래쪽(#f6b27a)에서도 4.5:1 이상 — 원래 --bad #b42318은 3.62(독립 검토 4번). #8a1a10: #f6b27a 5.17, 크림 8.75 */
@@ -446,9 +450,8 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .g-ppe { background:#fff; color:var(--wa-navy); border-radius:10px; padding:1px 8px; font-size:12px; font-weight:700; }
 .g-ppe.spark { animation:g-spark .6s ease-out; }
 @keyframes g-spark { 0% { box-shadow:0 0 0 0 rgba(255,213,74,.9) } 100% { box-shadow:0 0 0 12px rgba(255,213,74,0) } }
-.g-progress.pop { display:inline-block; transform-origin:left center; animation:g-pop .3s ease-out; }
 @keyframes g-pop { 0% { transform:scale(1.25) } 100% { transform:scale(1) } }
-@media (prefers-reduced-motion: reduce) { .g-ppe.spark, .g-progress.pop { animation:none } }
+@media (prefers-reduced-motion: reduce) { .g-ppe.spark { animation:none } }
 .game.wa .g-gaugebtn.on { background:#c62828; }
 @media (max-width:420px) { .wl-arrow { display:none } }
 
@@ -564,3 +567,24 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .calc-keys button { min-height:44px; padding:0; font-size:17px; touch-action:manipulation; } /* 빠르게 두 번 눌러도 화면 확대로 먹히지 않게(iPad, 최종 검토 M-4) */
 .calc-keys .span2 { grid-column:span 2; }
 .calc-keys .span5 { grid-column:span 5; }
+
+/* 손맛(설계 2026-11-12 §4.3): 처음 누른 장비 — 도감 숫자 튐, 정보 카드의 '도감에 등록' 꼬리표(둘러보기에서만) */
+.g-codex.pop { display:inline-block; animation:g-pop .3s ease-out; }
+.g-chip { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:10px; background:var(--wa-navy); color:#fff; font-size:12px; font-weight:700; white-space:nowrap; animation:g-chip .25s ease-out; }
+@keyframes g-chip { from { transform:scale(.6); opacity:0 } to { transform:scale(1); opacity:1 } }
+@media (prefers-reduced-motion: reduce) { .g-codex.pop, .g-chip { animation:none } }
+
+/* 손맛(설계 2026-11-12 §4.3): 진행 점 줄 — 끝난 수만큼 왼쪽부터 채운다. 주황은 쓰지 않는다(안전 경고와 헷갈리지 않게) */
+.g-progress { display:flex; align-items:center; gap:8px; }
+.g-dots { display:inline-flex; gap:4px; flex-wrap:wrap; }
+.g-dots i { width:8px; height:8px; border-radius:50%; box-sizing:border-box; border:1.5px solid currentColor; opacity:.85; }
+.g-dots i.on { background:var(--wa-navy); border-color:var(--wa-navy); opacity:1; }
+.g-dots i.new { animation:g-dot .3s ease-out; }
+@keyframes g-dot { 0% { transform:scale(1.9) } 100% { transform:scale(1) } }
+@media (prefers-reduced-motion: reduce) { .g-dots i.new { animation:none } }
+/* 화면에는 보이지 않고 화면 낭독에만 읽히는 글 */
+.sr-only { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0; }
+
+/* 손맛(설계 2026-11-12 §4.5): 목적지 방향 화살표 — 안내 있음에서 목적지가 화면 밖일 때 가장자리에 선다. 캔버스(0) 위, HUD(4 이상) 아래. 누를 수 없다 */
+.g-goalarrow { position:absolute; left:0; top:0; z-index:3; width:44px; height:44px; border-radius:50%; background:#2d6cdf; color:#fff; border:2px solid #fff; box-sizing:border-box; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,.35); pointer-events:none; visibility:hidden; opacity:0; transition:opacity .15s; will-change:transform, opacity; }
+@media (prefers-reduced-motion: reduce) { .g-goalarrow { transition:none } }

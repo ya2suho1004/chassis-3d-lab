@@ -1,9 +1,13 @@
 // 게임 화면 겹침 측정(2026-11-10, Codex 회의 지적 10). CSS 글자가 아니라 실제 화면의 상자 위치로 잰다.
-// 개발 서버에서 window.__hudOverlaps()로 부른다(src/main.tsx). 운영 빌드에는 들어가지 않는다.
+// 개발 서버에서 window.__hudOverlaps()로 부른다(src/main.tsx — 그 함수는 운영 빌드에 달지 않는다).
+// 부품 목록과 상자 재기(hudBoxes)는 실습 화면도 쓴다: 목적지 방향 화살표가 이 부품들을 피해 서게 한다(설계 2026-11-12 §4.5).
 // 화면 위에 떠 있는 부품(styles.css의 position:absolute 규칙)은 모두 HUD_PARTS나 HUD_EXCLUDED에 있어야 한다(tests/hudLayout.test.ts).
 
 export interface Box { name: string; left: number; top: number; right: number; bottom: number }
 export interface Overlap { a: string; b: string; width: number; height: number }
+
+/** 목적지 방향 화살표의 이름. 화살표는 다른 부품의 자리를 재서 피해 서므로, 띠를 만들 때는 화살표 자신의 상자를 뺀다 */
+export const ARROW_PART_NAME = '방향 화살표'
 
 /** 함께 떠 있을 때 서로 겹치면 안 되는 게임 화면 부품 */
 export const HUD_PARTS: ReadonlyArray<{ name: string; selector: string }> = [
@@ -18,6 +22,7 @@ export const HUD_PARTS: ReadonlyArray<{ name: string; selector: string }> = [
   { name: '측정판 버튼 줄', selector: '.g-ttbar' },
   { name: '연습 창', selector: '.g-practice' },
   { name: '조준 버튼', selector: '.g-aim' },
+  { name: ARROW_PART_NAME, selector: '.g-goalarrow' },
 ]
 
 /** 겹침을 재지 않는 것과 그 이유 */
@@ -65,8 +70,8 @@ function visible(el: Measurable): boolean {
   return true
 }
 
-/** 지금 화면에 보이는 부품의 상자를 재고 겹친 짝을 돌려준다 */
-export function measureHud(root: ParentNode, view: { innerWidth: number; innerHeight: number }) {
+/** 지금 화면에 보이는 부품의 상자 */
+export function hudBoxes(root: ParentNode): Box[] {
   const boxes: Box[] = []
   for (const part of HUD_PARTS) {
     root.querySelectorAll(part.selector).forEach((node) => {
@@ -76,5 +81,11 @@ export function measureHud(root: ParentNode, view: { innerWidth: number; innerHe
       boxes.push({ name: part.name, left: Math.round(r.left), top: Math.round(r.top), right: Math.round(r.right), bottom: Math.round(r.bottom) })
     })
   }
+  return boxes
+}
+
+/** 지금 화면에 보이는 부품의 상자를 재고 겹친 짝을 돌려준다 */
+export function measureHud(root: ParentNode, view: { innerWidth: number; innerHeight: number }) {
+  const boxes = hudBoxes(root)
   return { viewport: { width: view.innerWidth, height: view.innerHeight }, boxes, overlaps: findOverlaps(boxes) }
 }

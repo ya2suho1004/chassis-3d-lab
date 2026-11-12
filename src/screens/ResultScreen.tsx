@@ -9,11 +9,14 @@ import { WorkLog } from './WorkLog'
 import { isRequestPassed } from '../app/cozyState'
 import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/resultLabels'
 import { LESSON_SHORT } from '../app/lesson'
+import type { LabSound } from '../scene/sound'
 
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
 const ERROR_HINT: Record<string, string> = { TIMEOUT: '서버 응답이 오지 않음 — 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
 
-export function ResultScreen({ session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onNextStudent, onRetrySave }: {
+export function ResultScreen({ sound, session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onNextStudent, onRetrySave }: {
+  /** 소리 엔진(설계 2026-11-12 §4.7): 실습 화면에서 켠 채 넘어왔으면 통과 도장에 소리가 난다. 이 화면에는 배경 소음도 소리 버튼도 없다 */
+  sound?: Pick<LabSound, 'enabled' | 'play'>
   session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null
   /** 확정 저장한 원본(G2). 있으면 표시·JSON·CSV 모두 이것을 쓴다 */
   frozenPayload?: RecordPayload | null
@@ -60,7 +63,7 @@ export function ResultScreen({ session, run, completionStatus, envelope, saveErr
   return (
     <main className="screen result wa">
       <h1>{nickname ? `${nickname}의 ` : ''}수행 결과 — {completionStatus === 'completed' ? 'NPC 검사 통과' : '중단'}</h1>
-      <WorkLog run={run} passed={isRequestPassed(completionStatus, payload)} nickname={nickname} />
+      <WorkLog run={run} passed={isRequestPassed(completionStatus, payload)} nickname={nickname} sound={sound} />
       <div className="status3">
         <span>실습 결과: <b>{payload.ok ? payload.value.npcInspectionResult === 'passed' ? '통과' : payload.value.npcInspectionResult === 'needsCorrection' ? '보완' : '미완료' : '—'}</b></span>
         {noRecord ? (

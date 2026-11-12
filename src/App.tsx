@@ -1,5 +1,5 @@
 import type { RecordPayload } from './domain/record'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { SessionContext } from './domain/record'
 import { createTaskRun, rehydrateRun, serializeRun, type DifficultyMode, type TaskRun } from './domain/taskEngine'
 import type { ApprovedTask } from './domain/types'
@@ -19,6 +19,7 @@ import { initialQuality } from './app/quality'
 import { useGLTF } from '@react-three/drei'
 import { DEFAULT_PROFILE, loadAvatar, nicknameOf, randomNickname, saveAvatar, type AvatarProfile } from './app/avatar'
 import { assetUrl } from './app/assetUrl'
+import { LabSound } from './scene/sound'
 
 type Screen =
   | { name: 'loading' }
@@ -38,6 +39,19 @@ export function App() {
   // 인트로(설계 2026-11-03): 저장소는 뒤에서 열고, 인트로가 끝나면 원래 첫 화면을 보인다
   const [intro] = useState(() => introPlan(loadIntroPrefs(), typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))
   const [introDone, setIntroDone] = useState(intro === 'none')
+  // 소리(설계 2026-11-12 §4.7): 엔진과 켬 상태는 실습 화면에서 결과 화면까지 이어지고, 그 밖의 화면에서는 꺼진다. 기기에 저장하지 않는다
+  const [sound] = useState(() => new LabSound())
+  const [soundOn, setSoundOn] = useState(false)
+  // 화면의 켬 표시는 엔진을 따른다: 오디오 장치를 못 만들면 켜지지 않는다
+  const changeSound = useCallback((on: boolean) => { sound.setEnabled(on); setSoundOn(sound.enabled) }, [sound])
+  const inRun = screen.name === 'lab' || screen.name === 'result'
+  useEffect(() => { if (!inRun) changeSound(false) }, [inRun, changeSound])
+  // 화면이 가려지면(다른 앱·탭으로 가거나 화면이 꺼지면) 소리를 끈다. 돌아와도 꺼진 채로 둔다 — 뒤로 보낸 태블릿이 교실에서 소리를 내지 않게(설계 2026-11-12 §4.7)
+  useEffect(() => {
+    const onHide = () => { if (document.hidden) changeSound(false) }
+    document.addEventListener('visibilitychange', onHide)
+    return () => document.removeEventListener('visibilitychange', onHide)
+  }, [changeSound])
   // 실습장 3D 모델을 처음부터 미리 받아 둔다(인트로·코드 입력·캐릭터 만들기 동안). 실습장의 useGLTF가 같은 캐시를 쓴다
   // 품질 높음이면 화면 효과 코드도 함께(실습장과 같은 품질 판정 — app/quality.ts). 반사광은 실습장 자체로 만들어 받을 파일이 없다
   useEffect(() => {
@@ -115,6 +129,7 @@ export function App() {
     const { session, task, mode, noRecord, runRepo, profile } = screen
     return (
       <LabScreen
+        sound={sound} soundOn={soundOn} onSoundChange={changeSound}
         repo={runRepo}
         noRecord={noRecord}
         profile={profile}
@@ -138,7 +153,7 @@ export function App() {
   }
 
   return (
-    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} frozenPayload={screen.frozenPayload} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
+    <ResultScreen sound={sound} session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} frozenPayload={screen.frozenPayload} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
       onRetrySave={!screen.noRecord && screen.saveError && screen.frozenPayload ? async () => {
         // D4: 처음 만든 원본 그대로 다시 확정 저장(수행 번호·완료 시각 유지)
         const r = await retryFreeze(repo!, screen.frozenPayload!)

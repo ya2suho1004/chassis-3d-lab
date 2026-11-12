@@ -41,6 +41,10 @@ const GL_STATS = `(() => { if (window.__glStats) return; const st = { frames: 0,
     if (dai) p.drawArraysInstanced = function (mode, first, count, n) { fc++; if (mode === 4) ft += (count / 3) * n; return dai.apply(this, arguments) } };
   wrap(window.WebGL2RenderingContext && WebGL2RenderingContext.prototype); wrap(window.WebGLRenderingContext && WebGLRenderingContext.prototype);
   const tick = () => { st.frames++; st.last = { calls: fc, tris: Math.round(ft) }; st.hist.push(fc); if (st.hist.length > 120) st.hist.shift(); fc = 0; ft = 0; requestAnimationFrame(tick) }; requestAnimationFrame(tick) })();`
+/** 소리 장치를 몇 개 만들었는지, 소리 부품(발진기·소음 재생기)을 몇 번 시작했는지 센다(손맛 설계 §4.4·§4.7 — 소리를 켜기 전에는 둘 다 0이어야 한다) */
+const AUDIO_STATS = `(() => { if (window.__audio) return; const st = (window.__audio = { contexts: 0, starts: 0 });
+  for (const key of ['AudioContext', 'webkitAudioContext']) { const C = window[key]; if (C) window[key] = new Proxy(C, { construct(target, args) { st.contexts++; return new target(...args) } }) }
+  for (const P of [window.AudioScheduledSourceNode && AudioScheduledSourceNode.prototype, window.AudioBufferSourceNode && AudioBufferSourceNode.prototype]) { if (!P || !Object.prototype.hasOwnProperty.call(P, 'start')) continue; const start = P.start; P.start = function () { st.starts++; return start.apply(this, arguments) } } })();`
 /** 개발 빌드의 리액트 상태에서 학생 위치를 읽는다(걷기가 끝났는지 보려고) */
 const HELPERS = `(() => { window.__fiber = (name) => { const c = document.getElementById('root'); const k = c && Object.keys(c).find((x) => x.startsWith('__reactContainer$')); if (!k) return null; const st = [c[k].stateNode.current]; while (st.length) { const f = st.pop(); if (f.type && f.type.name === name) return f; if (f.sibling) st.push(f.sibling); if (f.child) st.push(f.child) } return null };
   window.__labPos = () => { const f = window.__fiber('LabScreen'); if (!f) return null; const out = []; let h = f.memoizedState; while (h) { out.push(h.memoizedState); h = h.next } return out[1] && typeof out[1].x === 'number' ? { x: out[1].x, z: out[1].z, moving: out[2] } : null } })();`
@@ -79,7 +83,7 @@ async function launch(outDir) {
   for (const m of ['Page.enable', 'Runtime.enable', 'Network.enable']) await send(m)
   await send('Fetch.enable', { patterns: [{ urlPattern: '*', requestStage: 'Request' }] })
   await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false })
-  for (const source of [WRITE_BLOCK, PRESETS, GL_STATS, HELPERS]) await send('Page.addScriptToEvaluateOnNewDocument', { source })
+  for (const source of [WRITE_BLOCK, PRESETS, GL_STATS, HELPERS, AUDIO_STATS]) await send('Page.addScriptToEvaluateOnNewDocument', { source })
   const ev = async (expression) => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? r.result.exceptionDetails.text); return r.result?.result?.value }
   const waitFor = async (expression, timeout = 30000) => { const end = Date.now() + timeout; while (Date.now() < end) { if (await ev(expression).catch(() => false)) return; await sleep(150) } throw new Error('기다리다 시간 초과: ' + expression.slice(0, 120)) }
   /** 글자가 들어 있는 요소를 누른다(숨겨 둔 화면 위 단추도 누를 수 있게 DOM click) */
@@ -91,14 +95,14 @@ async function launch(outDir) {
 
 // ---------- 앱 흐름 ----------
 /** 시작 화면 → 캐릭터 → 실습장(게임 화면). 기록은 이 임시 프로필 안에만 남고, 전송은 막혀 있다 */
-async function enterLab(b, base, quality, task = 'brake') {
+async function enterLab(b, base, quality, task = 'brake', help = '안내 있음') {
   await b.send('Page.navigate', { url: `${base}${base.includes('?') ? '&' : '?'}q=${quality}` })
   await b.waitFor(`!!document.querySelector('main.start')`)
   if (!(await b.ev(`window.__writeBlock === true`))) throw new Error('쓰기 막기가 걸리지 않았습니다')
   await b.ev(`(() => { const i = document.querySelector('input[aria-label="익명 코드"]'); i.focus(); return true })()`)
   await b.send('Input.insertText', { text: 'A-01' })
   await b.click('.start-pick label.radio', task === 'brake' ? '제동력 측정 및 판독 — 사례 1' : '최소회전반경 측정 및 판정 — 사례 1')
-  await b.click('.start-pick label.radio', '안내 있음')
+  await b.click('.start-pick label.radio', help)
   await b.click('button.primary', '과제 수령하러 가기')
   await b.waitFor(`/이대로 시작/.test(document.body.innerText) || !!document.querySelector('main.game')`)
   await b.click('button.primary', '이대로 시작')
@@ -203,13 +207,15 @@ const ENV_HOOK = `(async () => { ${R3F} if (!window.__envCaptures) { const c = (
 const bakeCount = async (b) => ((await b.ev(`window.__lookdev ? window.__lookdev.bakes : null`)) ?? []).length
 
 /** 걷는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지 본다. 고정 구도 촬영으로는 드러나지 않는 부담이다 */
-async function walk(base, outDir, name, quality) {
+async function walk(base, outDir, name, quality, mode) {
   const b = await launch(outDir)
-  const out = { name, quality }
+  const out = { name, quality, mode: mode === 'guided' ? 'guided' : 'exploring' }
   const captures = () => b.ev(`window.__envCaptures.n`)
   const bakes = () => bakeCount(b)
   try {
     await enterLab(b, base, quality)
+    // guided: 과제를 받고 첫 단계를 끝내 목적지 표식이 떠 있는 채로 걷는다(손맛 설계 §6)
+    if (mode === 'guided') { await receiveTask(b); await finishPpe(b); out.beacons = await sceneCount(b, 'goalBeacon') }
     await b.ev(ENV_HOOK)
     const bake0 = await bakes()
     await sleep(2000)
@@ -235,11 +241,12 @@ async function walk(base, outDir, name, quality) {
 }
 
 /** 그래픽 장치 연결을 끊었다 되돌린다(기기 메모리가 모자랄 때 생기는 일). 한 번만 만들어 둔 것(반사광·구운 그림자)이 돌아오는지 본다 */
-async function ctx(base, outDir, name, quality) {
+async function ctx(base, outDir, name, quality, mode) {
   const b = await launch(outDir)
-  const out = { name, quality }
+  const out = { name, quality, mode: mode === 'guided' ? 'guided' : 'exploring' }
   try {
     await enterLab(b, base, quality)
+    if (mode === 'guided') { await receiveTask(b); await finishPpe(b); out.beacons = await sceneCount(b, 'goalBeacon') }
     await b.ev(ENV_HOOK)
     await hud(b, false); await setCam(b, CAMS.hero); await sleep(700)
     await b.shot(join(outDir, `${name}-${quality}-ctx-before.png`))
@@ -290,14 +297,147 @@ async function colors(outDir, name) {
   console.log(JSON.stringify({ name, source: { readoutDigits: [255, 74, 58], turntablePaper: [255, 248, 214] }, ...out }, null, 1))
 }
 
+// ---------- 손맛 확인(손맛 설계 docs/superpowers/specs/2026-11-12-feel-design.md §4.3·§4.5) ----------
+/** 장면에서 이름이 name인 물체 수 */
+const sceneCount = (b, name) => b.ev(`(async () => { ${R3F} let k = 0; st.scene.traverse((o) => { if (o.name === ${JSON.stringify(name)}) k++ }); return k })()`)
+/** 방향 화살표: 요소가 없으면 null, 있으면 보이는지와 가운데 자리 */
+const arrowState = (b) => b.ev(`(() => { const a = document.querySelector('.g-goalarrow'); if (!a) return null; const r = a.getBoundingClientRect(); return { visible: getComputedStyle(a).visibility === 'visible' && a.style.opacity === '1', x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } })()`)
+/** 작업 목록에서 '보호구' 단계를 끝낸다(두 도움 방식 모두 같은 길로) */
+async function finishPpe(b) {
+  await b.click('.g-quest-btns button', '작업 목록'); await sleep(600)
+  const done = await b.ev(`(() => { const li = Array.from(document.querySelectorAll('.g-drawer li')).find((x) => x.textContent.includes('보호구')); const btn = li && li.querySelector('button'); if (!btn) return false; btn.click(); return true })()`)
+  if (!done) throw new Error('작업 목록에서 보호구 단계의 수행 버튼을 찾지 못했습니다')
+  await sleep(600)
+  await b.click('.g-drawer > .g-x'); await sleep(900)
+}
+/**
+ * 목적지 표식과 누름 고리. mode가 guided면 안내 있음으로 과제를 받아 첫 단계를 끝낸 뒤 표식을 다섯 구도로 찍고,
+ * 화살표가 HUD와 겹치지 않는지(여덟 방향), 표식이 그리기 호출을 몇 번 더하는지, 장비를 누르면 고리가 떴다 사라지는지 본다.
+ * unguided면 같은 흐름에서 표식 물체와 화살표가 하나도 없는지 센다.
+ * 두 경우 모두 소리를 켜기 전에는 소리 장치를 만들지 않는지, 켠 뒤 첫 단계를 끝내는 동안 소리 부품을 몇 번 시작하는지 적는다(두 도움 방식에서 같아야 한다).
+ */
+async function goal(base, outDir, name, quality, mode) {
+  // 오타가 조용히 '안내 있음'으로 돌지 않게 한다
+  if (mode !== 'guided' && mode !== 'unguided') { console.log(`goal의 다섯째 인자는 guided 또는 unguided입니다(받은 값: ${mode})`); process.exit(1) }
+  const guided = mode === 'guided'
+  const b = await launch(outDir)
+  const out = { name, quality, mode: guided ? 'guided' : 'unguided', beacons: {}, arrows: [], shots: [] }
+  const snap = async (tag, withHud) => { if (!withHud) await hud(b, false); await sleep(500); const f = `${name}-${quality}-goal-${guided ? '' : 'unguided-'}${tag}.png`; await b.shot(join(outDir, f)); out.shots.push(f); if (!withHud) await hud(b, true) }
+  const look = async (tag, cam) => { await setCam(b, cam); await sleep(500); out.arrows.push({ tag, arrow: await arrowState(b), overlaps: await b.ev(`window.__hudOverlaps ? window.__hudOverlaps().overlaps : null`) }) }
+  try {
+    await enterLab(b, base, quality, 'brake', guided ? '안내 있음' : '안내 없음')
+    out.beacons.exploring = await sceneCount(b, 'goalBeacon')
+    await receiveTask(b)
+    out.beacons.received = await sceneCount(b, 'goalBeacon') // 첫 단계(보호구)는 목적지 장비가 없다
+    // 소리: 켜기 전에는 장치 0·시작 0. 소리 버튼은 진짜 누름(사용자 동작)으로 눌러야 브라우저가 소리를 허락한다
+    const audio = () => b.ev(`({ ...window.__audio })`)
+    out.audio = { off: await audio() }
+    const at = await b.ev(`(() => { const r = document.querySelector('button[aria-label="소리 켜기"]').getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) } })()`)
+    await b.mouse(at.x, at.y); await sleep(700)
+    out.audio.on = await audio() // 확인음 '딸깍'(2) + 배경 소음(3)
+    await finishPpe(b)
+    out.audio.afterPpe = await audio() // 버튼 누름 셋(6) + 보호구 '찰칵'(3) + 단계 완료 두 음(2)
+    out.next = await b.ev(`document.querySelector('.g-quest .g-next')?.textContent ?? null`)
+    out.progress = await b.ev(`(() => { const d = document.querySelectorAll('.g-dots i'); return { dots: d.length, on: document.querySelectorAll('.g-dots i.on').length, count: document.querySelector('.g-count')?.textContent ?? null } })()`)
+    out.beacons.afterPpe = await sceneCount(b, 'goalBeacon')
+    await snap('default-hud', true)
+    await setCam(b, CAMS.hero); await snap('hero')
+    if (guided) {
+      const withBeacon = await drawStats(b)
+      await b.ev(`(async () => { ${R3F} st.scene.traverse((o) => { if (o.name === 'goalBeacon') o.visible = false }); return true })()`); await sleep(600)
+      const without = await drawStats(b)
+      await b.ev(`(async () => { ${R3F} st.scene.traverse((o) => { if (o.name === 'goalBeacon') o.visible = true }); return true })()`)
+      out.beaconDrawCalls = withBeacon.calls - without.calls
+    }
+    await setCam(b, CAMS.top); await snap('top')
+    await setCam(b, { pos: [12.5, 1.7, 13.5], target: [16.2, 1.0, 8.6], fov: 50 }); await snap('near')
+    await setCam(b, { pos: [10, 1.8, 7], target: [2, 1.0, 5], fov: 50 }); await snap('offscreen-hud', true)
+    // 여덟 방향을 둘러보며 화살표 자리와 HUD 겹침을 적는다(겹침은 개발 서버의 window.__hudOverlaps)
+    for (let k = 0; k < 8; k++) { const r = (k * Math.PI) / 4; await look(`dir${k * 45}`, { pos: [11, 2.2, 7], target: [11 + 5 * Math.cos(r), 1.2, 7 + 5 * Math.sin(r)], fov: 50 }) }
+    await look('down', { pos: [9, 9, 9.5], target: [9, 0, 9], fov: 50 })
+    // 누름 고리: 공용 조작부를 누르면 고리가 보였다가 0.3초 뒤 사라진다
+    await setCam(b, { pos: [14.6, 2.2, 12.2], target: [17.7, 0.9, 9.25], fov: 50 }); await sleep(600)
+    const p = await b.ev(`(async () => { ${R3F} st.camera.updateMatrixWorld(); const v = st.camera.position.clone().set(17.7, 1.0, 9.25).project(st.camera); const r = st.gl.domElement.getBoundingClientRect(); return { x: Math.round(r.left + (v.x * 0.5 + 0.5) * r.width), y: Math.round(r.top + (-v.y * 0.5 + 0.5) * r.height) } })()`)
+    await b.mouse(p.x, p.y)
+    const ring = () => b.ev(`(async () => { ${R3F} const mesh = st.scene.getObjectByName('tapRing'); return mesh ? { visible: mesh.visible, scale: +mesh.scale.x.toFixed(3) } : null })()`)
+    await sleep(120); const during = await ring()
+    await sleep(700); const after = await ring()
+    out.tapRing = { during, after, selected: await b.ev(`document.querySelector('.g-info b')?.textContent ?? null`), rings: await sceneCount(b, 'tapRing') }
+    out.blockedInPage = await b.ev(`window.__blocked.length`)
+  } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
+  writeFileSync(join(outDir, `${name}-${quality}-goal${guided ? '' : '-unguided'}.json`), JSON.stringify(out, null, 1))
+  console.log(JSON.stringify(out))
+}
+
+// ---------- 소리 재기(손맛 설계 docs/superpowers/specs/2026-11-12-feel-design.md §4.4) ----------
+/** 소리 하나를 화면 밖 장치에 그려 잰다: 가장 큰 순간(dBFS), −50 dB보다 큰 동안(ms), 가장 큰 구간의 음높이 중심(Hz), 300 Hz 아래 에너지 몫 */
+const SOUND_MEASURE = `const fft = (re, im) => { const n = re.length; for (let i = 1, j = 0; i < n; i++) { let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]] } }
+    for (let len = 2; len <= n; len <<= 1) { const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang); for (let i = 0; i < n; i += len) { let cr = 1, ci = 0; for (let k = 0; k < len / 2; k++) { const ur = re[i + k], ui = im[i + k], vr = re[i + k + len / 2] * cr - im[i + k + len / 2] * ci, vi = re[i + k + len / 2] * ci + im[i + k + len / 2] * cr; re[i + k] = ur + vr; im[i + k] = ui + vi; re[i + k + len / 2] = ur - vr; im[i + k + len / 2] = ui - vi; const t = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = t } } } }
+  const measure = async (name) => { const sr = 44100, dur = 3.6, off = new OfflineAudioContext(2, sr * dur, sr), o = { ctx: off, out: m.makeOutput(off), noise: m.makeNoise(off) };
+    if (name === 'rollers') m.startRollers(o, 0.05); else if (name === 'ambience') m.startAmbience(o, 0.05); else m.CUES[name](o, 0.05);
+    const buf = await off.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1), thr = Math.pow(10, -50 / 20), mono = new Float32Array(L.length); let peak = 0, first = -1, last = -1;
+    for (let i = 0; i < L.length; i++) { mono[i] = (L[i] + R[i]) / 2; const a = Math.max(Math.abs(L[i]), Math.abs(R[i])); if (a > peak) peak = a; if (a > thr) { if (first < 0) first = i; last = i } }
+    const N = 8192; let best = 0, bi = 0; for (let i = 0; i + N < mono.length; i += 1024) { let e = 0; for (let k = 0; k < N; k += 8) e += mono[i + k] * mono[i + k]; if (e > best) { best = e; bi = i } }
+    const re = new Float64Array(N), im = new Float64Array(N); for (let k = 0; k < N; k++) re[k] = mono[bi + k] * (0.5 - 0.5 * Math.cos(2 * Math.PI * k / N)); fft(re, im);
+    let tot = 0, cen = 0, low = 0; for (let k = 1; k < N / 2; k++) { const p = re[k] * re[k] + im[k] * im[k], f = k * sr / N; tot += p; cen += p * f; if (f < 300) low += p }
+    return { name, peakDb: +(20 * Math.log10(peak || 1e-9)).toFixed(1), ms: first < 0 ? 0 : Math.round((last - first) / sr * 1000), centroidHz: Math.round(cen / (tot || 1)), below300: +(low / (tot || 1)).toFixed(2) } }
+  const out = []; for (const n of [...m.CUE_NAMES, 'rollers', 'ambience']) out.push(await measure(n)); return out`
+/**
+ * 이어지는 소리를 멈출 때와 소리를 끌 때를 화면 밖 장치에 그려 잰다: 멈춘 뒤의 가장 큰 세기(afterDb)와, 줄인 시간에 0.1초를 더 기다린 뒤에 남은 세기(goneDb).
+ * 0.05초에 시작해 다 올라온 뒤(2초), 오르는 중, 시작하기도 전(0.045초)에 멈춘다. 'off'는 엔진이 소리를 끌 때처럼 모음 단자를 OFF_FADE초에 0으로 줄인다 —
+ * 울리던 소리(긴 리프트)와 예약만 해 둔 소리(1.5초의 축하음)가 함께 사라져야 한다.
+ * 화면 밖 장치는 예약을 모두 받은 뒤에 그리므로, 오르는 중에 멈춘 줄의 beforeDb는 실제(오르던 세기)보다 작게 나온다. 한도는 afterDb로 본다.
+ */
+const SOUND_STOPS = `const sr = 44100, dur = 3.6, START = 0.05
+  const render = async (draw) => { const off = new OfflineAudioContext(2, sr * dur, sr), main = m.makeOutput(off); draw(off, main, m.makeNoise(off)); const buf = await off.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1)
+    return (a, b) => { let p = 0; for (let i = Math.max(0, Math.round(a * sr)); i < Math.min(L.length, Math.round(b * sr)); i++) p = Math.max(p, Math.abs(L[i]), Math.abs(R[i])); return +(20 * Math.log10(p || 1e-9)).toFixed(1) } }
+  const out = []
+  for (const [name, stopAt, fade] of [['rollers', 2, 0.8], ['rollers', 2, 0.25], ['rollers', 0.4, 0.8], ['rollers', 0.045, 0.8], ['ambience', 2, 0.3], ['ambience', 0.65, 0.3], ['ambience', 0.045, 0.3]]) {
+    const peak = await render((ctx, main, noise) => { const o = { ctx, out: main, noise }; if (name === 'rollers') m.startRollers(o, START)(stopAt, fade); else m.startAmbience(o, START)(stopAt) })
+    out.push({ name, startAt: START, stopAt, fade, beforeDb: peak(0, stopAt), afterDb: peak(stopAt, dur), goneDb: peak(stopAt + fade + 0.1, dur) }) }
+  const peak = await render((ctx, main, noise) => { const bus = ctx.createGain(); bus.connect(main); const o = { ctx, out: bus, noise }; m.CUES.liftLong(o, START); m.CUES.celebrate(o, 1.5); bus.gain.setValueAtTime(1, 0.5); bus.gain.linearRampToValueAtTime(0, 0.5 + m.OFF_FADE) })
+  out.push({ name: 'off', startAt: START, stopAt: 0.5, fade: m.OFF_FADE, beforeDb: peak(0, 0.5), afterDb: peak(0.5, dur), goneDb: peak(0.5 + m.OFF_FADE + 0.1, dur) })
+  return out`
+/** 한도(설계 §4.4): 도장만 크고(−12~−9 dBFS) 나머지는 −16 dBFS 이하. 누름 계열 0.1초, 도장 0.15초, 완료 계열 0.2초, 축하음 0.7초 이하 */
+const SOUND_MS_LIMIT = { tap: 100, press: 100, pedal: 100, tick: 100, ppe: 100, step: 100, stamp: 150, stepDone: 200, codex: 200, celebrate: 700 }
+async function sound(base, outDir, name) {
+  const b = await launch(outDir)
+  const out = { name, base, cues: [], stops: [], violations: [] }
+  try {
+    await b.send('Page.navigate', { url: base }); await b.waitFor(`document.readyState === 'complete'`)
+    out.cues = await b.ev(`(async () => { const m = await import(new URL('src/scene/sound.ts', location.href).href); ${SOUND_MEASURE} })()`)
+    for (const c of out.cues) {
+      if (c.name === 'stamp' ? c.peakDb < -12 || c.peakDb > -9 : c.peakDb > -16) out.violations.push(`${c.name}: 세기 ${c.peakDb} dBFS`)
+      const lim = SOUND_MS_LIMIT[c.name]
+      if (lim !== undefined && c.ms > lim) out.violations.push(`${c.name}: 길이 ${c.ms} ms(한도 ${lim})`)
+    }
+    // 멈춘 뒤가 다 올라왔을 때의 세기(끄기는 끄기 전의 세기)보다 1 dB 넘게 커지면 안 된다. 시작 전에 멈추면 울리지 않아야 하고, 줄인 시간이 지나면 남지 않아야 한다
+    out.stops = await b.ev(`(async () => { const m = await import(new URL('src/scene/sound.ts', location.href).href); ${SOUND_STOPS} })()`)
+    const steady = Object.fromEntries(out.cues.map((c) => [c.name, c.peakDb]))
+    for (const s of out.stops) {
+      const what = `${s.name} 멈춤(${s.stopAt}초, 줄임 ${s.fade}초)`
+      const cap = s.stopAt < s.startAt ? -80 : (s.name === 'off' ? s.beforeDb : steady[s.name]) + 1
+      if (s.afterDb > cap) out.violations.push(`${what}: 멈춘 뒤 ${s.afterDb} dBFS(한도 ${cap})`)
+      if (s.goneDb > -60) out.violations.push(`${what}: 줄인 뒤에도 ${s.goneDb} dBFS가 남음`)
+    }
+  } catch (e) { out.error = String(e?.stack ?? e).slice(0, 800) } finally { Object.assign(out, report(b)); await b.close() }
+  // 이 명령은 첫 화면만 열어 소리 모듈을 불러 쓴다. 그래도 쓰기 요청이 나갔다면(막았더라도) 알린다
+  if (out.blockedWrites?.length) out.violations.push(`쓰기 요청 ${out.blockedWrites.length}건을 막음`)
+  writeFileSync(join(outDir, `${name}-sound.json`), JSON.stringify(out, null, 1))
+  console.log(JSON.stringify(out))
+  if (out.error || out.violations.length) process.exit(1)
+}
+
 const [cmd, ...a] = process.argv.slice(2)
 const dir = (p) => { const d = resolve(p); mkdirSync(d, { recursive: true }); return d }
 if (cmd === 'cams') await cams(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4] ?? 'all')
 else if (cmd === 'inst') await inst(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4] ?? 'disc')
 else if (cmd === 'toggle') await toggle(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
-else if (cmd === 'walk') await walk(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
-else if (cmd === 'ctx') await ctx(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high')
+else if (cmd === 'walk') await walk(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4])
+else if (cmd === 'ctx') await ctx(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4])
 else if (cmd === 'sheet') await sheet(dir(a[0]), a[1], a[2], a[3])
 else if (cmd === 'colors') await colors(dir(a[0]), a[1])
-else { console.log('사용: lookdev.mjs cams|inst|toggle|walk|ctx|sheet|colors … (scripts/lookdev/README.md)'); process.exit(1) }
+else if (cmd === 'goal') await goal(a[0], dir(a[1]), a[2], a[3] === 'low' ? 'low' : 'high', a[4] ?? 'guided')
+else if (cmd === 'sound') await sound(a[0], dir(a[1]), a[2])
+else { console.log('사용: lookdev.mjs cams|inst|toggle|walk|ctx|goal|sound|sheet|colors … (scripts/lookdev/README.md)'); process.exit(1) }
 process.exit(0)

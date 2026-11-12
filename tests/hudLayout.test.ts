@@ -2,7 +2,7 @@
 // 11-09 겹침 수정은 CSS 글자만 확인해 계기 버튼과 질문 버튼의 겹침을 놓쳤다. 측정 대상이 빠지지 않게 목록을 CSS와 맞춰 본다.
 import fs from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { findOverlaps, HUD_EXCLUDED, HUD_PARTS, measureHud, type Box } from '../src/app/hudLayout'
+import { ARROW_PART_NAME, findOverlaps, HUD_EXCLUDED, HUD_PARTS, hudBoxes, measureHud, type Box } from '../src/app/hudLayout'
 
 const box = (name: string, left: number, top: number, right: number, bottom: number): Box => ({ name, left, top, right, bottom })
 
@@ -38,6 +38,14 @@ describe('화면 측정', () => {
     expect(r.overlaps).toEqual([{ a: '질문 버튼', b: '가운데 버튼', width: 48, height: 45 }])
     expect(r.viewport).toEqual({ width: 767, height: 736 })
   })
+  test('hudBoxes: 겹침을 따지지 않고 보이는 부품의 상자만 돌려준다(목적지 방향 화살표의 띠를 만드는 데 쓴다)', () => {
+    const b = hudBoxes(root({
+      '.g-status': [el({ left: 12, top: 12, right: 660, bottom: 60, width: 648, height: 48 })],
+      '.g-quest': [el({ left: 928, top: 12, right: 1268, bottom: 235, width: 340, height: 223 }, true)],
+      '.g-goalarrow': [el({ left: 1194, top: 378, right: 1238, bottom: 422, width: 44, height: 44 })],
+    }))
+    expect(b).toEqual([{ name: '상태 줄', left: 12, top: 12, right: 660, bottom: 60 }, { name: ARROW_PART_NAME, left: 1194, top: 378, right: 1238, bottom: 422 }])
+  })
 })
 
 describe('측정 대상 목록', () => {
@@ -53,6 +61,10 @@ describe('측정 대상 목록', () => {
   test('11-09에 놓친 계기 버튼·질문 버튼·안내 줄을 잰다', () => {
     const parts = HUD_PARTS.map((p) => p.selector)
     for (const s of ['.g-gaugebtn', '.g-chatbtn', '.g-hud', '.joystick', '.g-actions', '.g-status', '.g-quest', '.g-ttbar']) expect(parts).toContain(s)
+  })
+  test('목적지 방향 화살표도 함께 떠 있는 부품이다 — 다른 부품과 겹치면 측정에 잡힌다', () => {
+    expect(HUD_PARTS.find((p) => p.selector === '.g-goalarrow')).toEqual({ name: ARROW_PART_NAME, selector: '.g-goalarrow' })
+    expect(ARROW_PART_NAME).toBe('방향 화살표')
   })
   test('빼는 것에는 이유가 있다', () => {
     for (const [s, why] of Object.entries(HUD_EXCLUDED)) expect(why.length, s).toBeGreaterThan(5)

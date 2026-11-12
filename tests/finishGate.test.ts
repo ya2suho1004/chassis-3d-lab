@@ -57,7 +57,7 @@ describe('화면 연결(소스 확인 — 컴포넌트 시험 도구가 없어 �
   const task = fs.readFileSync('src/screens/TaskScreen.tsx', 'utf8')
   it('LabScreen: 관문으로 결과 요청, 끄덕임 뒤엔 교관 누르기·대화창 막음, 말풍선에 초점', () => {
     expect(lab).toContain('gate.request(a, nod)')
-    expect(lab).toContain("onNpcTap={() => { if (!gate.closed) setNpcOpen(true) }}")
+    expect(lab).toContain("onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }}")
     expect(lab).toContain('{npcOpen && !gate.closed && (')
     expect(lab).toContain('ref={nodBtnRef}')
     expect(lab).toContain('{NOD_LINE}')

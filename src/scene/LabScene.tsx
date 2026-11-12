@@ -24,6 +24,11 @@ import { BacklashRig, backlashFaceInRig } from './BacklashRig'
 import type { BacklashCase, BacklashState } from './backlash'
 import { ShockStandModel, TransmissionSimulatorModel, fitsShockStand, fitsTransmissionSimulator } from './models/TrainersModel'
 import { STEP_STRIDE, stepsCrossed } from './sound'
+import { TapRing } from './feel/TapRing'
+import type { TapPulse } from './feel/tapPulse'
+import { GoalBeacon } from './feel/GoalBeacon'
+import { goalSpotOf } from './feel/goalSpot'
+import type { ArrowTrack } from './feel/edgeArrow'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
 import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction, type CharacterLook } from './models/CharacterModel'
 import { bodyScale } from '../app/avatar'
@@ -74,6 +79,11 @@ export interface LabSceneProps {
   glowIds?: string[]
   /** 한 걸음 디딜 때마다(발소리) */
   onStep?: () => void
+  /** 누름 고리(설계 2026-11-12 §4.3): 장비나 교관을 누를 때마다 번호가 오른다. 없으면 고리도 없다 */
+  tapPulse?: TapPulse | null
+  /** 목적지 방향 화살표(설계 2026-11-12 §4.5): 화면 가장자리의 화살표 요소와 띠. 게임 화면만 준다 */
+  goalArrow?: React.RefObject<HTMLDivElement>
+  arrowTrack?: React.RefObject<ArrowTrack>
   /** 공용 조작부 계기 화면 값(과제 중) */
   panelReadout?: PanelReadout | null
   /** 계기 화면 가까이 보기: 카메라가 조작부 앞면을 비춘다 */
@@ -256,7 +266,7 @@ function Equipment({ e, m, facing, selected, highlight, label, onTap, lowSpec, r
     <group position={[e.x, 0, e.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onTap() } }}>
       <EquipmentModel e={e} m={m} facing={facing} lowSpec={lowSpec} raised={raised} readout={readout} disc={disc} backlash={backlash} steer={steer} />
       {glow && <GlowFrame w={w} d={d} />}
-      {(selected || highlight) && <FootprintFrame w={w} d={d} color={selected ? '#ff9800' : '#2d6cdf'} />}
+      {selected && <FootprintFrame w={w} d={d} color="#ff9800" />}
       {label === 'label' && (
         <Html position={[0, e.h + 0.35, 0]} center style={{ pointerEvents: 'none' }}>
           <div className={`label3d ${e.interactive ? 'interactive' : ''} ${highlight ? 'hl' : ''}`}>{e.label}</div>
@@ -363,7 +373,7 @@ function LiftRig({ e, m, lowSpec, raised, car }: { e: SceneEquipment; m: Mats; l
 }
 
 /** 제동력 시험기 연출: 롤러 4개·리프트 판·시험 차량(진입/이탈·들림·뒷바퀴 회전). 단계 판정과 무관한 표시 전용 */
-function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, vehicleLabel, onTapVehicle, lowSpec }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; m: Mats; selected: boolean; testerHighlight: boolean; vehicleLabel: LabelKind; onTapVehicle: () => void; lowSpec: boolean }) {
+function BrakeRig({ tester, vehicle, rig, m, selected, testerSelected, vehicleLabel, onTapVehicle, lowSpec }: { tester: SceneEquipment; vehicle: SceneEquipment; rig: BrakeRigState; m: Mats; selected: boolean; testerSelected: boolean; vehicleLabel: LabelKind; onTapVehicle: () => void; lowSpec: boolean }) {
   const theta = (vehicle.rotation * Math.PI) / 180
   const away = { x: -Math.sin(theta), z: -Math.cos(theta) }
   const rearAxle = vehicle.d / 2 - 0.6
@@ -460,7 +470,7 @@ function BrakeRig({ tester, vehicle, rig, m, selected, testerHighlight, vehicleL
             <Suspense fallback={codeTester}><BrakeTesterModel onParts={onTesterParts} /></Suspense>
           </>
         ) : codeTester}
-        {testerHighlight && <FootprintFrame w={tester.w} d={tester.d} color="#2d6cdf" />}
+        {testerSelected && <FootprintFrame w={tester.w} d={tester.d} color="#ff9800" />}
         {rig.rollersSpinning && (
           <Html position={[0, 0.6, tester.d / 2 + 0.3]} center style={{ pointerEvents: 'none' }}>
             <div className="label3d hl">롤러 회전 중</div>
@@ -798,7 +808,7 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} look={look} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, antialias = false, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, antialias = false, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, tapPulse = null, goalArrow, arrowTrack, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -822,6 +832,9 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
   const turningCar = layout.equipment.find((e) => e.id === 'min-turning-radius-01') ?? null
   const ttOpen = turntableCloseUp !== null && !npcTalking && turningCar !== null
   const camBusy = npcTalking || panelCloseUp || discOpen || blOpen || ttOpen
+  // 목적지 표식(안내 있음): 다음 단계 장비가 있을 때만 자리가 나온다. 장비 이름(글자)으로 기억해 걷는 동안 다시 계산하지 않는다
+  const goalId = highlightIds[0] ?? null
+  const goal = useMemo(() => goalSpotOf(layout.equipment, goalId), [layout, goalId])
   const posRef = useRef<Pt>(start)
   const look = useRef({ yaw: 0, pitch: 0 })
   const first = viewMode === 'first'
@@ -930,8 +943,9 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
       {tester && (glowIds.includes(tester.id) || (vehicle && glowIds.includes(vehicle.id))) && (
         <group position={[tester.x, 0, tester.z]}><GlowFrame w={footprintOf(tester).xMax - footprintOf(tester).xMin} d={footprintOf(tester).zMax - footprintOf(tester).zMin} /></group>
       )}
-      {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} m={m} lowSpec={lowSpec} selected={selectedId === vehicle.id} testerHighlight={highlightIds.includes(tester.id) || selectedId === tester.id}
+      {tester && vehicle && <BrakeRig tester={tester} vehicle={vehicle} rig={rig} m={m} lowSpec={lowSpec} selected={selectedId === vehicle.id} testerSelected={selectedId === tester.id}
         vehicleLabel={labelFor(vehicle)} onTapVehicle={() => onSelectEquipment(vehicle.id)} />}
+      {goal && <GoalBeacon x={goal.x} z={goal.z} w={goal.w} d={goal.d} h={goal.h} hidden={camBusy} arrow={goalArrow} track={arrowTrack} />}
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
         <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} talking={npcTalking} nod={npcNod} />
@@ -939,6 +953,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]} receiveShadow><ringGeometry args={[0.3, 0.45, 24]} /><meshStandardMaterial color={PALETTE.line} roughness={0.5} /></mesh>
+      <TapRing pulse={tapPulse} />
       <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} holdStill={holdStill} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}

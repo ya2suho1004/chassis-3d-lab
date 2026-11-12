@@ -1,8 +1,19 @@
 // src/app/cozyState.ts — '따뜻한 정비 공방' 연출의 판단 로직(순수 함수). 컴포넌트는 이것만 쓴다.
 import type { Effect } from './reactions'
 
-export type Fx = { effects: Effect[]; seq: number }
-export const EMPTY_FX: Fx = { effects: [], seq: 0 }
+/**
+ * 실습 화면의 CSS 연출과 그 수명(ms). 연출은 이 시간이 지나면 끈다 — CSS 움직임이 끝났다는 신호에 기대지 않는다.
+ * 요소가 화면에 없으면(세로 폰의 보호구 꼬리표, 가까이 보기 중의 의뢰 패널) 그 신호가 오지 않아, 연출이 남았다가 요소가 다시 보일 때 뒤늦게 터지기 때문이다.
+ * 수명은 CSS 움직임(src/styles.css)보다 0.2초 길다 — 느린 태블릿에서 움직임이 늦게 시작해도 끝자락이 잘리지 않게. '도감에 등록' 꼬리표는 붙어 있는 시간이 곧 수명이다.
+ */
+export const EFFECT_MS = { checkPop: 500, sparkle: 800, codexPop: 500, codexChip: 1600 } as const
+export type TimedEffect = keyof typeof EFFECT_MS
+/** 수명 표에 없는 연출 — 다른 곳이 맡는다: 3D 누름 고리(장면), 결과 화면의 도장·종이 조각(정비 일지). 모든 연출은 수명 표나 이 목록 가운데 한쪽에 있어야 한다(시험이 확인) */
+export const UNTIMED_EFFECTS: readonly Effect[] = ['tapRing', 'stamp', 'confetti']
+
+/** 켜져 있는 연출: 이름 → 켠 차례 번호(같은 연출을 다시 켜면 번호가 바뀌어 CSS 움직임을 처음부터 다시 건다)와 꺼질 시각(ms) */
+export type Fx = { on: Partial<Record<TimedEffect, { seq: number; until: number }>>; seq: number }
+export const EMPTY_FX: Fx = { on: {}, seq: 0 }
 
 /** 완료 단계 수가 '늘어날 때만' true. 같거나 줄면(되돌림·재마운트 0) false */
 export function shouldPopOnDone(prevDone: number, nextDone: number): boolean {
@@ -14,14 +25,41 @@ export function isRequestPassed(completionStatus: 'completed' | 'aborted', paylo
   return completionStatus === 'completed' && payload.ok && payload.value.npcInspectionResult === 'passed'
 }
 
-/** onAnimationEnd: 연출 클래스만 지우고 seq는 유지 */
-export function clearEffects(f: Fx): Fx {
-  return { ...f, effects: [] }
+const isTimed = (e: Effect): e is TimedEffect => e in EFFECT_MS
+
+/**
+ * 연출을 켠다. now는 지금 시각(ms). 수명이 정해진 연출만 담는다 — 수명 표에 없는 연출(UNTIMED_EFFECTS)은 다른 곳이 맡는다.
+ * 켤 것이 없으면 같은 객체를 돌려 불필요한 렌더를 막는다.
+ */
+export function addEffects(f: Fx, effects: readonly Effect[], now: number): Fx {
+  const timed = effects.filter(isTimed)
+  if (!timed.length) return f
+  const seq = f.seq + 1
+  const on = { ...f.on }
+  for (const e of timed) on[e] = { seq, until: now + EFFECT_MS[e] }
+  return { on, seq }
+}
+
+/** 가장 먼저 꺼질 시각(ms). 켜진 연출이 없으면 null */
+export function nextExpiry(f: Fx): number | null {
+  let at: number | null = null
+  for (const v of Object.values(f.on)) if (v && (at === null || v.until < at)) at = v.until
+  return at
+}
+
+/** 수명이 다한 연출을 끈다. 함께 켜진 다른 연출은 제 수명까지 간다(끌 것이 없으면 같은 객체) */
+export function dropExpired(f: Fx, now: number): Fx {
+  const names = Object.keys(f.on) as TimedEffect[]
+  const keep = names.filter((e) => (f.on[e]?.until ?? 0) > now)
+  if (keep.length === names.length) return f
+  const on: Fx['on'] = {}
+  for (const e of keep) on[e] = f.on[e]
+  return { on, seq: f.seq }
 }
 
 /** run이 null이 되면 연출 상태 초기화(이미 비어 있으면 같은 객체를 돌려 불필요한 렌더 방지) */
 export function resetFxIfIdle(f: Fx): Fx {
-  return f.effects.length || f.seq ? EMPTY_FX : f
+  return Object.keys(f.on).length || f.seq ? EMPTY_FX : f
 }
 
 /** 검사 통과 뒤 결과 화면 전에 교관이 고개를 끄덕일지(설계 §4 대화창).
