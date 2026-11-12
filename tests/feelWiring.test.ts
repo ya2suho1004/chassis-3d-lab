@@ -66,3 +66,33 @@ describe('소리가 나는 화면', () => {
     expect(lab).toContain('useEffect(() => { if (!gameUi && soundOn) onSoundChange(false) }, [gameUi, soundOn, onSoundChange])')
   })
 })
+
+describe('누름 고리(설계 §4.3)', () => {
+  const scene = read('src/scene/LabScene.tsx')
+  const ring = read('src/scene/feel/TapRing.tsx')
+  test('장비를 고르면 그 자리에서, 교관을 누르면 교관 자리에서 장면 누름 사건을 낸다. 고르기를 풀 때는 내지 않는다', () => {
+    expect(lab).toContain("    setSelectedId(id)\n    if (!id) return\n    const e = layout.equipment.find((x) => x.id === id)\n    fire('sceneTap', e ? tapSpotOf(e) : undefined)")
+    expect(lab).toContain("const tapNpc = () => fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS })")
+    expect(lab).toContain('onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }}')
+    expect(lab).toContain('if (aimId === NPC_AIM) { tapNpc(); setNpcOpen(true) } else selectEquipment(aimId)')
+  })
+  test('fire는 규칙표가 고리를 내라고 할 때만 고리를 보낸다(움직임 줄이기면 없다). 고리는 장면으로 가고, CSS 연출 상태는 고리를 담지 않는다(tests/cozyState.test.ts)', () => {
+    expect(lab).toContain("    if (at && r.effects.includes('tapRing')) setTapPulse((p) => nextPulse(p, at))\n    const now = performance.now()\n    setFx((f) => addEffects(f, r.effects, now))")
+    expect(lab.match(/ tapPulse=\{tapPulse\}/g)).toHaveLength(2)
+  })
+  test('장면에는 고리가 하나만 있다', () => {
+    expect(scene).toContain('<TapRing pulse={tapPulse} />')
+    expect(scene.match(/<TapRing /g)).toHaveLength(1)
+  })
+  test('고리의 모양과 재질은 한 번만 만들고, 매 화면에는 값만 바꾼다(걷는 동안 새로 만드는 것이 없게)', () => {
+    expect(ring).toMatch(/const parts = useMemo\(\(\) => \(\{\n[\s\S]+?\n  \}\), \[\]\)/)
+    expect(ring.match(/new THREE\./g)).toHaveLength(2)
+    const frame = ring.slice(ring.indexOf('useFrame('), ring.indexOf('return <mesh'))
+    expect(frame.length).toBeGreaterThan(100)
+    expect(frame).not.toMatch(/new |useMemo|useState/)
+    expect(ring).toContain('useEffect(() => () => { parts.geo.dispose(); parts.mat.dispose() }, [parts])')
+  })
+  test('고리는 흰색이고 색 보정·깊이 기록에서 빠진다(주황은 선택, 노랑은 가까움, 파랑은 목적지라서 흰색을 쓴다)', () => {
+    expect(ring).toContain("new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0, depthWrite: false, toneMapped: false })")
+  })
+})

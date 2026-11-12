@@ -14,6 +14,7 @@ import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
 import { eventsForStep, prefersReducedMotion, reactionsFor, type ReactionEvent } from '../app/reactions'
 import { rigEvents, type RigLook } from '../app/feelEvents'
+import { NPC_TAP_RADIUS, nextPulse, tapSpotOf, type TapPulse, type TapSpot } from '../scene/feel/tapPulse'
 import { addEffects, dropExpired, EMPTY_FX, nextExpiry, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
 import { createFinishGate, type FinishGate } from '../app/finishGate'
 import { NOD_LINE } from '../app/requests'
@@ -173,9 +174,12 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     return () => clearTimeout(t)
   }, [fx])
   /** 반응을 내는 한 곳: 사건 → 규칙표 → 소리와 화면 연출. 규칙표는 사건 이름·움직임 줄이기·소리 켬만 받는다(설계 2026-11-12 §5-1) */
-  const fire = useCallback((ev: ReactionEvent) => {
+  /** 누름 고리(3D): 장비나 교관을 누른 자리. 번호가 오르면 장면의 고리가 다시 퍼진다 */
+  const [tapPulse, setTapPulse] = useState<TapPulse | null>(null)
+  const fire = useCallback((ev: ReactionEvent, at?: TapSpot) => {
     const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: sound.enabled })
     for (const c of r.cues) sound.play(c.name, c.delay)
+    if (at && r.effects.includes('tapRing')) setTapPulse((p) => nextPulse(p, at))
     const now = performance.now()
     setFx((f) => addEffects(f, r.effects, now))
   }, [sound])
@@ -317,8 +321,13 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
 
   const selectEquipment = (id: string | null) => {
     setSelectedId(id)
-    if (id && !codex.includes(id)) setCodex([...codex, id])
+    if (!id) return
+    const e = layout.equipment.find((x) => x.id === id)
+    fire('sceneTap', e ? tapSpotOf(e) : undefined)
+    if (!codex.includes(id)) setCodex([...codex, id])
   }
+  /** 교관을 눌렀다(3D에서 누르거나 1인칭 조준 버튼으로): 장면 누름 사건 */
+  const tapNpc = () => fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS })
   const toggleDisplay = () => {
     if (!run) return
     const r = changeDisplayMode(run, displayMode === 'threeD' ? 'diagram' : 'threeD', 'userChoice')
@@ -366,10 +375,10 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         <div className="g-canvas">
           <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
             joystickRef={joystickRef} npcTalking={talking} npcNod={!!nodding} viewMode={viewMode} playerPos={pos} onAim={setAimId}
-            glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep}
+            glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep} tapPulse={tapPulse}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
-            onSelectEquipment={selectEquipment} onNpcTap={() => { if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording} />
+            onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording} />
         </div>
 
         {!talking && (
@@ -435,7 +444,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
 
             {viewMode === 'first' && <div className={`g-reticle ${aimId ? 'on' : ''}`} aria-hidden />}
             {viewMode === 'first' && aimId && (
-              <button className="g-aim" onClick={() => (aimId === NPC_AIM ? setNpcOpen(true) : selectEquipment(aimId))}>
+              <button className="g-aim" onClick={() => { if (aimId === NPC_AIM) { tapNpc(); setNpcOpen(true) } else selectEquipment(aimId) }}>
                 {aimId === NPC_AIM ? <><Icon name="talk" /> 교관과 대화</> : <><Icon name="look" /> {layout.equipment.find((e) => e.id === aimId)?.label.replace(/\(.*\)/, '').trim() ?? ''} 살펴보기</>}
               </button>
             )}
@@ -591,7 +600,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
             <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
-              onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} />
+              onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} tapPulse={tapPulse} />
             <div className="quicknav">
               <button onClick={() => goTo({ x: layout.npc.x - 1.0, z: layout.npc.z })}>교관에게 가기</button>
               {layout.equipment.filter((e) => e.interactive && e.accessPoint).map((e) => (
