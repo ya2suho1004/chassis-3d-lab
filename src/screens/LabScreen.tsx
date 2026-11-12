@@ -173,14 +173,14 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     }, Math.max(0, at - performance.now()))
     return () => clearTimeout(t)
   }, [fx])
-  /** 반응을 내는 한 곳: 사건 → 규칙표 → 소리와 화면 연출. 규칙표는 사건 이름·움직임 줄이기·소리 켬만 받는다(설계 2026-11-12 §5-1) */
   /** 누름 고리(3D): 장비나 교관을 누른 자리. 번호가 오르면 장면의 고리가 다시 퍼진다 */
   const [tapPulse, setTapPulse] = useState<TapPulse | null>(null)
+  /** 반응을 내는 한 곳: 사건 → 규칙표 → 소리와 화면 연출. 규칙표는 사건 이름·움직임 줄이기·소리 켬만 받는다(설계 2026-11-12 §5-1). at은 장면에서 누른 자리다 */
   const fire = useCallback((ev: ReactionEvent, at?: TapSpot) => {
     const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: sound.enabled })
     for (const c of r.cues) sound.play(c.name, c.delay)
     if (at && r.effects.includes('tapRing')) setTapPulse((p) => nextPulse(p, at))
-    const now = performance.now()
+    const now = performance.now() // 상태 갱신 함수 안에서 시각을 읽지 않는다(갱신 함수는 두 번 돌 수 있다)
     setFx((f) => addEffects(f, r.effects, now))
   }, [sound])
   /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
@@ -600,7 +600,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
             <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
-              onSelectEquipment={selectEquipment} onNpcTap={() => setNpcOpen(true)} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} tapPulse={tapPulse} />
+              onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} tapPulse={tapPulse} />
             <div className="quicknav">
               <button onClick={() => goTo({ x: layout.npc.x - 1.0, z: layout.npc.z })}>교관에게 가기</button>
               {layout.equipment.filter((e) => e.interactive && e.accessPoint).map((e) => (
