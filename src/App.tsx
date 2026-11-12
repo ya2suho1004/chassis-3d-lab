@@ -147,7 +147,7 @@ export function App() {
   }
 
   return (
-    <ResultScreen session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} frozenPayload={screen.frozenPayload} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
+    <ResultScreen sound={sound} session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} frozenPayload={screen.frozenPayload} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
       onRetrySave={!screen.noRecord && screen.saveError && screen.frozenPayload ? async () => {
         // D4: 처음 만든 원본 그대로 다시 확정 저장(수행 번호·완료 시각 유지)
         const r = await retryFreeze(repo!, screen.frozenPayload!)
