@@ -70,3 +70,20 @@ describe('사건 뽑기가 받지 않는 것(설계 §5-1)', () => {
     expect(src).not.toMatch(/difficultyMode|guided|nextStep|correct|grading|firstAnswer|firstInput|readout|measurement/i)
   })
 })
+
+describe('rigEvents — 경계: 과제를 받는 순간, 진입 방향을 정하지 않은 세션', () => {
+  it('과제를 받는 순간: 둘러보기 모습을 앞 모습으로 두면 누르지 않은 리프트·차량 사건이 난다. 그래서 화면은 과제가 없는 동안 앞 모습을 비운다', () => {
+    const tour = brakeRigState(null, 'north')
+    const start = brakeRigState({ completedSteps: [], offProgress: [], motorOn: false }, 'north')
+    expect(rigEvents(tour, start)).toEqual(['liftMove', 'vehicleMove']) // 비우지 않았다면 났을 가짜 사건
+    expect(rigEvents(null, start)).toEqual([]) // 화면이 하는 대로 비우면 나지 않는다
+  })
+  it('진입 방향을 정하지 않은 세션: 차량이 바깥에 서는 모습이 없어 진입과 빼기에서 차량 사건이 없다(리프트 사건은 그대로)', () => {
+    const look = (completed: string[], off: OffSubStep[] = []) => brakeRigState({ completedSteps: completed, offProgress: off, motorOn: false }, null)
+    const pre = ['ppe', 'tire', 'equip']
+    const measured = [...pre, 'enter', 'axle', 'mode', 'lower', 'motor', 'press', 'read']
+    expect(rigEvents(look(pre), look([...pre, 'enter']))).toEqual([])
+    expect(rigEvents(look([...pre, 'enter', 'axle', 'mode']), look([...pre, 'enter', 'axle', 'mode', 'lower']))).toEqual(['liftMove'])
+    expect(rigEvents(look(measured, ['motorOff', 'liftUp']), look(measured, ['motorOff', 'liftUp', 'exitVehicle']))).toEqual([])
+  })
+})

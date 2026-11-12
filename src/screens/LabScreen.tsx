@@ -12,7 +12,8 @@ import { backlashTravel, checkBacklash, initialBacklashState, randomBacklashCase
 import { checkRunout, randomDiscCase, type DiscControl } from '../scene/DiscRunout'
 import { needleAngle } from '../scene/dialGauge'
 import { fmtMm, loadPracticeSpec, PRACTICE_SPEC_SOURCE, practiceOkText, verdictFor, type Verdict } from '../app/practiceSpec'
-import { eventsForStep, prefersReducedMotion, reactionsFor } from '../app/reactions'
+import { eventsForStep, prefersReducedMotion, reactionsFor, type ReactionEvent } from '../app/reactions'
+import { rigEvents, type RigLook } from '../app/feelEvents'
 import { addEffects, dropExpired, EMPTY_FX, nextExpiry, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
 import { createFinishGate, type FinishGate } from '../app/finishGate'
 import { NOD_LINE } from '../app/requests'
@@ -84,7 +85,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   const [selectedId, setSelectedId] = useState<string | null>(null)
   /** 올려 둔 리프트(보기 전용 — 과제 기록·판정과 무관) */
   const [raisedLifts, setRaisedLifts] = useState<string[]>([])
-  const toggleLift = (id: string) => setRaisedLifts((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id]))
+  const toggleLift = (id: string) => { setRaisedLifts((l) => (l.includes(id) ? l.filter((x) => x !== id) : [...l, id])); fire('bigLiftMove') }
   const [codex, setCodex] = useState<string[]>([])
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
@@ -171,6 +172,13 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     }, Math.max(0, at - performance.now()))
     return () => clearTimeout(t)
   }, [fx])
+  /** 반응을 내는 한 곳: 사건 → 규칙표 → 소리와 화면 연출. 규칙표는 사건 이름·움직임 줄이기·소리 켬만 받는다(설계 2026-11-12 §5-1) */
+  const fire = useCallback((ev: ReactionEvent) => {
+    const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: sound.enabled })
+    for (const c of r.cues) sound.play(c.name, c.delay)
+    const now = performance.now()
+    setFx((f) => addEffects(f, r.effects, now))
+  }, [sound])
   /** 단계를 마치면 학생 몸짓(보호구 쓰기·쪼그려 살펴보기·버튼 누르기) — 연출 전용 */
   const [avatarCue, setAvatarCue] = useState<AvatarCue | null>(null)
   const cuePrev = useRef<{ completed: string[]; off: string[] } | null>(null)
@@ -184,18 +192,13 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     const step = newCue(cuePrev.current, now)
     cuePrev.current = now
     if (!step) return
-    const firedAt = performance.now() // 상태 갱신 함수 안에서 시각을 읽지 않는다(갱신 함수는 두 번 돌 수 있다)
-    for (const ev of eventsForStep(step, advanced)) {
-      const r = reactionsFor(ev, { reducedMotion: prefersReducedMotion(), sound: soundOn })
-      for (const c of r.cues) sound.play(c.name, c.delay)
-      setFx((f) => addEffects(f, r.effects, firedAt))
-    }
+    for (const ev of eventsForStep(step, advanced)) fire(ev)
     const action = actionForStep(step)
     if (!action) return
     const eqId = actionTarget(step, task.steps.find((st) => st.stepId === step)?.equipmentId ?? null)
     const eq = eqId ? layout.equipment.find((e) => e.id === eqId) : null
     setAvatarCue((c) => ({ action, seq: (c?.seq ?? 0) + 1, target: eq ? { x: eq.x, z: eq.z } : null }))
-  }, [run, task, layout, sound, soundOn])
+  }, [run, task, layout, fire])
   const ppe = !!run?.completedSteps.includes('ppe')
   /** 계기 화면 가까이 보기(조작부 근처, 과제 중) */
   const [closeUp, setCloseUp] = useState(false)
@@ -278,6 +281,16 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   /** 이름표: 게임 화면 기본은 '가까운 것만'(먼 작동 장비는 ◆), 기본 화면은 둘러보기 전체·과제 중 필요한 것만 */
   const labelMode: LabelMode = labelChoice ?? (uiStyle === 'game' ? 'near' : run ? 'focus' : 'all')
   const rig = useMemo(() => brakeRigState(run, session.vehicleEntryDirection), [run, session.vehicleEntryDirection])
+  /** 제동 장치의 보이는 움직임(리프트 판·차량 이동·제동) → 사건. 과제를 막 받았거나 이어 하기로 돌아온 순간에는 내지 않는다(설계 2026-11-12 §4.2) */
+  const rigPrev = useRef<RigLook | null>(null)
+  useEffect(() => {
+    if (!run) { rigPrev.current = null; return }
+    const evs = rigEvents(rigPrev.current, rig)
+    rigPrev.current = rig
+    for (const ev of evs) fire(ev)
+  }, [run, rig, fire])
+  // 롤러 회전음은 사건이 아니라 '도는 동안'이라는 상태를 따른다. 측정값이 무엇이든 같은 소리다
+  useEffect(() => { sound.setRollers(rig.rollersSpinning) }, [sound, rig.rollersSpinning])
   const turning = useMemo(() => turningRigState(run), [run])
   const turningNear = run?.task.taskId === 'min-turning-radius' && nearIds.includes('min-turning-radius-01')
   /** 계기·측정판 가까이 보기 중이면 걷기·연습 버튼을 숨긴다 */
@@ -341,6 +354,8 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   useEffect(() => { if (nodding) nodBtnRef.current?.focus({ preventScroll: true }) }, [nodding])
 
   const gameUi = uiStyle === 'game' && displayMode === 'threeD' && !reviewOpen
+  // 소리는 소리 버튼이 있는 게임 화면(3D)에서만 난다. 기본 화면·도식 모드로 가면 끄고, 돌아와도 꺼진 채로 둔다(설계 2026-11-12 §4.7)
+  useEffect(() => { if (!gameUi && soundOn) onSoundChange(false) }, [gameUi, soundOn, onSoundChange])
   if (gameUi) {
     const navTargets = layout.equipment.filter((e) => e.interactive && e.accessPoint)
     const talking = (npcOpen || !!nodding) && nearNpc
