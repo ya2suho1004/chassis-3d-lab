@@ -71,8 +71,9 @@ export function materialColor(name: string, outfit: Outfit, look: CharacterLook)
 const NOD_DELAY = 0.45
 
 /** nod: 켜지는 순간부터 고개를 두 번 끄덕인다(검사 통과 — 교관 전용). 모든 동작 클립이 Head 회전을 매 프레임 덮어쓰므로 그 위에 더한다.
- *  instructor: 교관 전용 모델(character-npc.glb)을 쓴다 */
-export function CharacterModel({ action, outfit, speed = 1, goggles = false, look = DEFAULT_LOOK, nod = false, instructor = false }: { action: CharacterAction; outfit: Outfit; speed?: number; goggles?: boolean; look?: CharacterLook; nod?: boolean; instructor?: boolean }) {
+ *  instructor: 교관 전용 모델(character-npc.glb)을 쓴다
+ *  rate: 있으면 매 프레임 지금 동작의 재생 속도로 쓴다(speed 대신 — 걷기 동작을 현재 이동 속도에 맞출 때, React 상태를 거치지 않는다) */
+export function CharacterModel({ action, outfit, speed = 1, rate, goggles = false, look = DEFAULT_LOOK, nod = false, instructor = false }: { action: CharacterAction; outfit: Outfit; speed?: number; rate?: React.RefObject<number>; goggles?: boolean; look?: CharacterLook; nod?: boolean; instructor?: boolean }) {
   const { scene, animations } = useGLTF(characterUrl(look.body, instructor), false, true)
   // 뼈대가 있는 모델은 SkeletonUtils로 복제해야 학생·교관이 따로 움직인다
   const clone = useMemo(() => SkeletonUtils.clone(scene) as THREE.Group, [scene])
@@ -83,6 +84,7 @@ export function CharacterModel({ action, outfit, speed = 1, goggles = false, loo
   useEffect(() => { nodT.current = nod ? -NOD_DELAY : -1 }, [nod])
   // useAnimations의 mixer.update 뒤에 돈다(같은 컴포넌트에서 먼저 등록됨)
   useFrame((_, dt) => {
+    if (rate) { const a = actions[action]; if (a && rate.current != null) a.timeScale = rate.current }
     if (!nod || !head) return
     nodT.current += Math.min(dt, 0.1)
     const a = nodAngle(nodT.current)

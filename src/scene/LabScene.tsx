@@ -6,7 +6,8 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { distanceToFootprint, footprintOf, labelState, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
-import { advanceAlongPath, buildNavGrid, findPath } from './pathfind'
+import { advanceAlongPath, buildNavGrid, findPath, smoothPath } from './pathfind'
+import { STICK_DEADZONE, approachSpeed, nextWalking, pathRemaining, pathSpeed, stickTargetSpeed, walkPlayback } from './locomotion'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
 import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, StaticCar, Stand, ToeGauge, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
@@ -42,7 +43,6 @@ import { ToneSetup } from './look/ToneSetup'
 import { FloorShadowBake } from './look/FloorShadowBake'
 
 const Effects = lazy(() => import('./Effects'))
-const WALK_SPEED = 1.6 // m/s
 const TAP_MAX_PX = 6
 
 export interface LabSceneProps {
@@ -143,10 +143,14 @@ function BlobShadow({ size = 0.95 }: { size?: number }) {
   return <mesh rotation-x={-Math.PI / 2} position-y={0.008} material={mat} renderOrder={1}><planeGeometry args={[size, size]} /></mesh>
 }
 
-function Avatar({ pos, heading, moving, oneShot, ppe, look }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; oneShot: AvatarAction | null; ppe: boolean; look: CharacterLook }) {
+/** speed: 현재 이동 속도(m/s, Walker의 ref). 걷기 동작 재생 속도를 여기서 프레임마다 정해 rate ref로 넘긴다(React 상태를 거치지 않는다) */
+function Avatar({ pos, heading, moving, speed, oneShot, ppe, look }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; speed: React.MutableRefObject<number>; oneShot: AvatarAction | null; ppe: boolean; look: CharacterLook }) {
   const outfit = useMemo(() => (ppe ? { ...STUDENT_OUTFIT, shoes: SAFETY_SHOES } : STUDENT_OUTFIT), [ppe])
   const turn = useRef<THREE.Group>(null)
+  const rate = useRef(1)
   useFrame((_, dt) => {
+    // 걷기 동작은 현재 속도에 비례(최고 속도에서 예전 고정값과 같다), 다른 동작은 1배
+    rate.current = moving ? walkPlayback(speed.current, WALK_CYCLE_DISTANCE * bodyScale(look.body)) : 1
     const g = turn.current
     if (!g) return
     // 가장 짧은 쪽으로 부드럽게 돈다
@@ -159,7 +163,7 @@ function Avatar({ pos, heading, moving, oneShot, ppe, look }: { pos: Pt; heading
     <group position={[pos.x, 0, pos.z]}>
       <BlobShadow />
       <group ref={turn}>
-        <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : oneShot ?? 'Idle'} outfit={outfit} goggles={ppe} look={look} speed={moving ? WALK_SPEED / (WALK_CYCLE_DISTANCE * bodyScale(look.body)) : 1} /></Suspense>
+        <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : oneShot ?? 'Idle'} outfit={outfit} goggles={ppe} look={look} rate={rate} /></Suspense>
       </group>
     </group>
   )
@@ -707,6 +711,13 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   const heading = useRef(0)
   const [walking, setWalking] = useState(false)
   const walkingRef = useRef(false)
+  // 현재 이동 속도(m/s)와 걷는 방향(단위 벡터). 목표 속도로 가속·감속한다(locomotion.ts). 속도는 React 상태로 올리지 않는다
+  const speed = useRef(0)
+  const dirX = useRef(0)
+  const dirZ = useRef(0)
+  // 마지막으로 알린 뒤 자리가 바뀌었는가(걷기 판정에 들기 전의 아주 짧은 이동도 멈출 때 알린다)
+  const unreported = useRef(false)
+  const fwd = useMemo(() => new THREE.Vector3(), [])
   const { camera, controls } = useThree() as unknown as { camera: THREE.Camera; controls: OrbitControlsImpl | null }
 
   // 단계를 마친 뒤 몸짓: 장비 쪽으로 돌아 한 번 하고, 걷기 시작하면 바로 그친다
@@ -744,70 +755,84 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       requestRef.current = null
       if (pathRef.current) { pathRef.current = null; onMove(posRef.current, false) }
     }
-    // 새 목적지 요청 처리
+    // 새 목적지 요청 처리: A* 격자 경로에서 곧게 갈 수 있는 중간 점을 빼 꺾임을 줄인다(시작점·누른 자리는 그대로)
     if (requestRef.current) {
       const target = requestRef.current
       requestRef.current = null
-      const path = findPath(grid, posRef.current, target)
+      const found = findPath(grid, posRef.current, target)
+      const path = found && smoothPath(grid, found)
       pathRef.current = path
       idxRef.current = 0
       if (!path) onMove(posRef.current, false)
     }
-    let moving = false
-    // 조이스틱·키보드: 카메라가 보는 쪽 기준으로 걷는다. 막힌 칸이면 x·z 한쪽만 움직여 벽을 따라 미끄러진다
+    // 대화·가까이 보기(frozen)·기록 창(holdStill): 감속 없이 바로 선다
+    if (frozen || holdStill) speed.current = 0
+    const prev = posRef.current
+    // 조이스틱·키보드: 카메라가 보는 쪽 기준으로 걷는다
     const j = joystickRef?.current
     const mag = j && !frozen && !holdStill ? Math.hypot(j.x, j.y) : 0
-    if (j && mag > 0.15) {
+    if (j && mag > STICK_DEADZONE) {
       pathRef.current = null
-      const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd)
+      camera.getWorldDirection(fwd)
       const fl = Math.hypot(fwd.x, fwd.z) || 1
       const fx = fwd.x / fl, fz = fwd.z / fl
-      const k = Math.min(1, mag), step = WALK_SPEED * k * Math.min(dt, 0.1)
-      const vx = ((-fz) * j.x + fx * -j.y) / mag, vz = (fx * j.x + fz * -j.y) / mag
-      const prev = posRef.current
-      const cands: Pt[] = [{ x: prev.x + vx * step, z: prev.z + vz * step }, { x: prev.x + vx * step, z: prev.z }, { x: prev.x, z: prev.z + vz * step }]
-      const nextPos = cands.find((c) => !grid.isBlocked(c.x, c.z))
-      heading.current = headingFor(vx, vz)
-      if (nextPos) {
-        posRef.current = nextPos
-        if (orbitFollow) {
-          camera.position.x += nextPos.x - prev.x
-          camera.position.z += nextPos.z - prev.z
-          if (controls) { controls.target.set(nextPos.x, targetY, nextPos.z); controls.update() }
-        }
-        setPos(nextPos)
-        moving = true
-        lastReport.current += dt
-        if (lastReport.current > 0.25) { lastReport.current = 0; onMove(nextPos, true) }
-      }
-    } else if (walkingRef.current && !pathRef.current) {
-      onMove(posRef.current, false)
+      dirX.current = ((-fz) * j.x + fx * -j.y) / mag
+      dirZ.current = (fx * j.x + fz * -j.y) / mag
+      heading.current = headingFor(dirX.current, dirZ.current)
     }
-    if (pathRef.current && !frozen) {
-      const r = advanceAlongPath(posRef.current, pathRef.current, idxRef.current, WALK_SPEED, Math.min(dt, 0.1))
-      const prev = posRef.current
-      posRef.current = r.pos
-      idxRef.current = r.index
-      moving = !r.done
-      if (r.done) pathRef.current = null
-      const dx = r.pos.x - prev.x, dz = r.pos.z - prev.z
-      if (dx * dx + dz * dz > 1e-8) heading.current = headingFor(dx, dz)
-      // 카메라가 아바타를 따라가도록 이동량만큼 함께 이동
+    if (pathRef.current) {
+      // 경로 이동: 최고 속도로 가속하고 남은 거리에 맞춰 감속해 누른 자리에 정확히 선다
+      if (!frozen) {
+        speed.current = pathSpeed(speed.current, pathRemaining(posRef.current, pathRef.current, idxRef.current), dt, prefersReducedMotion)
+        const r = advanceAlongPath(posRef.current, pathRef.current, idxRef.current, speed.current, Math.min(dt, 0.1))
+        posRef.current = r.pos
+        idxRef.current = r.index
+        if (r.done) { pathRef.current = null; speed.current = 0 }
+        const dx = r.pos.x - prev.x, dz = r.pos.z - prev.z
+        const d = Math.hypot(dx, dz)
+        if (d > 1e-4) { dirX.current = dx / d; dirZ.current = dz / d; heading.current = headingFor(dx, dz) }
+      }
+    } else {
+      // 조이스틱 입력 크기(없으면 0)를 목표 속도로 가속·감속. 손을 떼면(또는 갈 수 없는 자리를 누르면) 마지막 방향으로 감속하며 조금 더 나아가 선다.
+      // 막힌 칸이면 x·z 한쪽만 움직여 벽을 따라 미끄러지고, 둘 다 막히면 그 자리에 선다
+      speed.current = approachSpeed(speed.current, stickTargetSpeed(mag), dt, prefersReducedMotion)
+      const step = speed.current * Math.min(dt, 0.1)
+      if (step > 0) {
+        const nx = prev.x + dirX.current * step, nz = prev.z + dirZ.current * step
+        if (!grid.isBlocked(nx, nz)) posRef.current = { x: nx, z: nz }
+        else if (!grid.isBlocked(nx, prev.z)) posRef.current = { x: nx, z: prev.z }
+        else if (!grid.isBlocked(prev.x, nz)) posRef.current = { x: prev.x, z: nz }
+        else speed.current = 0
+      }
+    }
+    const nextPos = posRef.current
+    if (nextPos.x !== prev.x || nextPos.z !== prev.z) {
+      // 궤도 시점은 카메라가 아바타를 따라가도록 이동량만큼 함께 옮긴다
       if (orbitFollow) {
-        camera.position.x += r.pos.x - prev.x
-        camera.position.z += r.pos.z - prev.z
-        if (controls) { controls.target.set(r.pos.x, targetY, r.pos.z); controls.update() }
+        camera.position.x += nextPos.x - prev.x
+        camera.position.z += nextPos.z - prev.z
+        if (controls) { controls.target.set(nextPos.x, targetY, nextPos.z); controls.update() }
       }
-      setPos(r.pos)
-      lastReport.current += dt
-      if (!moving || lastReport.current > 0.25) { lastReport.current = 0; onMove(r.pos, moving) }
+      setPos(nextPos)
+      unreported.current = true
     }
-    if (moving !== walkingRef.current) { walkingRef.current = moving; setWalking(moving) }
+    // 걷기·서기는 현재 속도로 판정(이력 있음). 걷는 동안 0.25초마다, 설 때 한 번 알린다
+    const was = walkingRef.current
+    const now = nextWalking(was, speed.current)
+    if (now) {
+      lastReport.current += dt
+      if (lastReport.current > 0.25) { lastReport.current = 0; unreported.current = false; onMove(nextPos, true) }
+    } else if (was || (unreported.current && speed.current === 0)) {
+      lastReport.current = 0
+      unreported.current = false
+      onMove(nextPos, false)
+    }
+    if (now !== was) { walkingRef.current = now; setWalking(now) }
   })
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
   // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼). 1인칭은 내 몸을 숨긴다
-  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} oneShot={oneShot} ppe={ppe} look={look} /></group>
+  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} speed={speed} oneShot={oneShot} ppe={ppe} look={look} /></group>
 }
 
 export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, antialias = false, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, tapPulse = null, goalArrow, arrowTrack, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false }: LabSceneProps) {
