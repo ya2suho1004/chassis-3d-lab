@@ -312,7 +312,7 @@ export function Wall({ from, to, inward, m, sign }: { from: [number, number]; to
 }
 
 // ---------- 사람 ----------
-/** 작업복 사람: 몸(캡슐)·머리·안전모. 학생 = 파란 작업복, NPC 교관 = 남색 작업복 + 형광 조끼 */
+/** 작업복 사람: 몸(캡슐)·머리·안전모. 학생 = 주황 실습복(STUDENT_OUTFIT.top), NPC 교관 = 남색 작업복(INSTRUCTOR_OUTFIT.trim) + 형광 연두 조끼 */
 /** 사람 캐릭터를 불러오는 동안의 대체 모형. 기본은 학생(키 1.45 m, 머리 0.48 m — 3등신), 교관은 height·head를 넘긴다(1.62 m, 0.467 m) */
 export function Person({ suit, vest, helmet, height = 1.45, head = 0.48 }: { suit: string; vest?: string; helmet: string; height?: number; head?: number }) {
   const neck = height - head // 몸통 꼭대기(머리 아래)

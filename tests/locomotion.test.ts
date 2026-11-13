@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest'
 import {
   ACCEL_TIME, DECEL_TIME, MAX_STEP_DT, STICK_DEADZONE, WALK_ANIM_MIN, WALK_OFF_SPEED, WALK_ON_SPEED, WALK_SPEED,
-  approachSpeed, arrivalSpeed, nextWalking, pathRemaining, pathSpeed, stickTargetSpeed, walkPlayback,
+  ARRIVE_EPS, approachSpeed, arrivalSpeed, nextWalking, pathArrived, pathRemaining, pathSpeed, stickTargetSpeed, walkPlayback,
 } from '../src/scene/locomotion'
 import { advanceAlongPath } from '../src/scene/pathfind'
 import type { Pt } from '../src/scene/layoutModel'
@@ -149,6 +149,30 @@ describe('경로 이동의 도착 감속', () => {
       expect(w.pos).toEqual({ x: 0.1, z: 0 })
       expect(w.frames).toBeLessThan(200)
     }
+  })
+  test('서 있는 자리가 곧 목적지면(같은 장비 버튼을 다시 누름) 이미 도착한 것', () => {
+    const p = { x: 1, z: 1 }
+    expect(pathArrived(p, [p, { x: 1, z: 1 }], 0)).toBe(true)
+    expect(pathArrived(p, [{ x: 1 + ARRIVE_EPS / 2, z: 1 }], 0)).toBe(true)
+    expect(pathArrived(p, [{ x: 1.1, z: 1 }], 0)).toBe(false)
+    expect(pathArrived(p, [{ x: 1.1, z: 1 }], 1)).toBe(true)
+  })
+  test('남은 거리가 0인 경로도 첫 프레임에 끝난다(속도 0이어도 같은 자리의 점은 지나간다)', () => {
+    for (const dt of DTS) {
+      const w = walkPath([{ x: 1, z: 1 }, { x: 1, z: 1 }], dt)
+      expect(w.frames).toBe(0)
+      expect(w.pos).toEqual({ x: 1, z: 1 })
+    }
+    expect(advanceAlongPath({ x: 2, z: 3 }, [{ x: 2, z: 3 }], 0, 0, 1 / 60)).toEqual({ pos: { x: 2, z: 3 }, index: 1, done: true })
+    // 앞에 남은 거리가 있으면 속도 0으로는 나아가지 않는다
+    expect(advanceAlongPath({ x: 0, z: 0 }, [{ x: 1, z: 0 }], 0, 0, 1 / 60).done).toBe(false)
+  })
+  test('멈추는 중(걷기 판정 켜짐)에 몸짓이 시작돼 속도를 0으로 두면 그 프레임에 서기로 바뀐다', () => {
+    let v = WALK_SPEED, w = true
+    for (let i = 0; i < 3; i++) { v = approachSpeed(v, 0, 1 / 60); w = nextWalking(w, v) }
+    expect(w).toBe(true)
+    v = 0
+    expect(nextWalking(w, approachSpeed(v, 0, 1 / 60))).toBe(false)
   })
   test('모션 줄이기 설정이면 최고 속도로 가다 즉시 선다(예전과 같음)', () => {
     const w = walkPath([{ x: 0, z: 0 }, { x: 3, z: 0 }], 1 / 60, true)

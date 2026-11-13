@@ -15,6 +15,8 @@ export const WALK_DECEL = WALK_SPEED / DECEL_TIME
 export const MAX_STEP_DT = 0.1
 /** 조이스틱 죽은 구간(입력 크기) */
 export const STICK_DEADZONE = 0.15
+/** 이만큼(m) 안이면 이미 도착한 것으로 본다(서 있는 자리를 다시 목적지로 누를 때) */
+export const ARRIVE_EPS = 1e-3
 /** 걷기 판정: 서 있다가 이 속도 이상이면 걷기, 걷다가 WALK_OFF_SPEED 밑이면 서기(두 값을 달리해 경계에서 떨지 않는다) */
 export const WALK_ON_SPEED = 0.2
 export const WALK_OFF_SPEED = 0.05
@@ -56,6 +58,11 @@ export function pathRemaining(pos: Pt, path: readonly Pt[], index: number): numb
   let sum = Math.hypot(path[index]!.x - pos.x, path[index]!.z - pos.z)
   for (let i = index + 1; i < path.length; i++) sum += Math.hypot(path[i]!.x - path[i - 1]!.x, path[i]!.z - path[i - 1]!.z)
   return sum
+}
+
+/** 남은 거리가 사실상 0이면 도착한 것 — 새 목적지를 받을 때 바로 끝낸다(남은 거리 0이면 도착 감속 속도도 0이라 경로가 끝나지 않는다) */
+export function pathArrived(pos: Pt, path: readonly Pt[], index: number): boolean {
+  return pathRemaining(pos, path, index) <= ARRIVE_EPS
 }
 
 /** 걷기·서기 판정(이력 있음) */

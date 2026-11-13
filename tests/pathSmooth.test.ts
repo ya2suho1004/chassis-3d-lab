@@ -20,9 +20,9 @@ function gridFrom(rows: string[], cell = 1): NavGrid {
   return { cell, cols, rows: nr, originX: 0, originZ: 0, blocked, isBlocked, toCell, toWorld }
 }
 
-/** 독립 확인: 선분을 아주 촘촘히 짚어(1 mm 간격) 막힌 칸에 들어가는지 본다 */
-function sampledClear(grid: NavGrid, a: Pt, b: Pt): boolean {
-  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.001))
+/** 독립 확인: 선분을 촘촘히 짚어(기본 1 mm 간격) 막힌 칸에 들어가는지 본다 */
+function sampledClear(grid: NavGrid, a: Pt, b: Pt, step = 0.001): boolean {
+  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / step))
   for (let i = 0; i <= n; i++) {
     const t = i / n
     if (grid.isBlocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false
@@ -69,6 +69,14 @@ describe('곧게 갈 수 있는지(segmentClear)', () => {
     const a = { x: 0.5, z: 0.5 }, b = { x: 3.5, z: 1.52 }
     expect(sampledClear(g, a, b)).toBe(false)
     expect(segmentClear(g, a, b)).toBe(false)
+  })
+  test('유한한 수가 아닌 좌표(NaN·무한대)는 막힌 것(가는·두꺼운 판정 모두)', () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+      for (const half of [0, 0.5]) {
+        expect(segmentClear(open, { x: bad, z: 0.5 }, { x: 2.5, z: 2.5 }, half)).toBe(false)
+        expect(segmentClear(open, { x: 0.5, z: 0.5 }, { x: 2.5, z: bad }, half)).toBe(false)
+      }
+    }
   })
   test('격자 밖으로 나가는 선분은 막힌 것', () => {
     expect(segmentClear(open, { x: 0.5, z: 0.5 }, { x: 6, z: 0.5 })).toBe(false)
@@ -192,12 +200,29 @@ describe('실제 실습장 배치로 확인', () => {
   // 장비·기둥 발자국(사람 여유를 더하지 않은 실제 크기)에서 걸어가는 선의 가장 가까운 거리
   const rects: Rect[] = [...layout.equipment.map(footprintOf), ...layout.pillars.map(pillarRect)]
   const dRect = (p: Pt, r: Rect) => Math.hypot(Math.max(r.xMin - p.x, 0, p.x - r.xMax), Math.max(r.zMin - p.z, 0, p.z - r.zMax))
+  const dSeg = (q: Pt, a: Pt, b: Pt) => {
+    const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz
+    const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((q.x - a.x) * dx + (q.z - a.z) * dz) / l2))
+    return Math.hypot(a.x + dx * t - q.x, a.z + dz * t - q.z)
+  }
+  /** 선분이 사각형을 지나는가(Liang–Barsky 자르기) */
+  const crosses = (a: Pt, b: Pt, r: Rect) => {
+    let t0 = 0, t1 = 1
+    const dx = b.x - a.x, dz = b.z - a.z
+    for (const [p, q] of [[-dx, a.x - r.xMin], [dx, r.xMax - a.x], [-dz, a.z - r.zMin], [dz, r.zMax - a.z]] as const) {
+      if (p === 0) { if (q < 0) return false; continue }
+      const t = q / p
+      if (p < 0) t0 = Math.max(t0, t); else t1 = Math.min(t1, t)
+      if (t0 > t1) return false
+    }
+    return true
+  }
+  /** 선분과 사각형의 정확한 거리: 겹치면 0, 아니면 선분 끝점↔사각형, 사각형 꼭짓점↔선분 가운데 가장 짧은 것(볼록한 두 도형) */
+  const segRect = (a: Pt, b: Pt, r: Rect) => crosses(a, b, r) ? 0 : Math.min(dRect(a, r), dRect(b, r),
+    dSeg({ x: r.xMin, z: r.zMin }, a, b), dSeg({ x: r.xMax, z: r.zMin }, a, b), dSeg({ x: r.xMin, z: r.zMax }, a, b), dSeg({ x: r.xMax, z: r.zMax }, a, b))
   const clearance = (path: Pt[]) => {
     let m = Infinity
-    for (let i = 1; i < path.length; i++) {
-      const a = path[i - 1]!, b = path[i]!, n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.01) + 1
-      for (let k = 0; k <= n; k++) { const x = a.x + ((b.x - a.x) * k) / n, z = a.z + ((b.z - a.z) * k) / n; for (const r of rects) m = Math.min(m, dRect({ x, z }, r)) }
-    }
+    for (let i = 1; i < path.length; i++) for (const r of rects) m = Math.min(m, segRect(path[i - 1]!, path[i]!, r))
     return m
   }
   test('여러 출발·도착 쌍: 다듬은 경로의 어떤 선분도 막힌 칸을 지나지 않고, 끝이 같고, 짧아지거나 같고, 장비에 더 붙지 않는다', () => {
@@ -216,7 +241,7 @@ describe('실제 실습장 배치로 확인', () => {
       expect(s[s.length - 1]).toEqual(p[p.length - 1])
       expect(s.filter((q) => q !== a).length).toBeLessThanOrEqual(p.length)
       expect(len(walked)).toBeLessThanOrEqual(len(walkedRaw) + 1e-9)
-      for (let i = 1; i < s.length; i++) expect(sampledClear(grid, s[i - 1]!, s[i]!), `${a.x},${a.z}→${b.x},${b.z} #${i}`).toBe(true)
+      for (let i = 1; i < s.length; i++) expect(sampledClear(grid, s[i - 1]!, s[i]!, 0.005), `${a.x},${a.z}→${b.x},${b.z} #${i}`).toBe(true)
       // 다듬은 경로는 서 있는 자리와 원래 점들로만 이뤄진다(새 점을 만들지 않는다)
       for (const q of s) if (q !== a) expect(p).toContainEqual(q)
       // 장비 발자국에서 0.3 m(사람 여유) 이상 떨어져 지나가고, 다듬기 전 경로가 그보다 가까웠으면 그보다 더 붙지 않는다

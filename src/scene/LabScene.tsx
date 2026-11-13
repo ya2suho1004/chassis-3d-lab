@@ -7,7 +7,7 @@ import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { distanceToFootprint, footprintOf, labelState, type LabelMode, type Pt, type SceneEquipment, type SceneLayout } from './layoutModel'
 import { advanceAlongPath, buildNavGrid, findPath, smoothPath } from './pathfind'
-import { STICK_DEADZONE, approachSpeed, nextWalking, pathRemaining, pathSpeed, stickTargetSpeed, walkPlayback } from './locomotion'
+import { STICK_DEADZONE, approachSpeed, nextWalking, pathArrived, pathRemaining, pathSpeed, stickTargetSpeed, walkPlayback } from './locomotion'
 import { OUTSIDE_DISTANCE, type BrakeRigState } from './brakeRig'
 import { AbsPanel, BrakeTesterBase, CarBody, CheckerSurround, Desk, FootprintFrame, Machine, Person, Pillar, Roller, StaticCar, Stand, ToeGauge, Wall, Wheel, Workbench, useMaterials, type Mats } from './models/models'
 import { TestCarModel, fitsTestCar } from './models/TestCarModel'
@@ -731,22 +731,21 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       if (dx * dx + dz * dz > 1e-4) heading.current = headingFor(dx, dz)
     }
     shotLeft.current = ACTION_SECONDS[cue.action]
+    // 멈추는 중(손을 뗀 뒤 미끄러지는 사이)이어도 그 자리에 서서 한다 — 다음 프레임에 걷는 중으로 판정돼 바로 끊기지 않게
+    speed.current = 0
     setOneShot(cue.action)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cue?.seq])
   const walked = useRef(0)
   const lastPos = useRef<Pt>(start)
   useFrame((_, dt) => {
-    if (shotLeft.current > 0) {
-      shotLeft.current -= Math.min(dt, 0.1)
-      if (shotLeft.current <= 0 || walkingRef.current) { shotLeft.current = 0; setOneShot(null) }
-    }
     // 발소리: 실제로 움직인 거리로 걸음을 센다(조이스틱·탭 이동 모두)
     const lp = lastPos.current, cp = posRef.current
     const moved = Math.hypot(cp.x - lp.x, cp.z - lp.z)
     lastPos.current = cp
     if (moved > 0 && moved < 1) {
-      const n = stepsCrossed(walked.current, walked.current + moved, STEP_STRIDE)
+      // 보폭도 걷기 재생 속도처럼 체형 배율을 곱한다(체형 2는 약 6% 짧다)
+      const n = stepsCrossed(walked.current, walked.current + moved, STEP_STRIDE * bodyScale(look.body))
       walked.current += moved
       if (n > 0) onStep?.()
     }
@@ -764,6 +763,8 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       pathRef.current = path
       idxRef.current = 0
       if (!path) onMove(posRef.current, false)
+      // 서 있는 자리가 곧 목적지(같은 장비 버튼을 다시 누름): 바로 끝내고, 도착 알림은 프레임 끝에서 한 번 간다
+      if (path && pathArrived(posRef.current, path, 0)) { pathRef.current = null; speed.current = 0; unreported.current = true }
     }
     // 대화·가까이 보기(frozen)·기록 창(holdStill): 감속 없이 바로 선다
     if (frozen || holdStill) speed.current = 0
@@ -828,6 +829,11 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       onMove(nextPos, false)
     }
     if (now !== was) { walkingRef.current = now; setWalking(now) }
+    // 단계를 마친 뒤 몸짓: 정한 길이가 지나거나 걷기 시작하면(이번 프레임의 판정) 그친다
+    if (shotLeft.current > 0) {
+      shotLeft.current -= Math.min(dt, 0.1)
+      if (shotLeft.current <= 0 || now) { shotLeft.current = 0; setOneShot(null) }
+    }
   })
 
   useEffect(() => { onMove(start, false) }, [start, onMove])

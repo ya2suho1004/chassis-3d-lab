@@ -103,6 +103,8 @@ export function findPath(grid: NavGrid, from: Pt, to: Pt): Pt[] | null {
  *  격자선 위를 따라가면 선 양쪽 칸도 본다(모서리를 대각선으로 스쳐 장비를 뚫지 않게).
  *  half가 0보다 크면 두꺼운 선분: 선분을 따라 미는 반 폭 half의 정사각형이 걸치는 칸(경계에 닿기만 하는 칸은 빼고)이 모두 비어야 한다 */
 export function segmentClear(grid: NavGrid, a: Pt, b: Pt, half = 0): boolean {
+  // 좌표가 유한한 수가 아니면(NaN·무한대) 막힌 것으로 본다
+  if (!Number.isFinite(a.x) || !Number.isFinite(a.z) || !Number.isFinite(b.x) || !Number.isFinite(b.z)) return false
   const { cell, cols, rows, originX, originZ, blocked } = grid
   const x0 = (a.x - originX) / cell, z0 = (a.z - originZ) / cell
   const x1 = (b.x - originX) / cell, z1 = (b.z - originZ) / cell
@@ -177,16 +179,18 @@ export function smoothPath(grid: NavGrid, path: readonly Pt[], from?: Pt): Pt[] 
   return out
 }
 
-/** 경로를 따라 speed(m/s)·dt(s)만큼 전진. index는 다음 목표점 인덱스 */
+/** 경로를 따라 speed(m/s)·dt(s)만큼 전진. index는 다음 목표점 인덱스. 지금 자리와 같은 점은 속도가 0이어도 지나간다 */
 export function advanceAlongPath(pos: Pt, path: Pt[], index: number, speed: number, dt: number): { pos: Pt; index: number; done: boolean } {
   let remaining = speed * dt
   let p = { ...pos }
   let i = index
-  while (remaining > 0 && i < path.length) {
+  while (i < path.length) {
     const t = path[i]!
     const dx = t.x - p.x
     const dz = t.z - p.z
     const dist = Math.hypot(dx, dz)
+    if (dist === 0) { i++; continue }
+    if (!(remaining > 0)) break
     if (dist <= remaining) { p = { x: t.x, z: t.z }; remaining -= dist; i++ }
     else { p = { x: p.x + (dx / dist) * remaining, z: p.z + (dz / dist) * remaining }; remaining = 0 }
   }

@@ -30,6 +30,22 @@ describe('Walker는 순수 함수로 속도와 경로를 정한다', () => {
     // 지금 서 있는 자리에서 곧게 갈 수 있으면 칸 가운데를 거치지 않고 바로 출발한다
     expect(walkerFrame).toContain('const path = found && smoothPath(grid, found, posRef.current)')
   })
+  test('서 있는 자리가 곧 목적지면 경로를 바로 끝내고 도착을 한 번 알린다(프레임 끝의 알림이 맡는다)', () => {
+    expect(walkerFrame).toContain('if (path && pathArrived(posRef.current, path, 0)) { pathRef.current = null; speed.current = 0; unreported.current = true }')
+    expect(walkerFrame).toContain('} else if (was || (unreported.current && speed.current === 0)) {')
+  })
+  test('발소리 보폭은 체형 배율을 걷기 재생 속도와 똑같이 곱한다', () => {
+    expect(walkerFrame).toContain('stepsCrossed(walked.current, walked.current + moved, STEP_STRIDE * bodyScale(look.body))')
+  })
+  test('몸짓이 시작되면 그 자리에 서고(속도 0), 몸짓은 이번 프레임의 걷기 판정으로만 그친다', () => {
+    const cueEffect = walker.slice(walker.indexOf('useEffect(() => {\n    if (!cue) return'), walker.indexOf('}, [cue?.seq])'))
+    expect(cueEffect).toContain('speed.current = 0')
+    const judged = walkerFrame.indexOf('const now = nextWalking(was, speed.current)')
+    const cut = walkerFrame.indexOf('if (shotLeft.current <= 0 || now) { shotLeft.current = 0; setOneShot(null) }')
+    expect(judged).toBeGreaterThan(0)
+    expect(cut).toBeGreaterThan(judged)
+    expect(walkerFrame).not.toContain('walkingRef.current) { shotLeft.current = 0')
+  })
   test('대화(frozen)·기록 창(holdStill)이면 감속 없이 바로 선다', () => {
     expect(walkerFrame).toMatch(/if \(frozen \|\| holdStill\) speed\.current = 0/)
   })
