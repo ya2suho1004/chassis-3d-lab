@@ -755,12 +755,12 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
       requestRef.current = null
       if (pathRef.current) { pathRef.current = null; onMove(posRef.current, false) }
     }
-    // 새 목적지 요청 처리: A* 격자 경로에서 곧게 갈 수 있는 중간 점을 빼 꺾임을 줄인다(시작점·누른 자리는 그대로)
+    // 새 목적지 요청 처리: A* 격자 경로에서 곧게 갈 수 있는 중간 점을 빼 꺾임을 줄이고, 서 있는 자리에서 곧게 갈 수 있으면 칸 가운데를 거치지 않는다(누른 자리는 그대로)
     if (requestRef.current) {
       const target = requestRef.current
       requestRef.current = null
       const found = findPath(grid, posRef.current, target)
-      const path = found && smoothPath(grid, found)
+      const path = found && smoothPath(grid, found, posRef.current)
       pathRef.current = path
       idxRef.current = 0
       if (!path) onMove(posRef.current, false)

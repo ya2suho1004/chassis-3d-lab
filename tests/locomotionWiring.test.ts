@@ -27,7 +27,8 @@ describe('Walker는 순수 함수로 속도와 경로를 정한다', () => {
   })
   test('바닥 누르기·장비로 걸어가기 경로는 다듬은 뒤 따라간다', () => {
     expect(walkerFrame).toContain('const found = findPath(grid, posRef.current, target)')
-    expect(walkerFrame).toContain('const path = found && smoothPath(grid, found)')
+    // 지금 서 있는 자리에서 곧게 갈 수 있으면 칸 가운데를 거치지 않고 바로 출발한다
+    expect(walkerFrame).toContain('const path = found && smoothPath(grid, found, posRef.current)')
   })
   test('대화(frozen)·기록 창(holdStill)이면 감속 없이 바로 선다', () => {
     expect(walkerFrame).toMatch(/if \(frozen \|\| holdStill\) speed\.current = 0/)

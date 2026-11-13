@@ -1,7 +1,7 @@
 // tests/pathSmooth.test.ts — 바닥 누르기 경로 다듬기(설계 2026-11-13 캐릭터와 움직임 §6): A* 점 가운데 곧게 갈 수 있는 중간 점을 뺀다
 import { describe, expect, test } from 'vitest'
 import raw from '../src/data/layout/layout.dev-provisional.json'
-import { loadSceneLayout, type Pt } from '../src/scene/layoutModel'
+import { footprintOf, loadSceneLayout, pillarRect, type Pt, type Rect } from '../src/scene/layoutModel'
 import { buildNavGrid, findPath, segmentClear, smoothPath, type NavGrid } from '../src/scene/pathfind'
 import { buildReviewItems } from '../src/review/layoutReview'
 
@@ -26,6 +26,17 @@ function sampledClear(grid: NavGrid, a: Pt, b: Pt): boolean {
   for (let i = 0; i <= n; i++) {
     const t = i / n
     if (grid.isBlocked(a.x + (b.x - a.x) * t, a.z + (b.z - a.z) * t)) return false
+  }
+  return true
+}
+
+/** 독립 확인(두꺼운 선분): 선분 위 점마다 반 폭 h 정사각형의 테두리·안쪽 점을 짚어 막힌 칸에 들어가는지 본다(경계에 딱 닿는 것은 빼려고 h를 조금 줄인다) */
+function sampledThickClear(grid: NavGrid, a: Pt, b: Pt, h: number): boolean {
+  const k = h * 0.999
+  const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.01))
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, x = a.x + (b.x - a.x) * t, z = a.z + (b.z - a.z) * t
+    for (let u = -4; u <= 4; u++) for (let v = -4; v <= 4; v++) if (grid.isBlocked(x + (k * u) / 4, z + (k * v) / 4)) return false
   }
   return true
 }
@@ -75,6 +86,34 @@ describe('곧게 갈 수 있는지(segmentClear)', () => {
   })
 })
 
+describe('두꺼운 선분 판정(segmentClear의 반 폭)', () => {
+  test('한 칸 폭 통로의 가운데 줄은 지나가고, 통로 안에서 조금만 비켜도 벽 칸에 걸린다', () => {
+    const g = gridFrom(['######', '......', '######'])
+    expect(segmentClear(g, { x: 0.5, z: 1.5 }, { x: 5.5, z: 1.5 }, 0.5)).toBe(true)
+    expect(segmentClear(g, { x: 0.5, z: 1.4 }, { x: 5.5, z: 1.4 }, 0.5)).toBe(false)
+    expect(segmentClear(g, { x: 0.5, z: 1.4 }, { x: 5.5, z: 1.4 })).toBe(true)
+  })
+  test('가는 선분은 비켜 가지만 반 칸 폭 안에 막힌 칸이 있으면 막힌 것', () => {
+    const g = gridFrom(['......', '......', '...#..', '......'])
+    const a = { x: 0.5, z: 1.5 }, b = { x: 5.5, z: 1.7 }
+    expect(segmentClear(g, a, b)).toBe(true)
+    expect(segmentClear(g, a, b, 0.5)).toBe(false)
+  })
+  test('무작위 선분 2000개: 두껍게 통과한 선분은 반 폭 안의 어느 점도 막힌 칸에 들지 않는다, 촘촘히 짚어 걸리는 선분은 반드시 막힘', () => {
+    const g = gridFrom(['..........', '..##......', '......#...', '...#......', '.......##.', '..........', '.#...#....', '..........'])
+    let seed = 11
+    const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648 }
+    let pass = 0
+    for (let i = 0; i < 2000; i++) {
+      const a = { x: 0.5 + rnd() * 9, z: 0.5 + rnd() * 7 }, b = { x: 0.5 + rnd() * 9, z: 0.5 + rnd() * 7 }
+      const thick = segmentClear(g, a, b, 0.5)
+      if (thick) { pass++; expect(sampledThickClear(g, a, b, 0.5)).toBe(true) }
+      if (!sampledThickClear(g, a, b, 0.5)) expect(thick).toBe(false)
+    }
+    expect(pass).toBeGreaterThan(50)
+  })
+})
+
 describe('경로 다듬기(smoothPath)', () => {
   test('장애물이 없으면 시작점과 목적지 두 점만 남는다', () => {
     const g = gridFrom(['..........', '..........', '..........', '..........', '..........', '..........'])
@@ -103,6 +142,41 @@ describe('경로 다듬기(smoothPath)', () => {
     expect(smoothPath(g, [{ x: 0.5, z: 0.5 }])).toEqual([{ x: 0.5, z: 0.5 }])
     expect(smoothPath(g, [{ x: 0.5, z: 0.5 }, { x: 2.5, z: 0.5 }])).toEqual([{ x: 0.5, z: 0.5 }, { x: 2.5, z: 0.5 }])
   })
+  test('막힌 칸 옆을 지나는 지름길은 반 칸 폭 여유가 없으면 쓰지 않는다(벽에 바짝 붙지 않는다)', () => {
+    const g = gridFrom(['......', '......', '...#..', '......', '......'])
+    const p = findPath(g, { x: 0.5, z: 1.5 }, { x: 5.5, z: 1.7 })!
+    const s = smoothPath(g, p)
+    for (let i = 1; i < s.length; i++) {
+      const adjacent = p.indexOf(s[i]!) === p.indexOf(s[i - 1]!) + 1
+      if (!adjacent) expect(sampledThickClear(g, s[i - 1]!, s[i]!, 0.5)).toBe(true)
+    }
+  })
+})
+
+describe('지금 서 있는 자리에서 바로 출발', () => {
+  const open = gridFrom(['..........', '..........', '..........', '..........'])
+  test('서 있는 자리에서 다음 점까지 곧게 갈 수 있으면 칸 가운데를 거치지 않는다', () => {
+    const from = { x: 1.8, z: 1.2 } // 칸 (1,1)의 가운데(1.5, 1.5)가 아님
+    const p = findPath(open, from, { x: 8.4, z: 2.6 })!
+    expect(p[0]).toEqual({ x: 1.5, z: 1.5 })
+    const s = smoothPath(open, p, from)
+    expect(s).toEqual([from, { x: 8.4, z: 2.6 }])
+  })
+  test('같은 칸 안을 누르면 서 있는 자리에서 곧장 간다', () => {
+    const from = { x: 1.8, z: 1.2 }, to = { x: 1.2, z: 1.7 }
+    const p = findPath(open, from, to)!
+    expect(smoothPath(open, p, from)).toEqual([from, to])
+  })
+  test('서 있는 자리가 막힌 칸에 바짝 붙어 곧게 못 가면 지금처럼 칸 가운데를 거친다', () => {
+    const g = gridFrom(['......', '.#....', '......', '......'])
+    const from = { x: 0.6, z: 2.08 } // 칸 (0,2), 북쪽 위 칸 (0,1)·(1,1)에 0.08 붙어 있다
+    const to = { x: 4.5, z: 0.5 }
+    const p = findPath(g, from, to)!
+    expect(p[0]).toEqual({ x: 0.5, z: 2.5 })
+    const s = smoothPath(g, p, from)
+    expect(s[0]).toEqual(p[0])
+    expect(s[s.length - 1]).toEqual(to)
+  })
 })
 
 describe('실제 실습장 배치로 확인', () => {
@@ -115,24 +189,46 @@ describe('실제 실습장 배치로 확인', () => {
     if (!grid.isBlocked(q.x, q.z)) floor.push({ x: q.x + 0.13, z: q.z - 0.21 })
   }
   const spots: Pt[] = [layout.studentStart, ...layout.equipment.flatMap((e) => (e.accessPoint ? [e.accessPoint] : [])), ...buildReviewItems(layout).map((i) => i.viewPoint), ...floor]
-  test('여러 출발·도착 쌍: 다듬은 경로의 어떤 선분도 막힌 칸을 지나지 않고, 시작·끝이 같고, 짧아지거나 같다', () => {
-    let pairs = 0, fewer = 0
+  // 장비·기둥 발자국(사람 여유를 더하지 않은 실제 크기)에서 걸어가는 선의 가장 가까운 거리
+  const rects: Rect[] = [...layout.equipment.map(footprintOf), ...layout.pillars.map(pillarRect)]
+  const dRect = (p: Pt, r: Rect) => Math.hypot(Math.max(r.xMin - p.x, 0, p.x - r.xMax), Math.max(r.zMin - p.z, 0, p.z - r.zMax))
+  const clearance = (path: Pt[]) => {
+    let m = Infinity
+    for (let i = 1; i < path.length; i++) {
+      const a = path[i - 1]!, b = path[i]!, n = Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.01) + 1
+      for (let k = 0; k <= n; k++) { const x = a.x + ((b.x - a.x) * k) / n, z = a.z + ((b.z - a.z) * k) / n; for (const r of rects) m = Math.min(m, dRect({ x, z }, r)) }
+    }
+    return m
+  }
+  test('여러 출발·도착 쌍: 다듬은 경로의 어떤 선분도 막힌 칸을 지나지 않고, 끝이 같고, 짧아지거나 같고, 장비에 더 붙지 않는다', () => {
+    let pairs = 0, fewer = 0, direct = 0, minRaw = Infinity, minSmooth = Infinity
     for (const a of spots) for (const b of spots) {
       if (a === b) continue
       const p = findPath(grid, a, b)
       if (!p) continue
       pairs++
-      const s = smoothPath(grid, p)
-      expect(s[0]).toEqual(p[0])
+      const s = smoothPath(grid, p, a)
+      // 실제로 걷는 선: 서 있는 자리 → 경로 점들
+      const walkedRaw = [a, ...p]
+      const walked = s[0] === a ? s : [a, ...s]
+      if (s[0] === a) direct++
+      else expect(s[0]).toEqual(p[0])
       expect(s[s.length - 1]).toEqual(p[p.length - 1])
-      expect(s.length).toBeLessThanOrEqual(p.length)
-      expect(len(s)).toBeLessThanOrEqual(len(p) + 1e-9)
+      expect(s.filter((q) => q !== a).length).toBeLessThanOrEqual(p.length)
+      expect(len(walked)).toBeLessThanOrEqual(len(walkedRaw) + 1e-9)
       for (let i = 1; i < s.length; i++) expect(sampledClear(grid, s[i - 1]!, s[i]!), `${a.x},${a.z}→${b.x},${b.z} #${i}`).toBe(true)
-      // 다듬은 경로는 원래 점들의 부분 목록이다(새 점을 만들지 않는다)
-      for (const q of s) expect(p).toContainEqual(q)
-      if (s.length < p.length) fewer++
+      // 다듬은 경로는 서 있는 자리와 원래 점들로만 이뤄진다(새 점을 만들지 않는다)
+      for (const q of s) if (q !== a) expect(p).toContainEqual(q)
+      // 장비 발자국에서 0.3 m(사람 여유) 이상 떨어져 지나가고, 다듬기 전 경로가 그보다 가까웠으면 그보다 더 붙지 않는다
+      const cr = clearance(walkedRaw), cs = clearance(walked)
+      expect(cs, `${a.x},${a.z}→${b.x},${b.z}`).toBeGreaterThanOrEqual(Math.min(cr, 0.3) - 1e-6)
+      minRaw = Math.min(minRaw, cr); minSmooth = Math.min(minSmooth, cs)
+      if (s.filter((q) => q !== a).length < p.length) fewer++
     }
-    expect(pairs).toBeGreaterThan(100)
+    expect(pairs).toBeGreaterThan(1000)
     expect(fewer).toBeGreaterThan(pairs * 0.8)
+    expect(direct).toBeGreaterThan(pairs * 0.5)
+    // 모든 쌍을 통틀어 가장 가까운 거리도 다듬기 전보다 작지 않다
+    expect(minSmooth).toBeGreaterThanOrEqual(minRaw - 1e-6)
   })
 })
