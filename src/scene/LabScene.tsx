@@ -30,7 +30,7 @@ import { GoalBeacon } from './feel/GoalBeacon'
 import { goalSpotOf } from './feel/goalSpot'
 import type { ArrowTrack } from './feel/edgeArrow'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
-import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction, type CharacterLook } from './models/CharacterModel'
+import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, INSTRUCTOR_EYE, INSTRUCTOR_HEIGHT, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction, type CharacterLook } from './models/CharacterModel'
 import { bodyScale } from '../app/avatar'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 import { CEILING_H, hallBounds } from './Surroundings'
@@ -137,9 +137,10 @@ const blobTexture = (() => {
     return t
   }
 })()
-function BlobShadow() {
+/** size: 그림자 지름(m) — 몸 폭(팔 포함)의 약 1.5배. 학생 0.62 m → 0.95, 교관 0.69 m → 1.05 */
+function BlobShadow({ size = 0.95 }: { size?: number }) {
   const mat = useMemo(() => new THREE.MeshBasicMaterial({ map: blobTexture(), transparent: true, depthWrite: false }), [])
-  return <mesh rotation-x={-Math.PI / 2} position-y={0.008} material={mat} renderOrder={1}><planeGeometry args={[0.9, 0.9]} /></mesh>
+  return <mesh rotation-x={-Math.PI / 2} position-y={0.008} material={mat} renderOrder={1}><planeGeometry args={[size, size]} /></mesh>
 }
 
 function Avatar({ pos, heading, moving, oneShot, ppe, look }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; oneShot: AvatarAction | null; ppe: boolean; look: CharacterLook }) {
@@ -176,8 +177,8 @@ function Instructor({ facing, talking = false, nod = false }: { facing: number; 
     const next: CharacterAction = nod ? 'Idle' : talking ? (t.current % 3 < 2 ? 'Gesture' : 'Idle') : t.current > 6 ? 'Gesture' : 'Idle'
     if (next !== action) setAction(next)
   })
-  const code = <Person suit="#24324a" vest="#c6ff00" helmet="#ffffff" />
-  return <group rotation-y={facing}><BlobShadow /><Suspense fallback={code}><CharacterModel action={action} outfit={INSTRUCTOR_OUTFIT} goggles nod={nod} /></Suspense></group>
+  const code = <Person suit={INSTRUCTOR_OUTFIT.trim!} vest={INSTRUCTOR_OUTFIT.top} helmet="#ffffff" height={INSTRUCTOR_HEIGHT} head={0.467} />
+  return <group rotation-y={facing}><BlobShadow size={1.05} /><Suspense fallback={code}><CharacterModel instructor action={action} outfit={INSTRUCTOR_OUTFIT} goggles nod={nod} /></Suspense></group>
 }
 
 /** 장비 종류·ID로 모델을 고른다. 모르는 종류는 예전처럼 상자로 그린다. */
@@ -518,11 +519,12 @@ function NpcCamera({ npc, facing }: { npc: Pt; facing: number }) {
     }
   }, [camera, controls, npc.x, npc.z])
   useFrame((_, dt) => {
-    // 교관 얼굴 앞(바라보는 쪽) 1.45 m, 살짝 옆에서 가슴~얼굴 높이를 본다
+    // 교관 얼굴 앞(바라보는 쪽) 1.45 m, 살짝 옆에서 가슴~얼굴 높이를 본다.
+    // 카메라는 교관 눈높이(1.339 m), 목표는 그보다 0.14 아래(턱 1.15와 눈 사이) — 큰 머리가 화면 위쪽 3분의 2쯤에 오는 예전 구도
     const fx = -Math.sin(facing), fz = -Math.cos(facing)
     const sx = -fz, sz = fx
-    const goal = new THREE.Vector3(npc.x + fx * 1.45 + sx * 0.35, 1.52, npc.z + fz * 1.45 + sz * 0.35)
-    const tgt = new THREE.Vector3(npc.x + sx * 0.12, 1.38, npc.z + sz * 0.12)
+    const goal = new THREE.Vector3(npc.x + fx * 1.45 + sx * 0.35, INSTRUCTOR_EYE, npc.z + fz * 1.45 + sz * 0.35)
+    const tgt = new THREE.Vector3(npc.x + sx * 0.12, INSTRUCTOR_EYE - 0.14, npc.z + sz * 0.12)
     const k = prefersReducedMotion ? 1 : 1 - Math.exp(-4 * Math.min(dt, 0.1))
     camera.position.lerp(goal, k)
     look.current.lerp(tgt, k)
@@ -949,7 +951,8 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
       {/* NPC 교관: 남색 작업복 + 형광 조끼 */}
       <group position={[layout.npc.x, 0, layout.npc.z]} onClick={(ev: ThreeEvent<MouseEvent>) => { if (ev.delta < TAP_MAX_PX) { ev.stopPropagation(); onNpcTap() } }}>
         <Instructor facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} talking={npcTalking} nod={npcNod} />
-        {npcLabel && <Html position={[0, 2.05, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">{npcLabel === 'full' ? 'NPC 교관 — 탭하여 대화' : '교관'}</div></Html>}
+        {/* 이름표: 교관 키(1.62 m) 위 0.33 m — 예전(키 1.72 m, 2.05)과 같은 간격 */}
+        {npcLabel && <Html position={[0, INSTRUCTOR_HEIGHT + 0.33, 0]} center style={{ pointerEvents: 'none' }}><div className="label3d npc">{npcLabel === 'full' ? 'NPC 교관 — 탭하여 대화' : '교관'}</div></Html>}
       </group>
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]} receiveShadow><ringGeometry args={[0.3, 0.45, 24]} /><meshStandardMaterial color={PALETTE.line} roughness={0.5} /></mesh>

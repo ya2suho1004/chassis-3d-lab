@@ -313,13 +313,19 @@ export function Wall({ from, to, inward, m, sign }: { from: [number, number]; to
 
 // ---------- 사람 ----------
 /** 작업복 사람: 몸(캡슐)·머리·안전모. 학생 = 파란 작업복, NPC 교관 = 남색 작업복 + 형광 조끼 */
-export function Person({ suit, vest, helmet }: { suit: string; vest?: string; helmet: string }) {
+/** 사람 캐릭터를 불러오는 동안의 대체 모형. 기본은 학생(키 1.45 m, 머리 0.48 m — 3등신), 교관은 height·head를 넘긴다(1.62 m, 0.467 m) */
+export function Person({ suit, vest, helmet, height = 1.45, head = 0.48 }: { suit: string; vest?: string; helmet: string; height?: number; head?: number }) {
+  const neck = height - head // 몸통 꼭대기(머리 아래)
+  const r = 0.19 // 몸통 반지름(어깨 폭 약 0.5 m의 학생 기준)
+  const hr = head * 0.42 // 머리 공 반지름
+  const hy = neck + hr // 머리 공 가운데
+  const cap = height - (hy + hr * 0.5) // 모자 반구: 공 가운데보다 조금 위에서 키 높이까지
   return (
     <group>
-      <mesh position={[0, 0.85, 0]} castShadow><capsuleGeometry args={[0.2, 0.75, 6, 12]} /><meshStandardMaterial color={suit} roughness={0.8} /></mesh>
-      {vest && <mesh position={[0, 1.0, 0]}><cylinderGeometry args={[0.215, 0.215, 0.42, 16, 1, true]} /><meshStandardMaterial color={vest} roughness={0.6} emissive={vest} emissiveIntensity={0.15} side={THREE.DoubleSide} /></mesh>}
-      <mesh position={[0, 1.5, 0]} castShadow><sphereGeometry args={[0.15, 16, 16]} /><meshStandardMaterial color="#f1c9a5" roughness={0.7} /></mesh>
-      <mesh position={[0, 1.6, 0]}><sphereGeometry args={[0.165, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color={helmet} roughness={0.35} /></mesh>
+      <mesh position={[0, neck / 2, 0]} castShadow><capsuleGeometry args={[r, neck - 2 * r, 6, 12]} /><meshStandardMaterial color={suit} roughness={0.8} /></mesh>
+      {vest && <mesh position={[0, neck * 0.72, 0]}><cylinderGeometry args={[r + 0.015, r + 0.015, neck * 0.36, 16, 1, true]} /><meshStandardMaterial color={vest} roughness={0.6} emissive={vest} emissiveIntensity={0.15} side={THREE.DoubleSide} /></mesh>}
+      <mesh position={[0, hy, 0]} castShadow><sphereGeometry args={[hr, 16, 16]} /><meshStandardMaterial color="#f1c9a5" roughness={0.7} /></mesh>
+      <mesh position={[0, hy + hr * 0.5, 0]}><sphereGeometry args={[cap, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color={helmet} roughness={0.35} /></mesh>
     </group>
   )
 }

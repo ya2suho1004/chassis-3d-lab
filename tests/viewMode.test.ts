@@ -14,9 +14,8 @@ describe('시점 3단계', () => {
     expect(VIEW_MODES).toEqual(['overview', 'follow', 'first'])
     expect(DEFAULT_VIEW).toBe('follow')
   })
-  it('눈높이는 캐릭터 키(1.72)보다 낮고 1.5 이상', () => {
-    expect(EYE_HEIGHT).toBeGreaterThanOrEqual(1.5)
-    expect(EYE_HEIGHT).toBeLessThan(1.72)
+  it('1인칭 눈높이는 캐릭터 키(학생 1.45 m)와 따로 1.6 m로 둔다(설계 2026-11-13 §2-5, 장비가 보이는 높이 유지)', () => {
+    expect(EYE_HEIGHT).toBe(1.6)
   })
   it('1인칭 yaw: 앞이 -z면 0, -x(서쪽)를 보면 +π/2', () => {
     expect(yawFromForward(0, -1)).toBeCloseTo(0, 6)
