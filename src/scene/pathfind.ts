@@ -98,6 +98,55 @@ export function findPath(grid: NavGrid, from: Pt, to: Pt): Pt[] | null {
   return null
 }
 
+/** a에서 b까지 곧게 가도 막힌 칸(격자 밖 포함)을 지나지 않는가. 선분이 지나는 칸을 빠짐없이 본다(격자 걷기):
+ *  격자 꼭짓점을 정확히 지나면 꼭짓점 양옆 칸도, 격자선 위를 따라가면 선 양쪽 칸도 본다 — 모서리를 대각선으로 스쳐 장비를 뚫지 않게.
+ *  판정 기준은 길찾기와 같은 격자(사람 여유 AVATAR_PAD를 더해 막은 칸)다 */
+export function segmentClear(grid: NavGrid, a: Pt, b: Pt): boolean {
+  const { cell, cols, rows, originX, originZ, blocked } = grid
+  const x0 = (a.x - originX) / cell, z0 = (a.z - originZ) / cell
+  const x1 = (b.x - originX) / cell, z1 = (b.z - originZ) / cell
+  const dx = x1 - x0, dz = z1 - z0
+  // 세로·가로 격자선 위를 따라가는 선분(선 양쪽 칸에 걸친다)
+  const onX = dx === 0 && Number.isInteger(x0)
+  const onZ = dz === 0 && Number.isInteger(z0)
+  const free = (c: number, r: number) => c >= 0 && r >= 0 && c < cols && r < rows && blocked[r * cols + c] === 0
+  const ok = (c: number, r: number) => free(c, r) && (!onX || free(c - 1, r)) && (!onZ || free(c, r - 1))
+  let c = Math.floor(x0), r = Math.floor(z0)
+  const ec = Math.floor(x1), er = Math.floor(z1)
+  const sc = Math.sign(dx), sr = Math.sign(dz)
+  const tdC = sc !== 0 ? Math.abs(1 / dx) : Infinity
+  const tdR = sr !== 0 ? Math.abs(1 / dz) : Infinity
+  // 선분 매개변수 t(0~1)에서 다음 세로·가로 격자선을 만나는 값
+  let tmC = sc > 0 ? (c + 1 - x0) / dx : sc < 0 ? (x0 - c) / -dx : Infinity
+  let tmR = sr > 0 ? (r + 1 - z0) / dz : sr < 0 ? (z0 - r) / -dz : Infinity
+  if (!ok(c, r)) return false
+  for (let guard = Math.abs(ec - c) + Math.abs(er - r) + 2; guard > 0 && (c !== ec || r !== er); guard--) {
+    if (Math.min(tmC, tmR) > 1 + 1e-9) break
+    if (Math.abs(tmC - tmR) < 1e-9) {
+      // 격자 꼭짓점을 지난다: 꼭짓점을 함께 쓰는 옆 두 칸도 비어 있어야 한다
+      if (!free(c + sc, r) || !free(c, r + sr)) return false
+      c += sc; r += sr; tmC += tdC; tmR += tdR
+    } else if (tmC < tmR) { c += sc; tmC += tdC } else { r += sr; tmR += tdR }
+    if (!ok(c, r)) return false
+  }
+  return true
+}
+
+/** 경로 다듬기: A* 점 가운데 앞 점에서 뒤 점까지 곧게 갈 수 있으면(segmentClear) 그 사이 점을 뺀다.
+ *  시작점·목적지는 그대로, 새 점은 만들지 않는다(원래 점들의 부분 목록). 이웃한 A* 점끼리는 원래 경로 그대로 둔다 */
+export function smoothPath(grid: NavGrid, path: readonly Pt[]): Pt[] {
+  if (path.length <= 2) return path.slice()
+  const out: Pt[] = [path[0]!]
+  let i = 0
+  while (i < path.length - 1) {
+    let j = path.length - 1
+    while (j > i + 1 && !segmentClear(grid, path[i]!, path[j]!)) j--
+    out.push(path[j]!)
+    i = j
+  }
+  return out
+}
+
 /** 경로를 따라 speed(m/s)·dt(s)만큼 전진. index는 다음 목표점 인덱스 */
 export function advanceAlongPath(pos: Pt, path: Pt[], index: number, speed: number, dt: number): { pos: Pt; index: number; done: boolean } {
   let remaining = speed * dt
