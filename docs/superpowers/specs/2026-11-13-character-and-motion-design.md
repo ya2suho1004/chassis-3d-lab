@@ -27,7 +27,7 @@
 
 ## 4. 지키는 것
 - 최고 속도 1.6 m/s. 몸짓은 지금처럼 단계를 마친 뒤에만 나온다(안내 없음 원칙). 두 도움 방식에 똑같이 적용된다.
-- 앱이 문자열로 기대하는 이름을 유지한다: 뼈 15개(Hips·Spine·Chest·Neck·Head, 팔·다리 좌우 3개씩), 동작 6개, 재질 Top·Trim·Bottom·Shoes·Skin·Hair·Eye·Goggles, 부품 Hair_Short·Hair_Fringe·Hair_Bob·Hair_Tied·Goggles, 뿌리 Character.
+- 앱이 문자열로 기대하는 이름을 유지한다: 뼈 17개(Hips·Spine·Chest·Neck·Head, 팔·다리 좌우 3개씩), 동작 6개, 재질 Top·Trim·Bottom·Shoes·Skin·Hair·Eye·Goggles, 부품 Hair_Short·Hair_Fringe·Hair_Bob·Hair_Tied·Goggles, 뿌리 Character.
 - 태블릿(늘 품질 낮음) 기준: 캐릭터 하나의 삼각형 수는 지금 수준(약 1만 개) 안, 모델 파일은 40만 바이트 미만(`tests/characterAsset.test.ts`), 품질 낮음의 그리기 호출 수는 지금 값 +2 이내, 높음은 +8% 이내. 재질을 늘려야 하면 캐릭터당 1개까지.
 - 실제 인물의 얼굴이나 특정 게임·작품의 캐릭터를 따라 만들지 않는다. 상표·학교 표식을 넣지 않는다. 외부 자산을 내려받지 않고 Blender 스크립트로 자체 제작한다.
 - 캐릭터 선택은 연구 기록·서버·AI 요청에 남지 않는다(지금과 같음). IRB 원고는 바뀌지 않는다.
@@ -36,7 +36,7 @@
 ## 5. 모델
 - 생성 스크립트 `scripts/blender/build_character.py`는 관절 높이와 머리·옷 경계가 1.72 m 기준의 고정 숫자다. 치수 표 하나에서 모든 좌표를 계산하도록 다시 쓰고, 변형(학생 체형 1·2, 교관)을 인자로 고른다.
 - 파일: `character.glb`(학생 체형 1), `character-b.glb`(학생 체형 2, 뿌리 scale 1.62/1.72 유지), `character-npc.glb`(교관, 새 파일).
-- 동작은 지금처럼 뼈 회전 키프레임과 Hips 위치 키로 만든다. 길이는 지금 프레임 수를 유지한다(Walk 24, Idle 72, Gesture 48, Crouch 57, Press 34, Equip 38, 24fps) — 앱의 `ACTION_SECONDS`가 그대로 맞는다.
+- 동작은 지금처럼 뼈 회전 키프레임과 Hips 위치 키로 만든다. 길이는 지금 프레임 수를 유지한다(Walk 24, Idle 72, Gesture 48, Crouch 57, Press 33, Equip 38, 24fps) — 앱의 `ACTION_SECONDS`가 그대로 맞는다.
 - 걷기 한 주기에 나아가는 거리(`WALK_CYCLE_DISTANCE`, 지금 1.47 m)는 새 모델에서 발이 미끄러지지 않는 값으로 다시 재서 앱에 넣는다. 발소리 보폭(`STEP_STRIDE`)은 그 절반이다.
 
 ## 6. 이동
