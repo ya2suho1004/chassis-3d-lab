@@ -26,7 +26,7 @@ const read = (f: File) => {
 const BONES = ['Hips', 'Spine', 'Chest', 'Neck', 'Head', 'UpperArm.L', 'LowerArm.L', 'Hand.L', 'UpperArm.R', 'LowerArm.R', 'Hand.R',
   'UpperLeg.L', 'LowerLeg.L', 'Foot.L', 'UpperLeg.R', 'LowerLeg.R', 'Foot.R']
 /** 앱이 이름으로 색을 입히는 재질 + 보안경 + 정점색 Detail */
-const MATERIALS = ['Top', 'Trim', 'Bottom', 'Shoes', 'Skin', 'Hair', 'Eye', 'GogglesFrame', 'GogglesLens', 'Detail']
+const MATERIALS = ['Top', 'Trim', 'Bottom', 'Shoes', 'Skin', 'Hair', 'Eye', 'GogglesFrame', 'Detail']
 
 describe.each(FILES)('사람 캐릭터 모델 — %s', (f) => {
   const { size, j } = read(f)
@@ -143,7 +143,7 @@ describe('앱 쪽 연결', () => {
     expect(materialColor('Bottom', STUDENT_OUTFIT, look)).toBe(STUDENT_OUTFIT.bottom)
     expect(materialColor('Shoes', STUDENT_OUTFIT, look)).toBe(STUDENT_OUTFIT.shoes)
     expect([materialColor('Skin', STUDENT_OUTFIT, look), materialColor('Hair', STUDENT_OUTFIT, look), materialColor('Eye', STUDENT_OUTFIT, look)]).toEqual(['#111111', '#222222', '#333333'])
-    for (const n of ['Detail', 'GogglesFrame', 'GogglesLens']) expect(materialColor(n, STUDENT_OUTFIT, look)).toBeUndefined()
+    for (const n of ['Detail', 'GogglesFrame']) expect(materialColor(n, STUDENT_OUTFIT, look)).toBeUndefined()
   })
   it('교관 옷: 조끼(Top)는 형광 연두, 소매·깃(Trim)과 하의는 짙은 남색', () => {
     const c = (h: string) => new THREE.Color(h)

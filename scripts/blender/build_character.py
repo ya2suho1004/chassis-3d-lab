@@ -8,8 +8,10 @@
 #   특정 인물·작품의 캐릭터를 따라 만들지 않은 일반 캐릭터이고, 상표·학교 표식은 없다.
 # 모든 좌표는 맨 위 치수 표(spec)에서 계산한다: 관절 → 옷 경계 높이 → 얼굴·머리카락·보안경 → 신발 → 동작(걷기 보폭·쪼그리기 깊이).
 # 노드: Character(뿌리) > Armature(뼈 17개: Hips·Spine·Chest·Neck·Head + 팔·다리 좌우 3개씩) > Body, Hair_Short·Hair_Fringe·Hair_Bob·Hair_Tied, Goggles. 머리 부품·보안경은 앱이 보이기를 정한다.
-# 재질: 앱이 이름으로 색을 입히는 Top·Trim·Bottom·Shoes·Skin·Hair·Eye(모델에는 중립 기본색), 보안경 GogglesFrame·GogglesLens,
+# 재질: 앱이 이름으로 색을 입히는 Top·Trim·Bottom·Shoes·Skin·Hair·Eye(모델에는 중립 기본색), 보안경 테 GogglesFrame(렌즈 없음),
 #   그리고 Detail 1개(정점색: 반사띠·눈 하이라이트·입·볼터치·지퍼·밑창·끈 — 앱은 이 재질 색을 바꾸지 않는다).
+# 그리기 호출(three.js는 재질 조각 하나가 한 번): Body 7(Skin·Top·Trim·Bottom·Shoes·Eye·Detail) + 머리 부품 1(Hair, 눈썹 포함) + 보안경 1(GogglesFrame).
+#   예전 모델(Body 6 + 머리 1 + 보안경 2)보다 보안경 없을 때 +1, 있을 때 0. 눈썹·머리끈을 Body·Detail에 따로 두지 않는 이유다.
 #   학생은 Top=주황 몸판·소매, Trim=남색 어깨판·깃·끝단. 교관은 Top=조끼 몸판, Trim=소매·어깨·깃·끝단(남색 작업복 + 조끼).
 # 동작 6개(Idle·Walk·Gesture·Crouch·Press·Equip, 24fps, 길이는 예전과 같음). 걷기는 디딘 발이 몸에 대해 일정한 속도로 뒤로 가게 설계했다
 #   → 앱의 WALK_CYCLE_DISTANCE는 끝에 찍는 MEASURE의 walk_cycle_m 값이다.
@@ -64,6 +66,8 @@ def spec(body):
         walk=dict(stride=0.42, beta=0.52, lift=0.042, phi_hs=D(14), phi_to=D(24), heel=0.14, toe=0.22, sway=0.010, arm=D(24), reach=0.975),
         # 쪼그리기: 엉덩이 내리는 거리(다리 길이 비율)·뒤로 빼는 거리, 몸 숙임
         crouch=dict(down=0.50, back=0.03, hips=D(3), spine=D(12), chest=D(5), head=D(14), knee_out=0.55),
+        # 보호구 쓰기: 상체·목·고개 숙임, 손을 머리 옆 얼마나 앞에(머리 앞뒤 반지름 단위)
+        equip=dict(spine=D(8), chest=D(6), neck=D(8), head=D(16), fwd=0.30),
     )
     if body == 'b':
         # 체형 2: 어깨·팔을 안으로, 가슴을 조금 좁게(뿌리 scale로 키 1.37 m)
@@ -99,24 +103,28 @@ STUDENT = P['student']
 # line: 이마 쪽(0)~뒤(π) 방향각별 머리선 높이(머리 중심 기준, 머리 높이 반지름 단위), tips: 뾰족한 머리 끝(방향각, 반폭, 깊이),
 # off·scale: 머리 타원체 대비 머리카락 껍질의 위치·크기, tuck: 끝을 안으로 말아 넣는 비율, flare: 아래쪽 퍼짐(시작 높이, 양)
 # locks: 머리 위를 따라 흐르는 덩어리 (방향각·높이각 세 점[도], 폭 처음·끝, 두께, 띄움) — 폭·두께는 머리 가로 반지름 단위
+# hang: (시작 높이, 반지름 배율, 아래로 갈수록 줄이는 양) — 이 높이 아래는 타원체처럼 안으로 오므라들지 않고 곧게 떨어진다(단발·앞머리의 옆·뒤)
 HAIR = {
-    'Hair_Short': dict(off=(0, -0.04, 0.06), scale=(1.07, 1.075, 1.06), tuck=0.10,
-                       line=[(0, 0.44), (0.55, 0.40), (1.05, 0.22), (1.35, 0.10), (1.62, 0.08), (2.1, -0.28), (2.6, -0.52), (math.pi, -0.58)],
-                       tips=[(-0.42, 0.30, 0.13), (-0.05, 0.28, 0.10), (0.33, 0.26, 0.09), (1.36, 0.16, 0.20), (-1.36, 0.16, 0.20)],
+    # 짧은 머리: 딱 붙는 모자, 귀 위·목덜미가 드러나게 짧고, 앞머리 끝이 세 갈래로 뾰족, 정수리에서 앞으로 흐르는 덩어리 둘
+    'Hair_Short': dict(off=(0, -0.04, 0.06), scale=(1.06, 1.07, 1.05), tuck=0.10,
+                       line=[(0, 0.46), (0.55, 0.40), (1.05, 0.22), (1.35, 0.16), (1.62, 0.16), (2.1, -0.10), (2.6, -0.30), (math.pi, -0.36)],
+                       tips=[(-0.42, 0.30, 0.14), (-0.05, 0.28, 0.11), (0.33, 0.26, 0.10), (1.36, 0.14, 0.22), (-1.36, 0.14, 0.22)],
                        locks=[((10, 82), (-22, 48), (-40, 18), 0.50, 0.12, 0.10, 0.0), ((40, 80), (34, 46), (38, 22), 0.40, 0.08, 0.09, 0.0)]),
-    'Hair_Fringe': dict(off=(0, -0.03, 0.06), scale=(1.075, 1.085, 1.06), tuck=0.10,
-                        line=[(0, 0.34), (0.6, 0.30), (1.0, 0.20), (1.35, 0.06), (1.62, 0.02), (2.1, -0.32), (2.6, -0.56), (math.pi, -0.62)],
-                        tips=[(-0.62, 0.20, 0.10), (-0.32, 0.18, 0.10), (-0.02, 0.18, 0.09), (0.28, 0.18, 0.10), (0.58, 0.20, 0.10),
-                              (1.32, 0.15, 0.18), (-1.32, 0.15, 0.18)],
+    # 앞머리: 부풀린 바가지 모양, 눈썹 바로 위까지 곧게 내린 앞머리(잔 톱니), 옆은 귀 위쪽을 덮고 뒤는 목덜미까지
+    'Hair_Fringe': dict(off=(0, -0.03, 0.07), scale=(1.13, 1.12, 1.08), tuck=0.12, hang=(0.05, 1.0, 0.03),
+                        line=[(0, 0.27), (0.75, 0.25), (1.0, 0.05), (1.3, -0.30), (1.62, -0.36), (2.2, -0.62), (math.pi, -0.70)],
+                        tips=[(-0.66, 0.11, 0.04), (-0.44, 0.11, 0.04), (-0.22, 0.11, 0.04), (0.0, 0.11, 0.04), (0.22, 0.11, 0.04), (0.44, 0.11, 0.04), (0.66, 0.11, 0.04)],
                         locks=[((-30, 80), (-32, 44), (-30, 14), 0.40, 0.14, 0.08, 0.0), ((6, 82), (6, 44), (4, 14), 0.42, 0.14, 0.08, 0.0), ((42, 80), (42, 44), (38, 14), 0.38, 0.14, 0.08, 0.0)]),
-    'Hair_Bob': dict(off=(0, -0.05, 0.06), scale=(1.10, 1.10, 1.07), tuck=0.12, flare=(-0.05, 0.10),
-                     line=[(0, 0.40), (0.5, 0.34), (0.85, 0.02), (1.15, -0.42), (1.5, -0.58), (2.2, -0.60), (math.pi, -0.62)],
-                     tips=[(-0.30, 0.34, 0.12), (0.22, 0.30, 0.08)],
+    # 단발: 가르마에서 옆으로 넘긴 앞머리, 옆·뒤는 귀를 덮고 턱 아래까지 곧게 떨어진 뒤 끝이 살짝 바깥으로
+    'Hair_Bob': dict(off=(0, -0.05, 0.06), scale=(1.12, 1.12, 1.07), tuck=0.14, hang=(0.10, 1.04, -0.06), flare=(-0.75, 0.08),
+                     line=[(0, 0.38), (0.45, 0.30), (0.80, 0.02), (1.05, -0.60), (1.35, -0.98), (2.2, -1.00), (math.pi, -1.00)],
+                     tips=[(-0.30, 0.34, 0.14), (0.25, 0.30, 0.06)],
                      locks=[((15, 84), (-28, 48), (-48, 16), 0.52, 0.12, 0.10, 0.0), ((45, 80), (42, 46), (50, 20), 0.40, 0.10, 0.09, 0.0)]),
-    'Hair_Tied': dict(off=(0, -0.04, 0.06), scale=(1.065, 1.07, 1.055), tuck=0.10,
-                      line=[(0, 0.46), (0.6, 0.40), (1.1, 0.20), (1.4, 0.10), (1.62, 0.07), (2.1, -0.20), (2.6, -0.42), (math.pi, -0.46)],
-                      tips=[(1.38, 0.14, 0.14), (-1.38, 0.14, 0.14)],
-                      locks=[((-10, 80), (-26, 46), (-40, 24), 0.42, 0.10, 0.08, 0.0), ((14, 80), (28, 46), (42, 24), 0.42, 0.10, 0.08, 0.0)],
+    # 묶은 머리: 이마를 드러내 뒤로 넘긴 매끈한 모자 + 뒤통수 높이에서 묶어 크게 늘어뜨린 꼬리와 끈
+    'Hair_Tied': dict(off=(0, -0.04, 0.06), scale=(1.055, 1.065, 1.05), tuck=0.10,
+                      line=[(0, 0.52), (0.6, 0.44), (1.1, 0.24), (1.4, 0.14), (1.62, 0.10), (2.1, -0.16), (2.6, -0.34), (math.pi, -0.38)],
+                      tips=[(1.38, 0.12, 0.10), (-1.38, 0.12, 0.10)],
+                      locks=[((-10, 80), (-26, 46), (-40, 26), 0.42, 0.10, 0.08, 0.0), ((14, 80), (28, 46), (42, 26), 0.42, 0.10, 0.08, 0.0)],
                       tail=True),
 }
 
@@ -156,10 +164,8 @@ MAT = {'Skin': material('Skin', '#e2b796', rough=0.55), 'Hair': material('Hair',
        # 늘린 재질 1개: 정점색으로 여러 작은 부분의 색을 낸다(앱이 색을 바꾸지 않음)
        'Detail': material('Detail', '#ffffff', rough=0.5, vcol=True)}
 MAT['GogglesFrame'] = material('GogglesFrame', '#22262b', rough=0.45)
-MAT['GogglesLens'] = material('GogglesLens', '#24404e', metal=0.0, rough=0.15)   # 어두운 유리색: 밝은 색이면 알파만큼 더해져 눈이 뿌옇게 보인다
-_lp = MAT['GogglesLens'].node_tree.nodes['Principled BSDF']; _lp.inputs['Alpha'].default_value = 0.16
-if hasattr(MAT['GogglesLens'], 'surface_render_method'): MAT['GogglesLens'].surface_render_method = 'BLENDED'   # glTF alphaMode BLEND
-DETAIL = {'reflect': '#d9dee2', 'shine': '#ffffff', 'mouth': '#8f4a3c', 'blush': '#ee9a88', 'zip': '#3c3f48',
+# 보안경은 테만 있는 한 조각(GogglesFrame) — 반투명 렌즈는 뿌연 판처럼 보였고 그리기 호출을 1개 더 썼다(모델 2차, 2026-11-13)
+DETAIL = {'reflect': '#d9dee2', 'shine': '#ffffff', 'mouth': '#8f4a3c', 'blush': '#f2ad9f', 'zip': '#3c3f48',
           'sole': '#1d1714', 'lace': '#2a1d15', 'tie': '#3a3f5c'}
 
 
@@ -302,6 +308,17 @@ def hair_mesh(name, st):
         k = 1 + fa * smooth((f0 - h) / 0.6)
         return V((p.x * k, hc.y + (p.y - hc.y) * k, p.z))
 
+    def hang(p, az):
+        if 'hang' not in st: return p
+        h0, kr, tp = st['hang']
+        h = (p.z - hc.z) / hr.z
+        if h >= h0: return p
+        req = math.hypot(rr.x * math.sin(az), rr.y * math.cos(az)) * kr * (1 - tp * min(1.0, (h0 - h)))   # 곧게 떨어지는 반지름
+        dx, dy = p.x - hc.x, p.y - hc.y; cur = math.hypot(dx, dy)
+        if cur < 1e-6 or cur >= req: return p
+        k = smooth((h0 - h) / 0.25); r = cur + (req - cur) * k
+        return V((hc.x + dx / cur * r, hc.y + dy / cur * r, p.z))
+
     def surf(az, el, lift=0.0):
         p = cc + V((rr.x * math.cos(el) * math.sin(az), rr.y * math.cos(el) * math.cos(az), rr.z * math.sin(el)))
         n = V(((p.x - cc.x) / rr.x ** 2, (p.y - cc.y) / rr.y ** 2, (p.z - cc.z) / rr.z ** 2)).normalized()
@@ -317,7 +334,7 @@ def hair_mesh(name, st):
         col = []
         for i in range(1, NR + 1):
             th = th_end * (i / NR) ** 0.9
-            col.append(bm.verts.new(flare(cc + V((rr.x * math.sin(th) * math.sin(az), rr.y * math.sin(th) * math.cos(az), rr.z * math.cos(th))))))
+            col.append(bm.verts.new(hang(flare(cc + V((rr.x * math.sin(th) * math.sin(az), rr.y * math.sin(th) * math.cos(az), rr.z * math.cos(th)))), az)))
         last = col[-1].co
         col.append(bm.verts.new(hc + (last - hc) * (1 - st['tuck']) + V((0, 0, 0.004))))
         grid.append(col)
@@ -343,14 +360,14 @@ def hair_mesh(name, st):
         obs.append(loft(path, ws, ts, nrm, 'Hair', n_ring=8))
     if st.get('tail'):
         # 묶은 머리: 뒤통수에서 아래로 늘어진 다발 + 끈
-        pts = [(0, -0.90, 0.30), (0, -1.10, 0.22), (0, -1.22, 0.02), (0, -1.20, -0.24), (0, -1.10, -0.50), (0, -1.02, -0.70)]
+        pts = [(0, -0.92, 0.46), (0, -1.16, 0.40), (0, -1.30, 0.16), (0, -1.30, -0.20), (0, -1.20, -0.55), (0, -1.08, -0.90)]
         path = [hc + V((x * hr.x, y * hr.y, z * hr.z)) for x, y, z in pts]
         nrm = [V((0, -1, 0.2)).normalized()] * len(path)
-        ws = [w * hr.x for w in (0.34, 0.38, 0.36, 0.30, 0.20, 0.0)]
-        ts = [w * hr.x for w in (0.30, 0.32, 0.30, 0.24, 0.15, 0.04)]
+        ws = [w * hr.x for w in (0.40, 0.48, 0.46, 0.40, 0.28, 0.0)]
+        ts = [w * hr.x for w in (0.34, 0.40, 0.38, 0.32, 0.20, 0.04)]
         obs.append(loft(path, ws, ts, nrm, 'Hair', n_ring=10))
         d = (path[1] - path[0]).normalized()
-        obs.append(tube(path[0] + d * 0.035, d, 0.36 * hr.x * 0.55, 0.31 * hr.x * 0.55, 0.022, 'Detail', segs=14, col=DETAIL['tie']))
+        obs.append(tube(path[0] + d * 0.035, d, 0.40 * hr.x * 0.55, 0.34 * hr.x * 0.55, 0.026, 'Hair', segs=14))   # 머리끈(머리와 같은 재질 — 그리기 호출을 늘리지 않게)
     for o in obs: paint(o)
     ob = join(obs[1:], obs[0]) if len(obs) > 1 else obs[0]
     ob.name = name
@@ -568,6 +585,24 @@ def feat(x, z, r, mat, tilt=0.0, sink=0.35, deform=None, segs=12, rings=8, col=N
     return ell(loc - nrm * r[1] * sink, r, mat, q=q, segs=segs, rings=rings, deform=deform, col=col)
 
 
+def decal(cx, cz, rx, rz, col, bend=0.0, off=0.0012, ns=14):
+    # 머리 표면에서 일정 간격(off) 띄운 얇은 타원 판(볼터치·입). 피부에 박은 타원체와 달리 교차선이 없어 겹쳐 그려지지 않는다
+    bm = bmesh.new(); rings_ = []
+    for r in (0.0, 0.55, 1.0):
+        row = []
+        for k in range(1 if r == 0 else ns):
+            a = 2 * math.pi * k / ns; u, w = math.cos(a) * r, math.sin(a) * r
+            loc, nrm = ray(head, cx + rx * u, cz + rz * w + bend * u * u)
+            row.append(bm.verts.new(loc + nrm * off))
+        rings_.append(row)
+    for k in range(ns): bm.faces.new((rings_[0][0], rings_[1][k], rings_[1][(k + 1) % ns]))
+    for k in range(ns): bm.faces.new((rings_[1][k], rings_[2][k], rings_[2][(k + 1) % ns], rings_[1][(k + 1) % ns]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    for f_ in bm.faces:   # 앞(+Y 쪽)을 보게
+        if f_.normal.y < 0: f_.normal_flip()
+    ob = to_obj(bm, 'decal', 'Detail', col=col); return ob
+
+
 F = FACE
 EYE_Z = hc.z + F['eye_z']
 for sx in (1, -1):
@@ -575,13 +610,15 @@ for sx in (1, -1):
     hl = F['eye_r']
     head_parts.append(feat(sx * F['eye_x'] - hl[0] * 0.33, EYE_Z + hl[2] * 0.38, (hl[0] * 0.32, hl[1] * 0.7, hl[0] * 0.32), 'Detail', sink=-0.25, segs=6, rings=5, col=DETAIL['shine']))
     head_parts.append(feat(sx * F['eye_x'] + hl[0] * 0.30, EYE_Z - hl[2] * 0.42, (hl[0] * 0.14, hl[1] * 0.6, hl[0] * 0.14), 'Detail', sink=-0.3, segs=5, rings=4, col=DETAIL['shine']))
-    head_parts.append(feat(sx * F['brow_x'], hc.z + F['brow_z'], F['brow_r'], 'Hair', tilt=sx * F['brow_tilt'], segs=8, rings=5))
     if F.get('blush'):
-        head_parts.append(feat(sx * F['blush'][0], hc.z + F['blush'][1], F['blush'][2], 'Detail', sink=0.62, segs=8, rings=5, col=DETAIL['blush']))
+        head_parts.append(decal(sx * F['blush'][0], hc.z + F['blush'][1], F['blush'][2][0], F['blush'][2][2], col=DETAIL['blush']))
     head_parts.append(ell((sx * hr.x * 0.955, hc.y - 0.012, hc.z + F['ear_z']), F['ear_r'], 'Skin', segs=10, rings=6))
-_mw = F['mouth_r'][0]
-head_parts.append(feat(0, hc.z + F['mouth_z'], F['mouth_r'], 'Detail', deform=lambda co: V((co.x, co.y, co.z + F['smile'] * (co.x / _mw) ** 2)), segs=8, rings=5, col=DETAIL['mouth']))
+head_parts.append(decal(0, hc.z + F['mouth_z'], F['mouth_r'][0], F['mouth_r'][2], col=DETAIL['mouth'], bend=F['smile']))
 head_parts.append(feat(0, hc.z + F['nose_z'], F['nose_r'], 'Skin', sink=0.5, segs=8, rings=5))
+# 눈썹: 머리 부품 4개에 한 쌍씩 넣는다(Body에 Hair 조각이 따로 생기지 않게 — 그리기 호출 1개 절약)
+BROWS = {nm: [feat(sx * F['brow_x'], hc.z + F['brow_z'], F['brow_r'], 'Hair', tilt=sx * F['brow_tilt'], segs=8, rings=5) for sx in (1, -1)] for nm in HAIR}
+# 얼굴 법선 다듬기 대상(머리 피부·볼터치·입): 합친 뒤 법선을 위쪽으로 기울여 위 조명에서 얼굴이 어둡지 않게
+for ob in [head] + [o for o in head_parts if o.name.startswith('decal')]: group(ob, 'FaceN')
 
 # =====================================================================================
 # 손(벙어리장갑 모양 + 엄지, Hand 뼈에 통째로)
@@ -745,10 +782,29 @@ for ob in parts + [body]: paint(ob)
 paint_faces(body, REFLECT_FACES, DETAIL['reflect'])
 body = join(parts, body); body.name = 'Body'
 
+# 얼굴 법선: 큰 머리의 아래쪽 반구에 얼굴이 있어 법선이 앞·아래를 향한다 → 위쪽 주광을 덜 받아 몸보다 어둡게 보였다(앱 2026-11-13 확인).
+#   머리 중심보다 아래·뒤의 점에서 뻗는 방향으로 법선을 기울여(얼굴은 앞·조금 위) 피부·볼터치·입이 같은 법선을 쓰게 한다.
+_fg = body.vertex_groups['FaceN'].index
+_fv = {v.index for v in body.data.vertices if any(g.group == _fg and g.weight > 0.5 for g in v.groups)}
+_me = body.data
+_cn = [n.vector.copy() for n in _me.corner_normals]
+_low = hc + V((0, -0.15 * hr.y, -0.95 * hr.z))
+for _p in _me.polygons:
+    if all(vi in _fv for vi in _p.vertices):
+        for li in _p.loop_indices:
+            co = _me.vertices[_me.loops[li].vertex_index].co
+            n0 = V(((co.x - hc.x) / hr.x ** 2, (co.y - hc.y) / hr.y ** 2, (co.z - hc.z) / hr.z ** 2)).normalized()
+            d = co - _low; n1 = V((d.x / hr.x ** 2, d.y / hr.y ** 2, d.z / hr.z ** 2)).normalized()
+            _cn[li] = (n0 * 0.15 + n1 * 0.85).normalized()
+_me.normals_split_custom_set([tuple(n) for n in _cn])
+body.vertex_groups.remove(body.vertex_groups['FaceN'])
+
 # 머리 모양 4개(따로 된 물체, Head 뼈에 통째로 — 앱이 하나만 보인다)
 hair_objs = {}
 for nm, st in HAIR.items():
-    ob = hair_mesh(nm, st); group(ob, 'Head')
+    ob = hair_mesh(nm, st)
+    for o in BROWS[nm]: paint(o)
+    ob = join(BROWS[nm], ob); ob.name = nm; group(ob, 'Head')
     ob.parent = arm
     am_ = ob.modifiers.new('arm', 'ARMATURE'); am_.object = arm
     hair_objs[nm] = ob
@@ -784,9 +840,8 @@ def band(rx, ry, z0, z1, a0, a1, n, mat, t=None):
     return solidify(ob, t, 1) if t else ob
 
 
-fh = 0.010
+fh = 0.012
 gparts = [
-    band(GX, GY, zlo, zhi, -A_LENS, A_LENS, 32, 'GogglesLens'),                                                   # 렌즈(얇은 한 장)
     band(GX * 1.01, GY * 1.01, lambda a: zhi(a) - 0.002, lambda a: zhi(a) + fh, -A_LENS, A_LENS, 32, 'GogglesFrame', 0.007),   # 위 테
     band(GX * 1.01, GY * 1.01, lambda a: zlo(a) - fh, lambda a: zlo(a) + 0.002, -A_LENS, A_LENS, 32, 'GogglesFrame', 0.007),   # 아래 테
     band(hr.x * 1.17, hr.y * 1.10, ez - 0.011, ez + 0.011, A_LENS, 2 * math.pi - A_LENS, 24, 'GogglesFrame', 0.005),           # 뒤 끈
@@ -795,7 +850,7 @@ for sx in (1, -1):   # 옆 테(렌즈 끝을 감싸 끈으로 이어짐)
     a0, a1 = sorted((sx * (A_LENS - 0.05), sx * (A_LENS + 0.07)))
     gparts.append(band(GX * 1.012, GY * 1.012, LENS[0] - fh, LENS[1] + fh, a0, a1, 3, 'GogglesFrame', 0.009))
 for o in gparts: paint(o)
-gog = join(gparts[1:], gparts[0]); gog.name = 'Goggles'
+gog = join(gparts[1:], gparts[0]); gog.name = 'Goggles'   # 재질 1개(GogglesFrame) = 그리기 호출 1개
 group(gog, 'Head')
 gog.parent = arm
 am = gog.modifiers.new('arm', 'ARMATURE'); am.object = arm
@@ -1037,24 +1092,33 @@ def press(t):
 
 
 # 보호구 쓰기: 두 손을 머리 옆(눈 높이 위)으로 올렸다가 보안경을 눈으로 끌어내리는 몸짓
+EQ = P['equip']
+
+
 def equip_pose(dz):
+    # 짧은 팔로 손을 눈 높이 머리 옆까지 올리면 팔꿈치가 어깨 위로 들린다 → 상체·목·고개를 숙여 눈 높이를 내리고,
+    # 손 목표는 숙인 머리를 따라 잡으며, 팔꿈치는 옆이 아니라 앞·아래를 향하게 한다
     reset_pose()
-    pb['Head'].rotation_euler.x = D(3)
+    pb['Spine'].rotation_euler.x = -EQ['spine']; pb['Chest'].rotation_euler.x = -EQ['chest']
+    pb['Neck'].rotation_euler.x = -EQ['neck']; pb['Head'].rotation_euler.x = -EQ['head']
+    upd()
+    M = pb['Head'].matrix @ arm_data.bones['Head'].matrix_local.inverted()
     for s, sx in (('L', 1), ('R', -1)):
-        upd()
-        hx = sx * (hr.x * 1.06 + Hd['palm'][0] * 1.15)
-        tgt = V((hx, hc.y + 0.42 * hr.y, ez + dz)) - V((0, 0, Hd['palm_d'] + Hd['palm'][2] * 0.25))
-        arm_pose(s, tgt, V((sx * 0.7, 0.6, -0.8)), V((sx * -0.2, 0.3, 1)))
+        hand_c = V((sx * (hr.x * 1.03 + Hd['palm'][0] * 1.05), hc.y + EQ['fwd'] * hr.y, ez + dz))   # 머리 옆, 숙이기 전 머리 기준
+        wrist = hand_c - V((0, 0, Hd['palm_d'] + Hd['palm'][2] * 0.1))
+        arm_pose(s, M @ wrist, V((sx * 0.35, 1.0, -1.0)), M.to_3x3() @ V((sx * -0.15, 0.3, 1)))
     return quats()
 
 
-Q_EQ_UP = equip_pose(0.30 * hr.z); Q_EQ_DN = equip_pose(0.02 * hr.z)
+Q_EQ_UP = equip_pose(0.10 * hr.z); Q_EQ_DN = equip_pose(0.0)
+upd()
+EQUIP_ELBOW = max(pb['LowerArm.' + s].head.z - pb['UpperArm.' + s].head.z for s in ('L', 'R'))   # 팔꿈치가 어깨보다 높은 정도(마지막 자세)
 
 
 def equip(t):
     k = hold(t, 0.3)
     g = smooth((t - 0.3) / 0.35)
-    for nm in ARM_NAMES['L'] + ARM_NAMES['R'] + ['Head']:
+    for nm in ARM_NAMES['L'] + ARM_NAMES['R'] + ['Spine', 'Chest', 'Neck', 'Head']:
         set_q(nm, Quaternion().slerp(Q_EQ_UP[nm].slerp(Q_EQ_DN[nm], g), k))
 
 
@@ -1196,7 +1260,7 @@ MEAS = dict(body=BODY, tris_body=TRI['Body'], tris_hair={k: TRI[k] for k in HAIR
             shoulder_width_m=round(2 * (P['shoulder'][0] + P['R']['shoulder'][0]) * RS, 3),
             walk_cycle_m=round(WALK_MEAS * RS, 4), walk_cycle_design_m=round(WALK_DESIGN * RS, 4),
             walk_contact_speed_range=[round(min(slip) * NSUB * FPS * RS, 3), round(max(slip) * NSUB * FPS * RS, 3)], walk_airborne_samples=airborne,
-            hips_bob_m=round(max(HIPS_DZ) - min(HIPS_DZ), 4),
+            hips_bob_m=round(max(HIPS_DZ) - min(HIPS_DZ), 4), equip_elbow_above_shoulder_m=round(EQUIP_ELBOW * RS, 3),
             materials=sorted({m.name for o in [body, gog] + list(hair_objs.values()) for m in o.data.materials}),
             check=CHECK)
 print('MEASURE ' + json.dumps(MEAS, ensure_ascii=False))
