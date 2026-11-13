@@ -6,7 +6,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { BODIES, EYES, HAIR_COLORS, HAIR_STYLES, NICK_BACK, NICK_FRONT, SKINS, nicknameOf, randomNickname, type AvatarProfile, type Choice } from '../app/avatar'
 import { Icon } from './Icon'
-import { CHARACTER_LAYER, CharacterModel, STUDENT_OUTFIT } from '../scene/models/CharacterModel'
+import { CHARACTER_LAYER, CharacterModel, STUDENT_HEIGHT, STUDENT_OUTFIT } from '../scene/models/CharacterModel'
 import { ToneSetup } from '../scene/look/ToneSetup'
 
 /** 사람은 레이어 2에만 그려진다(CharacterModel) — 미리보기 카메라도 레이어 2를 켠다 */
@@ -52,7 +52,8 @@ export function AvatarScreen({ initial, editing = false, saveNote, onDone, onCan
         <div>
         <p className="av-nick" aria-live="polite">{nicknameOf(p)}</p>
         <section className="av-preview" aria-label="캐릭터 미리보기(끌어서 돌리기)">
-          <Canvas camera={{ position: [0, 1.0, 3.7], fov: 30 }} dpr={[1, 2]}>
+          {/* 키 1.45 m가 세로 시야의 약 88%를 채우는 거리(예전 1.72 m·3.7 m와 같은 비율), 가운데를 조금 위에서 본다 */}
+          <Canvas camera={{ position: [0, 0.85, 3.1], fov: 30 }} dpr={[1, 2]}>
             <SeeCharacters />
             <ToneSetup />
             <color attach="background" args={['#f6e7d2']} />
@@ -64,7 +65,7 @@ export function AvatarScreen({ initial, editing = false, saveNote, onDone, onCan
               </group>
             </Suspense>
             <mesh rotation-x={-Math.PI / 2}><circleGeometry args={[0.7, 40]} /><meshStandardMaterial color="#2e8b57" /></mesh>
-            <OrbitControls target={[0, 0.86, 0]} enablePan={false} enableZoom={false} minPolarAngle={Math.PI / 2.6} maxPolarAngle={Math.PI / 1.9} />
+            <OrbitControls target={[0, STUDENT_HEIGHT / 2, 0]} enablePan={false} enableZoom={false} minPolarAngle={Math.PI / 2.6} maxPolarAngle={Math.PI / 1.9} />
           </Canvas>
         </section>
         <p className="small">미리보기를 손가락으로 끌면 캐릭터가 돌아갑니다.</p>

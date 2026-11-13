@@ -8,7 +8,7 @@ export const VIEW_LABEL: Record<ViewMode, string> = { overview: '내려다보기
 /** 처음 켰을 때 시점: 따라가기(사용자 결정 2026-11-02, docs/20 D34) */
 export const DEFAULT_VIEW: ViewMode = 'follow'
 
-/** 눈높이(m). 캐릭터 키 1.72 기준 */
+/** 1인칭 눈높이(m). 캐릭터 키(학생 1.45 m)와 따로 1.6 m를 유지한다 — 장비가 보이는 높이(설계 2026-11-13 §2-5) */
 export const EYE_HEIGHT = 1.6
 /** 1인칭에서 조준점으로 장비를 고를 수 있는 거리(m) */
 export const AIM_RANGE = 3.5
@@ -21,7 +21,8 @@ export const PITCH_LIMIT = 1.2
 export interface OrbitPreset { fov: number; targetY: number; distance: number; minDistance: number; maxDistance: number; minPolar: number; maxPolar: number }
 export const ORBIT_PRESET: Record<Exclude<ViewMode, 'first'>, OrbitPreset> = {
   overview: { fov: 50, targetY: 1.0, distance: 9, minDistance: 3, maxDistance: 18, minPolar: 0, maxPolar: Math.PI / 2.1 },
-  follow: { fov: 55, targetY: 1.35, distance: 3.4, minDistance: 1.8, maxDistance: 5, minPolar: 0.75, maxPolar: 1.5 },
+  // 따라가기 targetY 1.05: 학생(키 1.45 m) 어깨(0.87)와 눈(1.16) 사이 — 머리·어깨쯤(예전 1.35는 키 1.72 기준)
+  follow: { fov: 55, targetY: 1.05, distance: 3.4, minDistance: 1.8, maxDistance: 5, minPolar: 0.75, maxPolar: 1.5 },
 }
 export const FIRST_FOV = 70
 

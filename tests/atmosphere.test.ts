@@ -14,11 +14,17 @@ describe('발소리', () => {
     expect(STEP_STRIDE).toBeCloseTo(WALK_CYCLE_DISTANCE / 2, 6)
   })
   it('걸음 경계를 넘을 때만 센다', () => {
-    expect(stepsCrossed(0, 0.5)).toBe(0)
-    expect(stepsCrossed(0.5, 0.8)).toBe(1)
-    expect(stepsCrossed(0.8, 0.8)).toBe(0)
-    expect(stepsCrossed(0, STEP_STRIDE * 3 + 0.01)).toBe(3)
-    expect(stepsCrossed(1, 0.5)).toBe(0)
+    const s = STEP_STRIDE
+    expect(stepsCrossed(0, s * 0.7)).toBe(0)
+    expect(stepsCrossed(s * 0.7, s * 1.1)).toBe(1)
+    expect(stepsCrossed(s * 1.1, s * 1.1)).toBe(0)
+    expect(stepsCrossed(0, s * 3 + 0.01)).toBe(3)
+    expect(stepsCrossed(s * 1.4, s * 0.7)).toBe(0)
+  })
+  it('최고 속도(1.6 m/s)에서 걸음은 초당 4번쯤 — 발소리(약 0.09초)가 서로 겹치지 않는다', () => {
+    expect(1.6 / STEP_STRIDE).toBeGreaterThan(3.5)
+    expect(1.6 / STEP_STRIDE).toBeLessThan(4.5)
+    expect(STEP_STRIDE / 1.6).toBeGreaterThan(0.09 * 2)
   })
 })
 

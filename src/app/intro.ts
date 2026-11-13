@@ -38,7 +38,7 @@ export function saveIntroPrefs(p: IntroPrefs): boolean {
 
 /** 인트로가 도는 동안 미리 받아 둘 3D 모델(실습장 진입 때 캐시를 쓴다). public/assets/models의 glb 전부 */
 export const PRELOAD_MODELS = [
-  'abs-panel', 'avante', 'brake-tester', 'character', 'character-b', 'dial-gauge', 'dial-gauge-b', 'dial-gauge-h', 'diff-carrier',
+  'abs-panel', 'avante', 'brake-tester', 'character', 'character-b', 'character-npc', 'dial-gauge', 'dial-gauge-b', 'dial-gauge-h', 'diff-carrier',
   'disc-fixture', 'k3', 'pride', 'scissor-lift', 'shock-stand', 'test-car', 'tire-changer', 'transmission-simulator', 'wheel-balancer',
 ].map((n) => `${n}.glb`)
 

@@ -3,8 +3,8 @@
 // 이 파일은 과제 상태를 모른다(아무것도 들여오지 않는다). 무슨 일에 어떤 소리를 낼지는 규칙표(src/app/reactions.ts)가 정한다.
 // 소리는 측정값·정답·다음 단계에 따라 달라지지 않는다. 모두 짧고 작으며 도장만 크다(설계 2026-11-12 §4.4).
 
-/** 걷기 한 걸음 길이(m) — 캐릭터 걷기 한 주기 1.47 m의 절반 */
-export const STEP_STRIDE = 0.735
+/** 걷기 한 걸음 길이(m) — 캐릭터(체형 1) 걷기 한 주기 0.808 m의 절반. 최고 속도 1.6 m/s에서 초당 약 4걸음 */
+export const STEP_STRIDE = 0.404
 
 /** 걸은 거리 누적값이 prev→next로 늘 때 넘은 걸음 수 */
 export function stepsCrossed(prev: number, next: number, stride = STEP_STRIDE): number {
