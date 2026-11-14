@@ -108,7 +108,7 @@ function tally(payloads: RecordPayload[], f: (p: RecordPayload) => string): stri
 
 function readme(input: BundleInput, c: BundleCounts, payloads: RecordPayload[]): string {
   const summaryNotes: Record<string, string> = {
-    recordId: '수행 번호. 모든 표를 잇는 열쇠', schemaVersion: '기록 형식 판', anonymousStudentCode: '가명 코드(대응표와 이어질 수 있어 완전 익명이 아니다)', classConditionCode: '조건 코드', sessionCode: '수업 세션', sessionSnapshotId: '수업 설정 스냅샷 번호',
+    recordId: '수행 번호. 모든 표를 잇는 열쇠', schemaVersion: '기록 형식 판', anonymousStudentCode: '학생 코드. 필드 이름과 달리 익명이 아닐 수 있다 — 0.3.7-demo부터 리허설이 아닌 세션에서는 학번(학년·반·번호 네 자리)이 들어가 학생을 알아볼 수 있고, 리허설 세션은 가상 코드(D-01~D-99), 그 전 판은 가명 코드(A-01 꼴)', classConditionCode: '조건 코드', sessionCode: '수업 세션', sessionSnapshotId: '수업 설정 스냅샷 번호',
     taskId: '과제(braking-force 제동력, min-turning-radius 최소회전반경)', difficultyMode: '도움 방식(guided 안내 있음, unguided 안내 없음, timedAssessment 시간제한)', attemptRole: '수행 역할(practice 연습, primary 본 수행, remediation 보완)', runPurpose: 'demo 시연·시험, research 연구', usagePhase: '차시(preview 1~2차시 연습, review 5차시 정리, other 그 밖)',
     researchEligible: '과제·기준·배치·연구사용 승인이 모두 있고 research이며 완료·NPC 통과일 때만 true. 기관 승인·동의를 대신하지 않는다', completionStatus: 'completed 완료, aborted 중단', retryOfRecordId: '다시 한 수행이면 앞 수행 번호', retryCount: '다시 한 횟수',
     displayMode: '처음 화면 방식(threeD, diagram)', experiencedDisplayModes: '겪은 화면 방식(|로 구분)', startedAt: '시작 시각(UTC, 기기 시계)', completedAt: '확정 시각(UTC, 기기 시계)', durationSeconds: '마지막 사건까지 경과 초. completedAt−startedAt이 아니다',
@@ -116,14 +116,14 @@ function readme(input: BundleInput, c: BundleCounts, payloads: RecordPayload[]):
     taskDefinitionVersion: '과제 정의 판', rulesetVersion: '판정 기준 판', measurementSetVersion: '측정값 묶음 판', layoutVersion: '배치 판', judgeEngineVersion: '판정 엔진 판. 계산 채점 규칙 변경(2026-11-10)은 이 판이 아니라 clientAppVersion으로 가른다(읽는 규칙 참고)', sessionConfigVersion: '세션 설정 판', researchProtocolVersion: '연구 절차 판', feedbackPolicyVersion: '피드백 정책 판',
     errorCount: '비안전 학습 오류 수', errorTypes: '오류 종류:횟수', safetyViolationCount: '안전 위반 수', safetyViolationTypes: '안전 위반 종류:횟수', hintCount: '학생이 요청한 힌트 수. 자동 피드백은 세지 않는다(사건 표의 feedbackShown)',
     vehicleVerdict: '기준으로 계산한 실제 차량 판정(pass/fail). 학생 답이 아니다', judgmentCorrect: '판정 항목의 최초 답이 모두 정답이면 true', firstCorrectCount: '최초 답 정답 항목 수', finalCorrectCount: '최종 답 정답 항목 수', requiredCount: '응답 항목 수', unansweredFirstCount: '최초 답이 채점되지 않은 항목 수',
-    npcInspectionResult: '마지막 NPC 검사(passed, needsCorrection, notCompleted)', npcInspectionCount: 'NPC 검사 횟수', eventCount: '사건 수', clientAppVersion: '앱 판(기본 판+빌드 커밋). 0.3.1-demo부터 계산 답을 다시 절사하지 않고 채점, 0.3.2-demo부터 계산기, 0.3.3-demo부터 실습장 조명·바닥 겉모습이 달라짐(채점·기록은 같음), 0.3.4-demo부터 안내 있음에만 목적지 표식이 생기고, 두 도움 방식 모두 조작 반응·소리(처음엔 꺼짐, 켰는지는 기록에 없음)가 늘어남(채점·기록은 같음), 0.3.5-demo부터 캐릭터 겉모습(머리가 큰 비례, 학생 키 1.45 m)과 걷기(출발·멈춤에 약 0.2초의 가속·감속, 눌러 가는 경로가 곧아짐)가 달라짐(최고 속도 1.6 m/s와 채점·기록은 같음, 이동 한 번의 소요 시간이 약 0.2초 늘 수 있음), 0.3.6-demo부터 실습장 벽과 이웃 구역에 꾸밈(창문·셔터·문·표지·이웃 실습 구역 물건)이 생김(누를 수 있는 것과 채점·기록은 같음). 이어 하기로 이어진 수행은 처음 시작한 판이 남는다',
+    npcInspectionResult: '마지막 NPC 검사(passed, needsCorrection, notCompleted)', npcInspectionCount: 'NPC 검사 횟수', eventCount: '사건 수', clientAppVersion: '앱 판(기본 판+빌드 커밋). 0.3.1-demo부터 계산 답을 다시 절사하지 않고 채점, 0.3.2-demo부터 계산기, 0.3.3-demo부터 실습장 조명·바닥 겉모습이 달라짐(채점·기록은 같음), 0.3.4-demo부터 안내 있음에만 목적지 표식이 생기고, 두 도움 방식 모두 조작 반응·소리(처음엔 꺼짐, 켰는지는 기록에 없음)가 늘어남(채점·기록은 같음), 0.3.5-demo부터 캐릭터 겉모습(머리가 큰 비례, 학생 키 1.45 m)과 걷기(출발·멈춤에 약 0.2초의 가속·감속, 눌러 가는 경로가 곧아짐)가 달라짐(최고 속도 1.6 m/s와 채점·기록은 같음, 이동 한 번의 소요 시간이 약 0.2초 늘 수 있음), 0.3.6-demo부터 실습장 벽과 이웃 구역에 꾸밈(창문·셔터·문·표지·이웃 실습 구역 물건)이 생김(누를 수 있는 것과 채점·기록은 같음), 0.3.7-demo부터 리허설이 아닌 세션의 학생 코드가 학번(학년·반·번호 네 자리)이 되고 학생이 과제·차시·도움 방식을 고르지 않음(채점·기록 형식은 같음). 이어 하기로 이어진 수행은 처음 시작한 판이 남는다',
     localSaveStatus: '기기 저장 상태', uploadStatus: '전송 상태. 학습 성과와 무관', uploadedAt: '서버 접수 시각', receiptId: '접수번호. 내용 접수 확인일 뿐 신원·정답·적격의 증명이 아니다', payloadHash: '원본 해시(JCS+SHA-256)',
   }
   return [
     '섀시 가상 실습장 연구용 내려받기 묶음 설명서', '',
     '[주의 — 연구자 전용]',
-    '- 여러 학생의 가명 코드가 들어 있다. 일반 다운로드 폴더에 두지 말고, 가명 코드 대응표와 따로 보관한다.',
-    '- 바깥에 공유하기 전에 가명 코드 처리 규칙을 먼저 정한다. 이 묶음은 공유본이 아니다.',
+    '- 여러 학생의 학생 코드가 들어 있다. 학번이 들어 있으면 학생을 바로 알아볼 수 있다(0.3.7-demo부터, anonymousStudentCode 설명 참고). 일반 다운로드 폴더에 두지 말고, 가명 코드를 썼다면 대응표와 따로 보관한다.',
+    '- 바깥에 공유하기 전에 학생 코드(학번) 처리 규칙을 먼저 정한다. 이 묶음은 공유본이 아니다.',
     '- 참여 철회가 있으면 이 파일과 복사본도 처리 대상이다.', '',
     '[이 묶음]',
     `- 묶음 규칙 판: ${RESEARCH_BUNDLE_VERSION}`,
