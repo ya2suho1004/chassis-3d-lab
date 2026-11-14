@@ -6,6 +6,11 @@ import { useEffect, useMemo } from 'react'
 import type { SceneLayout } from './layoutModel'
 import { PALETTE, PANEL_RGB, labZones } from './look/lookConfig'
 import { glowTexture, hallFalloffTexture, wallShadeTexture } from './look/lookTextures'
+import { FILL_ON } from './fill/fillSwitch'
+import { hallPaintTexture } from './fill/hallPaint'
+import { ZONE_PAINT } from './fill/neighborZones'
+import { SpaceFillMeshes } from './fill/SpaceFill'
+import { buildSpaceFill } from './fill/spaceFillPlan'
 
 /** 천장 높이(m, 가정 — 미측정). 실습장 벽(3.4 m) 위는 흰 벽으로 이어 붙인다 */
 export const CEILING_H = 4.2
@@ -94,16 +99,20 @@ function InnerWall({ x1, z1, x2, z2, y0, y1, inward, mat }: { x1: number; z1: nu
 
 export function Surroundings({ layout, halo }: { layout: SceneLayout; halo: number }) {
   const b = useMemo(() => hallBounds(layout), [layout])
+  // 공간 채우기(설계 2026-11-14): 이웃 구역 물건·벽 꾸밈(fill/). 배치가 바뀔 때만 만든다
+  const fill = useMemo(() => buildSpaceFill(b, layout), [b, layout])
   const mats = useMemo(() => ({
-    // 바깥 바닥은 실습장에서 멀수록 어둡게(시선이 실습장에 모이게)
-    floor: new THREE.MeshStandardMaterial({ color: PALETTE.hallFloor, map: hallFalloffTexture(b, labZones(layout)), roughness: 0.82 }),
+    // 바깥 바닥은 실습장에서 멀수록 어둡게(시선이 실습장에 모이게). 공간 채우기가 켜져 있으면 구역 칠·구획선·물건 밑 그늘을 함께 구운 그림(색 포함)을 쓴다
+    floor: FILL_ON
+      ? new THREE.MeshStandardMaterial({ color: '#ffffff', map: hallPaintTexture(b, labZones(layout), fill.paint, fill.feet, { color: ZONE_PAINT.line, width: ZONE_PAINT.lineWidth }), roughness: 0.82 })
+      : new THREE.MeshStandardMaterial({ color: PALETTE.hallFloor, map: hallFalloffTexture(b, labZones(layout)), roughness: 0.82 }),
     wall: new THREE.MeshStandardMaterial({ color: PALETTE.hallWall, map: wallShadeTexture('up'), roughness: 0.9 }),
     wallLow: new THREE.MeshStandardMaterial({ color: PALETTE.hallWallLow, map: wallShadeTexture('low'), roughness: 0.9 }),
     // 천장은 조명 영향 없이 밝은 회색(반구광의 바닥색이 아래 보는 면을 초록으로 물들이지 않게)
     ceiling: new THREE.MeshBasicMaterial({ color: PALETTE.ceiling }),
     // 조명판: 밝기 1을 넘는 흰색(품질 높음에서 빛 번짐이 걸린다)
     panel: new THREE.MeshBasicMaterial({ color: new THREE.Color().setRGB(PANEL_RGB[0], PANEL_RGB[1], PANEL_RGB[2]) }),
-  }), [b, layout])
+  }), [b, layout, fill])
   // 조명판 둘레의 옅은 빛 판(더하기 섞기)
   const haloMat = useMemo(() => new THREE.MeshBasicMaterial({ map: glowTexture('alpha'), color: PALETTE.halo, transparent: true, opacity: halo, depthWrite: false, blending: THREE.AdditiveBlending }), [halo])
   // 품질이나 배치가 바뀌어 재질을 새로 만들면 예전 것은 내려놓는다(그림은 여러 곳이 함께 쓰는 것이라 그대로 둔다)
@@ -139,6 +148,7 @@ export function Surroundings({ layout, halo }: { layout: SceneLayout; halo: numb
       <CeilingInstances spots={panels} y={CEILING_H - 0.01} geometry={panelGeo} material={mats.panel} />
       <CeilingInstances spots={panels} y={CEILING_H - 0.02} geometry={haloGeo} material={haloMat} />
       {decor.map((d) => <Decor key={d.kind} d={d} />)}
+      {FILL_ON && <SpaceFillMeshes plan={fill} />}
     </group>
   )
 }
