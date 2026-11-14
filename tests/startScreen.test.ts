@@ -133,3 +133,19 @@ describe('촬영 도구(scripts/lookdev/lookdev.mjs)', () => {
     expect(src).toMatch(/#v=1&s=DEMO-ONLY&t=\$\{LOOKDEV_CASE\[/)
   })
 })
+
+describe('흐름 확인·시연 영상 스크립트(puppeteer-core, 설치돼 있을 때만 돈다)', () => {
+  const flow = fs.readFileSync('scripts/check/flow-check.mjs', 'utf8')
+  const vid = fs.readFileSync('scripts/demo-video/demovid.mjs', 'utf8')
+  test('예전 입력칸·고르기 대신 수업 주소와 학번 3999를 쓴다', async () => {
+    const { readClassLink } = await import('../src/app/classLink')
+    for (const src of [flow, vid]) {
+      expect(src).not.toMatch(/익명 코드|start-pick|name="mode"|사례 1"\)\]\/input/)
+      const m = src.match(/#v=1&s=DEMO-ONLY&t=([^&]+)&p=p&m=/)
+      expect(m, '수업 주소').not.toBeNull()
+      expect(readClassLink(`http://127.0.0.1:4325/#v=1&s=DEMO-ONLY&t=${m![1]}&p=p&m=g&d=x`, tasks.map(caseKey)).kind).toBe('ok')
+    }
+    expect(flow).toMatch(/p\.type\('input\[aria-label="학번"\]', '3999'\)/)
+    expect(flow).toMatch(/m=\$\{MODE === 'unguided' \? 'u' : 'g'\}/)
+  })
+})
