@@ -22,7 +22,7 @@ node scripts/lookdev/lookdev.mjs colors <출력폴더> <이름>
 
 | 명령 | 하는 일 | 나오는 것 |
 |---|---|---|
-| `cams` | 고정 구도 10개(`hero top tester carclose lifttop turncar lifts graze north bench`)를 찍는다 | `<이름>-<품질>-<구도>.png`, `<이름>-<품질>-cams.json`(그리기 호출 수·삼각형 수·굽기 통계·오류) |
+| `cams` | 고정 구도 15개(`hero top tester carclose lifttop turncar lifts graze north bench`, 공간 채우기용 `westview southview northwall eastwide southwest`)를 찍는다 | `<이름>-<품질>-<구도>.png`, `<이름>-<품질>-cams.json`(그리기 호출 수·삼각형 수·굽기 통계·오류) |
 | `inst` | 계측부 가까이 보기. `disc` 다이얼 게이지 2종, `panel` 계기 화면, `turn` 측정판 좌·우 | `<이름>-<품질>-inst-….png` |
 | `toggle` | 품질을 두 번 바꾸고 기본 화면에 다녀온다(부품이 붙고 떨어질 때 오류가 없는지, 그때마다 바닥 그림자를 다시 굽는지) | 표준 출력(JSON: 단계별 굽기 횟수·오류), `<이름>-<품질>-toggled.png`(바꾼 뒤), `…-toggled-back.png`(되돌린 뒤) |
 | `walk` | 빈 바닥 세 곳을 두 바퀴 걷는 동안, 한 번만 해야 하는 일(실습장 반사광 그리기·바닥 그림자 굽기)을 되풀이하지 않는지, 둘째 바퀴에서 그래픽 장치에 새로 만드는 것(그림·그림판·셰이더·버퍼)이 없는지 센다 | 표준 출력(JSON: `envCaptures.walking`이 0, `bakes`가 그대로, `madeSecondLap`의 `textures`·`framebuffers`·`programs`가 0이고 `buffers`가 100 이하여야 한다) |
@@ -39,6 +39,17 @@ node scripts/lookdev/lookdev.mjs colors <출력폴더> <이름>
 3. `sheet`로 비교 그림을 만들고 `colors`로 계측부 색을 잰다. `toggle`로 품질 바꾸기·화면 바꾸기에서 오류가 없는지 본다.
 4. `walk`와 `ctx`로, 고정 구도 촬영으로는 드러나지 않는 것(걷는 동안의 숨은 부담, 연결이 끊겼다 돌아온 뒤의 화면)을 본다.
 5. 한도(빛과 재질 설계 §6): 품질 낮음의 그리기 호출 수는 바꾸기 전 값 + 2 이하, 품질 높음은 +8% 이내. 콘솔 오류와 막힌 쓰기 요청은 0건.
+
+### 공간 채우기 앞뒤 견주기
+
+공간 채우기(설계 `docs/superpowers/specs/2026-11-14-space-fill-design.md` — 이웃 구역 물건과 북·동 벽 꾸밈)는 운영 묶음에서 늘 켜져 있다. 개발 서버에서만 주소에 `?fill=0`을 붙이면 꺼진다. 주소는 따옴표로 감싸 넘긴다(도구가 품질 인자를 `&q=…`로 잇는다).
+
+```bash
+node scripts/lookdev/lookdev.mjs cams "http://127.0.0.1:5173/?fill=0" <출력폴더> before low all   # 끈 모습(앞)
+node scripts/lookdev/lookdev.mjs cams "http://127.0.0.1:5173/"        <출력폴더> after  low all   # 기본(뒤)
+```
+
+새 구도 다섯: `westview`(안에서 서쪽 엔진 실습 구역), `southview`(안에서 남쪽 전기 실습 구역), `northwall`(북쪽 벽 창 띠·표지), `eastwide`(동쪽 벽 셔터·출입문), `southwest`(남서쪽 배선판·칸막이).
 
 `walk`와 `ctx`에 `guided`를 붙이면 과제를 받고 첫 단계를 끝내 목적지 표식이 떠 있는 채로 돌린다. 개발 서버를 오래 켜 둔 채 파일을 많이 바꿨으면 서버를 새로 띄운 뒤 확인한다(예전 파일을 내주는 일이 있었다).
 
