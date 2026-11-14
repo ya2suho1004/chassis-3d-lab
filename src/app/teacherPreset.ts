@@ -18,6 +18,8 @@ export interface TeacherPreset {
 export const PRESET_KEY = 'chassis.teacherPreset.v1'
 /** 과제 사례 식별자(사례 ID가 없으면 빈 문자열 — 그런 과제는 고정 설정 대상이 아님) */
 export const caseKey = (t: { measurement: { caseId: string | null } }) => t.measurement.caseId ?? ''
+/** 교사 설정·수업 주소가 받는 사례 목록(사례 ID가 없는 과제는 뺀다). 시작 화면·이어 하기·앱이 열릴 때 주소 읽기가 같은 목록을 쓴다 */
+export const knownCaseIds = (tasks: Array<{ measurement: { caseId: string | null } }>) => tasks.map(caseKey).filter((k) => k !== '')
 const PHASES: UsagePhase[] = ['preview', 'review', 'other']
 const MODES: DifficultyMode[] = ['guided', 'unguided']
 

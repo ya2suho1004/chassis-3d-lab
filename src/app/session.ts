@@ -27,11 +27,11 @@ const VIRTUAL_CODE_RE = /^D-\d{2}$/
 
 export const ENTRY_TEXT: Record<EntryKind, { word: string; label: string; example: string; placeholder: string; error: string; inputMode: 'numeric' | 'text' }> = {
   studentNumber: {
-    word: '학번', label: '학번 네 자리', example: '예: 2학년 2반 11번 → 2211', placeholder: '2211',
+    word: '학번', label: '학번 네 자리', example: '예: 2학년 2반 11번 → 2211', placeholder: '네 자리 숫자',
     error: '학번은 학년·반·번호를 붙인 네 자리 숫자예요. 예: 2학년 2반 11번 → 2211', inputMode: 'numeric',
   },
   virtualCode: {
-    word: '가상 코드', label: '가상 코드', example: '예: D-01', placeholder: 'D-01',
+    word: '가상 코드', label: '가상 코드', example: '예: D-01', placeholder: 'D-두 자리 번호',
     error: '가상 코드는 D-01처럼 써요. 한글 자판이면 영문으로 바꿔 넣으세요.', inputMode: 'text',
   },
 }

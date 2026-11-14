@@ -77,3 +77,8 @@ export function takeClassLink(env: { href: string; save: (p: TeacherPreset) => b
   if (saved) env.replaceState(env.href.split('#')[0]!)
   return { kind: 'ok', preset: r.preset, saved }
 }
+
+/** 화면이 쓸 교사 설정: 기기에 저장하지 못한 수업 주소 설정이 있으면 그것, 아니면 기기에 저장된 설정(load) */
+export function screenPreset(link: ClassLinkTaken | undefined, load: () => TeacherPreset | null): TeacherPreset | null {
+  return link?.kind === 'ok' && !link.saved ? link.preset : load()
+}

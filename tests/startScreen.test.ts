@@ -29,7 +29,7 @@ describe('학번 입장', () => {
     expect(html).toMatch(/<input[^>]*aria-label="학번"/)
     expect(html).toMatch(/inputMode="numeric"|inputmode="numeric"/)
     expect(html).toMatch(/maxLength="4"|maxlength="4"/)
-    expect(html).toMatch(/placeholder="2211"/)
+    expect(html).toMatch(/placeholder="네 자리 숫자"/) // 예시 값(2211)은 라벨에만 — 자리 표시가 미리 채운 값처럼 보이지 않게
     const t = text(html)
     expect(t).toMatch(/학번 네 자리/)
     expect(t).toMatch(/2학년 2반 11번 → 2211/)
@@ -42,7 +42,7 @@ describe('학번 입장', () => {
     withPreset({ sessionCode: 'REH-L12' })
     const html = render()
     expect(html).toMatch(/<input[^>]*aria-label="가상 코드"/)
-    expect(html).toMatch(/placeholder="D-01"/)
+    expect(html).toMatch(/placeholder="D-두 자리 번호"/)
     expect(text(html)).toMatch(/가상 코드/)
     expect(text(html)).not.toMatch(/학번/)
   })

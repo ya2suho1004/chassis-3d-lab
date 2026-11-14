@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createDemoSession, listTasks, validateStudentCode, entryKindFor, ENTRY_TEXT, APP_VERSION } from '../app/session'
-import { caseKey, loadPreset, MODE_LABEL, type TeacherPreset } from '../app/teacherPreset'
-import type { ClassLinkTaken } from '../app/classLink'
+import { knownCaseIds, loadPreset, type TeacherPreset } from '../app/teacherPreset'
+import { screenPreset, type ClassLinkTaken } from '../app/classLink'
+import { todayTask, todayTaskText } from '../app/todayTask'
 import type { SessionContext } from '../domain/record'
 import type { DifficultyMode } from '../domain/taskEngine'
 import type { ApprovedTask } from '../domain/types'
@@ -9,8 +10,7 @@ import type { Draft, Repository } from '../records/repository'
 import { startOrResume } from '../app/saveRecovery'
 import { NO_RECORD_CODE } from '../records/memoryRepository'
 import { TeacherPanel } from './TeacherPanel'
-import { LESSON_SHORT, lessonAttemptRole, lessonMode } from '../app/lesson'
-import { DEFAULT_SESSION_CODE, applySessionRules } from '../app/sessions'
+import { lessonAttemptRole } from '../app/lesson'
 
 // 시작 화면(설계 docs/superpowers/specs/2026-11-14-student-number-and-class-link-design.md §3-2·§3-3):
 // 학생은 학번(리허설 세션은 가상 코드)만 넣는다. 과제·차시·도움 방식은 교사가 정하고(교사 화면 또는 수업 주소), 여기서는 '오늘 과제' 한 줄로만 보인다.
@@ -21,20 +21,14 @@ export function StartScreen({ repo, onStart, onFoundDraft, classLink }: { repo: 
   /** 앱이 열릴 때 읽은 수업 주소(main.tsx). 읽지 못했으면 안내를 보이고, 기기에 저장하지 못한 설정은 이번 화면에서만 쓴다 */
   classLink?: ClassLinkTaken }) {
   const tasks = listTasks()
-  const caseIds = tasks.map(caseKey).filter((k) => k !== '')
-  const [preset, setPreset] = useState<TeacherPreset | null>(() => (classLink?.kind === 'ok' && !classLink.saved ? classLink.preset : loadPreset(caseIds)))
+  const caseIds = knownCaseIds(tasks)
+  const [preset, setPreset] = useState<TeacherPreset | null>(() => screenPreset(classLink, () => loadPreset(caseIds)))
   const [code, setCode] = useState('')
-  // 오늘 세션은 교사 화면(또는 수업 주소)에서 정한다(설계 2026-11-03-class-sessions). 정하지 않았으면 시연 세션
-  const sessionCode = preset?.sessionCode ?? DEFAULT_SESSION_CODE
+  // 오늘 세션·과제는 교사 화면(또는 수업 주소)에서 정한다. 정하지 않았으면 기본값(app/todayTask.ts — 이어 하기 화면과 같은 규칙)
+  const today = todayTask(preset, tasks)
+  const { sessionCode, task, usagePhase: phase, difficultyMode: mode, vehicleEntryDirection: entryDir } = today
   const entryKind = entryKindFor(sessionCode)
   const entry = ENTRY_TEXT[entryKind]
-  // 오늘 과제: 교사 설정 그대로, 없으면 기본값. 세션이 정한 차시·도움 방식이 먼저, 5차시는 안내 없음 고정(lessonMode)
-  const task = tasks[Math.max(0, preset ? tasks.findIndex((t) => caseKey(t) === preset.caseId) : 0)]!
-  const fixed = applySessionRules(sessionCode, { usagePhase: preset?.usagePhase ?? 'preview', difficultyMode: preset?.difficultyMode ?? 'guided' })
-  const phase = fixed.usagePhase
-  const mode = lessonMode(fixed.usagePhase, fixed.difficultyMode)
-  // 차량 진입 방향도 교사 설정에서만 정한다(시작 화면 정리 2026-11-03)
-  const entryDir = preset?.vehicleEntryDirection ?? null
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [counts, setCounts] = useState<{ records: number; outbox: number } | null>(null)
@@ -94,7 +88,7 @@ export function StartScreen({ repo, onStart, onFoundDraft, classLink }: { repo: 
         <span className="small">이름·연락처는 넣지 않아요.</span>
       </section>
       <section className="card start-today" aria-label="오늘 과제">
-        <p><b>오늘 과제</b> {task.title} · {LESSON_SHORT[phase]} · {MODE_LABEL[mode]}</p>
+        <p><b>오늘 과제</b> {todayTaskText(today)}</p>
       </section>
       {error && <p className="error" role="alert">{error}</p>}
       <button className="primary" onClick={() => start()} disabled={busy}>{busy ? '준비 중…' : '과제 수령하러 가기'}</button>
