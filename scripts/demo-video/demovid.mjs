@@ -23,14 +23,14 @@ const closeToast = async () => { const x = await p.$('.g-toast .g-x'); if (x) { 
 fs.mkdirSync(`${OUT}/f`, { recursive: true });
 const cdp = await p.createCDPSession(); const frames = []; let fn = 0;
 cdp.on('Page.screencastFrame', (f) => { const file = `${OUT}/f/${String(fn++).padStart(6, '0')}.jpg`; fs.writeFileSync(file, Buffer.from(f.data, 'base64')); frames.push({ file, t: f.metadata.timestamp }); cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }).catch(() => {}) });
-await p.goto(URL, { waitUntil: 'domcontentloaded' });
+// 학생 화면에는 고르기가 없어(설계 2026-11-14-student-number-and-class-link) 과제(최소회전반경 사례 1)·안내 있음은 수업 주소(# 값)로 정한다
+await p.goto(URL.split('#')[0] + '#v=1&s=DEMO-ONLY&t=case-left-35-30-2.7&p=p&m=g&d=x', { waitUntil: 'domcontentloaded' });
 await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 88, maxWidth: W, maxHeight: H, everyNthFrame: 1 });
 mark('rec start');
 await cap('섀시 가상 실습장 — 기록 없는 실습 흐름 (시연 예비 영상 · AI 교관 장면 없음)'); await sleep(3200);
 await p.mouse.click(W / 2, H / 2); mark('intro click'); await sleep(3500);
 await cap(''); await X('.//button[contains(., "기록 없이 하기")]'); await sleep(800); await shot('start');
-await cap('① 시작 화면 — 과제(최소회전반경 사례 1)와 안내 있음 고르기');
-await click('.//label[contains(., "최소회전반경 측정 및 판정 — 사례 1")]/input', 1500);
+await cap('① 시작 화면 — 오늘 과제(최소회전반경 사례 1 · 안내 있음)는 선생님이 정함'); await sleep(1500);
 await click(btn('기록 없이 하기'), 1500); mark('norecord');
 await cap('② 캐릭터 만들기 — 체형·머리·색·조합형 닉네임');
 const sels = await p.$$('select');

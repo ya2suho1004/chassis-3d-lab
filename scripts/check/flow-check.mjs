@@ -1,4 +1,5 @@
-// 흐름 확인(사용: node flow-check.mjs <주소> <출력폴더> guided|unguided). 처음 작성: Codex 검토 A1·A2·A6·A8 화면 확인 — 로컬 빌드, 기본 화면(패널), 기록 모드 D-01(이 기기에만 저장, 서버 전송 없음).
+// 흐름 확인(사용: node flow-check.mjs <주소> <출력폴더> guided|unguided). 처음 작성: Codex 검토 A1·A2·A6·A8 화면 확인 — 로컬 빌드, 기본 화면(패널), 기록 모드 학번 3999(가상 값, 이 기기에만 저장, 서버 전송 없음).
+// 학생 화면에는 고르기가 없어(설계 2026-11-14-student-number-and-class-link) 과제(최소회전반경 사례 1)·도움 방식은 수업 주소(# 값)로 정한다.
 // GET 외 요청은 모두 막는다(AI 질문·기록 전송 0건). 질문 창은 열기만 하고 보내지 않는다.
 import puppeteer from 'puppeteer-core';
 const [URL, OUT, MODE] = process.argv.slice(2);
@@ -9,14 +10,13 @@ const blocked = []; await p.setRequestInterception(true);
 p.on('request', (r) => { if (r.method() !== 'GET') { blocked.push(r.method() + ' ' + r.url().slice(0, 80)); r.abort() } else r.continue() });
 await p.setViewport({ width: 1280, height: 860 });
 await p.evaluateOnNewDocument(() => localStorage.setItem('chassis.intro.v1', JSON.stringify({ seen: true, off: true })));
-await p.goto(URL, { waitUntil: 'domcontentloaded' }); await sleep(1000);
+const LINK = `#v=1&s=DEMO-ONLY&t=case-left-35-30-2.7&p=p&m=${MODE === 'unguided' ? 'u' : 'g'}&d=x`;
+await p.goto(URL.split('#')[0] + LINK, { waitUntil: 'domcontentloaded' }); await sleep(1000);
 const X = async (xp) => { for (let i = 0; i < 40; i++) { const [el] = await p.$$('xpath/' + xp); if (el) return el; await sleep(300) } throw new Error('not found ' + xp) };
 const click = async (xp, wait = 400) => { await (await X(xp)).click(); await sleep(wait) };
 const btn = (t) => `.//button[contains(normalize-space(.), "${t}")]`;
 const out = { mode: MODE };
-await p.type('input[aria-label="익명 코드"]', 'D-01');
-await click('.//label[contains(., "최소회전반경 측정 및 판정 — 사례 1")]/input');
-if (MODE === 'unguided') await click('.//input[@name="mode"]/parent::label[contains(., "안내 없음")]/input');
+await p.type('input[aria-label="학번"]', '3999');
 await click(btn('과제 수령하러 가기'), 800);
 await click(btn('이대로 시작'), 1500);
 for (let i = 0; i < 60; i++) { if (!(await p.$('.g-loading'))) break; await sleep(500) }

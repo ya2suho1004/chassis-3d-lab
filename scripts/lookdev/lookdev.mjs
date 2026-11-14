@@ -100,15 +100,17 @@ async function launch(outDir) {
 }
 
 // ---------- 앱 흐름 ----------
-/** 시작 화면 → 캐릭터 → 실습장(게임 화면). 기록은 이 임시 프로필 안에만 남고, 전송은 막혀 있다 */
+/** 시작 화면 → 캐릭터 → 실습장(게임 화면). 기록은 이 임시 프로필 안에만 남고, 전송은 막혀 있다.
+ *  학생 화면에는 고르기가 없어(설계 2026-11-14-student-number-and-class-link) 과제·도움 방식은 수업 주소(# 값)로 정하고, 학번은 가상 값 3999를 넣는다 */
+const LOOKDEV_CASE = { brake: 'case-rear-ok-240-200-600', turning: 'case-left-35-30-2.7' }
 async function enterLab(b, base, quality, task = 'brake', help = '안내 있음') {
-  await b.send('Page.navigate', { url: `${base}${base.includes('?') ? '&' : '?'}q=${quality}` })
+  const link = `#v=1&s=DEMO-ONLY&t=${LOOKDEV_CASE[task === 'brake' ? 'brake' : 'turning']}&p=p&m=${help === '안내 없음' ? 'u' : 'g'}&d=x`
+  await b.send('Page.navigate', { url: `${base.split('#')[0]}${base.includes('?') ? '&' : '?'}q=${quality}${link}` })
   await b.waitFor(`!!document.querySelector('main.start')`)
   if (!(await b.ev(`window.__writeBlock === true`))) throw new Error('쓰기 막기가 걸리지 않았습니다')
-  await b.ev(`(() => { const i = document.querySelector('input[aria-label="익명 코드"]'); i.focus(); return true })()`)
-  await b.send('Input.insertText', { text: 'A-01' })
-  await b.click('.start-pick label.radio', task === 'brake' ? '제동력 측정 및 판독 — 사례 1' : '최소회전반경 측정 및 판정 — 사례 1')
-  await b.click('.start-pick label.radio', help)
+  if (await b.ev(`location.hash !== ''`)) throw new Error('수업 주소를 읽지 못했습니다: ' + (await b.ev('location.hash')))
+  await b.ev(`(() => { const i = document.querySelector('input[aria-label="학번"]'); i.focus(); return true })()`)
+  await b.send('Input.insertText', { text: '3999' })
   await b.click('button.primary', '과제 수령하러 가기')
   await b.waitFor(`/이대로 시작/.test(document.body.innerText) || !!document.querySelector('main.game')`)
   await b.click('button.primary', '이대로 시작')

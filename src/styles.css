@@ -503,6 +503,14 @@ main.wa.screen::before { content:""; position:fixed; inset:0; z-index:-1; backgr
 .today-summary dd { margin:0; font-weight:600; overflow-wrap:anywhere; }
 .today-summary dl > div.warn dd { color:#9a4a00; }
 .today-summary dl > div.warn dd::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#d97a00; margin-right:6px; vertical-align:middle; }
+/* 학생용 수업 주소·QR(설계 2026-11-14-student-number-and-class-link §3-4) */
+.class-link { border:1px solid #c9d3db; border-radius:12px; padding:10px 14px; margin:12px 0; background:#fff; }
+.class-link h3 { margin:0 0 6px; font-size:1rem; }
+.class-link-qr { display:block; width:200px; height:200px; margin:8px 0; }
+.class-link-url { margin:4px 0 8px; }
+.class-link-url code { overflow-wrap:anywhere; word-break:break-all; font-size:.85rem; }
+/* 시작 화면 오늘 과제 한 줄 */
+.start .start-today p { margin:0; overflow-wrap:anywhere; }
 .today-warn { margin:8px 0 0; padding:6px 10px; border-radius:8px; background:#fff4e0; color:#7a3d00; font-size:.9rem; }
 
 /* C2 접수 대조(교사 화면 수업 후 탭) */

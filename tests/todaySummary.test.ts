@@ -10,7 +10,7 @@ import type { SessionRow } from '../src/teacher/serverAdmin'
 import type { ApprovedTask } from '../src/domain/types'
 
 const tasks = [lv1, turn1] as ApprovedTask[]
-const preset: TeacherPreset = { sessionCode: 'REH-L12', caseId: lv1.measurement.caseId!, usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: 'north', locked: true }
+const preset: TeacherPreset = { sessionCode: 'REH-L12', caseId: lv1.measurement.caseId!, usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: 'north' }
 const row = (p: Partial<SessionRow> = {}): SessionRow => ({ session_code: 'REH-L12', class_condition_code: 'REH', lesson_flow: 'lesson1-2', chatbot_enabled: true, chat_cap_per_student: 10, chat_daily_cap: 500, active: true, ...p })
 const val = (r: ReturnType<typeof todaySummary>, label: string) => r.rows.find((x) => x.label === label)?.value
 
@@ -22,7 +22,8 @@ describe('오늘 수업 설정 요약', () => {
     expect(val(r, '차시')).toBe('1~2차시 연습')
     expect(val(r, '도움 방식')).toBe('안내 있음(견습)')
     expect(val(r, '차량 진입')).toBe('북쪽 진입')
-    expect(val(r, '학생 변경')).toBe('막음 — 익명 코드만 입력')
+    expect(val(r, '학생 변경')).toBeUndefined() // 학생 화면에는 고르기가 없어 늘 막힘(설계 2026-11-14 §3-3)
+    expect(val(r, '학생 입장')).toBe('가상 코드(D-01~D-99)')
     expect(val(r, 'AI 교관')).toBe('켜짐 · 학생 1인 하루 질문 10회')
     expect(val(r, '이 기기 기록')).toBe('확정 3건 · 전송 대기 1건')
     expect(r.rows.find((x) => x.label === '이 기기 기록')?.tone).toBe('warn')
@@ -34,9 +35,10 @@ describe('오늘 수업 설정 요약', () => {
     expect(val(todaySummary({ preset: p, form: p, tasks, server: { configured: true, loggedIn: false, session: undefined }, counts: null }), '도움 방식')).toBe('안내 없음(정비사)')
   })
 
-  it('저장된 설정이 없으면 학생이 직접 고른다고 알린다', () => {
+  it('저장된 설정이 없으면 기본값으로 들어간다고 알린다', () => {
     const r = todaySummary({ preset: null, form: preset, tasks, server: { configured: true, loggedIn: false, session: undefined }, counts: null })
-    expect(val(r, '설정')).toBe('저장된 설정 없음 — 학생이 시작 화면에서 직접 고름')
+    expect(val(r, '설정')).toBe(`저장된 설정 없음 — 이 기기는 기본값(시연 · ${lv1.title} · 1~2차시 연습 · 안내 있음)으로 들어감`)
+    expect(val(r, '학생 입장')).toBe('학번 네 자리')
     expect(r.rows.find((x) => x.label === '설정')?.tone).toBe('warn')
   })
 
@@ -49,12 +51,15 @@ describe('오늘 수업 설정 요약', () => {
     expect(s({ configured: true, loggedIn: true, session: row({ active: false }) })).toBe('켜짐 · 학생 1인 하루 질문 10회 · 세션 비활성')
   })
 
-  it('학생 변경 허용·저장 안 한 변경·서버 차시 불일치를 경고한다', () => {
-    const open = { ...preset, locked: false }
-    const r = todaySummary({ preset: open, form: { ...open, vehicleEntryDirection: 'south' }, tasks, server: { configured: true, loggedIn: true, session: row({ lesson_flow: 'lesson5' }) }, counts: { records: 0, outbox: 0 } })
-    expect(r.rows.find((x) => x.label === '학생 변경')).toMatchObject({ value: '허용 — 학생이 바꿀 수 있음', tone: 'warn' })
+  it('시연 세션은 학번으로 들어온다', () => {
+    const p = { ...preset, sessionCode: 'DEMO-ONLY' }
+    expect(val(todaySummary({ preset: p, form: p, tasks, server: { configured: true, loggedIn: false, session: undefined }, counts: null }), '학생 입장')).toBe('학번 네 자리')
+  })
+
+  it('저장 안 한 변경·서버 차시 불일치를 경고한다', () => {
+    const r = todaySummary({ preset, form: { ...preset, vehicleEntryDirection: 'south' }, tasks, server: { configured: true, loggedIn: true, session: row({ lesson_flow: 'lesson5' }) }, counts: { records: 0, outbox: 0 } })
     expect(r.warnings).toEqual([
-      '아래에서 바꾼 설정이 아직 저장되지 않았습니다. ‘설정 저장’을 눌러야 학생 화면에 적용됩니다.',
+      '아래에서 바꾼 설정이 아직 저장되지 않았습니다. ‘설정 저장’을 눌러야 이 기기 시작 화면과 학생용 수업 주소에 적용됩니다.',
       '서버의 이 세션은 5차시 정리인데, 이 기기 차시는 1~2차시 연습입니다.',
     ])
     expect(r.rows.find((x) => x.label === '이 기기 기록')?.tone).toBeUndefined()

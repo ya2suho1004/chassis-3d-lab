@@ -187,6 +187,15 @@ describe('설명서와 건수 대조', () => {
     expect(readme.indexOf('0.3.6-demo부터')).toBeGreaterThan(readme.indexOf('0.3.5-demo부터'))
   })
 
+  test('학번이 들어가는 판(0.3.7-demo)을 알린다 — anonymousStudentCode는 이름과 달리 학생을 알아볼 수 있다(설계 2026-11-14 §3-7)', async () => {
+    const readme = file(await bundle([]), 'README.txt')
+    expect(readme).toContain('0.3.7-demo부터 리허설이 아닌 세션의 학생 코드가 학번(학년·반·번호 네 자리)이 되고 학생이 과제·차시·도움 방식을 고르지 않음(채점·기록 형식은 같음)')
+    const appLine = readme.split('\n').find((l) => l.startsWith('- clientAppVersion:'))!
+    expect(appLine.indexOf('0.3.7-demo부터')).toBeGreaterThan(appLine.indexOf('0.3.6-demo부터'))
+    expect(readme).toContain('anonymousStudentCode: 학생 코드. 필드 이름과 달리 익명이 아닐 수 있다 — 0.3.7-demo부터 리허설이 아닌 세션에서는 학번(학년·반·번호 네 자리)이 들어가 학생을 알아볼 수 있고, 리허설 세션은 가상 코드(D-01~D-99), 그 전 판은 가명 코드(A-01 꼴)')
+    expect(readme).toContain('학번이 들어 있으면 학생을 바로 알아볼 수 있다')
+  })
+
   test('수식으로 실행될 입력은 csv 규칙대로 막고 원본 파일은 그대로 둔다', async () => {
     const p = makePayload()
     p.measurementInputs[0]!.firstInput = '=1+1'

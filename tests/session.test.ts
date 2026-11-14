@@ -1,18 +1,48 @@
 import { describe, expect, test } from 'vitest'
 import lv1 from '../src/data/tasks/task.braking-force.case-lv1.json'
-import { validateStudentCode, createDemoSession, guidanceFor, feedbackFor, listTasks } from '../src/app/session'
+import { validateStudentCode, entryKindFor, ENTRY_TEXT, createDemoSession, guidanceFor, feedbackFor, listTasks } from '../src/app/session'
 import { createTaskRun, attempt } from '../src/domain/taskEngine'
 import type { ApprovedTask } from '../src/domain/types'
 
 const task = lv1 as ApprovedTask
 
-describe('세션 — 익명 코드', () => {
-  test('A-01 형식만 허용한다', () => {
-    expect(validateStudentCode('A-01')).toEqual({ ok: true, code: 'A-01' })
-    expect(validateStudentCode('b-07')).toEqual({ ok: true, code: 'B-07' })
-    expect(validateStudentCode('A01').ok).toBe(false)
-    expect(validateStudentCode('홍길동').ok).toBe(false)
-    expect(validateStudentCode('').ok).toBe(false)
+// 학번 입장(설계 2026-11-14-student-number-and-class-link §3-1): 리허설은 가상 코드 D-xx, 그 밖은 학번 네 자리
+describe('세션 — 입장 코드', () => {
+  test('세션 종류로 입장 방식을 정한다: 리허설은 가상 코드, 시연·연구·모르는 세션은 학번', () => {
+    expect(entryKindFor('DEMO-ONLY')).toBe('studentNumber')
+    for (const s of ['REH-L12', 'REH-L5', 'REH-USAB']) expect(entryKindFor(s)).toBe('virtualCode')
+    expect(entryKindFor('EXP-L12')).toBe('studentNumber')
+    expect(entryKindFor('없는세션')).toBe('studentNumber')
+  })
+
+  test('학번: 학년 1~3 + 반 1~9 + 번호 01~99 네 자리', () => {
+    for (const ok of ['1101', '2211', '3999', '1901', '3110']) expect(validateStudentCode(ok, 'DEMO-ONLY')).toEqual({ ok: true, code: ok })
+    expect(validateStudentCode(' 2211 ', 'DEMO-ONLY')).toEqual({ ok: true, code: '2211' })
+    for (const bad of ['0101', '4101', '9999', '2011', '2200', '1100', '221', '22110', '22-11', 'A-01', 'D-01', '２２１１', '홍길동', '', '   '])
+      expect(validateStudentCode(bad, 'DEMO-ONLY').ok, bad).toBe(false)
+  })
+
+  test('세션을 주지 않으면 시연 세션 규칙(학번)', () => {
+    expect(validateStudentCode('2211')).toEqual({ ok: true, code: '2211' })
+    expect(validateStudentCode('A-01').ok).toBe(false)
+  })
+
+  test('리허설: 가상 코드 D-두 자리만(서버가 받는 범위와 같다), 소문자는 대문자로', () => {
+    expect(validateStudentCode('D-01', 'REH-L12')).toEqual({ ok: true, code: 'D-01' })
+    expect(validateStudentCode('d-07', 'REH-L5')).toEqual({ ok: true, code: 'D-07' })
+    expect(validateStudentCode('D-99', 'REH-USAB')).toEqual({ ok: true, code: 'D-99' })
+    for (const bad of ['2211', 'A-01', 'D-1', 'D-001', 'D01', 'ㅇ-01', '']) expect(validateStudentCode(bad, 'REH-L12').ok, bad).toBe(false)
+  })
+
+  test('오류 글은 방식마다 다르고 예를 보인다', () => {
+    const n = validateStudentCode('A-01', 'DEMO-ONLY'), v = validateStudentCode('2211', 'REH-L12')
+    expect(n.ok ? '' : n.reason).toBe(ENTRY_TEXT.studentNumber.error)
+    expect(v.ok ? '' : v.reason).toBe(ENTRY_TEXT.virtualCode.error)
+    expect(ENTRY_TEXT.studentNumber.error).toMatch(/네 자리/)
+    expect(ENTRY_TEXT.studentNumber.error).toMatch(/2211/)
+    expect(ENTRY_TEXT.virtualCode.error).toMatch(/D-01/)
+    // 학생에게 보이는 글에서 '익명 코드'라는 말은 쓰지 않는다(학번은 익명이 아님)
+    for (const t of Object.values(ENTRY_TEXT)) expect(JSON.stringify(t)).not.toMatch(/익명|가명/)
   })
 
   test('demo 세션은 runPurpose=demo, 연구사용 미승인, 새 recordId(UUID)를 가진다', () => {

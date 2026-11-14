@@ -1,5 +1,6 @@
-// 교사 설정(기기별) — 수업 전에 사례·수업 시점·도움 방식·차량 진입 방향을 한 번 정해 두면 시작 화면의 기본값이 된다.
-// ‘잠금’이면 학생은 익명 코드만 입력한다. 이 기기 localStorage에만 두며 전송하지 않는다. 개인정보 칸은 없다.
+// 교사 설정(기기별) — 수업 전에 세션·사례·수업 시점·도움 방식·차량 진입 방향을 정해 두면 학생은 고르지 않고 그대로 들어간다.
+// 학생 화면에는 고르기가 없다(설계 2026-11-14-student-number-and-class-link §3-3). 학생 기기에는 수업 주소(app/classLink.ts)로 전달한다.
+// 이 기기 localStorage에만 두며 서버로 보내지 않는다. 개인정보 칸은 없다.
 // 화면 PIN은 시연용이며 보안 통제가 아니다(설계 03 §7).
 import type { UsagePhase } from '../domain/record'
 import type { DifficultyMode } from '../domain/taskEngine'
@@ -12,17 +13,17 @@ export interface TeacherPreset {
   usagePhase: UsagePhase
   difficultyMode: DifficultyMode
   vehicleEntryDirection: 'north' | 'south' | null
-  /** true면 학생 시작 화면에서 바꿀 수 없음 */
-  locked: boolean
 }
 
 export const PRESET_KEY = 'chassis.teacherPreset.v1'
 /** 과제 사례 식별자(사례 ID가 없으면 빈 문자열 — 그런 과제는 고정 설정 대상이 아님) */
 export const caseKey = (t: { measurement: { caseId: string | null } }) => t.measurement.caseId ?? ''
+/** 교사 설정·수업 주소가 받는 사례 목록(사례 ID가 없는 과제는 뺀다). 시작 화면·이어 하기·앱이 열릴 때 주소 읽기가 같은 목록을 쓴다 */
+export const knownCaseIds = (tasks: Array<{ measurement: { caseId: string | null } }>) => tasks.map(caseKey).filter((k) => k !== '')
 const PHASES: UsagePhase[] = ['preview', 'review', 'other']
 const MODES: DifficultyMode[] = ['guided', 'unguided']
 
-/** 저장된 값을 검사해 쓸 수 있으면 돌려준다. 모르는 사례·값이면 null(기본 화면으로) */
+/** 저장된 값을 검사해 쓸 수 있으면 돌려준다. 모르는 사례·값이면 null(기본값으로 들어감) */
 export function parsePreset(raw: string | null, knownCaseIds: string[]): TeacherPreset | null {
   if (!raw) return null
   let v: unknown
@@ -33,10 +34,10 @@ export function parsePreset(raw: string | null, knownCaseIds: string[]): Teacher
   if (!PHASES.includes(o.usagePhase as UsagePhase)) return null
   if (!MODES.includes(o.difficultyMode as DifficultyMode)) return null
   if (!(o.vehicleEntryDirection === null || o.vehicleEntryDirection === 'north' || o.vehicleEntryDirection === 'south')) return null
-  if (typeof o.locked !== 'boolean') return null
+  // 예전 저장값의 locked(‘학생이 바꾸지 못하게’, 0.3.6-demo까지)는 읽지 않는다. 지금은 늘 막힘
   const sessionCode = o.sessionCode === undefined ? DEFAULT_SESSION_CODE : o.sessionCode
   if (typeof sessionCode !== 'string' || !selectableSession(sessionCode)) return null
-  return applySessionRules(sessionCode, { sessionCode, caseId: o.caseId, usagePhase: o.usagePhase as UsagePhase, difficultyMode: o.difficultyMode as DifficultyMode, vehicleEntryDirection: o.vehicleEntryDirection as TeacherPreset['vehicleEntryDirection'], locked: o.locked })
+  return applySessionRules(sessionCode, { sessionCode, caseId: o.caseId, usagePhase: o.usagePhase as UsagePhase, difficultyMode: o.difficultyMode as DifficultyMode, vehicleEntryDirection: o.vehicleEntryDirection as TeacherPreset['vehicleEntryDirection'] })
 }
 
 export function loadPreset(knownCaseIds: string[]): TeacherPreset | null {
@@ -46,7 +47,8 @@ export function loadPreset(knownCaseIds: string[]): TeacherPreset | null {
 /** 저장 성공 여부를 돌려준다(사파리 개인 정보 보호 모드 등에서는 실패할 수 있음) */
 export function savePreset(p: TeacherPreset | null): boolean {
   try {
-    if (p) localStorage.setItem(PRESET_KEY, JSON.stringify(p))
+    // locked: true는 예전 판(0.3.6-demo까지)으로 되돌려도 이 설정을 읽게 함께 적는다(지금 판은 읽지 않음)
+    if (p) localStorage.setItem(PRESET_KEY, JSON.stringify({ ...p, locked: true }))
     else localStorage.removeItem(PRESET_KEY)
     return true
   } catch { return false }

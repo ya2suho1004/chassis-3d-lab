@@ -59,7 +59,7 @@ export function ChatReview({ cfg, auth, session, busy, onToggleChat, onExpired, 
       </div>
       <div className="row small">
         <label className="inline">학생
-          <select value={code ?? ''} onChange={(e) => setCode(e.target.value || null)} aria-label="익명 코드로 거르기">
+          <select value={code ?? ''} onChange={(e) => setCode(e.target.value || null)} aria-label="학생 코드로 거르기">
             <option value="">전체</option>
             {studentCodesOf(rows).map((c) => <option key={c} value={c}>{c}</option>)}
           </select>

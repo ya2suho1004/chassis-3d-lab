@@ -20,6 +20,13 @@ import { useGLTF } from '@react-three/drei'
 import { DEFAULT_PROFILE, loadAvatar, nicknameOf, randomNickname, saveAvatar, type AvatarProfile } from './app/avatar'
 import { assetUrl } from './app/assetUrl'
 import { LabSound } from './scene/sound'
+import { screenPreset, type ClassLinkTaken } from './app/classLink'
+import { caseKey, knownCaseIds, loadPreset } from './app/teacherPreset'
+import { resumeTodayLine } from './app/todayTask'
+
+const TASKS = listTasks()
+/** 이 기기에 저장된 교사 설정(시작 화면과 같은 사례 목록으로 읽음) */
+const loadDevicePreset = () => loadPreset(knownCaseIds(TASKS))
 
 type Screen =
   | { name: 'loading' }
@@ -33,7 +40,8 @@ type Screen =
   | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository; profile: AvatarProfile }
   | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile; frozenPayload: RecordPayload | null }
 
-export function App() {
+/** classLink: 앱이 열릴 때 읽은 수업 주소(main.tsx, 설계 2026-11-14 §3-4) — 시작 화면이 안내에 쓴다 */
+export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
   const [repo, setRepo] = useState<Repository | null>(null)
   const [screen, setScreen] = useState<Screen>({ name: 'loading' })
   // 인트로(설계 2026-11-03): 저장소는 뒤에서 열고, 인트로가 끝나면 원래 첫 화면을 보인다
@@ -82,11 +90,14 @@ export function App() {
   if (screen.name === 'loading') return <main className="screen"><p>저장소를 여는 중…</p></main>
   if (screen.name === 'storageError') return <main className="screen"><p className="error">이 기기의 저장소(IndexedDB)를 열 수 없습니다: {screen.message}</p><p className="small">시크릿 모드이거나 브라우저가 저장을 막고 있을 수 있습니다. 일반 창(시크릿 모드가 아닌 창)이나 다른 기기에서 다시 열어 보세요. 그래도 안 되면 선생님께 알려 주세요.</p></main>
 
+  // 끝내지 않은 수행이 있으면 시작 화면을 건너뛰므로, 새 수업 주소의 오늘 과제와 다르면 사실만 알리고 주소를 못 읽었으면 안내한다(설계 2026-11-14 §7)
   if (screen.name === 'resume') {
     return (
       <ResumeScreen
         draft={screen.draft}
         keepDraft={!!screen.startFresh}
+        todayLine={resumeTodayLine({ sessionCode: screen.draft.session.sessionCode, caseId: caseKey(screen.draft.snapshot.task), usagePhase: screen.draft.session.usagePhase, difficultyMode: screen.draft.snapshot.difficultyMode }, screenPreset(classLink, loadDevicePreset), TASKS)}
+        linkFailed={classLink?.kind === 'bad'}
         onResume={() => {
           repo?.setCurrentRecordId(screen.draft.recordId)
           const run = rehydrateRun(screen.draft.snapshot)
@@ -110,7 +121,7 @@ export function App() {
 
   // 시작 화면에서는 세션만 만든다. 수행 번호(recordId)와 초안은 NPC에게 과제를 받을 때 발급·저장한다(설계 02 §3 S4).
   // 비기록이면 이 수행만 쓰는 메모리 저장소를 새로 만든다(실제 저장소·포인터는 건드리지 않음)
-  if (screen.name === 'start') return <StartScreen repo={repo!} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
+  if (screen.name === 'start') return <StartScreen repo={repo!} classLink={classLink} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
     const runRepo = noRecord ? openMemoryRepository() : repo!
     const saved = noRecord ? null : loadAvatar(session.anonymousStudentCode)
     setScreen(saved
