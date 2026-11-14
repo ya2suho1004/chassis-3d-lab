@@ -158,7 +158,7 @@ export function ServerAfter({ s, repo }: { s: ServerAdminState; repo: Repository
       ))}
       {bundleNote && <p className="small" role="status">{bundleNote}</p>}
       {recon && <ReconcileView result={recon} onDownload={() => download(exportFileName('reconcile', recon.sessionCode, recon.rows.length + recon.serverOnly.length, new Date()), reconcileToCsv(recon))} />}
-      <p className="small">연구용 묶음은 원본·수행 요약·항목별 최초·최종 답·사건 표·설명서를 담습니다. AI 대화는 들어 있지 않습니다. 가명 코드가 있는 연구자 전용 파일이니 대응표와 따로 보관하세요.</p>
+      <p className="small">연구용 묶음은 원본·수행 요약·항목별 최초·최종 답·사건 표·설명서를 담습니다. AI 대화는 들어 있지 않습니다. 학생 코드가 있는 연구자 전용 파일이니 대응표와 따로 보관하세요.</p>
       <details>
         <summary>새 수업 세션 만들기</summary>
         <label>세션 코드(영문·숫자·-·_)<input value={newCode} onChange={(e) => setNewCode(e.target.value)} aria-label="새 세션 코드" /></label>

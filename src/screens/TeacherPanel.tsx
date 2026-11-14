@@ -1,4 +1,4 @@
-// 교사 화면 — 수업 설정(기기별 기본값·잠금)과 기록 관리(요약 CSV, 대기 기록 전송)를 한곳에 모은다.
+// 교사 화면 — 수업 설정(이 기기 설정과 학생용 수업 주소·QR)과 기록 관리(요약 CSV, 대기 기록 전송)를 한곳에 모은다.
 // PIN은 화면 안 입력칸으로 받는다(시연용 0000, 보안 통제 아님). 설정은 이 기기에만 저장되고 전송하지 않는다.
 // 학생 기록 내려받기와 기록별 목록은 PIN이 아니라 교사 서버 로그인 뒤에 연다(독립 검토 1번, 설계 03 §7·05 §12).
 import { useState } from 'react'
@@ -14,6 +14,7 @@ import { deviceRows } from '../records/researchBundle'
 import { downloadResearchBundle } from '../teacher/downloadBundle'
 import type { Repository } from '../records/repository'
 import { DeviceExports, DeviceRecordCheck } from './RecordCheck'
+import { ClassLinkCard } from './ClassLinkCard'
 import { ServerAfter, ServerLive, useServerAdmin } from './ServerAdmin'
 import { loginValid } from '../teacher/serverAdmin'
 import { LESSON_LABEL } from '../app/lesson'
@@ -66,7 +67,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   const save = (p: TeacherPreset | null) => {
     const ok = savePreset(p)
     onPresetChange(p)
-    setSaveMsg(ok ? (p ? '저장했습니다. 시작 화면에 바로 적용됩니다.' : '설정을 지웠습니다. 학생이 직접 고르는 화면으로 돌아갑니다.') : '이 기기에 저장하지 못했습니다(브라우저 저장 제한). 이번 화면에서만 적용됩니다.')
+    setSaveMsg(ok ? (p ? '저장했습니다. 이 기기 시작 화면에 바로 적용됩니다. 학생 기기에는 아래 수업 주소나 QR로 보내세요.' : '설정을 지웠습니다. 이 기기는 기본값으로 들어갑니다.') : '이 기기에 저장하지 못했습니다(브라우저 저장 제한). 이번 화면에서만 적용됩니다.')
   }
 
   const saveSpec = (reset: boolean) => {
@@ -132,14 +133,16 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
       {tab === 'before' && (
         <div role="tabpanel" aria-label="수업 전">
       <h3>수업 설정 (이 기기)</h3>
-      <p className="small">수업 전에 한 번 정해 두면 시작 화면의 기본값이 됩니다. ‘학생이 바꾸지 못하게’를 켜면 학생은 익명 코드만 입력합니다.</p>
+      <p className="small">정해서 ‘설정 저장’을 누르면 이 기기 시작 화면에 바로 적용되고, 학생 기기에 보낼 수업 주소와 QR이 아래에 나옵니다. 학생은 과제를 고르지 않고 학번(리허설 세션은 가상 코드)만 넣습니다.</p>
       <div className="field-group">
         <span className="small">오늘 세션 — 학생 기록과 AI 교관 질문이 이 세션으로 갑니다</span>
         {SESSIONS.map((s) => (
           <label key={s.code} className="radio"><input type="radio" name="t-session" disabled={s.pending} checked={form.sessionCode === s.code}
             onChange={() => setForm(applySessionRules(s.code, { ...form, sessionCode: s.code }))} /> <b>{s.code}</b> {s.label}{s.pending ? ' — IRB 승인 후 열림' : ''}</label>
         ))}
-        {sessionDef(form.sessionCode)?.kind === 'rehearsal' && <span className="small">리허설 세션은 가상 코드(D-01~D-99)만 서버가 받습니다. 연구 기록이 아닙니다.</span>}
+        {sessionDef(form.sessionCode)?.kind === 'rehearsal'
+          ? <span className="small">리허설 세션은 학생이 가상 코드(D-01~D-99)로 들어오고, 서버가 그 기록을 받습니다. 연구 기록이 아닙니다.</span>
+          : <span className="small">이 세션은 학생이 학번 네 자리로 들어옵니다. 학번은 학생을 알아볼 수 있는 값입니다. 서버는 리허설 세션의 가상 코드(D-01~D-99) 기록만 받습니다. 학번으로 한 수행 기록은 ③ 수업 후에서 이 기기 기록으로 내려받으세요. AI 교관에게 질문하면 서버 대화 기록에 학번이 남습니다.</span>}
       </div>
       <div className="field-group">
         <span className="small">과제 사례</span>
@@ -171,6 +174,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         {preset && <button onClick={() => save(null)}>설정 지우기</button>}
       </div>
       {saveMsg && <p className="small" role="status">{saveMsg}</p>}
+      <ClassLinkCard preset={preset} base={`${window.location.origin}${window.location.pathname}`} />
 
       <h3>연습 규정값 (이 기기)</h3>
       <p className="small">디스크 런아웃·차동기어 백래시 연습의 판정 기준(이 값 이하면 양호). 기본값은 교사 확인지 0F의 실습장 기준 0.10 mm입니다. 연습은 기록이 없습니다.</p>
@@ -200,7 +204,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         <div role="tabpanel" aria-label="수업 후">
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>
-      <p className="small">기록은 이 기기에 먼저 저장되고, 서버 전송은 이 화면의 교사 조작으로만 합니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 전송 시험 중에는 합성 코드 D-01 같은 D-xx만 수신점이 받습니다. 익명 코드 형식 검사는 본인 확인이 아닙니다.</p>
+      <p className="small">기록은 이 기기에 먼저 저장되고, 서버 전송은 이 화면의 교사 조작으로만 합니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 서버는 리허설 세션의 가상 코드(D-01~D-99) 기록만 받습니다. 학번으로 한 기록은 서버로 보내지 못합니다. 요약 CSV·연구용 묶음으로 이 기기에서 내려받으세요. 학번·코드 형식 검사는 본인 확인이 아닙니다.</p>
       <DeviceExports open={deviceOpen} hasRecords={!!counts?.records} onCsv={whileLoggedIn(downloadCsv)} onBundle={whileLoggedIn(downloadBundle)} />
       <div className="row">
         {endpoint ? (
@@ -220,7 +224,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         </ul>
       )}
       <DeviceRecordCheck repo={repo} refreshKey={sendLog} showList={deviceOpen} />
-      <p className="small">전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·익명 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</p>
+      <p className="small">전송 경로는 로그인 없는 공개 수신점입니다. 세션 코드·학번·가상 코드·접수번호는 학생 신원을 인증하지 않으며, 접수번호는 특정 내용의 접수 확인일 뿐 수행·정답·연구 적격의 증명이 아닙니다.</p>
           <ServerAfter s={server} repo={repo} />
         </div>
       )}

@@ -5,13 +5,13 @@ import type { Repository } from '../records/repository'
 
 const shortId = (id: string) => `${id.slice(0, 8)}…`
 
-/** showList: 익명 코드·기록 번호가 보이는 목록. 교사 로그인 뒤에만 켠다 */
+/** showList: 학생 코드(학번 또는 가상 코드)·기록 번호가 보이는 목록. 교사 로그인 뒤에만 켠다 */
 export function DeviceSummaryView({ summary: s, showList = false }: { summary: DeviceSummary; showList?: boolean }) {
   return (
     <section className="record-check" aria-label="이 기기 전송 상태">
       <h4>이 기기 전송 상태</h4>
       <p className="small">확정 기록 {s.total}건: 접수 확인 {s.acknowledged} · 전송 대기 {s.waiting} · 접수 확인 필요 {s.needsConfirm} · 거절 {s.rejected} · 충돌 {s.conflict}</p>
-      {s.drafts > 0 && <p className="small">끝내지 않은 수행 {s.drafts}건은 확정 전이라 전송되지 않습니다. 같은 익명 코드로 들어가면 이어서 할 수 있습니다.</p>}
+      {s.drafts > 0 && <p className="small">끝내지 않은 수행 {s.drafts}건은 확정 전이라 전송되지 않습니다. 같은 학번(리허설은 가상 코드)으로 들어가면 이어서 할 수 있습니다.</p>}
       {s.attention.length === 0
         ? <p className="small">보낼 기록이 없습니다.</p>
         : !showList ? null : (
@@ -25,7 +25,7 @@ export function DeviceSummaryView({ summary: s, showList = false }: { summary: D
   )
 }
 
-/** 이 기기 학생 기록 내려받기. 원본·가명 코드가 들어 있어 교사 로그인 뒤에만 버튼을 보인다(독립 검토 1번) */
+/** 이 기기 학생 기록 내려받기. 원본·학번(학생을 알아볼 수 있음)이 들어 있어 교사 로그인 뒤에만 버튼을 보인다(독립 검토 1번) */
 export function DeviceExports({ open, hasRecords, onCsv, onBundle }: { open: boolean; hasRecords: boolean; onCsv: () => void; onBundle: () => void }) {
   if (!open) return <p className="small" role="note">요약 CSV·연구용 묶음·기록별 목록에는 학생 기록이 들어 있어, 아래에서 교사 계정으로 로그인해야 열립니다. 인터넷이 끊겨 로그인할 수 없어도 기록은 이 기기에 그대로 있습니다. 연결된 뒤 내려받으세요.</p>
   return (
@@ -71,12 +71,12 @@ export function ReconcileView({ result: r, onDownload }: { result: ReconcileResu
       {r.otherSessionRecords > 0 && <p className="small">다른 세션의 이 기기 기록 {r.otherSessionRecords}건은 대조에서 뺐습니다.</p>}
       {r.receivedByCode.length > 0 && (
         <details>
-          <summary>서버에 접수된 익명 코드 {r.receivedByCode.length}개 (명단과 맞춰 보기)</summary>
+          <summary>서버에 접수된 학생 코드 {r.receivedByCode.length}개 (명단과 맞춰 보기)</summary>
           <p className="small">{r.receivedByCode.map((c) => `${c.code} ${c.count}건`).join(' · ')}</p>
         </details>
       )}
       <button onClick={onDownload}>대조표 CSV</button>
-      <p className="small">대조표에는 가명 코드가 들어 있습니다. 연구자 전용 파일로 관리하고 일반 내려받기 폴더에 두지 마세요. 이 화면은 어떤 기록도 지우거나 보내지 않습니다.</p>
+      <p className="small">대조표에는 학생 코드(학번이면 학생을 알아볼 수 있음)가 들어 있습니다. 연구자 전용 파일로 관리하고 일반 내려받기 폴더에 두지 마세요. 이 화면은 어떤 기록도 지우거나 보내지 않습니다.</p>
     </section>
   )
 }
