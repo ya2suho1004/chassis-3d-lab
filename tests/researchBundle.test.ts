@@ -181,6 +181,12 @@ describe('설명서와 건수 대조', () => {
     expect(readme).toContain('0.3.5-demo부터 캐릭터 겉모습(머리가 큰 비례, 학생 키 1.45 m)과 걷기(출발·멈춤에 약 0.2초의 가속·감속, 눌러 가는 경로가 곧아짐)가 달라짐(최고 속도 1.6 m/s와 채점·기록은 같음, 이동 한 번의 소요 시간이 약 0.2초 늘 수 있음)')
   })
 
+  test('벽과 이웃 구역 꾸밈이 생긴 판(0.3.6-demo)을 알린다 — 누를 수 있는 것과 채점·기록은 같다', async () => {
+    const readme = file(await bundle([]), 'README.txt')
+    expect(readme).toContain('0.3.6-demo부터 실습장 벽과 이웃 구역에 꾸밈(창문·셔터·문·표지·이웃 실습 구역 물건)이 생김(누를 수 있는 것과 채점·기록은 같음)')
+    expect(readme.indexOf('0.3.6-demo부터')).toBeGreaterThan(readme.indexOf('0.3.5-demo부터'))
+  })
+
   test('수식으로 실행될 입력은 csv 규칙대로 막고 원본 파일은 그대로 둔다', async () => {
     const p = makePayload()
     p.measurementInputs[0]!.firstInput = '=1+1'

@@ -22,6 +22,12 @@ export const CAMS = {
   graze: { pos: [-0.5, 0.7, 8.6], target: [10, 0.5, 6.0], fov: 45 },
   north: { pos: [7.5, 1.7, 6.0], target: [6.5, 1.0, 1.2], fov: 55 },
   bench: { pos: [15.6, 1.5, 2.6], target: [17.65, 0.95, 1.9], fov: 45 },
+  // 공간 채우기(설계 docs/superpowers/specs/2026-11-14-space-fill-design.md): 트인 쪽 너머 이웃 구역과 북·동 벽을 비춘다
+  westview: { pos: [9, 1.6, 7], target: [-6, 1.2, 7], fov: 55 },
+  southview: { pos: [8, 1.6, 5], target: [8, 1.0, 20], fov: 55 },
+  northwall: { pos: [9, 1.6, 9.5], target: [9, 1.5, 0], fov: 60 },
+  eastwide: { pos: [10.5, 1.7, 13.0], target: [18.15, 1.4, 7.0], fov: 60 },
+  southwest: { pos: [7.0, 1.6, 12.6], target: [-3.0, 1.0, 22.0], fov: 55 },
 }
 
 // ---------- 문서가 뜨기 전에 넣는 글 ----------
