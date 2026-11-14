@@ -114,3 +114,22 @@ describe('글', () => {
     expect(src).toMatch(/validateStudentCode\(code, sessionCode\)/)
   })
 })
+
+describe('촬영 도구(scripts/lookdev/lookdev.mjs)', () => {
+  const src = fs.readFileSync('scripts/lookdev/lookdev.mjs', 'utf8')
+  test('새 규칙에 맞는 가상 학번 3999로 들어간다', async () => {
+    const { validateStudentCode } = await import('../src/app/session')
+    expect(src).toMatch(/input\[aria-label="학번"\]/)
+    expect(src).toMatch(/insertText', \{ text: '3999' \}/)
+    expect(validateStudentCode('3999', 'DEMO-ONLY')).toEqual({ ok: true, code: '3999' })
+    expect(src).not.toMatch(/A-01|start-pick/)
+  })
+  test('과제·도움 방식은 수업 주소로 정하고, 그 사례가 실제 과제 목록에 있다', async () => {
+    const { readClassLink } = await import('../src/app/classLink')
+    const cases = [...src.matchAll(/(brake|turning): '([^']+)'/g)].map((m) => m[2]!)
+    expect(cases).toHaveLength(2)
+    for (const c of cases) for (const m of ['g', 'u'])
+      expect(readClassLink(`http://127.0.0.1:4325/?q=high#v=1&s=DEMO-ONLY&t=${c}&p=p&m=${m}&d=x`, tasks.map(caseKey)).kind).toBe('ok')
+    expect(src).toMatch(/#v=1&s=DEMO-ONLY&t=\$\{LOOKDEV_CASE\[/)
+  })
+})
