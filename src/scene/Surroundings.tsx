@@ -6,11 +6,9 @@ import { useEffect, useMemo } from 'react'
 import type { SceneLayout } from './layoutModel'
 import { PALETTE, PANEL_RGB, labZones } from './look/lookConfig'
 import { glowTexture, hallFalloffTexture, wallShadeTexture } from './look/lookTextures'
-import { FILL_ON } from './fill/fillSwitch'
 import { hallPaintTexture } from './fill/hallPaint'
 import { ZONE_PAINT } from './fill/neighborZones'
-import { SpaceFillMeshes } from './fill/SpaceFill'
-import { buildSpaceFill } from './fill/spaceFillPlan'
+import { SpaceFillMeshes, useSpaceFill } from './fill/SpaceFill'
 
 /** 천장 높이(m, 가정 — 미측정). 실습장 벽(3.4 m) 위는 흰 벽으로 이어 붙인다 */
 export const CEILING_H = 4.2
@@ -99,11 +97,11 @@ function InnerWall({ x1, z1, x2, z2, y0, y1, inward, mat }: { x1: number; z1: nu
 
 export function Surroundings({ layout, halo }: { layout: SceneLayout; halo: number }) {
   const b = useMemo(() => hallBounds(layout), [layout])
-  // 공간 채우기(설계 2026-11-14): 이웃 구역 물건·벽 꾸밈(fill/). 배치가 바뀔 때만 만든다
-  const fill = useMemo(() => buildSpaceFill(b, layout), [b, layout])
+  // 공간 채우기(설계 2026-11-14): 이웃 구역 물건·벽 꾸밈(fill/). 배치가 바뀔 때만 만들고 내려놓는다(개발 서버 ?fill=0이면 null)
+  const fill = useSpaceFill(b, layout)
   const mats = useMemo(() => ({
     // 바깥 바닥은 실습장에서 멀수록 어둡게(시선이 실습장에 모이게). 공간 채우기가 켜져 있으면 구역 칠·구획선·물건 밑 그늘을 함께 구운 그림(색 포함)을 쓴다
-    floor: FILL_ON
+    floor: fill
       ? new THREE.MeshStandardMaterial({ color: '#ffffff', map: hallPaintTexture(b, labZones(layout), fill.paint, fill.feet, { color: ZONE_PAINT.line, width: ZONE_PAINT.lineWidth }), roughness: 0.82 })
       : new THREE.MeshStandardMaterial({ color: PALETTE.hallFloor, map: hallFalloffTexture(b, labZones(layout)), roughness: 0.82 }),
     wall: new THREE.MeshStandardMaterial({ color: PALETTE.hallWall, map: wallShadeTexture('up'), roughness: 0.9 }),
@@ -148,7 +146,7 @@ export function Surroundings({ layout, halo }: { layout: SceneLayout; halo: numb
       <CeilingInstances spots={panels} y={CEILING_H - 0.01} geometry={panelGeo} material={mats.panel} />
       <CeilingInstances spots={panels} y={CEILING_H - 0.02} geometry={haloGeo} material={haloMat} />
       {decor.map((d) => <Decor key={d.kind} d={d} />)}
-      {FILL_ON && <SpaceFillMeshes plan={fill} />}
+      {fill && <SpaceFillMeshes plan={fill} />}
     </group>
   )
 }

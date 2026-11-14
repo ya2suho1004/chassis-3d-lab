@@ -21,9 +21,9 @@ export class PartKit {
   private frameY: number[] = [0]
 
   /** 지금 자리 위에 지역 좌표계를 하나 올린다(바닥 위 x·z, 세로축 회전). fn 안의 좌표는 지역 좌표다 */
-  at(x: number, z: number, rotY: number, fn: () => void, y = 0): void {
+  at(x: number, z: number, rotY: number, fn: () => void): void {
     const top = this.frames[this.frames.length - 1]!
-    const m = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotY), ONE)
+    const m = new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotY), ONE)
     this.frames.push(top.clone().multiply(m))
     this.frameY.push(this.frameY[this.frameY.length - 1]! + rotY)
     try { fn() } finally { this.frames.pop(); this.frameY.pop() }
@@ -68,8 +68,6 @@ export class PartKit {
     }
     this.add(g, at, color, o)
   }
-
-  get size(): number { return this.parts.length }
 
   /** 모은 것을 한 형상으로 합친다(모은 조각은 버린다). 아무것도 없으면 null */
   build(): THREE.BufferGeometry | null {

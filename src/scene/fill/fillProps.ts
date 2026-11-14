@@ -2,6 +2,7 @@
 // 이웃 구역 소품은 실습장 안 과제 장비보다 채도·명도를 낮춘 색(NB)만 쓴다 — 누를 수 있는 장비로 보이지 않게.
 // 치수는 일반적인 정비 실습장 물건의 대략값(가정, 실측 아님). 상표·글자 없음.
 import { atlasUv, type AtlasCell } from './fillAtlas'
+import { rng } from './fillShared'
 import type { PartKit } from './partKit'
 
 /** 이웃 구역 색(낮은 채도·명도) */
@@ -21,9 +22,6 @@ export interface Kits { solid: PartKit; decal: PartKit }
 export function at(kits: Kits, x: number, z: number, rotY: number, fn: () => void): void {
   kits.solid.at(x, z, rotY, () => kits.decal.at(x, z, rotY, fn))
 }
-
-/** 결정적 의사 난수(매번 같은 배치) */
-export function rng(seed: number) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647) }
 
 /** 엔진 스탠드에 올린 엔진(길이 축 = 지역 x). 바닥 약 1.1 × 0.9 m, 높이 약 1.4 m */
 export function engineStand({ solid: k }: Kits, stand: string, cover: string): void {

@@ -1,48 +1,64 @@
-// 공간 채우기의 그림판 한 장(1024×768): 일반 안전·시설 표지, 시계 판, 게시판, 창 유리, 셔터 살, 실습 패널 앞면, 사물함 문.
+// 공간 채우기의 그림판 한 장(1024×608): 일반 안전·시설 표지, 시계 판, 게시판, 창 유리, 셔터 살, 실습 패널 앞면, 사물함 문.
 // 글은 SIGN_TEXT의 일반 안전·시설 표지(설계 2026-11-14 §4 허용 목록)만 쓴다. 게시판 종이와 패널 앞면은 읽을 수 없는 줄·점뿐이고 계기에 숫자가 없다(정비 요령·기준 없음).
+// 칸마다 둘레에 ATLAS_GUTTER 픽셀 여백을 두고 칸 가장자리 색을 늘려 채운다(밉맵에서 이웃 칸 색이 번지거나 투명 칸 옆이 깎이지 않게).
 // 같은 칸 배치를 절반 크기로 줄인 빛나는 그림(비상구 유도등·창 유리만 밝다)을 함께 만든다. 처음 쓸 때 한 번 만들어 재사용한다.
 import * as THREE from 'three'
+import { rng } from './fillShared'
 import type { UvRect } from './partKit'
 
 /** 그림판 크기(픽셀). 빛나는 그림은 가로·세로 GLOW_SCALE배 */
-const AW = 1024, AH = 768, GLOW_SCALE = 0.5
+export const ATLAS_W = 1024, ATLAS_H = 608
+const AW = ATLAS_W, AH = ATLAS_H, GLOW_SCALE = 0.5
+/** 칸 둘레 여백(픽셀) */
+export const ATLAS_GUTTER = 4
 /** 늘어나는 그림 크기(그림 메모리 추정용 — tests/spaceFill.test.ts) */
 export const FILL_TEXTURES = [{ name: 'atlas', w: AW, h: AH }, { name: 'glow', w: AW * GLOW_SCALE, h: AH * GLOW_SCALE }] as const
 /** 표지 글: 일반 안전·시설 표지만(학습 단서 없음). 그림판에 그리는 글은 이것뿐이다 */
 export const SIGN_TEXT = { exit: '비상구', extinguisher: '소화기', goggles: '보안경 착용', tidy: '정리 정돈', safety: '안전제일' } as const
 type Px = [number, number, number, number]
-/** 칸 자리(그림판 픽셀: 왼쪽 위 x, y, 너비, 높이) */
-const CELLS = {
-  glass: [0, 0, 128, 256],
-  shutter: [128, 0, 128, 256],
-  panelA: [256, 0, 256, 160],
-  panelB: [512, 0, 256, 160],
-  board: [768, 0, 256, 176],
-  exit: [0, 256, 256, 96],
-  extSign: [256, 256, 96, 128],
-  goggles: [352, 256, 128, 160],
-  tidy: [480, 256, 128, 160],
-  safety: [608, 256, 128, 160],
-  clock: [736, 256, 128, 128],
-  shock: [864, 256, 96, 88],
-  extCab: [960, 256, 64, 112],
-  cork: [0, 512, 256, 160],
-  lockers: [256, 512, 256, 256],
-  breaker: [512, 512, 128, 160],
-  drawers: [640, 512, 128, 160],
-  cabinet: [768, 512, 128, 160],
-  doorLeaf: [896, 512, 64, 160],
+/** 칸 자리(그림판 픽셀: 왼쪽 위 x, y, 너비, 높이 — 여백 안쪽). 세 줄로 놓고 칸 사이는 여백 두 겹(8 px) */
+export const ATLAS_CELLS = {
+  lockers: [4, 4, 256, 256],
+  glass: [268, 4, 56, 248],
+  shutter: [332, 4, 56, 248],
+  board: [396, 4, 256, 176],
+  cork: [660, 4, 256, 160],
+  extCab: [924, 4, 64, 112],
+  panelA: [4, 268, 256, 160],
+  panelB: [268, 268, 256, 160],
+  goggles: [532, 268, 128, 160],
+  tidy: [668, 268, 128, 160],
+  safety: [804, 268, 128, 160],
+  doorLeaf: [940, 268, 64, 160],
+  breaker: [4, 436, 128, 160],
+  drawers: [140, 436, 128, 160],
+  cabinet: [276, 436, 128, 160],
+  exit: [412, 436, 256, 96],
+  extSign: [676, 436, 96, 128],
+  clock: [780, 436, 128, 128],
+  shock: [916, 436, 96, 88],
 } satisfies Record<string, Px>
+const CELLS = ATLAS_CELLS
 export type AtlasCell = keyof typeof CELLS
 
+/** 칸의 UV. 가장자리에서 반 텍셀 안쪽으로 줄인다 */
 export function atlasUv(cell: AtlasCell): UvRect {
   const [x, y, w, h] = CELLS[cell]
   // 그림판은 위아래를 뒤집어 올린다(three.js 기본): 그림 맨 위 줄이 v = 1
-  return { u0: x / AW, u1: (x + w) / AW, v0: 1 - (y + h) / AH, v1: 1 - y / AH }
+  return { u0: (x + 0.5) / AW, u1: (x + w - 0.5) / AW, v0: 1 - (y + h - 0.5) / AH, v1: 1 - (y + 0.5) / AH }
 }
 
-/** 결정적 의사 난수(매번 같은 무늬) */
-function rng(seed: number) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647) }
+/** 칸 가장자리 한 줄을 여백으로 늘려 채운다(좌우 먼저, 그다음 모서리까지 위아래). 여백을 비운 뒤 그려 투명 칸 둘레는 투명하게 남는다 */
+function bleed(g: CanvasRenderingContext2D, cv: HTMLCanvasElement, cell: AtlasCell) {
+  const [x, y, w, h] = CELLS[cell], G = ATLAS_GUTTER
+  const strip = (sx: number, sy: number, sw: number, sh: number, dx: number, dy: number, dw: number, dh: number) => { g.clearRect(dx, dy, dw, dh); g.drawImage(cv, sx, sy, sw, sh, dx, dy, dw, dh) }
+  g.save(); g.imageSmoothingEnabled = false
+  strip(x, y, 1, h, x - G, y, G, h)
+  strip(x + w - 1, y, 1, h, x + w, y, G, h)
+  strip(x - G, y, w + 2 * G, 1, x - G, y - G, w + 2 * G, G)
+  strip(x - G, y + h - 1, w + 2 * G, 1, x - G, y + h, w + 2 * G, G)
+  g.restore()
+}
 
 function inCell(g: CanvasRenderingContext2D, cell: AtlasCell, draw: (w: number, h: number) => void) {
   const [x, y, w, h] = CELLS[cell]
@@ -223,8 +239,9 @@ function drawGlow(g: CanvasRenderingContext2D, color: HTMLCanvasElement) {
   const k = GLOW_SCALE
   g.fillStyle = '#000'; g.fillRect(0, 0, AW * k, AH * k)
   const copy = (x: number, y: number, w: number, h: number, alpha: number) => { g.globalAlpha = alpha; g.drawImage(color, x, y, w, h, x * k, y * k, w * k, h * k); g.globalAlpha = 1 }
-  copy(...CELLS.exit, 1)
-  copy(...CELLS.glass, 0.55)
+  const G = ATLAS_GUTTER, withGutter = (cell: AtlasCell): Px => { const [x, y, w, h] = CELLS[cell]; return [x - G, y - G, w + 2 * G, h + 2 * G] }
+  copy(...withGutter('exit'), 1)
+  copy(...withGutter('glass'), 0.55)
   const [dx, dy] = CELLS.doorLeaf
   copy(dx + 16, dy + 16, 32, 34, 0.35)
 }
@@ -234,7 +251,9 @@ let made: { map: THREE.CanvasTexture; glow: THREE.CanvasTexture } | null = null
 export function fillAtlas(): { map: THREE.CanvasTexture; glow: THREE.CanvasTexture } {
   if (made) return made
   const c = document.createElement('canvas'); c.width = AW; c.height = AH
-  drawColor(c.getContext('2d')!)
+  const g = c.getContext('2d')!
+  drawColor(g)
+  for (const cell of Object.keys(CELLS) as AtlasCell[]) bleed(g, c, cell)
   const e = document.createElement('canvas'); e.width = AW * GLOW_SCALE; e.height = AH * GLOW_SCALE
   drawGlow(e.getContext('2d')!, c)
   const tex = (cv: HTMLCanvasElement, anisotropy: number) => { const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = anisotropy; return t }

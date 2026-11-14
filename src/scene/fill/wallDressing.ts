@@ -23,10 +23,32 @@ const LOW = {
   'sign-goggles': { wall: 'north', at: 5.05, w: 0.4, y0: 1.6 },
   'sign-tidy': { wall: 'north', at: 9.58, w: 0.4, y0: 1.6 },
   'sign-safety': { wall: 'east', at: 8.4, w: 0.4, y0: 1.6 },
-  'outlet-west': { wall: 'north', at: 4.75, w: 0.12, y0: 1.16 },
-  'outlet-mid': { wall: 'north', at: 9.95, w: 0.12, y0: 1.16 },
-  'air-tap': { wall: 'north', at: 15.8, w: 0.09, y0: 1.18 },
+  // 내려오는 관(콘센트·공기 꼭지까지)은 창과 창 사이 벽에 둔다. 앞에 장비가 선 자리는 꼭지를 장비보다 높게
+  'outlet-west': { wall: 'north', at: 0.22, w: 0.12, y0: 1.16 },
+  'outlet-mid': { wall: 'north', at: 10.5, w: 0.12, y0: 1.56 },
+  'air-tap': { wall: 'north', at: 14.25, w: 0.09, y0: 1.62 },
 } as const satisfies Record<string, { wall: 'north' | 'east'; at: number; w: number; y0: number }>
+
+/** 북쪽 벽 창 띠: 아래 높이·창 높이, 창마다 가운데·폭·칸 수(창 사이 벽 0.38~0.88 m) */
+const WIN_Y = 2.4, WIN_H = 0.8
+const WINDOWS = [{ at: 2.0, w: 3.0, panes: 3 }, { at: 5.5, w: 3.0, panes: 3 }, { at: 8.75, w: 2.5, panes: 2 }, { at: 12.5, w: 3.0, panes: 3 }, { at: 16.0, w: 3.0, panes: 3 }] as const
+/** 시계(창 사이 벽, 반지름 0.18 m) */
+const CLOCK = { at: 7.25, y: 2.8, r: 0.18 }
+/** 벽을 따라가는 관 높이(가운데): 전선관(반지름 0.022)은 맨 위, 공기 배관(0.03)은 그 아래 — 둘 다 창 윗틀(3.225)보다 위 */
+const CONDUIT_Y = 3.36, AIR_Y = 3.27
+const CONDUIT_R = 0.022, AIR_R = 0.03
+
+export interface Span { name: string; from: number; to: number }
+/** 북쪽 벽에서 서로 겹치면 안 되는 것(시험용): 창·시계의 가로 구간과 세로 구간, 내려오는 관의 가로 구간, 가로 관의 세로 구간 */
+export function northWallLayout(): { openings: Array<Span & { y0: number; y1: number }>; drops: Span[]; pipes: Span[] } {
+  const openings = [
+    ...WINDOWS.map((w) => ({ name: `window-${w.at}`, from: w.at - (w.w + 0.12) / 2, to: w.at + (w.w + 0.12) / 2, y0: WIN_Y - 0.04, y1: WIN_Y + WIN_H + 0.025 })),
+    { name: 'clock', from: CLOCK.at - CLOCK.r, to: CLOCK.at + CLOCK.r, y0: CLOCK.y - CLOCK.r, y1: CLOCK.y + CLOCK.r },
+  ]
+  const drops = (['outlet-west', 'outlet-mid', 'air-tap'] as const).map((name) => ({ name, from: LOW[name].at - 0.06, to: LOW[name].at + 0.06 }))
+  const pipes = [{ name: 'conduit', from: CONDUIT_Y - CONDUIT_R, to: CONDUIT_Y + CONDUIT_R }, { name: 'air', from: AIR_Y - AIR_R, to: AIR_Y + AIR_R }]
+  return { openings, drops, pipes }
+}
 
 export interface WallFixture { name: string; wall: 'north' | 'east'; from: number; to: number; y0: number }
 
@@ -59,10 +81,8 @@ export function buildWallDressing(kits: Kits, b: HallBounds, layout: Pick<SceneL
   const k = kits.solid, t = kits.decal
 
   // 창 띠: 북쪽 벽 다섯 칸 + 서쪽으로 이어진 건물 북쪽 벽 두 칸(높이 2.4~3.2)
-  const winY = 2.4, winH = 0.8
-  for (const cx of [2.0, 5.5, 12.5, 16.0]) N(cx, () => windowUnit(kits, 3.0, winY, winH, 3))
-  N(8.75, () => windowUnit(kits, 2.5, winY, winH, 2))
-  for (const cx of [b.xMin + 2.0, b.xMin + 5.5]) N(cx, () => windowUnit(kits, 3.0, winY, winH, 3))
+  for (const w of WINDOWS) N(w.at, () => windowUnit(kits, w.w, WIN_Y, WIN_H, w.panes))
+  for (const cx of [b.xMin + 2.0, b.xMin + 5.5]) N(cx, () => windowUnit(kits, 3.0, WIN_Y, WIN_H, 3))
 
   // 셔터(차가 드나드는 말아 올리는 문): 제동력 조작부 남쪽. 살 폭 3.6 m, 높이 3.0 m, 감김 상자는 3.0 m 위
   const shW = 3.6, shH = 3.0
@@ -86,7 +106,7 @@ export function buildWallDressing(kits: Kits, b: HallBounds, layout: Pick<SceneL
     t.quad(0.38, 0.14, [0, 2.36, 0.062], atlasUv('exit'))
   })
   // 시계: 창 사이 기둥 벽(바늘은 고정)
-  N(7.25, () => { k.cyl(0.18, 0.04, [0, 2.8, 0.02], '#2b2f33', 'z', 20); t.quad(0.36, 0.36, [0, 2.8, 0.042], atlasUv('clock')) })
+  N(CLOCK.at, () => { k.cyl(CLOCK.r, 0.04, [0, CLOCK.y, 0.02], '#2b2f33', 'z', 20); t.quad(CLOCK.r * 2, CLOCK.r * 2, [0, CLOCK.y, 0.042], atlasUv('clock')) })
   // 소화기함 + 표지
   const extinguisher = () => {
     k.box(0.44, 0.74, 0.1, [0, 0.62, 0.05], C.extRed)
@@ -104,29 +124,35 @@ export function buildWallDressing(kits: Kits, b: HallBounds, layout: Pick<SceneL
   on(LOW['sign-tidy'], sign('tidy'))
   on(LOW['sign-safety'], sign('safety'))
   // 전선관(밝은 회색)과 공기 배관(푸른 회색): 2.0 m 위 벽을 따라. 내려오는 관은 콘센트·공기 꼭지까지
-  const top = 3.28
   N((mz.xMin + mz.xMax) / 2, () => {
     const len = mz.xMax - mz.xMin
-    k.cyl(0.022, len, [0, top, 0.03], C.conduit, 'x', 8)
-    k.cyl(0.03, len, [0, top - 0.11, 0.04], C.air, 'x', 8)
+    k.cyl(CONDUIT_R, len, [0, CONDUIT_Y, 0.03], C.conduit, 'x', 8)
+    k.cyl(AIR_R, len, [0, AIR_Y, 0.04], C.air, 'x', 8)
   })
-  for (const s of [LOW['outlet-west'], LOW['outlet-mid']]) on(s, () => { k.cyl(0.018, top - 1.35, [0, (top + 1.35) / 2, 0.03], C.conduit, 'y', 6); k.box(0.12, 0.18, 0.06, [0, 1.25, 0.03], C.box) })
+  // 콘센트: 아래 끝 y0 위에 상자(높이 0.18), 전선관에서 상자까지 내려오는 관
+  for (const s of [LOW['outlet-west'], LOW['outlet-mid']]) on(s, () => {
+    const boxY = s.y0 + 0.09
+    k.cyl(0.018, CONDUIT_Y - boxY, [0, (CONDUIT_Y + boxY) / 2, 0.03], C.conduit, 'y', 6)
+    k.box(0.12, 0.18, 0.06, [0, boxY, 0.03], C.box)
+  })
+  // 공기 꼭지: 조절기와 물받이 통, 공기 배관에서 내려오는 관
   on(LOW['air-tap'], () => {
-    k.cyl(0.024, top - 0.11 - 1.45, [0, (top - 0.11 + 1.45) / 2, 0.04], C.air, 'y', 6)
-    k.box(0.09, 0.16, 0.09, [0, 1.42, 0.045], '#6c7e8a')
-    k.cyl(0.035, 0.14, [0, 1.25, 0.06], '#a9b3b8', 'y', 8)
+    const bowlY = LOW['air-tap'].y0 + 0.07, regY = bowlY + 0.17
+    k.cyl(0.024, AIR_Y - regY, [0, (AIR_Y + regY) / 2, 0.04], C.air, 'y', 6)
+    k.box(0.09, 0.16, 0.09, [0, regY, 0.045], '#6c7e8a')
+    k.cyl(0.035, 0.14, [0, bowlY, 0.06], '#a9b3b8', 'y', 8)
   })
   const pipeEnd = LOW.shutter.at - LOW.shutter.w / 2 - 0.3
   E((mz.zMin + pipeEnd) / 2, () => {
     const len = pipeEnd - mz.zMin
-    k.cyl(0.022, len, [0, top, 0.03], C.conduit, 'x', 8)
-    k.cyl(0.03, len, [0, top - 0.11, 0.04], C.air, 'x', 8)
+    k.cyl(CONDUIT_R, len, [0, CONDUIT_Y, 0.03], C.conduit, 'x', 8)
+    k.cyl(AIR_R, len, [0, AIR_Y, 0.04], C.air, 'x', 8)
   })
   // 분전반(감전 주의 세모 — 글 없음)
   on(LOW.breaker, () => {
     k.box(0.6, 0.8, 0.1, [0, 1.55, 0.05], '#c2c5c2')
     t.quad(0.56, 0.76, [0, 1.55, 0.102], atlasUv('breaker'))
     t.quad(0.16, 0.14, [0.12, 1.75, 0.104], atlasUv('shock'))
-    k.cyl(0.03, top - 1.95, [0, (top + 1.95) / 2, 0.03], C.conduit, 'y', 6)
+    k.cyl(0.03, CONDUIT_Y - 1.95, [0, (CONDUIT_Y + 1.95) / 2, 0.03], C.conduit, 'y', 6)
   })
 }

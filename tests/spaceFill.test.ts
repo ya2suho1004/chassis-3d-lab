@@ -7,13 +7,15 @@ import rawLayout from '../src/data/layout/layout.dev-provisional.json'
 import { footprintOf, loadSceneLayout } from '../src/scene/layoutModel'
 import { hallBounds } from '../src/scene/Surroundings'
 import { labZones } from '../src/scene/look/lookConfig'
-import { FILL_TEXTURES, SIGN_TEXT } from '../src/scene/fill/fillAtlas'
+import { ATLAS_CELLS, ATLAS_GUTTER, ATLAS_H, ATLAS_W, FILL_TEXTURES, SIGN_TEXT, atlasUv, type AtlasCell } from '../src/scene/fill/fillAtlas'
 import { fillOffBySearch } from '../src/scene/fill/fillSwitch'
-import { HALL_PAINT_SIZE, hallPaintTexture } from '../src/scene/fill/hallPaint'
+import { HALL_PAINT_SIZE, footShade, hallPaintData, hallPaintTexture } from '../src/scene/fill/hallPaint'
 import { ZONE_PAINT } from '../src/scene/fill/neighborZones'
 import { buildSpaceFill } from '../src/scene/fill/spaceFillPlan'
-import { WALL_CLEAR_H, WALL_MAX_DEPTH, wallFixtures } from '../src/scene/fill/wallDressing'
-import { noRaycast } from '../src/scene/fill/SpaceFill'
+import { WALL_CLEAR_H, WALL_MAX_DEPTH, northWallLayout, wallFixtures } from '../src/scene/fill/wallDressing'
+import { noRaycast } from '../src/scene/fill/fillShared'
+import { hallFalloffAt } from '../src/scene/look/lookTextures'
+import { PALETTE } from '../src/scene/look/lookConfig'
 
 const read = (p: string) => fs.readFileSync(p, 'utf8')
 const layout = loadSceneLayout(rawLayout)
@@ -38,6 +40,26 @@ describe('이웃 구역 물건(걷기에 영향 없음)', () => {
         expect(inside(x, z, b), `(${x.toFixed(2)}, ${z.toFixed(2)})`).toBe(true)
       }
     }
+  })
+  test('합친 형상의 정점 가운데 벽 꾸밈이 아닌 것은 모두 실습장 두 구역에서 0.5 m 넘게 떨어지고 건물 안에 있다', () => {
+    // 벽 꾸밈 = 실습장 북·동 벽에서 0.13 m 안(2.0 m 위에서 더 두꺼운 셔터 감김 상자는 0.4 m 안)
+    const onWall = (x: number, y: number, z: number) => {
+      const band = y >= WALL_CLEAR_H ? 0.4 : 0.13
+      return (x >= mz.xMin - 1e-6 && x <= mz.xMax + 1e-6 && z - mz.zMin <= band) || (z >= mz.zMin - 1e-6 && z <= mz.zMax + 1e-6 && mz.xMax - x <= band)
+    }
+    let checked = 0
+    for (const g of [plan.solid, plan.decal]) {
+      const a = g!.attributes.position!
+      for (let i = 0; i < a.count; i++) {
+        const x = a.getX(i), y = a.getY(i), z = a.getZ(i)
+        if (onWall(x, y, z)) continue
+        checked++
+        for (const r of zones) expect(inside(x, z, r, 0.5), `(${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)})`).toBe(false)
+        const e = 1e-6
+        expect(x >= b.xMin - e && x <= b.xMax + e && z >= b.zMin - e && z <= b.zMax + e, `(${x.toFixed(2)}, ${z.toFixed(2)})`).toBe(true)
+      }
+    }
+    expect(checked).toBeGreaterThan(10000)
   })
   test('구역 바닥 칠은 서쪽 엔진 구역·남쪽 전기 구역 둘이고, 실습장 구역과 겹치지 않는다', () => {
     expect(plan.paint).toHaveLength(2)
@@ -79,6 +101,19 @@ describe('벽 꾸밈(학생이 벽에 바짝 붙어 걸을 수 있다)', () => {
   })
 })
 
+describe('북쪽 벽 꾸밈끼리 겹치지 않는다', () => {
+  const { openings, drops, pipes } = northWallLayout()
+  const overlap = (a0: number, a1: number, b0: number, b1: number) => a0 < b1 && b0 < a1
+  test('내려오는 관(콘센트·공기 꼭지)은 창·시계 앞을 지나지 않고 창 사이 벽으로 내려온다', () => {
+    expect(drops).toHaveLength(3)
+    for (const d of drops) for (const o of openings) expect(overlap(d.from, d.to, o.from, o.to), `${d.name}과 ${o.name}`).toBe(false)
+  })
+  test('벽을 따라가는 전선관·공기 배관은 창틀·시계 높이와 겹치지 않는다', () => {
+    for (const p of pipes) for (const o of openings) expect(overlap(p.from, p.to, o.y0, o.y1), `${p.name}과 ${o.name}`).toBe(false)
+    for (let i = 0; i < pipes.length; i++) for (let j = i + 1; j < pipes.length; j++) expect(overlap(pipes[i]!.from, pipes[i]!.to, pipes[j]!.from, pipes[j]!.to)).toBe(false)
+  })
+})
+
 describe('학습 단서 없음: 표지 글', () => {
   const allowed = ['보안경 착용', '정리 정돈', '안전제일', '소화기', '비상구']
   test('표지 글은 허용 목록(일반 안전·시설 표지)뿐이다', () => {
@@ -92,7 +127,7 @@ describe('학습 단서 없음: 표지 글', () => {
     expect(code).not.toMatch(/fillText\(\s*['"`]/)
   })
   test('그림판 밖의 꾸밈 파일은 글자를 그리지 않는다', () => {
-    for (const f of ['fillProps.ts', 'neighborZones.ts', 'wallDressing.ts', 'hallPaint.ts', 'SpaceFill.tsx', 'spaceFillPlan.ts', 'partKit.ts']) {
+    for (const f of ['fillProps.ts', 'neighborZones.ts', 'wallDressing.ts', 'hallPaint.ts', 'SpaceFill.tsx', 'spaceFillPlan.ts', 'partKit.ts', 'fillShared.ts']) {
       expect(read(`src/scene/fill/${f}`), f).not.toMatch(/fillText|strokeText|getContext/)
     }
   })
@@ -125,9 +160,13 @@ describe('누를 수 없는 장식', () => {
 describe('한 번만 만든다(걷는 동안 다시 만들지 않는다)', () => {
   test('형상은 배치가 바뀔 때만 만들고, 재질은 부품이 붙을 때 한 번, 그리는 동안 프레임마다 하는 일이 없다', () => {
     const sur = read('src/scene/Surroundings.tsx')
-    expect(sur).toMatch(/const fill = useMemo\(\(\) => buildSpaceFill\(b, layout\), \[b, layout\]\)/)
-    expect(sur).toMatch(/\{FILL_ON && <SpaceFillMeshes plan=\{fill\} \/>\}/)
+    expect(sur).toMatch(/const fill = useSpaceFill\(b, layout\)/)
+    expect(sur).toMatch(/\{fill && <SpaceFillMeshes plan=\{fill\} \/>\}/)
     const src = read('src/scene/fill/SpaceFill.tsx')
+    // 만드는 곳과 내려놓는 곳이 같다(한 훅 안). 꺼 두면 만들지 않는다
+    expect(src).toMatch(/const plan = useMemo\(\(\) => \(FILL_ON \? buildSpaceFill\(b, layout\) : null\), \[b, layout\]\)\n  useEffect\(\(\) => \(\) => \{ plan\?\.solid\?\.dispose\(\); plan\?\.decal\?\.dispose\(\) \}, \[plan\]\)/)
+    expect(src.match(/dispose\(\)/g)).toHaveLength(4)
+    expect(sur).not.toMatch(/buildSpaceFill/)
     expect(src).toMatch(/const mats = useMemo\(\(\) => \{[\s\S]*?\}, \[\]\)/)
     expect(src).not.toMatch(/useFrame|useState/)
   })
@@ -161,5 +200,78 @@ describe('부담 한도(설계 §6)', () => {
     const bytes = (w: number, h: number) => w * h * 4 * (4 / 3)
     const added = FILL_TEXTURES.reduce((a, t) => a + bytes(t.w, t.h), 0) + bytes(HALL_PAINT_SIZE, HALL_PAINT_SIZE) - bytes(128, 128)
     expect(added / 2 ** 20).toBeLessThan(12)
+  })
+})
+
+describe('그림판 칸(밉맵에서 번지지 않게)', () => {
+  const cells = Object.entries(ATLAS_CELLS) as Array<[AtlasCell, [number, number, number, number]]>
+  test(`칸마다 둘레 ${ATLAS_GUTTER} px 여백이 그림판 안에 있고, 여백끼리도 겹치지 않는다`, () => {
+    const G = ATLAS_GUTTER
+    for (const [name, [x, y, w, h]] of cells) {
+      expect(x - G >= 0 && y - G >= 0 && x + w + G <= ATLAS_W && y + h + G <= ATLAS_H, name).toBe(true)
+    }
+    for (let i = 0; i < cells.length; i++) for (let j = i + 1; j < cells.length; j++) {
+      const [a, [ax, ay, aw, ah]] = cells[i]!, [c, [bx, by, bw, bh]] = cells[j]!
+      const sep = ax + aw + G <= bx - G || bx + bw + G <= ax - G || ay + ah + G <= by - G || by + bh + G <= ay - G
+      expect(sep, `${a}과 ${c}`).toBe(true)
+    }
+  })
+  test('UV는 칸 가장자리에서 반 텍셀 안쪽', () => {
+    for (const [name, [x, y, w, h]] of cells) {
+      const uv = atlasUv(name)
+      expect(uv.u0 * ATLAS_W).toBeCloseTo(x + 0.5, 6)
+      expect(uv.u1 * ATLAS_W).toBeCloseTo(x + w - 0.5, 6)
+      expect((1 - uv.v1) * ATLAS_H).toBeCloseTo(y + 0.5, 6)
+      expect((1 - uv.v0) * ATLAS_H).toBeCloseTo(y + h - 0.5, 6)
+    }
+  })
+})
+
+describe('바깥 바닥 그림(구역 칠·구획선·그늘)', () => {
+  const line = { color: ZONE_PAINT.line, width: ZONE_PAINT.lineWidth }
+  const data = hallPaintData(b, zones, plan.paint, plan.feet, line)
+  const N = HALL_PAINT_SIZE
+  const px = (x: number, z: number) => {
+    const i = Math.floor(((x - b.xMin) / (b.xMax - b.xMin)) * N), j = Math.floor(((b.zMax - z) / (b.zMax - b.zMin)) * N), o = (j * N + i) * 4
+    return [data[o]!, data[o + 1]!, data[o + 2]!]
+  }
+  const toLin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  const toSrgb = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055)
+  /** 색 hex × 밝기 흐름(그 점) → sRGB 0~255 — 공간 채우기 전 바닥 재질(색 × 밝기 그림)과 같은 셈 */
+  const expected = (hex: string, x: number, z: number) => {
+    const g = toLin(Math.round(hallFalloffAt(x, z, zones)) / 255)
+    return [1, 3, 5].map((k) => Math.round(toSrgb(toLin(parseInt(hex.slice(k, k + 2), 16) / 255) * g) * 255))
+  }
+  const near = (got: number[], want: number[], tol = 3) => got.forEach((v, k) => expect(Math.abs(v - want[k]!), `${got} ≈ ${want}`).toBeLessThanOrEqual(tol))
+  /** 어느 물건의 그늘도 닿지 않는 점 */
+  const clear = (x: number, z: number) => plan.feet.every((f) => footShade(f, x, z) === 0)
+  const [engine, electric] = plan.paint
+
+  test('크기와 불투명', () => {
+    expect(data.length).toBe(N * N * 4)
+    for (let o = 3; o < data.length; o += 4 * 9973) expect(data[o]).toBe(255)
+  })
+  test('구역 밖(물건 없는 곳)은 예전 바닥(바깥 바닥 색 × 밝기 흐름)과 같다', () => {
+    for (const [x, z] of [[16.1, 28.5], [-0.3, 3.0], [-9.6, 29.0], [10, 14.4], [17.5, 26]] as const) {
+      expect(clear(x, z)).toBe(true)
+      near(px(x, z), expected(PALETTE.hallFloor, x, z))
+    }
+  })
+  test('구역 안(물건·구획선 없는 곳)은 그 구역 색 × 밝기 흐름', () => {
+    for (const [p, pts] of [[engine!, [[-1.5, 8.6], [-8.2, 8.6]]], [electric!, [[0.0, 15.3], [5.35, 20.3]]]] as const) {
+      for (const [x, z] of pts) { expect(clear(x, z), `${x},${z}`).toBe(true); near(px(x, z), expected(p.color, x, z)) }
+    }
+  })
+  test('구획선 자리(구역 가장자리 안쪽 0.1 m)는 노란 선 색', () => {
+    const r = engine!.rect
+    for (const [x, z] of [[r.xMin + 0.04, (r.zMin + r.zMax) / 2 + 0.3], [r.xMax - 0.04, 8.6], [-2.0, r.zMin + 0.04]] as const) near(px(x, z), expected(ZONE_PAINT.line, x, z))
+  })
+  test('물건 밑은 둘레보다 어둡다(그늘)', () => {
+    const lum = (c: number[]) => c[0]! + c[1]! + c[2]!
+    for (const f of plan.feet.filter((f) => f.dark >= 0.4).slice(0, 10)) {
+      const out = Math.max(f.w, f.d) / 2 + 0.45
+      const ring = [[out, 0], [-out, 0], [0, out], [0, -out]].map(([dx, dz]) => lum(px(f.x + dx!, f.z + dz!)))
+      expect(lum(px(f.x, f.z)), `${f.x.toFixed(2)},${f.z.toFixed(2)}`).toBeLessThan(Math.max(...ring) * 0.8)
+    }
   })
 })
