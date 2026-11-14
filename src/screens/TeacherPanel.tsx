@@ -37,7 +37,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   const [tab, setTab] = useState<'before' | 'during' | 'after'>('before')
   const server = useServerAdmin()
   const [unlocked, setUnlocked] = useState(false)
-  const [form, setForm] = useState<TeacherPreset>(preset ?? { sessionCode: DEFAULT_SESSION_CODE, caseId: caseKey(tasks[0]!), usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null, locked: true })
+  const [form, setForm] = useState<TeacherPreset>(preset ?? { sessionCode: DEFAULT_SESSION_CODE, caseId: caseKey(tasks[0]!), usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null })
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
   const [bundleNote, setBundleNote] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
@@ -166,7 +166,6 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
           <label key={String(d)} className="radio"><input type="radio" name="t-entry" checked={form.vehicleEntryDirection === d} onChange={() => setForm({ ...form, vehicleEntryDirection: d })} /> {ENTRY_LABEL(d)}{d === null ? ' — 3D 진입 연출 없음' : ''}</label>
         ))}
       </div>
-      <label className="radio"><input type="checkbox" checked={form.locked} onChange={(e) => setForm({ ...form, locked: e.target.checked })} /> 학생이 바꾸지 못하게(익명 코드만 입력)</label>
       <div className="row">
         <button className="primary" onClick={() => save(form)}>설정 저장</button>
         {preset && <button onClick={() => save(null)}>설정 지우기</button>}

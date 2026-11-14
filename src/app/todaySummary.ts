@@ -2,7 +2,8 @@
 // 이 기기 설정(저장본)과, 교사 로그인 때 이미 받은 서버 세션 정보만 쓴다(새 서버 조회·새 수집 없음).
 import { caseKey, ENTRY_LABEL, MODE_LABEL, type TeacherPreset } from './teacherPreset'
 import { LESSON_SHORT, lessonMode } from './lesson'
-import { sessionDef } from './sessions'
+import { DEFAULT_SESSION_CODE, sessionDef } from './sessions'
+import { entryKindFor } from './session'
 import type { ApprovedTask } from '../domain/types'
 import type { UsagePhase } from '../domain/record'
 import type { SessionRow } from '../teacher/serverAdmin'
@@ -16,11 +17,13 @@ export interface SummaryServer {
   session: SessionRow | null | undefined
 }
 
+const ENTRY_SHORT = { studentNumber: '학번 네 자리', virtualCode: '가상 코드(D-01~D-99)' } as const
+
 const FLOW_PHASE: Record<SessionRow['lesson_flow'], UsagePhase> = { 'lesson1-2': 'preview', lesson5: 'review' }
 
 const same = (a: TeacherPreset, b: TeacherPreset) =>
   a.sessionCode === b.sessionCode && a.caseId === b.caseId && a.usagePhase === b.usagePhase && a.difficultyMode === b.difficultyMode &&
-  a.vehicleEntryDirection === b.vehicleEntryDirection && a.locked === b.locked
+  a.vehicleEntryDirection === b.vehicleEntryDirection
 
 function aiText(server: SummaryServer): SummaryRow {
   if (!server.configured) return { label: 'AI 교관', value: '서버 주소 없음(이 판은 AI 교관을 쓰지 않음)' }
@@ -43,7 +46,10 @@ export function todaySummary(o: {
   const warnings: string[] = []
   const p = o.preset
   if (!p) {
-    rows.push({ label: '설정', value: '저장된 설정 없음 — 학생이 시작 화면에서 직접 고름', tone: 'warn' })
+    // 교사 설정이 없는 기기는 시작 화면의 기본값으로 들어간다(설계 2026-11-14 §3-3, 학생 화면에는 고르기가 없음)
+    const def = sessionDef(DEFAULT_SESSION_CODE)
+    rows.push({ label: '설정', value: `저장된 설정 없음 — 이 기기는 기본값(${def?.label ?? DEFAULT_SESSION_CODE} · ${o.tasks[0]?.title ?? '첫 과제'} · ${LESSON_SHORT.preview} · ${MODE_LABEL.guided.replace(/\(.*\)$/, '')})으로 들어감`, tone: 'warn' })
+    rows.push({ label: '학생 입장', value: ENTRY_SHORT[entryKindFor(DEFAULT_SESSION_CODE)] })
   } else {
     const def = sessionDef(p.sessionCode)
     rows.push({ label: '세션', value: def ? `${p.sessionCode} · ${def.label}` : p.sessionCode })
@@ -51,8 +57,8 @@ export function todaySummary(o: {
     rows.push({ label: '차시', value: LESSON_SHORT[p.usagePhase] })
     rows.push({ label: '도움 방식', value: MODE_LABEL[lessonMode(p.usagePhase, p.difficultyMode)] })
     rows.push({ label: '차량 진입', value: ENTRY_LABEL(p.vehicleEntryDirection) })
-    rows.push(p.locked ? { label: '학생 변경', value: '막음 — 익명 코드만 입력' } : { label: '학생 변경', value: '허용 — 학생이 바꿀 수 있음', tone: 'warn' })
-    if (!same(p, o.form)) warnings.push('아래에서 바꾼 설정이 아직 저장되지 않았습니다. ‘설정 저장’을 눌러야 학생 화면에 적용됩니다.')
+    rows.push({ label: '학생 입장', value: ENTRY_SHORT[entryKindFor(p.sessionCode)] })
+    if (!same(p, o.form)) warnings.push('아래에서 바꾼 설정이 아직 저장되지 않았습니다. ‘설정 저장’을 눌러야 이 기기 시작 화면과 학생용 수업 주소에 적용됩니다.')
     const flow = o.server.session?.lesson_flow
     if (flow && p.usagePhase !== 'other' && FLOW_PHASE[flow] !== p.usagePhase) {
       warnings.push(`서버의 이 세션은 ${LESSON_SHORT[FLOW_PHASE[flow]]}인데, 이 기기 차시는 ${LESSON_SHORT[p.usagePhase]}입니다.`)

@@ -31,7 +31,7 @@ export const ENTRY_TEXT: Record<EntryKind, { word: string; label: string; exampl
     error: '학번은 학년·반·번호를 붙인 네 자리 숫자예요. 예: 2학년 2반 11번 → 2211', inputMode: 'numeric',
   },
   virtualCode: {
-    word: '가상 코드', label: '가상 코드', example: '예: D-01 (선생님이 알려 줘요)', placeholder: 'D-01',
+    word: '가상 코드', label: '가상 코드', example: '예: D-01', placeholder: 'D-01',
     error: '가상 코드는 D-01처럼 써요. 한글 자판이면 영문으로 바꿔 넣으세요.', inputMode: 'text',
   },
 }

@@ -92,7 +92,7 @@ describe('서버 접수(가짜 저장소)', () => {
 
 describe('교사 설정(이 기기)', () => {
   const ids = listTasks().map(caseKey)
-  const base = { caseId: ids[0], usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null, locked: true }
+  const base = { caseId: ids[0], usagePhase: 'preview', difficultyMode: 'guided', vehicleEntryDirection: null }
   test('예전 저장값(세션 없음)은 시연 세션으로 읽는다', () => {
     expect(parsePreset(JSON.stringify(base), ids)?.sessionCode).toBe('DEMO-ONLY')
   })
