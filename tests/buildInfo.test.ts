@@ -25,5 +25,5 @@ describe('앱 판 번호 — 커밋 포함(H1)', () => {
     expect(cfg).toMatch(/__APP_COMMIT__/)
     expect(cfg).toMatch(/VERCEL_GIT_COMMIT_SHA/)
   })
-  test('캐릭터와 움직임 다듬기(2026-11-13)부터 기본 판 0.3.5-demo — 캐릭터 비례와 걷는 방식이 달라진 판을 기록에서 가른다(0.3.4-demo는 손맛, 0.3.3-demo는 빛과 재질, 0.3.2-demo는 계산기, 0.3.1-demo는 채점 규칙 가)', () => { expect(APP_BASE_VERSION).toBe('0.3.5-demo') })
+  test('공간 채우기(2026-11-14)부터 기본 판 0.3.6-demo — 실습장 벽과 이웃 구역 꾸밈이 생긴 판을 기록에서 가른다(0.3.5-demo는 캐릭터와 움직임, 0.3.4-demo는 손맛, 0.3.3-demo는 빛과 재질, 0.3.2-demo는 계산기, 0.3.1-demo는 채점 규칙 가)', () => { expect(APP_BASE_VERSION).toBe('0.3.6-demo') })
 })
