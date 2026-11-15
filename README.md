@@ -23,7 +23,8 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 |---|---|---|
 | `src/delivery/jcs.ts` | RFC 8785 정규화·SHA-256 | 키 UTF-16 순 정렬, NFC/NFD·trim·숫자 재절사 없음, 비유한 수·짝 없는 서로게이트 거절. 서버 `Jcs.gs`와 결과 동일 |
 | `src/delivery/submit.ts` | 제출 1건 전송·ack 검증 | `text/plain` POST, cors·omit·follow, 인증 헤더·쿼리 없음. JSON 모양·protocol·recordId·독립 계산 hash·receipt·시각이 모두 맞아야 acknowledged. HTML·opaque·네트워크 오류는 confirmationPending |
-| `src/delivery/outbox.ts` | 대기열 처리(교사 조작) | 같은 ID·같은 원본만 재전송, rejected·conflict는 자동 재시도 없음, 보내기 전 uploading 저장 |
+| `src/delivery/outbox.ts` | 대기열 처리(교사 조작·수업용 자동 전송) | 같은 ID·같은 원본만 재전송, rejected·conflict는 자동 재시도 없음, 보내기 전 uploading 저장. 2026-11-16(0.4.0-demo): `auto` 모드는 수업용 세션 기록만 보내고 거절 기록을 다시 보내지 않음, 시연·리허설 세션의 학번 기록은 교사 전송에서도 건너뜀(`STUDENT_NUMBER_OUTSIDE_CLASS`), 수업용 기록의 `SESSION_NOT_ALLOWED` 거절은 교사 전송으로 다시 보냄 |
+| `src/delivery/autoSend.ts` | 수업용 세션 자동 전송(2026-11-16) | 앱을 열 때·`online`·기록 확정 때 한 차례씩 돈다. 전송 주소가 없으면 아무것도 안 함. 결과 화면 전송 상태 문구(정오 없음) |
 | `archive/apps-script/*.gs` | Apps Script 수신점 | 엄격 파싱(prototype 없는 객체, 중복 키 거절) → 버전별 스키마(record 1.0.0·1.1.0) → 의미 검증 → 허용 스냅샷 문맥 대조(`DemoSnapshots.gs`) → 잠금 안 정본 1행(5열)·기존 행 재검증·중복/충돌·flush·재읽기 → ack. 접수 창·행 상한 설정은 필수(fail-closed) |
 | `src/data/session/demo-snapshots.json`, `snapshot-ledger.json` | 시연 세션 스냅샷 36개(active)와 append-only 원장 | 선택(사례·모드·시점·진입 방향)마다 불변 ID·versions·승인(과제 pending)과 검증 범위(등록 단계·선행 그래프). 옛 스냅샷은 retired로 보존(접수번호 회수용). 같은 ID의 내용·검증 범위 변경, 중복 ID는 생성 실패(`scripts/snapshotLib.mjs`). `npm run build:gs-snapshots`로 수신점 목록과 함께 생성 |
 | `server/dev/fakeSubmitServer.ts` | 개발 서버 가짜 수신점 | 같은 .gs 코드를 Node에서 실행. `/__fake-submit/control?mode=html|badhash|drop|lockbusy`로 D04·D07 재현. 운영 번들 제외 |
@@ -50,7 +51,7 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 
 ## 2단계 전반부: 시연 화면 (`src/screens/`)
 
-시작(학번 네 자리 입력 — 리허설 세션은 가상 코드 `D-01`~`D-99` · 오늘 과제 한 줄. 세션·과제·차시·도움 방식은 학생이 고르지 않고 교사 설정이나 수업 주소를 따르며, 설정이 없으면 기본값. 2026-11-14 변경, 그 전에는 익명 코드 `A-01`과 사례·안내 방식을 학생이 골랐다) → 과제 화면(NPC 작업지시서, 12단계 체크리스트, 안전 확인·위험 행동 버튼, 계기 화면, 판독 입력, 기록표, 힌트, NPC 검사) → 결과(실습 결과·기기 저장·온라인 접수 3상태, 요약, 최초/최종 답 표, 연구 기록 payload JSON). 모든 수행은 `runPurpose=demo`, `researchEligible=false`. 피드백은 실제 표시 직후 `feedbackShown` 이벤트로 기록한다.
+시작(학번 네 자리 입력 — 리허설 세션은 가상 코드 `D-01`~`D-99` · 오늘 과제 한 줄. 세션·과제·차시·도움 방식은 학생이 고르지 않고 교사 설정이나 수업 주소를 따르며, 설정이 없으면 기본값. 2026-11-14 변경, 그 전에는 익명 코드 `A-01`과 사례·안내 방식을 학생이 골랐다) → 과제 화면(NPC 작업지시서, 12단계 체크리스트, 안전 확인·위험 행동 버튼, 계기 화면, 판독 입력, 기록표, 힌트, NPC 검사) → 결과(실습 결과·기기 저장·온라인 접수 3상태, 요약, 최초/최종 답 표, 연구 기록 payload JSON). 모든 수행은 `runPurpose=demo`, `researchEligible=false`. 2026-11-16(0.4.0-demo, 설계 `docs/superpowers/specs/2026-11-15-class-records-design.md`): 수업용 세션(`CLS-L12` 수업 · 연습, `CLS-L5` 수업 · 정리)은 학번으로 들어오고, 마치거나 중단하면 기록이 서버로 바로 간다(시작 화면 안내 한 줄, 결과 화면 전송 상태 한 줄). 서버는 수업용 세션만 학번을 받고 시연·리허설은 `D-xx`만 받는다. 피드백은 실제 표시 직후 `feedbackShown` 이벤트로 기록한다.
 
 ## 2단계 후반부: 기기 저장 (`src/records/`)
 
@@ -61,7 +62,7 @@ npm run dev       # 시연 화면 (Vite 기본 포트 5173; 앱 내 .claude/laun
 | `types.ts` | `DeliveryEnvelope` | delivery.schema 대응. 연구 payload와 분리 |
 | 엔진 추가 | `pauseRun / resumeRun / serializeRun / rehydrateRun` | 숨김·새로고침 공백은 학습시간 제외(`timeQuality: resumed`). 복원 시 모터는 정지 상태 |
 
-화면: 시작 시 초안 저장이 끝나야 과제로 진입 · 조작마다 자동저장(상단에 ‘이 기기 저장됨/실패’) · 화면 숨김 시 일시중지 · 새로고침 후 ‘이어서 하기/새 수행’ · 완료·중단 시 확정 저장 · ‘다음 학생’은 포인터만 초기화(확정 기록 보존) · 시작 화면 하단 ‘교사 화면’(시연 PIN 0000, 보안 통제 아님): 수업 설정(세션·사례·수업 시점·도움 방식·진입 방향을 이 기기에 저장하고, 학생용 수업 주소 `#v=1&…`·복사 버튼·QR로 학생 기기에 전달 — 학생 기기는 그 주소로 열면 설정을 저장하고 `#` 값을 지움. `src/app/teacherPreset.ts`·`src/app/classLink.ts`·`src/teacher/qr.ts`, 2026-11-14)과 기록 관리(요약 CSV·대기 기록 전송, `screens/TeacherPanel.tsx`).
+화면: 시작 시 초안 저장이 끝나야 과제로 진입 · 조작마다 자동저장(상단에 ‘이 기기 저장됨/실패’) · 화면 숨김 시 일시중지 · 새로고침 후 ‘이어서 하기/새 수행’ · 완료·중단 시 확정 저장 · ‘다음 학생’은 포인터만 초기화(확정 기록 보존) · 시작 화면 하단 ‘교사 화면’(시연 PIN 0000, 보안 통제 아님): 수업 설정(세션·사례·수업 시점·도움 방식·진입 방향을 이 기기에 저장하고, 학생용 수업 주소 `#v=1&…`·복사 버튼·QR로 학생 기기에 전달 — 학생 기기는 그 주소로 열면 설정을 저장하고 `#` 값을 지움. `src/app/teacherPreset.ts`·`src/app/classLink.ts`·`src/teacher/qr.ts`, 2026-11-14)과 기록 관리(요약 CSV·대기 기록 전송, `screens/TeacherPanel.tsx`), 교사 로그인 뒤 학생별 성취 표(수업용 세션 서버 기록을 학번×과제로 — 완료 여부·검사·오류 수·걸린 시간·수행 횟수, `src/teacher/achievement.ts`·`screens/AchievementTable.tsx`, 2026-11-16).
 
 ## 1단계 결과물 (`src/domain/`)
 
