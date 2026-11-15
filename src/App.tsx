@@ -1,5 +1,5 @@
 import type { RecordPayload } from './domain/record'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SessionContext } from './domain/record'
 import { createTaskRun, rehydrateRun, serializeRun, type DifficultyMode, type TaskRun } from './domain/taskEngine'
 import type { ApprovedTask } from './domain/types'
@@ -23,10 +23,15 @@ import { LabSound } from './scene/sound'
 import { screenPreset, type ClassLinkTaken } from './app/classLink'
 import { caseKey, knownCaseIds, loadPreset } from './app/teacherPreset'
 import { resumeTodayLine } from './app/todayTask'
+import { isClassSession } from './app/sessions'
+import { getSubmitEndpoint } from './delivery/config'
+import { classSendLine, createAutoSender, type AutoSender } from './delivery/autoSend'
 
 const TASKS = listTasks()
 /** 이 기기에 저장된 교사 설정(시작 화면과 같은 사례 목록으로 읽음) */
 const loadDevicePreset = () => loadPreset(knownCaseIds(TASKS))
+/** 수업용 세션 기록을 마치면 바로 보낼 수 있는 빌드인가(전송 주소가 있을 때만, 설계 2026-11-15-class-records §3-3) */
+const autoSendOn = !!getSubmitEndpoint()
 
 type Screen =
   | { name: 'loading' }
@@ -38,12 +43,38 @@ type Screen =
   // avatar: 캐릭터 만들기(설계 2026-11-03) — 그 코드의 캐릭터가 이 기기에 없을 때만(비기록은 매번)
   | { name: 'avatar'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; noRecord: boolean; runRepo: Repository; initial: AvatarProfile }
   | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository; profile: AvatarProfile }
-  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile; frozenPayload: RecordPayload | null }
+  // sending: 수업용 세션 기록을 자동으로 보내는 중(설계 2026-11-15-class-records §3-3) — 결과 화면 전송 상태 한 줄에 쓴다
+  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile; frozenPayload: RecordPayload | null; sending: boolean }
 
 /** classLink: 앱이 열릴 때 읽은 수업 주소(main.tsx, 설계 2026-11-14 §3-4) — 시작 화면이 안내에 쓴다 */
 export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
   const [repo, setRepo] = useState<Repository | null>(null)
   const [screen, setScreen] = useState<Screen>({ name: 'loading' })
+  // 자동 전송(설계 2026-11-15-class-records §3-3): 수업용 세션 기록만, 앱을 열 때·인터넷이 다시 연결될 때·기록을 확정할 때 보낸다
+  const screenRef = useRef(screen)
+  screenRef.current = screen
+  const senderRef = useRef<AutoSender | null>(null)
+  const repoRef = useRef<Repository | null>(null)
+  const sendNow = useCallback(async () => {
+    const r = repoRef.current
+    const sender = senderRef.current
+    if (!r || !sender) return
+    await sender.run()
+    // 결과 화면에 있으면 그 기록의 전송 상태를 이 기기 저장본으로 새로 읽는다
+    const cur = screenRef.current
+    if (cur.name !== 'result' || cur.noRecord) return
+    let env: DeliveryEnvelope | null = null
+    try {
+      const stored = await r.loadRecord(cur.session.recordId)
+      env = stored?.envelope ?? null
+    } catch { /* 읽지 못하면 화면의 상태를 그대로 둔다 */ }
+    setScreen((s) => (s.name === 'result' && s.session.recordId === cur.session.recordId ? { ...s, envelope: env ?? s.envelope, sending: false } : s))
+  }, [])
+  useEffect(() => {
+    const onOnline = () => { void sendNow() }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [sendNow])
   // 인트로(설계 2026-11-03): 저장소는 뒤에서 열고, 인트로가 끝나면 원래 첫 화면을 보인다
   const [intro] = useState(() => introPlan(loadIntroPrefs(), typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches))
   const [introDone, setIntroDone] = useState(intro === 'none')
@@ -75,10 +106,14 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
       try {
         const r = await openRepository()
         if (cancelled) return
+        senderRef.current = createAutoSender(r, () => { const url = getSubmitEndpoint(); return url ? { fetch: (u, i) => fetch(u, i), endpointUrl: url, now: () => new Date() } : null })
+        repoRef.current = r
         setRepo(r)
         const cur = r.getCurrentRecordId()
         const draft = cur ? await r.loadDraft(cur) : null
         setScreen(draft ? { name: 'resume', draft } : { name: 'start' })
+        // 앱을 열 때: 지난번에 못 보낸 수업용 기록을 다시 보낸다
+        void sendNow()
       } catch (e) {
         setScreen({ name: 'storageError', message: (e as Error).message })
       }
@@ -121,7 +156,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
 
   // 시작 화면에서는 세션만 만든다. 수행 번호(recordId)와 초안은 NPC에게 과제를 받을 때 발급·저장한다(설계 02 §3 S4).
   // 비기록이면 이 수행만 쓰는 메모리 저장소를 새로 만든다(실제 저장소·포인터는 건드리지 않음)
-  if (screen.name === 'start') return <StartScreen repo={repo!} classLink={classLink} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
+  if (screen.name === 'start') return <StartScreen repo={repo!} classLink={classLink} autoSend={autoSendOn} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
     const runRepo = noRecord ? openMemoryRepository() : repo!
     const saved = noRecord ? null : loadAvatar(session.anonymousStudentCode)
     setScreen(saved
@@ -158,18 +193,25 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
           return null
         }}
         onRunChange={(run) => setScreen((s) => (s.name === 'lab' ? { ...s, run } : s))}
-        onFinish={(run, completionStatus, envelope, saveError, frozenPayload = null) => setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile, frozenPayload })}
+        onFinish={(run, completionStatus, envelope, saveError, frozenPayload = null) => {
+          setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile, frozenPayload, sending: !noRecord && !!envelope && autoSendOn && isClassSession(session.sessionCode) })
+          // 기록을 확정하면 보낸다(이 기록과, 전에 못 보낸 수업용 기록). 기록 없이 하기와 저장 실패는 보낼 것이 없다
+          if (!noRecord && envelope) void sendNow()
+        }}
       />
     )
   }
 
   return (
     <ResultScreen sound={sound} session={screen.session} run={screen.run} completionStatus={screen.completionStatus} envelope={screen.envelope} saveError={screen.saveError} frozenPayload={screen.frozenPayload} noRecord={screen.noRecord} nickname={nicknameOf(screen.profile)}
+      sendLine={!screen.noRecord && autoSendOn && isClassSession(screen.session.sessionCode) ? classSendLine(screen.envelope, screen.sending) : null}
       onRetrySave={!screen.noRecord && screen.saveError && screen.frozenPayload ? async () => {
         // D4: 처음 만든 원본 그대로 다시 확정 저장(수행 번호·완료 시각 유지)
         const r = await retryFreeze(repo!, screen.frozenPayload!)
         if (!r.ok) return r.errorCode
-        setScreen((s) => (s.name === 'result' ? { ...s, envelope: r.envelope, saveError: null, frozenPayload: r.payload } : s))
+        setScreen((s) => (s.name === 'result' ? { ...s, envelope: r.envelope, saveError: null, frozenPayload: r.payload, sending: autoSendOn && isClassSession(s.session.sessionCode) } : s))
+        // 다시 저장해 확정되면 보낸다(수업용 세션 기록만 간다)
+        void sendNow()
         return null
       } : undefined}
       onNextStudent={() => { if (!screen.noRecord) repo?.clearCurrent(); setScreen({ name: 'start' }) }} />
