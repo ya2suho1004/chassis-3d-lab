@@ -160,7 +160,8 @@ describe('전송은 교사 조작과 수업용 세션 자동 전송뿐(설계 20
     expect(fs.readFileSync('src/screens/TeacherPanel.tsx', 'utf8')).toMatch(/processOutbox\(/)
     const auto = fs.readFileSync('src/delivery/autoSend.ts', 'utf8')
     expect(auto.match(/processOutbox\(/g)).toHaveLength(1)
-    expect(auto).toMatch(/processOutbox\(repo, d, \{ auto: true \}\)/)
+    expect(auto).toMatch(/processOutbox\(repo, d, opts\)/)
+    expect(auto).toMatch(/const opts: OutboxOptions = \{ auto: true, /)
   })
   test('자동 전송은 접수 확인된 기록을 다시 보내지 않는다(대기열에 없음) — 철회 뒤 서버에서 지운 기록이 다시 들어오지 않게', () => {
     expect(fs.readFileSync('src/records/repository.ts', 'utf8')).toMatch(/filter\(\(r\) => r\.envelope\.uploadStatus !== 'acknowledged'\)/)
