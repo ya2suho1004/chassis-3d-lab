@@ -207,7 +207,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         <div role="tabpanel" aria-label="수업 후">
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>
-      <p className="small">기록은 이 기기에 먼저 저장됩니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 수업용 세션 기록은 학생이 마치면 바로 서버로 갑니다. 못 보낸 기록은 앱을 열 때·인터넷이 다시 연결될 때·다음 수행을 마칠 때 다시 보내고, 아래 버튼으로 지금 보낼 수도 있습니다. 리허설 세션 기록(가상 코드 D-01~D-99)은 아래 버튼으로 보냅니다. 시연 세션에 학번으로 남은 기록은 서버가 받지 않아 보내지 않습니다. 요약 CSV·연구용 묶음으로 이 기기에서 내려받으세요. 학번·코드 형식 검사는 본인 확인이 아닙니다.</p>
+      <p className="small">기록은 이 기기에 먼저 저장됩니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 수업용 세션 기록은 학생이 마치면 바로 서버로 갑니다. 못 보낸 기록은 이 기기에 남아 앱이 켜져 있는 동안 정해진 간격(최대 10분)으로, 그리고 앱을 열 때·인터넷이 다시 연결될 때·다음 수행을 마칠 때 다시 보냅니다. 인터넷이 끊겨 있으면 연결될 때까지 기다립니다. 거절된 기록과 서버 이상으로 멈춘 기록은 자동으로 다시 보내지 않으니 아래 버튼으로 보내세요. 리허설 세션 기록(가상 코드 D-01~D-99)은 아래 버튼으로 보냅니다. 시연 세션에 학번으로 남은 기록은 서버가 받지 않아 보내지 않습니다. 요약 CSV·연구용 묶음으로 이 기기에서 내려받으세요. 학번·코드 형식 검사는 본인 확인이 아닙니다.</p>
       <DeviceExports open={deviceOpen} hasRecords={!!counts?.records} onCsv={whileLoggedIn(downloadCsv)} onBundle={whileLoggedIn(downloadBundle)} />
       <div className="row">
         {endpoint ? (

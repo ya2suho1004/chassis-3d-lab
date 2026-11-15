@@ -59,6 +59,13 @@ describe('결과 화면 — 전송 상태 한 줄', () => {
     expect(t).toMatch(/교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다/)
     for (const v of Object.values(CLASS_SEND_TEXT)) expect(t).not.toContain(v)
   })
+  test('교사용 상세 줄: 수업용 세션은 "연구용 접수가 아니므로", 시연은 지금처럼 "시연이므로"', () => {
+    expect(result(CLASS_SEND_TEXT.sent)).toMatch(/연구용 접수가 아니므로 researchEligible=false/)
+    expect(result(CLASS_SEND_TEXT.sent)).not.toMatch(/시연이므로/)
+    const demo = createDemoSession({ studentCode: 'D-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', task: tasks[0]!, difficultyMode: 'guided' })
+    const t = text(renderToStaticMarkup(createElement(ResultScreen, { session: demo, run, completionStatus: 'aborted', envelope: { ...env, recordId: demo.recordId }, saveError: null, onNextStudent: () => {} })))
+    expect(t).toMatch(/시연이므로 researchEligible=false/)
+  })
   test('전송 상태 줄은 알림 영역(role=status)', () => {
     expect(read('src/screens/ResultScreen.tsx')).toMatch(/<span className="send-line" role="status">\{sendLine\}<\/span>/)
   })

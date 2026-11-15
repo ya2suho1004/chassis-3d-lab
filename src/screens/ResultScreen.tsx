@@ -10,6 +10,7 @@ import { isRequestPassed } from '../app/cozyState'
 import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/resultLabels'
 import { LESSON_SHORT } from '../app/lesson'
 import type { LabSound } from '../scene/sound'
+import { isClassSession } from '../app/sessions'
 
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
 const ERROR_HINT: Record<string, string> = { TIMEOUT: '서버 응답이 오지 않음 — 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
@@ -124,7 +125,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
       ) : (
       <section className="card">
         <details>
-          <summary>교사용 상세 기록 보기 (record.schema {payload.ok ? payload.value.schemaVersion : ''} 형식 · 시연이므로 researchEligible=false)</summary>
+          <summary>교사용 상세 기록 보기 (record.schema {payload.ok ? payload.value.schemaVersion : ''} 형식 · {isClassSession(session.sessionCode) ? '연구용 접수가 아니므로' : '시연이므로'} researchEligible=false)</summary>
           {payload.ok && <textarea readOnly value={json} rows={12} aria-label="payload" />}
         </details>
         {!payload.ok && <p className="error">{payload.error}</p>}
