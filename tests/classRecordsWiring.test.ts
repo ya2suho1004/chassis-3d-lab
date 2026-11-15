@@ -67,11 +67,15 @@ describe('결과 화면 — 전송 상태 한 줄', () => {
 describe('앱 배선 — 언제 보내는가', () => {
   const app = code('src/App.tsx')
   test('전송 주소가 있을 때만 자동 전송기를 만든다(주소 없는 빌드는 아무것도 하지 않음)', () => {
-    expect(app).toMatch(/createAutoSender\(r, \(\) => \{ const url = getSubmitEndpoint\(\); return url \? \{ fetch: \(u, i\) => fetch\(u, i\), endpointUrl: url, now: \(\) => new Date\(\) \} : null \}\)/)
+    expect(app).toMatch(/createAutoSender\(r, \(\) => \{ const url = getSubmitEndpoint\(\); return url \? \{ fetch: \(u, i\) => fetch\(u, i\), endpointUrl: url, now: \(\) => new Date\(\), online: \(\) => navigator\.onLine !== false \} : null \}, undefined, \(\) => \{ void afterSendRef\.current\(\) \}\)/)
+  })
+  test('앱이 닫히면 자동 전송기(타이머)를 정리한다', () => {
+    expect(app).toMatch(/return \(\) => \{ cancelled = true; senderRef\.current\?\.dispose\(\) \}/)
   })
   test('앱을 열 때(저장소를 연 뒤)와 인터넷이 다시 연결될 때 보낸다', () => {
     expect(app).toMatch(/setRepo\(r\)[\s\S]{0,400}void sendNow\(\)/)
     expect(app).toMatch(/window\.addEventListener\('online', onOnline\)/)
+    expect(app).toMatch(/const onOnline = \(\) => \{ void sendNow\(\{ online: true \}\) \}/)
     expect(app).toMatch(/window\.removeEventListener\('online', onOnline\)/)
   })
   test('기록을 확정하면(기록 없이 하기가 아니고 이 기기에 저장됐으면) 보낸다', () => {
@@ -81,8 +85,13 @@ describe('앱 배선 — 언제 보내는가', () => {
     expect(app).toMatch(/sendLine=\{!screen\.noRecord && autoSendOn && isClassSession\(screen\.session\.sessionCode\) \? classSendLine\(screen\.envelope, screen\.sending\) : null\}/)
     expect(app).toMatch(/<StartScreen repo=\{repo!\} classLink=\{classLink\} autoSend=\{autoSendOn\}/)
   })
-  test('보낸 뒤 결과 화면의 기록 상태를 이 기기 저장본으로 새로 읽는다', () => {
+  test('보낸 뒤(타이머로 다시 보낸 때도) 결과 화면의 기록 상태를 이 기기 저장본으로 새로 읽고, 시작 화면 건수도 새로 읽게 한다', () => {
+    expect(app).toMatch(/const afterSend = useCallback\(async \(\) => \{\s*setSendTick\(\(n\) => n \+ 1\)/)
     expect(app).toMatch(/const stored = await r\.loadRecord\(cur\.session\.recordId\)/)
+    expect(app).toMatch(/sendTick=\{sendTick\}/)
+    const start = code('src/screens/StartScreen.tsx')
+    expect(start).toMatch(/useEffect\(\(\) => \{ void refreshCounts\(\) \}, \[repo, sendTick\]\)/)
+    expect(start).toMatch(/onClick=\{\(\) => \{ void refreshCounts\(\); setTeacherOpen\(true\) \}\}/)
   })
   test('교사 화면 전송 버튼은 그대로 있다', () => {
     const tp = code('src/screens/TeacherPanel.tsx')

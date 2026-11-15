@@ -27,6 +27,8 @@ export interface SubmitDeps {
   maxAttempts?: number
   /** 요청·응답 읽기 대기 제한(ms). 기본 SUBMIT_TIMEOUT_MS */
   timeoutMs?: number
+  /** 인터넷이 연결돼 있는가(브라우저 navigator.onLine). 자동 전송만 본다 — false면 시도하지 않는다(설계 2026-11-15 §3-3) */
+  online?: () => boolean
 }
 
 export type SubmitOutcome =
@@ -87,6 +89,9 @@ export function backoffAt(now: Date, attemptCountAfter: number): string {
   const ms = Math.min(BACKOFF_BASE_MS * 2 ** Math.max(0, attemptCountAfter - 1), BACKOFF_MAX_MS)
   return new Date(now.getTime() + ms).toISOString()
 }
+
+/** 다시 보내도 소용없어 재시도 시각을 두지 않는 확인 필요 사유(아래 pendingConfirm(code, false)) — 자동 전송은 이 사유의 기록을 다시 보내지 않는다 */
+export const NO_AUTO_RETRY_CODES: ReadonlySet<string> = new Set(['CANONICAL_STORE_INVALID', 'RECEIPT_MISMATCH', 'ACCEPTED_AT_MISMATCH'])
 
 // 오류 코드 → 상태 (설계 15 §5 표)
 const REJECT_CODES = new Set(['INVALID_PAYLOAD', 'UNSUPPORTED_SCHEMA', 'PAYLOAD_TOO_LARGE', 'SESSION_NOT_ALLOWED'])

@@ -17,13 +17,15 @@ import { CLASS_START_NOTE } from '../delivery/autoSend'
 // 시작 화면(설계 docs/superpowers/specs/2026-11-14-student-number-and-class-link-design.md §3-2·§3-3):
 // 학생은 학번(리허설 세션은 가상 코드)만 넣는다. 과제·차시·도움 방식은 교사가 정하고(교사 화면 또는 수업 주소), 여기서는 '오늘 과제' 한 줄로만 보인다.
 // 교사 설정이 없는 기기는 기본값(시연 세션 · 첫 과제 · 1~2차시 연습 · 안내 있음 · 진입 방향 없음)으로 들어간다.
-export function StartScreen({ repo, onStart, onFoundDraft, classLink, autoSend = false }: { repo: Repository; onStart: (s: SessionContext, t: ApprovedTask, m: DifficultyMode, noRecord?: boolean) => Promise<string | null>
+export function StartScreen({ repo, onStart, onFoundDraft, classLink, autoSend = false, sendTick = 0 }: { repo: Repository; onStart: (s: SessionContext, t: ApprovedTask, m: DifficultyMode, noRecord?: boolean) => Promise<string | null>
   /** 같은 코드·세션의 끝내지 않은 초안을 찾았을 때(D4) — 이어서 하기 화면으로. startFresh는 오늘 과제로 새 수행을 시작한다 */
   onFoundDraft?: (d: Draft, startFresh: () => Promise<void>) => void
   /** 앱이 열릴 때 읽은 수업 주소(main.tsx). 읽지 못했으면 안내를 보이고, 기기에 저장하지 못한 설정은 이번 화면에서만 쓴다 */
   classLink?: ClassLinkTaken
   /** 수업용 세션 기록을 마치면 바로 보내는 빌드인가(전송 주소가 있을 때, 설계 2026-11-15-class-records §3-3) — 수업용 세션이면 안내 한 줄 */
-  autoSend?: boolean }) {
+  autoSend?: boolean
+  /** 자동 전송이 한 차례 끝날 때마다 바뀐다 — 확정·전송 대기 건수를 새로 읽는다 */
+  sendTick?: number }) {
   const tasks = listTasks()
   const caseIds = knownCaseIds(tasks)
   const [preset, setPreset] = useState<TeacherPreset | null>(() => screenPreset(classLink, () => loadPreset(caseIds)))
@@ -43,7 +45,7 @@ export function StartScreen({ repo, onStart, onFoundDraft, classLink, autoSend =
     const outbox = await repo.listOutbox()
     setCounts({ records: all.length, outbox: outbox.length })
   }
-  useEffect(() => { void refreshCounts() }, [repo]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void refreshCounts() }, [repo, sendTick]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** 교사 설정이 바뀌면 오늘 과제·입장 방식도 그 값을 따른다(위에서 설정으로 계산) */
   const applyPreset = (p: TeacherPreset | null) => setPreset(p)
@@ -105,7 +107,7 @@ export function StartScreen({ repo, onStart, onFoundDraft, classLink, autoSend =
         <TeacherPanel repo={repo} tasks={tasks} preset={preset} counts={counts} onPresetChange={applyPreset} onCountsChange={refreshCounts} onClose={() => setTeacherOpen(false)} />
       ) : (
         <footer className="small teacher">
-          <button className="link" onClick={() => setTeacherOpen(true)}>교사 화면(수업 설정·기록 관리)</button> · 이 기기 확정 기록 {counts?.records ?? '…'}건 (전송 대기 {counts?.outbox ?? '…'}건)
+          <button className="link" onClick={() => { void refreshCounts(); setTeacherOpen(true) }}>교사 화면(수업 설정·기록 관리)</button> · 이 기기 확정 기록 {counts?.records ?? '…'}건 (전송 대기 {counts?.outbox ?? '…'}건)
           <br />시연용 앱 {APP_VERSION} · 연구 기록으로 쓰이지 않음
         </footer>
       )}

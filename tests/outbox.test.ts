@@ -157,15 +157,53 @@ describe('자동 전송 모드(설계 2026-11-15 §3-3)', () => {
     expect(sent).toEqual([])
     expect(res.map((r) => r.outcome)).toEqual(['skipped', 'skipped', 'skipped'])
   })
-  test('보낸 적이 있는데 재시도 시각이 없는 기록(시도 상한·서버 이상)은 자동으로 다시 보내지 않는다 — 교사 전송으로만', async () => {
+  test('시도 상한이 없다: 교사 전송으로 상한에 닿아 재시도 시각이 빈 기록도 사유가 재시도할 수 있는 것이면 다시 보내고, 실패해도 재시도 시각이 계속 잡힌다(최대 10분)', async () => {
     const p = classRec(58); await repo.freezeRecord(p)
     await repo.updateEnvelope(id(58), { uploadStatus: 'confirmationPending', uploadAttemptCount: 8, lastErrorCode: 'NETWORK_ERROR', nextRetryAt: null })
-    const a = recorder(async () => ok(p))
-    expect(await processOutbox(repo, { fetch: a.f, endpointUrl: 'https://x/exec', now: () => NOW }, auto)).toEqual([{ recordId: id(58), outcome: 'skipped', code: 'NO_AUTO_RETRY' }])
+    const down = recorder(async () => { throw new TypeError('Failed to fetch') })
+    expect(await processOutbox(repo, { fetch: down.f, endpointUrl: 'https://x/exec', now: () => NOW }, auto)).toEqual([{ recordId: id(58), outcome: 'confirmationPending', code: 'NETWORK_ERROR' }])
+    expect(down.sent).toEqual([id(58)])
+    const env = (await repo.loadRecord(id(58)))!.envelope
+    expect(env.uploadAttemptCount).toBe(9)
+    expect(env.nextRetryAt).toBe(new Date(NOW.getTime() + 10 * 60_000).toISOString())
+    // 교사 전송은 지금 규칙(상한 8) 그대로 — 상한을 넘은 실패는 재시도 시각을 비운다
+    await repo.updateEnvelope(id(58), { nextRetryAt: null })
+    await processOutbox(repo, { fetch: down.f, endpointUrl: 'https://x/exec', now: () => NOW })
+    expect((await repo.loadRecord(id(58)))!.envelope.nextRetryAt).toBeNull()
+  })
+  test('다시 보내도 소용없는 사유(서버 이상·접수 정보 불일치)로 재시도 시각이 빈 기록은 자동으로 다시 보내지 않는다 — 교사 전송으로만', async () => {
+    for (const [n, code] of [[60, 'CANONICAL_STORE_INVALID'], [61, 'RECEIPT_MISMATCH'], [62, 'ACCEPTED_AT_MISMATCH']] as const) {
+      await repo.freezeRecord(classRec(n)); await repo.updateEnvelope(id(n), { uploadStatus: 'confirmationPending', uploadAttemptCount: 1, lastErrorCode: code, nextRetryAt: null })
+    }
+    const a = recorder(async () => ok(classRec(60)))
+    expect((await processOutbox(repo, { fetch: a.f, endpointUrl: 'https://x/exec', now: () => NOW }, auto)).map((r) => r.code)).toEqual(['NO_AUTO_RETRY', 'NO_AUTO_RETRY', 'NO_AUTO_RETRY'])
     expect(a.sent).toEqual([])
-    const t = recorder(async () => ok(p))
+    const t = recorder(async (rid) => ok(classRec(Number(rid.slice(-2)))))
     await processOutbox(repo, { fetch: t.f, endpointUrl: 'https://x/exec', now: () => NOW })
-    expect(t.sent).toEqual([id(58)])
+    expect(t.sent).toEqual([id(60), id(61), id(62)])
+  })
+  test('인터넷이 끊겨 있으면(online=false) 시도하지 않는다 — 시도 횟수·상태를 건드리지 않음', async () => {
+    await repo.freezeRecord(classRec(63))
+    const a = recorder(async () => ok(classRec(63)))
+    const res = await processOutbox(repo, { fetch: a.f, endpointUrl: 'https://x/exec', now: () => NOW, online: () => false }, auto)
+    expect(a.sent).toEqual([])
+    expect(res).toEqual([{ recordId: id(63), outcome: 'skipped', code: 'OFFLINE' }])
+    expect((await repo.loadRecord(id(63)))!.envelope).toMatchObject({ uploadStatus: 'pending', uploadAttemptCount: 0, lastErrorCode: null, nextRetryAt: null })
+    // 교사 전송은 지금처럼 시도한다(끊김이면 NETWORK_ERROR로 알려 줌)
+    const t = recorder(async () => ok(classRec(63)))
+    await processOutbox(repo, { fetch: t.f, endpointUrl: 'https://x/exec', now: () => NOW, online: () => false })
+    expect(t.sent).toEqual([id(63)])
+  })
+  test('online 신호로 불린 자동 전송은 NETWORK_ERROR 기록의 재시도 시각을 무시하고, 다른 사유는 재시도 시각을 지킨다', async () => {
+    const later = new Date(NOW.getTime() + 5 * 60_000).toISOString()
+    await repo.freezeRecord(classRec(64)); await repo.updateEnvelope(id(64), { uploadStatus: 'confirmationPending', uploadAttemptCount: 3, lastErrorCode: 'NETWORK_ERROR', nextRetryAt: later })
+    await repo.freezeRecord(classRec(65)); await repo.updateEnvelope(id(65), { uploadStatus: 'confirmationPending', uploadAttemptCount: 3, lastErrorCode: 'TIMEOUT', nextRetryAt: later })
+    const plain = recorder(async () => ok(classRec(64)))
+    expect((await processOutbox(repo, { fetch: plain.f, endpointUrl: 'https://x/exec', now: () => NOW }, auto)).map((r) => r.code)).toEqual(['RETRY_LATER', 'RETRY_LATER'])
+    const sig = recorder(async () => ok(classRec(64)))
+    const res = await processOutbox(repo, { fetch: sig.f, endpointUrl: 'https://x/exec', now: () => NOW }, { auto: true, onlineSignal: true })
+    expect(sig.sent).toEqual([id(64)])
+    expect(res.map((r) => [r.recordId, r.outcome, r.code])).toEqual([[id(64), 'acknowledged', null], [id(65), 'skipped', 'RETRY_LATER']])
   })
   test('새로고침으로 남은 uploading 수업용 기록은 같은 ID로 다시 확인한다', async () => {
     const p = classRec(59); await repo.freezeRecord(p)
@@ -181,5 +219,35 @@ describe('교사 화면 전송 결과 문구 — 수업 자료 모으기 안전�
     const { sendResultLabel } = await import('../src/delivery/sendLabel')
     const t = sendResultLabel({ recordId: 'abc', outcome: 'skipped', code: STUDENT_NUMBER_OUTSIDE_CLASS })
     expect(t).toMatch(/수업용 세션이 아니/); expect(t).toMatch(/학번/); expect(t).toMatch(/보내지 않/); expect(t).toMatch(/내려받/)
+  })
+})
+
+describe('전송이 겹치지 않게(전송함 처리 한 줄 세우기)', () => {
+  test('교사 전송과 자동 전송을 동시에 불러도 같은 기록의 fetch는 한 번이고 최종 상태는 acknowledged', async () => {
+    const p = classRec(70); await repo.freezeRecord(p)
+    let release!: () => void
+    const gate = new Promise<void>((r) => { release = r })
+    let calls = 0
+    const f = (async () => { calls++; await gate; return ok(p) }) as unknown as typeof fetch
+    const deps = { fetch: f, endpointUrl: 'https://x/exec', now: () => NOW }
+    const teacher = processOutbox(repo, deps, { force: true })
+    const auto = processOutbox(repo, deps, { auto: true, onlineSignal: true })
+    const teacher2 = processOutbox(repo, deps)
+    await new Promise((r) => setTimeout(r, 20))
+    expect(calls).toBe(1)
+    release()
+    const [a, b, c] = await Promise.all([teacher, auto, teacher2])
+    expect(calls).toBe(1)
+    expect(a).toEqual([{ recordId: id(70), outcome: 'acknowledged', code: null }])
+    expect(b).toEqual([]); expect(c).toEqual([])
+    expect((await repo.loadRecord(id(70)))!.envelope).toMatchObject({ uploadStatus: 'acknowledged', uploadAttemptCount: 1 })
+  })
+  test('앞 처리가 실패해도 뒤 처리는 돈다', async () => {
+    const p = classRec(71); await repo.freezeRecord(p)
+    const broken = { ...repo, listOutbox: async () => { throw new Error('idb') } } as Repository
+    const first = processOutbox(broken, { fetch: (async () => ok(p)) as unknown as typeof fetch, endpointUrl: 'https://x/exec', now: () => NOW })
+    const second = processOutbox(repo, { fetch: (async () => ok(p)) as unknown as typeof fetch, endpointUrl: 'https://x/exec', now: () => NOW })
+    await expect(first).rejects.toThrow('idb')
+    expect((await second)[0]?.outcome).toBe('acknowledged')
   })
 })

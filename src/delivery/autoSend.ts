@@ -1,38 +1,73 @@
 // 수업 자료 모으기 — 마치면 자동으로 보내기(설계 docs/superpowers/specs/2026-11-15-class-records-design.md §3-3)
 // - 보내는 대상은 수업용 세션 기록뿐이다(processOutbox의 auto 모드가 거른다). 기록 없이 하기는 이 기기 저장소에 없으므로 보내지 않는다.
-// - 부르는 때: 앱을 열 때, 인터넷이 다시 연결될 때(online), 기록을 확정할 때. 못 보낸 기록은 기기에 남고 기존 재시도 간격을 따른다(force 아님).
-// - 거절·충돌 기록은 다시 보내지 않는다(교사 화면 전송 버튼으로만). 전송 주소가 없는 빌드에서는 아무것도 하지 않는다.
-// - 한 번에 한 차례만 돈다. 도는 중에 다시 불리면 끝난 뒤 한 번 더 돈다(같은 기록을 겹쳐 보내지 않게).
-import type { Repository } from '../records/repository'
+// - 부르는 때: 앱을 열 때, 인터넷이 다시 연결될 때(online — NETWORK_ERROR 기록은 재시도 시각을 무시), 기록을 확정할 때,
+//   그리고 앱이 열려 있는 동안 수업용 대기 기록의 가장 이른 재시도 시각에 맞춘 타이머 하나.
+// - 인터넷이 끊겨 있으면 시도하지 않는다. 자동 전송에는 시도 상한이 없다(간격은 기존 규칙, 최대 10분).
+// - 거절·충돌과 다시 보내도 소용없는 사유의 기록은 다시 보내지 않는다(교사 화면 전송 버튼으로만). 전송 주소가 없는 빌드에서는 아무것도 하지 않는다.
+// - 전송함 처리는 outbox.ts가 모듈 단위로 한 줄로 세운다(교사 전송과도 겹치지 않음). 여기서는 아직 시작하지 않은 차례가 있으면 그 차례에 합친다.
+import type { Repository, StoredRecord } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
-import { processOutbox, type OutboxItemResult } from './outbox'
+import { isClassSession } from '../app/sessions'
+import { noAutoRetry, processOutbox, type OutboxItemResult, type OutboxOptions } from './outbox'
 import type { SubmitDeps } from './submit'
 
 export interface AutoSender {
-  /** 전송함의 수업용 기록을 보낸다. 전송 주소가 없거나 저장소를 못 읽으면 null(예외를 던지지 않음) */
-  run(): Promise<OutboxItemResult[] | null>
+  /** 전송함의 수업용 기록을 보낸다. online: 인터넷이 다시 연결돼 부름. 전송 주소가 없거나 닫았거나 저장소를 못 읽으면 null(예외를 던지지 않음) */
+  run(o?: { online?: boolean }): Promise<OutboxItemResult[] | null>
+  /** 타이머를 정리하고 더 보내지 않는다(앱이 닫힐 때) */
+  dispose(): void
 }
 
-export function createAutoSender(repo: Repository, deps: () => SubmitDeps | null): AutoSender {
-  let current: Promise<OutboxItemResult[] | null> | null = null
-  let again = false
-  const loop = async (d: SubmitDeps) => {
-    let last: OutboxItemResult[] | null = null
-    do {
-      again = false
-      try { last = await processOutbox(repo, d, { auto: true }) } catch { last = null }
-    } while (again)
-    return last
+export interface AutoSendTimers { set: (fn: () => void, delayMs: number) => unknown; clear: (handle: unknown) => void; now: () => number }
+const realTimers: AutoSendTimers = { set: (fn, ms) => setTimeout(fn, ms), clear: (h) => clearTimeout(h as ReturnType<typeof setTimeout>), now: () => Date.now() }
+
+/** 지난 재시도 시각이어도 이만큼은 기다린다(저장 실패 등으로 시각이 안 바뀐 기록 때문에 쉬지 않고 돌지 않게) */
+export const MIN_WAKE_MS = 5_000
+
+/** 다음에 자동 전송을 부를 때까지(ms). 수업용 대기 기록 가운데 가장 이른 재시도 시각. 걸 것이 없으면 null */
+export function nextWakeDelay(records: StoredRecord[], nowMs: number): number | null {
+  let earliest = Number.POSITIVE_INFINITY
+  for (const r of records) {
+    const env = r.envelope
+    if (!isClassSession(r.payload.sessionCode)) continue
+    if (env.uploadStatus === 'acknowledged' || env.uploadStatus === 'rejected' || env.uploadStatus === 'conflict') continue
+    if (!env.nextRetryAt || noAutoRetry(env)) continue
+    const t = Date.parse(env.nextRetryAt)
+    if (Number.isFinite(t)) earliest = Math.min(earliest, t)
   }
-  return {
-    run() {
+  return Number.isFinite(earliest) ? Math.max(MIN_WAKE_MS, earliest - nowMs) : null
+}
+
+/** onPass: 한 차례가 끝날 때마다(타이머로 부른 차례 포함) — 화면이 전송 상태를 새로 읽는 데 쓴다 */
+export function createAutoSender(repo: Repository, deps: () => SubmitDeps | null, timers: AutoSendTimers = realTimers, onPass?: () => void): AutoSender {
+  /** 줄을 섰지만 아직 시작하지 않은 차례(시작하면 비운다 — 그 뒤의 부름은 새 차례를 세워 전송함을 새로 읽는다) */
+  let waiting: { opts: OutboxOptions; p: Promise<OutboxItemResult[] | null> } | null = null
+  let timer: unknown = null
+  let disposed = false
+  const clearTimer = () => { if (timer !== null) { timers.clear(timer); timer = null } }
+  const schedule = async (d: SubmitDeps) => {
+    clearTimer()
+    if (disposed || (d.online && !d.online())) return
+    try {
+      const delay = nextWakeDelay(await repo.listOutbox(), timers.now())
+      if (delay !== null && !disposed) { clearTimer(); timer = timers.set(() => { timer = null; void sender.run() }, delay) }
+    } catch { /* 다음 부름(앱 열기·online·확정) 때 다시 건다 */ }
+  }
+  const sender: AutoSender = {
+    run(o = {}) {
       const d = deps()
-      if (!d) return Promise.resolve(null)
-      if (current) { again = true; return current }
-      current = loop(d).finally(() => { current = null })
-      return current
+      if (!d || disposed) return Promise.resolve(null)
+      if (waiting) { if (o.online) waiting.opts.onlineSignal = true; return waiting.p }
+      const opts: OutboxOptions = { auto: true, onlineSignal: !!o.online, onStart: () => { if (waiting?.opts === opts) waiting = null } }
+      const p = processOutbox(repo, d, opts)
+        .catch(() => null)
+        .then(async (res) => { if (waiting?.opts === opts) waiting = null; await schedule(d); if (!disposed) { try { onPass?.() } catch { /* 화면 쪽 실패는 전송과 무관 */ } } return res })
+      waiting = { opts, p }
+      return p
     },
+    dispose() { disposed = true; clearTimer() },
   }
+  return sender
 }
 
 /** 결과 화면 전송 상태 문구 — 정오·판정을 넣지 않는다(설계 §3-3, §5) */
@@ -44,11 +79,13 @@ export const CLASS_SEND_TEXT = {
   teacher: '기록을 보내지 못했어요. 선생님께 알려 주세요.',
 } as const
 
-/** 수업용 세션 결과 화면의 전송 상태 한 줄. 이 기기에 확정 저장되지 않았으면 null(저장 실패 안내가 따로 있음) */
+/** 수업용 세션 결과 화면의 전송 상태 한 줄. 이 기기에 확정 저장되지 않았으면 null(저장 실패 안내가 따로 있음).
+ * '인터넷이 연결되면 다시 보내요'는 자동으로 다시 보낼 기록에만 쓴다. 거절·충돌, 다시 보내도 소용없는 사유, 서버 한도(RATE_LIMITED)는 선생님께 알리게 한다 */
 export function classSendLine(env: DeliveryEnvelope | null, sending: boolean): string | null {
   if (!env || env.localSaveStatus !== 'saved') return null
   if (env.uploadStatus === 'acknowledged') return CLASS_SEND_TEXT.sent
   if (env.uploadStatus === 'rejected' || env.uploadStatus === 'conflict') return CLASS_SEND_TEXT.teacher
+  if (!sending && (noAutoRetry(env) || env.lastErrorCode === 'RATE_LIMITED')) return CLASS_SEND_TEXT.teacher
   return sending ? CLASS_SEND_TEXT.sending : CLASS_SEND_TEXT.notYet
 }
 
