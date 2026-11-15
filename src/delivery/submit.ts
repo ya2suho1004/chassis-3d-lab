@@ -10,6 +10,7 @@ import type { StoredRecord } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
 import { canonicalize, sha256Hex, stripUndefinedKeys, utf8Length } from './jcs'
 import { deadline, SUBMIT_TIMEOUT_MS } from './timeout'
+import { isClassSession } from '../app/sessions'
 
 export const PROTOCOL_VERSION = '1'
 export const CANONICAL_MAX_BYTES = 32 * 1024
@@ -112,9 +113,18 @@ export function rejectedOnlyByUnsupportedSchema(rec: StoredRecord): boolean {
   return rec.envelope.uploadStatus === 'rejected' && rec.envelope.lastErrorCode === 'UNSUPPORTED_SCHEMA'
 }
 
+/**
+ * 수업용 세션 기록이 '세션 허용 안 됨'으로 거절됐는가(수업 자료 모으기 설계 2026-11-15 §3-3 안전장치 2).
+ * 서버 허용 목록이 수업용 세션을 아직 모를 때(서버 배포보다 앱이 먼저 나감) 서버는 저장 전에 거절하므로, 서버를 배포한 뒤 다시 보내도 서버의 거절을 무시하는 것이 아니다.
+ * 교사가 전송을 누를 때만 다시 보낸다(자동 전송은 거절 기록을 보내지 않음). 서버가 여전히 모르면 같은 사유로 다시 거절되고 저장되지 않는다.
+ */
+export function rejectedClassSessionNotAllowed(rec: StoredRecord): boolean {
+  return rec.envelope.uploadStatus === 'rejected' && rec.envelope.lastErrorCode === 'SESSION_NOT_ALLOWED' && isClassSession(rec.payload.sessionCode)
+}
+
 /** 교사의 '대기 기록 지금 전송'으로 다시 보낼 수 있는 거절 기록 */
 export function resendableRejected(rec: StoredRecord): boolean {
-  return rejectedOnlyByUndefinedKeys(rec) || rejectedOnlyByUnsupportedSchema(rec)
+  return rejectedOnlyByUndefinedKeys(rec) || rejectedOnlyByUnsupportedSchema(rec) || rejectedClassSessionNotAllowed(rec)
 }
 
 export async function submitRecord(rec: StoredRecord, deps: SubmitDeps): Promise<SubmitResult> {
