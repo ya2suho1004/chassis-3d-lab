@@ -153,11 +153,18 @@ describe('재유입을 막는 조치', () => {
   })
 })
 
-describe('전송은 교사 조작으로만', () => {
-  test('대기열 처리를 부르는 곳은 교사 화면뿐이다(자동 재전송으로 재유입되지 않음)', () => {
+describe('전송은 교사 조작과 수업용 세션 자동 전송뿐(설계 2026-11-15-class-records §3-3)', () => {
+  test('대기열 처리를 부르는 곳은 교사 화면과 자동 전송기뿐이고, 자동 전송기는 auto 모드만 쓴다', () => {
     const screens = ['src/App.tsx', 'src/screens/StartScreen.tsx', 'src/screens/LabScreen.tsx', 'src/screens/TaskScreen.tsx', 'src/screens/ResultScreen.tsx', 'src/screens/ResumeScreen.tsx']
     for (const f of screens) expect(fs.readFileSync(f, 'utf8')).not.toMatch(/processOutbox/)
     expect(fs.readFileSync('src/screens/TeacherPanel.tsx', 'utf8')).toMatch(/processOutbox\(/)
+    const auto = fs.readFileSync('src/delivery/autoSend.ts', 'utf8')
+    expect(auto.match(/processOutbox\(/g)).toHaveLength(1)
+    expect(auto).toMatch(/processOutbox\(repo, d, opts\)/)
+    expect(auto).toMatch(/const opts: OutboxOptions = \{ auto: true, /)
+  })
+  test('자동 전송은 접수 확인된 기록을 다시 보내지 않는다(대기열에 없음) — 철회 뒤 서버에서 지운 기록이 다시 들어오지 않게', () => {
+    expect(fs.readFileSync('src/records/repository.ts', 'utf8')).toMatch(/filter\(\(r\) => r\.envelope\.uploadStatus !== 'acknowledged'\)/)
   })
 })
 

@@ -7,7 +7,8 @@ import type { DifficultyMode } from '../domain/taskEngine'
 export interface SessionDef {
   code: string
   condition: string
-  kind: 'demo' | 'rehearsal' | 'research'
+  /** class: 실제 수업용(설계 2026-11-15-class-records) — 학번으로 들어오고 마치면 기록을 서버로 바로 보낸다. 연구 기록은 아니다(runPurpose=demo) */
+  kind: 'demo' | 'class' | 'rehearsal' | 'research'
   label: string
   usagePhase: UsagePhase | null
   difficultyMode: Extract<DifficultyMode, 'guided' | 'unguided'> | null
@@ -19,6 +20,11 @@ export const DEFAULT_SESSION_CODE = 'DEMO-ONLY'
 
 export function sessionDef(code: string | null | undefined): SessionDef | null {
   return SESSIONS.find((s) => s.code === code) ?? null
+}
+
+/** 수업용 세션인가(설계 2026-11-15-class-records §3-1) — 이 세션의 기록만 자동으로 서버에 보낸다 */
+export function isClassSession(code: string | null | undefined): boolean {
+  return sessionDef(code)?.kind === 'class'
 }
 
 /** 고를 수 있는 세션(연구 세션은 IRB 승인 뒤 pending을 풀어야 고를 수 있다) */

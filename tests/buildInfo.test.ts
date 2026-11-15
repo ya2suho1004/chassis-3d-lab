@@ -25,5 +25,5 @@ describe('앱 판 번호 — 커밋 포함(H1)', () => {
     expect(cfg).toMatch(/__APP_COMMIT__/)
     expect(cfg).toMatch(/VERCEL_GIT_COMMIT_SHA/)
   })
-  test('학번 입장과 수업 주소(2026-11-14)부터 기본 판 0.3.7-demo — 리허설이 아닌 세션의 학생 코드가 학번이 된 판을 기록에서 가른다(0.3.6-demo는 공간 채우기, 0.3.5-demo는 캐릭터와 움직임, 0.3.4-demo는 손맛, 0.3.3-demo는 빛과 재질, 0.3.2-demo는 계산기, 0.3.1-demo는 채점 규칙 가)', () => { expect(APP_BASE_VERSION).toBe('0.3.7-demo') })
+  test('수업 자료 모으기(2026-11-16)부터 기본 판 0.4.0-demo — 수업용 세션 기록이 마치면 바로 서버로 가는 판을 기록에서 가른다(0.3.7-demo는 학번 입장과 수업 주소, 0.3.6-demo는 공간 채우기, 0.3.5-demo는 캐릭터와 움직임, 0.3.4-demo는 손맛, 0.3.3-demo는 빛과 재질, 0.3.2-demo는 계산기, 0.3.1-demo는 채점 규칙 가)', () => { expect(APP_BASE_VERSION).toBe('0.4.0-demo') })
 })

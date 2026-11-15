@@ -36,6 +36,9 @@ export const ENTRY_TEXT: Record<EntryKind, { word: string; label: string; exampl
   },
 }
 
+/** 학번 형식(학년 1~3 + 반 1~9 + 번호 01~99)인가 — 입장 검사와 전송함 안전장치(delivery/outbox.ts)가 같이 쓴다 */
+export const isStudentNumber = (code: string) => STUDENT_NUMBER_RE.test(code)
+
 export function entryKindFor(sessionCode: string): EntryKind {
   return sessionDef(sessionCode)?.kind === 'rehearsal' ? 'virtualCode' : 'studentNumber'
 }

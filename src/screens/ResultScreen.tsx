@@ -10,11 +10,12 @@ import { isRequestPassed } from '../app/cozyState'
 import { countsText, itemLabel, timeQualityLabel, verdictLabel } from '../app/resultLabels'
 import { LESSON_SHORT } from '../app/lesson'
 import type { LabSound } from '../scene/sound'
+import { isClassSession } from '../app/sessions'
 
 const UPLOAD_LABEL: Record<string, string> = { pending: '대기(교사가 전송 전)', uploading: '제출 중', confirmationPending: '접수 확인 필요', acknowledged: '서버 접수 확인됨', rejected: '제출자료 확인 필요', conflict: '기록 충돌' }
 const ERROR_HINT: Record<string, string> = { TIMEOUT: '서버 응답이 오지 않음 — 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', NETWORK_ERROR: '네트워크 오류 — 서버 저장 여부를 알 수 없어 같은 ID로 다시 확인합니다', UNREADABLE_ACK: '서버 응답을 읽지 못함(로그인 페이지·차단 가능)', HASH_MISMATCH: '서버 해시가 로컬 계산과 다름', RECORD_ID_CONFLICT: '같은 수행 번호로 다른 내용이 이미 접수됨', INVALID_PAYLOAD: '서버가 기록 형식을 거절함', SESSION_NOT_ALLOWED: '시험 세션·접수 기간이 아님' }
 
-export function ResultScreen({ sound, session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onNextStudent, onRetrySave }: {
+export function ResultScreen({ sound, session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onNextStudent, onRetrySave, sendLine = null }: {
   /** 소리 엔진(설계 2026-11-12 §4.7): 실습 화면에서 켠 채 넘어왔으면 통과 도장에 소리가 난다. 이 화면에는 배경 소음도 소리 버튼도 없다 */
   sound?: Pick<LabSound, 'enabled' | 'play'>
   session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null
@@ -26,6 +27,8 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
   nickname?: string; onNextStudent: () => void
   /** 확정 저장 실패 뒤 같은 원본으로 다시 저장(D4). 성공하면 null, 실패하면 오류 코드 */
   onRetrySave?: () => Promise<string | null>
+  /** 수업용 세션 기록의 전송 상태 한 줄(설계 2026-11-15-class-records §3-3, delivery/autoSend.ts). 있으면 교사 전송 안내 대신 보인다. 정오·판정은 넣지 않는다 */
+  sendLine?: string | null
 }) {
   const [retrying, setRetrying] = useState(false)
   const [retryError, setRetryError] = useState<string | null>(null)
@@ -71,7 +74,9 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
         ) : (
           <>
             <span>이 기기 저장: <b className={env.localSaveStatus === 'saved' ? 'ok' : 'bad'}>{env.localSaveStatus === 'saved' ? '저장됨' : '실패'}</b></span>
-            <span>온라인 접수: <b>{UPLOAD_LABEL[env.uploadStatus] ?? env.uploadStatus}</b>{env.receiptId ? <span className="small"> · 접수번호 {env.receiptId}</span> : null}{env.lastErrorCode && env.uploadStatus !== 'acknowledged' ? <span className="small"> · {ERROR_HINT[env.lastErrorCode] ?? env.lastErrorCode}</span> : null}</span>
+            {sendLine
+              ? <span className="send-line" role="status">{sendLine}</span>
+              : <span>온라인 접수: <b>{UPLOAD_LABEL[env.uploadStatus] ?? env.uploadStatus}</b>{env.receiptId ? <span className="small"> · 접수번호 {env.receiptId}</span> : null}{env.lastErrorCode && env.uploadStatus !== 'acknowledged' ? <span className="small"> · {ERROR_HINT[env.lastErrorCode] ?? env.lastErrorCode}</span> : null}</span>}
           </>
         )}
       </div>
@@ -120,7 +125,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
       ) : (
       <section className="card">
         <details>
-          <summary>교사용 상세 기록 보기 (record.schema {payload.ok ? payload.value.schemaVersion : ''} 형식 · 시연이므로 researchEligible=false)</summary>
+          <summary>교사용 상세 기록 보기 (record.schema {payload.ok ? payload.value.schemaVersion : ''} 형식 · {isClassSession(session.sessionCode) ? '연구용 접수가 아니므로' : '시연이므로'} researchEligible=false)</summary>
           {payload.ok && <textarea readOnly value={json} rows={12} aria-label="payload" />}
         </details>
         {!payload.ok && <p className="error">{payload.error}</p>}
@@ -130,7 +135,9 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
           <button className="primary" onClick={next}>{unsaved && confirmLeave ? '저장 안 된 채로 다음 학생' : '다음 학생'}</button>
         </div>
         {unsaved && confirmLeave && <p className="error" role="alert">이 수행은 아직 이 기기에 확정 저장되지 않았습니다. ‘다시 저장’을 하거나 JSON을 내려받은 뒤 넘어가세요. 그래도 넘어가려면 버튼을 한 번 더 누르세요.</p>}
-        <p className="small">‘다음 학생’은 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않고, 교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다.</p>
+        <p className="small">{sendLine
+          ? '‘다음 학생’은 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않고, 아직 보내지 못한 기록은 인터넷이 연결되면 다시 보냅니다.'
+          : '‘다음 학생’은 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않고, 교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다.'}</p>
       </section>
       )}
     </main>

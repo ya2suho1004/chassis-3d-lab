@@ -11,6 +11,7 @@ import { exportFileName } from '../teacher/exportName'
 import { createSession, getServerConfig, isTeacher, listAllServerRecords, listChatLogs, listServerReceipts, listSessions, ServerError, signIn, updateSession, type ServerConfig, type SessionRow, type TeacherAuth } from '../teacher/serverAdmin'
 import { ChatReview } from './ChatReview'
 import { ReconcileView } from './RecordCheck'
+import { AchievementTable } from './AchievementTable'
 
 export const FLOW_LABEL: Record<SessionRow['lesson_flow'], string> = { 'lesson1-2': '1~2차시 연습', lesson5: '5차시 정리' }
 
@@ -138,6 +139,9 @@ export function ServerAfter({ s, repo }: { s: ServerAdminState; repo: Repository
     setBundleNote(`${code} ${label} ${rows.length}건을 끝까지 읽어 내려받았습니다.`)
   }
   return (
+    <>
+    {/* 학생별 성취 표(설계 2026-11-15-class-records §3-4): 수업용 세션 기록을 학번·과제별로 */}
+    <AchievementTable s={s} />
     <section className="card serveradmin">
       <h3>서버 기록 내려받기 (수업 후)</h3>
       <AccountRow s={s} />
@@ -170,5 +174,6 @@ export function ServerAfter({ s, repo }: { s: ServerAdminState; repo: Repository
           onClick={() => void s.run(async () => { await createSession(cfg, auth, { session_code: newCode, class_condition_code: newCond, lesson_flow: newFlow }); setNewCode(''); setNewCond(''); await s.refresh() })}>만들기</button>
       </details>
     </section>
+    </>
   )
 }

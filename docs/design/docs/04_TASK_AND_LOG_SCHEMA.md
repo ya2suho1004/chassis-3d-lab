@@ -146,7 +146,7 @@ axlePercentSum       = (left + right) / axleWeight * 100
 |---|---|
 | `schemaVersion` | 문자열. 기록 계약 버전 |
 | `recordId` | UUID 문자열 |
-| `anonymousStudentCode` | 배부 코드. 기본 형식 예시는 `A-01`; 실제 regex와 범위는 세션 설정으로 승인. **2026-11-14 변경**(설계 `2026-11-14-student-number-and-class-link-design.md`, 0.3.7-demo): 리허설 세션은 가상 코드 `^D-\d{2}$`, 그 밖은 학번 `^[1-3][1-9](0[1-9]\|[1-9]\d)$`(학생을 알아볼 수 있음). 필드 이름·자료형은 그대로 |
+| `anonymousStudentCode` | 배부 코드. 기본 형식 예시는 `A-01`; 실제 regex와 범위는 세션 설정으로 승인. **2026-11-14 변경**(설계 `2026-11-14-student-number-and-class-link-design.md`, 0.3.7-demo): 리허설 세션은 가상 코드 `^D-\d{2}$`, 그 밖은 학번 `^[1-3][1-9](0[1-9]\|[1-9]\d)$`(학생을 알아볼 수 있음). 필드 이름·자료형은 그대로. **2026-11-16 변경**(설계 `2026-11-15-class-records-design.md`, 0.4.0-demo): 서버 허용 목록의 코드 형식도 세션 종류별 — 수업용 세션(`CLS-L12`·`CLS-L5`, 조건 `CLS`)은 학번만, 시연·리허설은 `D-xx`만 받는다. 수업용 기록도 `runPurpose=demo`·`researchEligible=false`(기록 형식 그대로) |
 | `classConditionCode` | 연구조건 코드. 학급 실명·실험조건의 대응표는 앱 밖에서 관리 |
 | `sessionCode` | 교사가 공개한 수업 단위 코드 |
 | `taskId` | MVP는 `braking-force` |

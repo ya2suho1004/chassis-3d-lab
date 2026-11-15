@@ -10,13 +10,15 @@ import type { StoredRecord } from '../records/repository'
 import type { DeliveryEnvelope } from '../records/types'
 import { canonicalize, sha256Hex, stripUndefinedKeys, utf8Length } from './jcs'
 import { deadline, SUBMIT_TIMEOUT_MS } from './timeout'
+import { isClassSession } from '../app/sessions'
 
 export const PROTOCOL_VERSION = '1'
 export const CANONICAL_MAX_BYTES = 32 * 1024
 export const REQUEST_MAX_BYTES = 48 * 1024
 export const DEFAULT_MAX_ATTEMPTS = 8
-const BACKOFF_BASE_MS = 30_000
-const BACKOFF_MAX_MS = 10 * 60_000
+/** 재시도 간격: 첫 간격 30초, 두 배씩, 최대 10분(자동 전송 타이머도 이 값을 쓴다) */
+export const BACKOFF_BASE_MS = 30_000
+export const BACKOFF_MAX_MS = 10 * 60_000
 
 export interface SubmitDeps {
   fetch: typeof fetch
@@ -26,6 +28,8 @@ export interface SubmitDeps {
   maxAttempts?: number
   /** 요청·응답 읽기 대기 제한(ms). 기본 SUBMIT_TIMEOUT_MS */
   timeoutMs?: number
+  /** 인터넷이 연결돼 있는가(브라우저 navigator.onLine). 자동 전송만 본다 — false면 시도하지 않는다(설계 2026-11-15 §3-3) */
+  online?: () => boolean
 }
 
 export type SubmitOutcome =
@@ -87,6 +91,9 @@ export function backoffAt(now: Date, attemptCountAfter: number): string {
   return new Date(now.getTime() + ms).toISOString()
 }
 
+/** 다시 보내도 소용없어 재시도 시각을 두지 않는 확인 필요 사유(아래 pendingConfirm(code, false)) — 자동 전송은 이 사유의 기록을 다시 보내지 않는다 */
+export const NO_AUTO_RETRY_CODES: ReadonlySet<string> = new Set(['CANONICAL_STORE_INVALID', 'RECEIPT_MISMATCH', 'ACCEPTED_AT_MISMATCH'])
+
 // 오류 코드 → 상태 (설계 15 §5 표)
 const REJECT_CODES = new Set(['INVALID_PAYLOAD', 'UNSUPPORTED_SCHEMA', 'PAYLOAD_TOO_LARGE', 'SESSION_NOT_ALLOWED'])
 const PENDING_CODES = new Set(['LOCK_BUSY', 'RATE_LIMITED'])
@@ -112,9 +119,18 @@ export function rejectedOnlyByUnsupportedSchema(rec: StoredRecord): boolean {
   return rec.envelope.uploadStatus === 'rejected' && rec.envelope.lastErrorCode === 'UNSUPPORTED_SCHEMA'
 }
 
+/**
+ * 수업용 세션 기록이 '세션 허용 안 됨'으로 거절됐는가(수업 자료 모으기 설계 2026-11-15 §3-3 안전장치 2).
+ * 서버 허용 목록이 수업용 세션을 아직 모를 때(서버 배포보다 앱이 먼저 나감) 서버는 저장 전에 거절하므로, 서버를 배포한 뒤 다시 보내도 서버의 거절을 무시하는 것이 아니다.
+ * 교사가 전송을 누를 때만 다시 보낸다(자동 전송은 거절 기록을 보내지 않음). 서버가 여전히 모르면 같은 사유로 다시 거절되고 저장되지 않는다.
+ */
+export function rejectedClassSessionNotAllowed(rec: StoredRecord): boolean {
+  return rec.envelope.uploadStatus === 'rejected' && rec.envelope.lastErrorCode === 'SESSION_NOT_ALLOWED' && isClassSession(rec.payload.sessionCode)
+}
+
 /** 교사의 '대기 기록 지금 전송'으로 다시 보낼 수 있는 거절 기록 */
 export function resendableRejected(rec: StoredRecord): boolean {
-  return rejectedOnlyByUndefinedKeys(rec) || rejectedOnlyByUnsupportedSchema(rec)
+  return rejectedOnlyByUndefinedKeys(rec) || rejectedOnlyByUnsupportedSchema(rec) || rejectedClassSessionNotAllowed(rec)
 }
 
 export async function submitRecord(rec: StoredRecord, deps: SubmitDeps): Promise<SubmitResult> {

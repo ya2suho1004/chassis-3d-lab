@@ -10,6 +10,7 @@ const task = lv1 as ApprovedTask
 describe('세션 — 입장 코드', () => {
   test('세션 종류로 입장 방식을 정한다: 리허설은 가상 코드, 시연·연구·모르는 세션은 학번', () => {
     expect(entryKindFor('DEMO-ONLY')).toBe('studentNumber')
+    for (const s of ['CLS-L12', 'CLS-L5']) expect(entryKindFor(s)).toBe('studentNumber')
     for (const s of ['REH-L12', 'REH-L5', 'REH-USAB']) expect(entryKindFor(s)).toBe('virtualCode')
     expect(entryKindFor('EXP-L12')).toBe('studentNumber')
     expect(entryKindFor('없는세션')).toBe('studentNumber')
