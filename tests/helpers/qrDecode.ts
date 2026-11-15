@@ -18,6 +18,7 @@ export function decodeWithCv(m: boolean[][]): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qr-'))
   const file = path.join(dir, 'q.pgm')
   fs.writeFileSync(file, Buffer.concat([Buffer.from(`P5\n${n} ${n}\n255\n`), px]))
-  const py = 'import cv2,sys;print(cv2.QRCodeDetector().detectAndDecode(cv2.imread(sys.argv[1]))[0],end="")'
+  // 기본 판독기(QRCodeDetector)가 몇몇 올바른 그림(예: REH-USAB·CLS 주소 일부)을 못 읽어 같은 OpenCV의 Aruco 판독기로 한 번 더 읽는다(2026-11-16, 수업용 세션을 더해 고르는 조합이 바뀌며 드러남).
+  const py = 'import cv2,sys;i=cv2.imread(sys.argv[1]);t=cv2.QRCodeDetector().detectAndDecode(i)[0]\nif not t and hasattr(cv2,"QRCodeDetectorAruco"):t=cv2.QRCodeDetectorAruco().detectAndDecode(i)[0]\nprint(t,end="")'
   try { return execFileSync('python3', ['-I', '-c', py, file], { encoding: 'utf8' }) } finally { fs.rmSync(dir, { recursive: true }) }
 }

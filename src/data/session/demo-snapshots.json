@@ -3598,5 +3598,1085 @@
     "sessionConfiguration": {
       "vehicleEntryDirection": "south"
     }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "43cff4ee-8d0d-4378-86c5-4ddc6bbc4ffd",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "92f00bfc-0d91-4e74-88db-6d9e9f207f0b",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "d7cca55e-774f-4137-862d-198bd05925c9",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "5f3fa133-6424-4a9b-8e6f-1e093a72a1a2",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "b69c7e41-d6df-40e4-8443-1819a476509d",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "ccc9afcc-1424-40ac-81a8-8e70ef11cfef",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "4c3947c3-9745-4f9b-86d3-8bfb477fdce3",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "67bb54fc-dbe6-4289-8652-6c81231a2d6f",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "0d8ee136-bfdd-4c6d-833c-a89a0f94c1a0",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "20c18531-3d16-4dda-84ad-a9f4135a4224",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "bb130386-6f38-4217-8e29-2a65b2fcbdc6",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "14be6598-345e-4222-8f4e-c25527a54a68",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "cdd9b017-069a-481c-876c-a70381c15184",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "72965f08-3b51-4f63-8d80-a410953abe60",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "690b081d-915e-4422-8cb3-e29796492261",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "c7990532-ebf1-493f-83bd-07ec053b0b87",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "55783f98-2c6c-4409-8330-a9c26bda65fe",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "1ab1403c-256c-4bc2-8437-094fc92dfb30",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "7cafa1da-56b7-44bd-8837-c77701f96334",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "dd217b20-2e3f-4c25-88ae-69862efc0eea",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "c5f51b11-958e-435b-879b-e0d5f284be0e",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "guided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "e90f549d-b7cf-49db-8501-688b34771a78",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "79f36f62-ef19-41d8-83ab-2c5fec2eb5b1",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "515ea147-46e4-4c5e-8a38-e866caa7c517",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L12",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "preview",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "cff71786-b428-4464-8b3f-c08c379d2d0a",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "e8677cf7-b565-41d3-8cdf-6fb1a7d472c4",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "5c3bcd7b-a8c3-446c-8021-36069da8b441",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-1-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "dc28aa38-bb2c-47f0-864a-08a4e8dee926",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "2c303c4a-41e3-4935-8970-7db625a83227",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "4c2124ab-5ff6-4a1b-86cc-dae394ef1c30",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "braking-force",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.2.0-review-case-2-2026-10-26",
+      "rulesetVersion": "1.1.0-school-0A-2026-10-21",
+      "measurementSetVersion": "1.0.0-teacher-2026-10-21",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "a1ec3d86-ee0d-4fb9-803b-e1842a5fa53a",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "f07bc78a-33c3-44f3-86bf-849c659581fe",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "2173d262-f78c-4a66-8de2-7cdcba9da6fd",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-1-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "55b73c80-36ad-4f2a-8391-63bc33165d15",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": null
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "8aca856d-7722-439c-884f-8962acb0cd4c",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "north"
+    }
+  },
+  {
+    "schemaVersion": "1.0.0",
+    "sessionSnapshotId": "f1634bce-a644-487d-8bd2-73454f098ca3",
+    "runPurpose": "demo",
+    "displayMode": "threeD",
+    "sessionCode": "CLS-L5",
+    "classConditionCode": "CLS",
+    "taskId": "min-turning-radius",
+    "difficultyMode": "unguided",
+    "usagePhase": "review",
+    "configurationApproval": {
+      "taskApproved": false,
+      "rulesetApproved": true,
+      "layoutConfirmed": false,
+      "researchUseApproved": false
+    },
+    "versions": {
+      "taskDefinitionVersion": "1.0.0-teacher-0G-case-2-2026-11-02",
+      "rulesetVersion": "1.0.0-school-0G-2026-11-02",
+      "measurementSetVersion": "1.0.0-teacher-2026-11-02",
+      "layoutVersion": "dev-provisional-2026-10-26",
+      "judgeEngineVersion": "0.1.0",
+      "sessionConfigVersion": "1.2.0-design-2026-10-26",
+      "researchProtocolVersion": "unapproved",
+      "feedbackPolicyVersion": "1.1.0-design-approved-2026-10-26"
+    },
+    "sessionConfiguration": {
+      "vehicleEntryDirection": "south"
+    }
   }
 ]

@@ -12,14 +12,20 @@ const fixture = read('../docs/design/examples/submission.demo-request.json').pay
 const LEDGER_URL = new URL('../src/data/session/snapshot-ledger.json', import.meta.url)
 const TODAY = process.env.SNAPSHOT_DATE ?? new Date().toISOString().slice(0, 10)
 
-// 세션 목록(src/data/session/sessions.json): 시연·리허설만 스냅샷을 만든다. 연구 세션(pending)은 IRB 승인 뒤 열 때 만든다(설계 2026-11-03-class-sessions).
-const SESSIONS = read('../src/data/session/sessions.json').sessions.filter((s) => !s.pending && (s.kind === 'demo' || s.kind === 'rehearsal'))
+// 세션 목록(src/data/session/sessions.json): 시연·수업용·리허설만 스냅샷을 만든다. 연구 세션(pending)은 IRB 승인 뒤 열 때 만든다(설계 2026-11-03-class-sessions).
+// 수업용(class, 설계 2026-11-15-class-records §3-2)은 원장 끝에 덧붙는다. 기존 항목의 ID·내용은 바뀌지 않는다(세션 목록 순서와 무관 — 원장은 ID로 병합).
+const SESSIONS = read('../src/data/session/sessions.json').sessions.filter((s) => !s.pending && (s.kind === 'demo' || s.kind === 'class' || s.kind === 'rehearsal'))
+const KIND_OF = new Map(SESSIONS.map((s) => [s.code, s.kind]))
 const COMMON = { schemaVersion: '1.0.0', runPurpose: 'demo', displayMode: 'threeD' }
 const APPROVAL = { taskApproved: false, rulesetApproved: true, layoutConfirmed: false, researchUseApproved: false } // 과제 전체 pending(U1 보류), 규칙 승인(0A)
 const FEEDBACK_POLICY_VERSION = '1.1.0-design-approved-2026-10-26'
 const SESSION_VERSIONS = { layoutVersion: 'dev-provisional-2026-10-26', judgeEngineVersion: '0.1.0', sessionConfigVersion: '1.2.0-design-2026-10-26', researchProtocolVersion: 'unapproved', feedbackPolicyVersion: FEEDBACK_POLICY_VERSION }
-/** 시험 배포의 코드 범위: 합성 D-xx만(설계 15 §2). 운영 배포는 별도 목록으로. */
+/** 시험 배포의 코드 범위: 합성 D-xx만(설계 15 §2). 시연·리허설 세션은 이 범위만 받는다. */
 const TEST_CODE_PATTERN = '^D-[0-9]{2}$'
+/** 수업용 세션의 코드 범위: 학번 = 학년(1~3)+반(1~9)+번호(01~99)(설계 2026-11-15 §3-2, 앱 입장 규칙 src/app/session.ts와 같다). 가상 코드 D-xx는 받지 않는다. */
+const STUDENT_NUMBER_PATTERN = '^[1-3][1-9](0[1-9]|[1-9][0-9])$'
+/** 허용 코드 형식은 원장에 저장되지 않는다(스냅샷 ID와 무관). 세션 종류로만 정한다 */
+const codePatternFor = (sessionCode) => (KIND_OF.get(sessionCode) === 'class' ? STUDENT_NUMBER_PATTERN : TEST_CODE_PATTERN)
 const OFF_SUBSTEPS = ['motorOff', 'liftUp', 'exitVehicle']
 
 for (const t of tasks) if (t.feedbackPolicy?.version !== FEEDBACK_POLICY_VERSION) throw new Error(`feedbackPolicy.version 불일치: ${t.taskDefinitionVersion} has ${t.feedbackPolicy?.version}, generator expects ${FEEDBACK_POLICY_VERSION}`)
@@ -45,13 +51,13 @@ writeFileSync(new URL('../src/data/session/demo-snapshots.json', import.meta.url
 
 // 수신점 허용 목록: 원장 전체(상태 포함) + Codex 합성 fixture
 const server = {}
-for (const e of ledger.entries) server[e.snapshot.sessionSnapshotId] = { snapshot: e.snapshot, status: e.status, anonymousCodePattern: TEST_CODE_PATTERN, allowedStepIds: e.allowedStepIds, stepPrerequisites: e.stepPrerequisites ?? null }
+for (const e of ledger.entries) server[e.snapshot.sessionSnapshotId] = { snapshot: e.snapshot, status: e.status, anonymousCodePattern: codePatternFor(e.snapshot.sessionCode), allowedStepIds: e.allowedStepIds, stepPrerequisites: e.stepPrerequisites ?? null }
 server[fixture.sessionSnapshotId] = {
   snapshot: { schemaVersion: '1.0.0', sessionSnapshotId: fixture.sessionSnapshotId, sessionCode: fixture.sessionCode, classConditionCode: fixture.classConditionCode, taskId: fixture.taskId, difficultyMode: fixture.difficultyMode, usagePhase: fixture.usagePhase, runPurpose: fixture.runPurpose, displayMode: fixture.displayMode, configurationApproval: fixture.configurationApproval, versions: fixture.versions, sessionConfiguration: { vehicleEntryDirection: null } },
   status: 'active', anonymousCodePattern: '^D-00$', allowedStepIds: null, stepPrerequisites: null,
 }
 writeFileSync(new URL('../archive/apps-script/DemoSnapshots.gs', import.meta.url), `// 자동 생성: npm run build:gs-snapshots (원본 scripts/build-demo-snapshots.mjs, 규칙 v${SNAPSHOT_RULE_VERSION}). 직접 고치지 말 것.
-// 허용 스냅샷 = 시험 배포가 받는 세션 문맥(설계 15 §3 4항·docs/17 §4). status=retired 는 기존 receipt 회수만 허용(신규 접수 불가). anonymousCodePattern 은 시험용 합성 코드 범위.
+// 허용 스냅샷 = 시험 배포가 받는 세션 문맥(설계 15 §3 4항·docs/17 §4). status=retired 는 기존 receipt 회수만 허용(신규 접수 불가). anonymousCodePattern 은 세션 종류별 코드 범위(수업용 = 학번 네 자리, 그 밖 = 시험용 합성 코드 D-xx).
 var ALLOWED_SNAPSHOTS = ${JSON.stringify(server)};
 `)
 console.log('ledger', ledger.entries.length, 'active', ledger.entries.filter((e) => e.status === 'active').length, 'server', Object.keys(server).length)
