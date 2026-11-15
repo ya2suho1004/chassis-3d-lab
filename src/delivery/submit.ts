@@ -16,8 +16,9 @@ export const PROTOCOL_VERSION = '1'
 export const CANONICAL_MAX_BYTES = 32 * 1024
 export const REQUEST_MAX_BYTES = 48 * 1024
 export const DEFAULT_MAX_ATTEMPTS = 8
-const BACKOFF_BASE_MS = 30_000
-const BACKOFF_MAX_MS = 10 * 60_000
+/** 재시도 간격: 첫 간격 30초, 두 배씩, 최대 10분(자동 전송 타이머도 이 값을 쓴다) */
+export const BACKOFF_BASE_MS = 30_000
+export const BACKOFF_MAX_MS = 10 * 60_000
 
 export interface SubmitDeps {
   fetch: typeof fetch

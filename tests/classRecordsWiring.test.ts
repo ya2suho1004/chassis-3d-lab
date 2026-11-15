@@ -74,7 +74,7 @@ describe('결과 화면 — 전송 상태 한 줄', () => {
 describe('앱 배선 — 언제 보내는가', () => {
   const app = code('src/App.tsx')
   test('전송 주소가 있을 때만 자동 전송기를 만든다(주소 없는 빌드는 아무것도 하지 않음)', () => {
-    expect(app).toMatch(/createAutoSender\(r, \(\) => \{ const url = getSubmitEndpoint\(\); return url \? \{ fetch: \(u, i\) => fetch\(u, i\), endpointUrl: url, now: \(\) => new Date\(\), online: \(\) => navigator\.onLine !== false \} : null \}, undefined, \(\) => \{ void afterSendRef\.current\(\) \}\)/)
+    expect(app).toMatch(/createAutoSender\(r, \(\) => \{ const url = getSubmitEndpoint\(\); return url \? \{ fetch: \(u, i\) => fetch\(u, i\), endpointUrl: url, now: \(\) => new Date\(\), online: \(\) => navigator\.onLine !== false \} : null \}, undefined, \(res\) => \{ void afterSendRef\.current\(res\) \}\)/)
   })
   test('앱이 닫히면 자동 전송기(타이머)를 정리한다', () => {
     expect(app).toMatch(/return \(\) => \{ cancelled = true; senderRef\.current\?\.dispose\(\) \}/)
@@ -93,12 +93,21 @@ describe('앱 배선 — 언제 보내는가', () => {
     expect(app).toMatch(/<StartScreen repo=\{repo!\} classLink=\{classLink\} autoSend=\{autoSendOn\}/)
   })
   test('보낸 뒤(타이머로 다시 보낸 때도) 결과 화면의 기록 상태를 이 기기 저장본으로 새로 읽고, 시작 화면 건수도 새로 읽게 한다', () => {
-    expect(app).toMatch(/const afterSend = useCallback\(async \(\) => \{\s*setSendTick\(\(n\) => n \+ 1\)/)
+    expect(app).toMatch(/const afterSend = useCallback\(async \(results: OutboxItemResult\[\] \| null\) => \{/)
+    // 시작 화면일 때만 건수를 새로 읽게 한다(실습 화면을 다시 그리지 않게)
+    expect(app).toMatch(/if \(screenRef\.current\.name === 'start'\) setSendTick\(\(n\) => n \+ 1\)/)
+    // 보내는 중 표시는 이 기록이 든 차례가 끝날 때만 끈다
+    expect(app).toMatch(/sending: sendingAfterPass\(s\.sending, s\.session\.recordId, results\)/)
     expect(app).toMatch(/const stored = await r\.loadRecord\(cur\.session\.recordId\)/)
     expect(app).toMatch(/sendTick=\{sendTick\}/)
     const start = code('src/screens/StartScreen.tsx')
     expect(start).toMatch(/useEffect\(\(\) => \{ void refreshCounts\(\) \}, \[repo, sendTick\]\)/)
     expect(start).toMatch(/onClick=\{\(\) => \{ void refreshCounts\(\); setTeacherOpen\(true\) \}\}/)
+  })
+  test('교사 전송이 끝나면 자동 전송기가 타이머를 다시 건다(보내지는 않음)', () => {
+    expect(app).toMatch(/onTeacherSent=\{\(\) => \{ void senderRef\.current\?\.reschedule\(\) \}\}/)
+    expect(code('src/screens/StartScreen.tsx')).toMatch(/<TeacherPanel [^\n]*onSent=\{onTeacherSent\} \/>/)
+    expect(code('src/screens/TeacherPanel.tsx')).toMatch(/setSending\(false\)\s*onSent\?\.\(\)/)
   })
   test('교사 화면 전송 버튼은 그대로 있다', () => {
     const tp = code('src/screens/TeacherPanel.tsx')

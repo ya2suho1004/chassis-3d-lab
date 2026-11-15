@@ -24,7 +24,7 @@ import { DEFAULT_PRACTICE_SPEC, fmtMm, loadPracticeSpec, savePracticeSpec } from
 
 const TEACHER_PIN = '0000' // 시연용. 화면 숨김·공통 PIN은 보안 통제가 아니다(설계 03 §7).
 
-export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCountsChange, onClose }: {
+export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCountsChange, onClose, onSent }: {
   repo: Repository
   tasks: ApprovedTask[]
   preset: TeacherPreset | null
@@ -32,6 +32,8 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
   onPresetChange: (p: TeacherPreset | null) => void
   onCountsChange: () => Promise<void>
   onClose: () => void
+  /** 교사 전송이 끝난 뒤 — 자동 전송기가 타이머를 다시 건다(교사 전송이 재시도 시각을 바꿨을 수 있음) */
+  onSent?: () => void
 }) {
   const [pin, setPin] = useState('')
   // 수업 순서 탭(설계 2026-11-03): 수업 전 설정 · 수업 중 AI 점검 · 수업 후 기록. 서버 로그인은 탭을 옮겨도 유지
@@ -114,6 +116,7 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
       setSendLog(results)
     } finally {
       setSending(false)
+      onSent?.()
       await onCountsChange()
     }
   }

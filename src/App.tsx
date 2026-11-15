@@ -25,7 +25,8 @@ import { caseKey, knownCaseIds, loadPreset } from './app/teacherPreset'
 import { resumeTodayLine } from './app/todayTask'
 import { isClassSession } from './app/sessions'
 import { getSubmitEndpoint } from './delivery/config'
-import { classSendLine, createAutoSender, type AutoSender } from './delivery/autoSend'
+import { classSendLine, createAutoSender, sendingAfterPass, type AutoSender } from './delivery/autoSend'
+import type { OutboxItemResult } from './delivery/outbox'
 
 const TASKS = listTasks()
 /** 이 기기에 저장된 교사 설정(시작 화면과 같은 사례 목록으로 읽음) */
@@ -60,9 +61,11 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
   const sendNow = useCallback(async (o: { online?: boolean } = {}) => {
     await senderRef.current?.run(o)
   }, [])
-  // 한 차례가 끝나면(앱 열기·online·확정·타이머 모두): 결과 화면에 있으면 그 기록의 전송 상태를 이 기기 저장본으로 새로 읽는다
-  const afterSend = useCallback(async () => {
-    setSendTick((n) => n + 1)
+  // 한 차례가 끝나면(앱 열기·online·확정·타이머 모두): 결과 화면에 있으면 그 기록의 전송 상태를 이 기기 저장본으로 새로 읽는다.
+  // '보내는 중'은 그 차례 결과에 이 기록이 들었을 때만 끈다(앞 차례가 끝난 것만으로 '못 보냈어요'를 보이지 않게)
+  const afterSend = useCallback(async (results: OutboxItemResult[] | null) => {
+    // 시작 화면일 때만 건수를 새로 읽게 한다(실습 화면을 다시 그리지 않게)
+    if (screenRef.current.name === 'start') setSendTick((n) => n + 1)
     const r = repoRef.current
     if (!r) return
     const cur = screenRef.current
@@ -72,7 +75,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
       const stored = await r.loadRecord(cur.session.recordId)
       env = stored?.envelope ?? null
     } catch { /* 읽지 못하면 화면의 상태를 그대로 둔다 */ }
-    setScreen((s) => (s.name === 'result' && s.session.recordId === cur.session.recordId ? { ...s, envelope: env ?? s.envelope, sending: false } : s))
+    setScreen((s) => (s.name === 'result' && s.session.recordId === cur.session.recordId ? { ...s, envelope: env ?? s.envelope, sending: sendingAfterPass(s.sending, s.session.recordId, results) } : s))
   }, [])
   const afterSendRef = useRef(afterSend)
   afterSendRef.current = afterSend
@@ -113,7 +116,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
       try {
         const r = await openRepository()
         if (cancelled) return
-        senderRef.current = createAutoSender(r, () => { const url = getSubmitEndpoint(); return url ? { fetch: (u, i) => fetch(u, i), endpointUrl: url, now: () => new Date(), online: () => navigator.onLine !== false } : null }, undefined, () => { void afterSendRef.current() })
+        senderRef.current = createAutoSender(r, () => { const url = getSubmitEndpoint(); return url ? { fetch: (u, i) => fetch(u, i), endpointUrl: url, now: () => new Date(), online: () => navigator.onLine !== false } : null }, undefined, (res) => { void afterSendRef.current(res) })
         repoRef.current = r
         setRepo(r)
         const cur = r.getCurrentRecordId()
@@ -163,7 +166,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
 
   // 시작 화면에서는 세션만 만든다. 수행 번호(recordId)와 초안은 NPC에게 과제를 받을 때 발급·저장한다(설계 02 §3 S4).
   // 비기록이면 이 수행만 쓰는 메모리 저장소를 새로 만든다(실제 저장소·포인터는 건드리지 않음)
-  if (screen.name === 'start') return <StartScreen repo={repo!} classLink={classLink} autoSend={autoSendOn} sendTick={sendTick} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
+  if (screen.name === 'start') return <StartScreen repo={repo!} classLink={classLink} autoSend={autoSendOn} sendTick={sendTick} onTeacherSent={() => { void senderRef.current?.reschedule() }} onFoundDraft={(draft, startFresh) => setScreen({ name: 'resume', draft, startFresh })} onStart={async (session, task, mode, noRecord = false) => {
     const runRepo = noRecord ? openMemoryRepository() : repo!
     const saved = noRecord ? null : loadAvatar(session.anonymousStudentCode)
     setScreen(saved
