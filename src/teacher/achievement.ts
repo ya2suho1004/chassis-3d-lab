@@ -9,6 +9,8 @@ export interface TaskRef { taskId: string; taskDefinitionVersion: string; title:
 export interface AchievementAttempt {
   recordId: string
   completedAt: string
+  /** 서버 접수 시각(서버 시계) — 기기 시계로 적힌 completedAt과 다를 수 있다. 수업 시간과 맞춰 보는 데 쓴다 */
+  acceptedAt: string
   completion: '완료' | '중단'
   inspection: string
   errorCount: number
@@ -31,6 +33,8 @@ export interface AchievementRow {
   attempts: AchievementAttempt[]
   /** 수행 횟수 = 서버 기록 건수 */
   count: number
+  /** 가장 최근 서버 접수 시각 */
+  lastAcceptedAt: string
 }
 
 export interface Achievement {
@@ -88,7 +92,7 @@ function parseRow(r: ServerRecordRow): Parsed | null {
 }
 
 const byTime = (a: Parsed, b: Parsed) => Date.parse(a.completedAt) - Date.parse(b.completedAt) || a.acceptedAt.localeCompare(b.acceptedAt) || a.recordId.localeCompare(b.recordId)
-const attemptOf = (p: Parsed): AchievementAttempt => ({ recordId: p.recordId, completedAt: p.completedAt, completion: p.status === 'completed' ? '완료' : '중단', inspection: inspectionText(p.npc, p.npcCount), errorCount: p.errors, duration: durationText(p.secs) })
+const attemptOf = (p: Parsed): AchievementAttempt => ({ recordId: p.recordId, completedAt: p.completedAt, acceptedAt: p.acceptedAt, completion: p.status === 'completed' ? '완료' : '중단', inspection: inspectionText(p.npc, p.npcCount), errorCount: p.errors, duration: durationText(p.secs) })
 const STUDENT_NUMBER = /^[1-3][1-9](0[1-9]|[1-9]\d)$/
 
 export function buildAchievement(rows: ServerRecordRow[], tasks: TaskRef[]): Achievement {
@@ -110,6 +114,7 @@ export function buildAchievement(rows: ServerRecordRow[], tasks: TaskRef[]): Ach
     out.push({
       key, studentCode: first.code, grade: sn ? first.code[0]! : '', classNo: sn ? first.code[1]! : '', taskKey: first.version, taskLabel: taskLabel(first.taskId, first.version, tasks),
       latest: attemptOf(sorted[sorted.length - 1]!), attempts: sorted.map(attemptOf), count: sorted.length,
+      lastAcceptedAt: sorted.map((x) => x.acceptedAt).reduce((a, b) => (Date.parse(b) > Date.parse(a) || Number.isNaN(Date.parse(a)) ? b : a)),
     })
   }
   out.sort((a, b) => a.studentCode.localeCompare(b.studentCode) || order(a.taskKey) - order(b.taskKey) || a.taskKey.localeCompare(b.taskKey))
@@ -127,11 +132,11 @@ export function filterAchievement(rows: AchievementRow[], f: { grade?: string | 
   return rows.filter((r) => (!f.grade || r.grade === f.grade) && (!f.classNo || r.classNo === f.classNo) && (!f.taskKey || r.taskKey === f.taskKey))
 }
 
-/** 펼친 수행의 끝낸 시각(한국 시각, 월-일 시:분) */
+/** 시각(한국 시각, 월/일 시:분). 읽지 못하면 — */
 export function whenText(iso: string): string {
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
+  if (!iso || Number.isNaN(d.getTime())) return '—'
   const parts = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(d)
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
-  return `${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`
+  return `${get('month')}/${get('day')} ${get('hour')}:${get('minute')}`
 }

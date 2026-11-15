@@ -9,7 +9,7 @@ import type { ServerRecordRow } from '../src/teacher/serverAdmin'
 const tasks = listTasks()
 const [brake1, brake2, turn1] = tasks as [typeof tasks[0], typeof tasks[0], typeof tasks[0]]
 let n = 0
-function row(o: { code: string; task?: typeof tasks[0]; status?: 'completed' | 'aborted'; npc?: 'passed' | 'needsCorrection' | 'notCompleted'; npcCount?: number; errors?: number; secs?: number; completedAt: string; session?: string }): ServerRecordRow {
+function row(o: { code: string; task?: typeof tasks[0]; status?: 'completed' | 'aborted'; npc?: 'passed' | 'needsCorrection' | 'notCompleted'; npcCount?: number; errors?: number; secs?: number; completedAt: string; acceptedAt?: string; session?: string }): ServerRecordRow {
   const t = o.task ?? brake1
   const rid = `60000000-0000-4000-8000-${String(++n).padStart(12, '0')}`
   const payload = {
@@ -17,7 +17,7 @@ function row(o: { code: string; task?: typeof tasks[0]; status?: 'completed' | '
     completionStatus: o.status ?? 'completed', completedAt: o.completedAt, durationSeconds: o.secs ?? 300, errorCount: o.errors ?? 0,
     npcInspectionResult: o.npc ?? ((o.status ?? 'completed') === 'completed' ? 'passed' : 'notCompleted'), npcInspectionCount: o.npcCount ?? 1,
   }
-  return { record_id: rid, receipt_id: 'R' + n, accepted_at: o.completedAt, payload_hash: 'a'.repeat(64), payload_json: JSON.stringify(payload), session_code: o.session ?? 'CLS-L12', anonymous_student_code: o.code, run_purpose: 'demo', schema_version: '1.3.0' }
+  return { record_id: rid, receipt_id: 'R' + n, accepted_at: o.acceptedAt ?? o.completedAt, payload_hash: 'a'.repeat(64), payload_json: JSON.stringify(payload), session_code: o.session ?? 'CLS-L12', anonymous_student_code: o.code, run_purpose: 'demo', schema_version: '1.3.0' }
 }
 
 describe('칸 값', () => {
@@ -36,9 +36,10 @@ describe('칸 값', () => {
     expect(durationText(-1)).toBe('—')
     expect(durationText(Number.NaN)).toBe('—')
   })
-  test('펼친 수행의 시각은 한국 시각 월-일 시:분', () => {
-    expect(whenText('2026-11-17T01:05:00Z')).toBe('11-17 10:05')
-    expect(whenText('2026-11-16T15:30:00Z')).toBe('11-17 00:30')
+  test('시각은 한국 시각 월/일 시:분', () => {
+    expect(whenText('2026-11-17T01:05:00Z')).toBe('11/17 10:05')
+    expect(whenText('2026-11-16T15:30:00Z')).toBe('11/17 00:30')
+    expect(whenText('')).toBe('—')
   })
   test('과제 이름은 짧게(제동력 사례 1 등), 모르는 판이면 과제와 판을 그대로', () => {
     expect(taskLabel(brake1.taskId, brake1.taskDefinitionVersion, tasks)).toBe('제동력 사례 1')
@@ -65,6 +66,16 @@ describe('표 만들기', () => {
     expect(r.attempts.map((a) => a.inspection)).toEqual(['검사 안 받음', '통과 못함(2번 받음)', '통과(3번째)'])
     expect(t.rows[1]!.latest).toMatchObject({ completion: '중단', inspection: '검사 안 받음', duration: '0:45' })
     expect([r.grade, r.classNo]).toEqual(['2', '2'])
+  })
+  test('서버 접수 시각: 줄에는 가장 최근 접수, 펼친 수행마다 그 수행의 접수 시각(기기 시계와 다를 수 있음)', () => {
+    const t = buildAchievement([
+      row({ code: '2211', completedAt: '2026-11-17T01:00:00Z', acceptedAt: '2026-11-17T01:00:02Z' }),
+      row({ code: '2211', status: 'aborted', completedAt: '2026-11-17T02:00:00Z', acceptedAt: '2026-11-17T05:40:00Z' }), // 기기 시계가 늦음 → 접수가 훨씬 뒤
+      row({ code: '2211', status: 'aborted', completedAt: '2026-11-17T03:00:00Z', acceptedAt: '2026-11-17T03:00:01Z' }),
+    ], tasks)
+    const r = t.rows[0]!
+    expect(r.lastAcceptedAt).toBe('2026-11-17T05:40:00Z')
+    expect(r.attempts.map((a) => a.acceptedAt)).toEqual(['2026-11-17T01:00:02Z', '2026-11-17T05:40:00Z', '2026-11-17T03:00:01Z'])
   })
   test('가장 최근 수행이 중단이면 그 중단을 보인다(앞서 완료했어도)', () => {
     const t = buildAchievement([
@@ -124,6 +135,15 @@ describe('화면 연결(소스)', () => {
     expect(screen).toMatch(/aria-expanded=\{open\}/)
     expect(screen).toMatch(/r\.attempts\.map\(/)
   })
+  test('다시 불러오면 학년·반·과제 거르기를 비운다', () => {
+    expect(screen).toMatch(/setGrade\(''\); setClassNo\(''\); setTaskKey\(''\); setOpenKey\(null\)/)
+  })
+  test('최근 접수 칸과 펼친 줄의 접수 시각, 수업 시간과 다르면 수업 밖 기록일 수 있다는 안내', () => {
+    expect(screen).toMatch(/<th>최근 접수<\/th>/)
+    expect(screen).toMatch(/whenText\(r\.lastAcceptedAt\)/)
+    expect(screen).toMatch(/접수 \{whenText\(a\.acceptedAt\)\}/)
+    expect(screen).toMatch(/접수 시각이 수업 시간과 다르면 수업 밖에서 들어온 기록일 수 있습니다/)
+  })
   test('교사 로그인 뒤 서버 관리(수업 후)에 붙는다', () => {
     expect(admin).toMatch(/<AchievementTable s=\{s\} \/>/)
     expect(admin.indexOf('<AchievementTable')).toBeGreaterThan(admin.indexOf('if (!s.cfg || !s.auth) return <ServerLogin s={s} />', admin.indexOf('export function ServerAfter')))
@@ -131,5 +151,20 @@ describe('화면 연결(소스)', () => {
   test('표는 가로로 밀어 볼 수 있는 상자 안에 있다(태블릿 폭)', () => {
     expect(screen).toMatch(/className="achv-scroll"/)
     expect(fs.readFileSync('src/styles.css', 'utf8')).toMatch(/\.achv-scroll \{[^}]*overflow-x:auto/)
+  })
+})
+
+describe('표 그리기(서버 없이)', () => {
+  test('펼친 줄에는 끝낸 시각과 접수 시각이 함께 나온다', async () => {
+    const { createElement } = await import('react')
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { AchievementGrid } = await import('../src/screens/AchievementTable')
+    const t = buildAchievement([row({ code: '2211', completedAt: '2026-11-17T01:00:00Z', acceptedAt: '2026-11-17T01:00:05Z' }), row({ code: '2211', status: 'aborted', completedAt: '2026-11-17T01:20:00Z', acceptedAt: '2026-11-17T01:20:03Z' })], tasks)
+    const html = renderToStaticMarkup(createElement(AchievementGrid, { rows: t.rows, openKey: t.rows[0]!.key, onToggle: () => {} }))
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
+    expect(text).toMatch(/최근 접수/)
+    expect(text).toMatch(/11\/17 10:20/)
+    expect(text).toMatch(/1번째 · 끝냄 11\/17 10:00 · 접수 11\/17 10:00/)
+    expect(html).toMatch(/aria-expanded="true"/)
   })
 })

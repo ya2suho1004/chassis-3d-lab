@@ -4,7 +4,7 @@
 import { Fragment, useState } from 'react'
 import { listTasks } from '../app/session'
 import { SESSIONS } from '../app/sessions'
-import { buildAchievement, filterAchievement, whenText, type Achievement } from '../teacher/achievement'
+import { buildAchievement, filterAchievement, whenText, type Achievement, type AchievementRow } from '../teacher/achievement'
 import { listAllServerRecords } from '../teacher/serverAdmin'
 import type { ServerAdminState } from './ServerAdmin'
 
@@ -22,7 +22,8 @@ export function AchievementTable({ s }: { s: ServerAdminState }) {
   const load = () => s.run(async () => {
     const rows = await listAllServerRecords(cfg, auth, session)
     setData({ ...buildAchievement(rows, listTasks()), session })
-    setOpenKey(null)
+    // 다시 불러오면 거르기를 비운다(다른 세션의 학년·반·과제 값이 남아 빈 표가 되지 않게)
+    setGrade(''); setClassNo(''); setTaskKey(''); setOpenKey(null)
   })
   const rows = data ? filterAchievement(data.rows, { grade, classNo, taskKey }) : []
   const label = (code: string) => SESSIONS.find((x) => x.code === code)?.label ?? code
@@ -63,44 +64,52 @@ export function AchievementTable({ s }: { s: ServerAdminState }) {
           <p className="small" role="status">{label(data.session)} · 학생×과제 {rows.length}줄{rows.length !== data.rows.length ? ` (전체 ${data.rows.length}줄)` : ''}</p>
           {data.skipped > 0 && <p className="error" role="status">원본을 읽지 못한 서버 기록 {data.skipped}건은 표에서 뺐습니다. 서버 수행 기록 CSV로 확인하세요.</p>}
           {data.rows.length === 0 ? <p className="small">이 세션에 들어온 기록이 없습니다.</p> : (
-            <div className="achv-scroll">
-              <table className="sheet small achv-table">
-                <thead><tr><th>학번</th><th>과제</th><th>완료 여부</th><th>검사</th><th>오류 수</th><th>걸린 시간</th><th>수행 횟수</th></tr></thead>
-                <tbody>
-                  {rows.map((r) => {
-                    const open = openKey === r.key
-                    return (
-                      <Fragment key={r.key}>
-                        <tr className="achv-row" onClick={() => setOpenKey(open ? null : r.key)}>
-                          <td><button className="link" aria-expanded={open} onClick={(e) => { e.stopPropagation(); setOpenKey(open ? null : r.key) }}>{open ? '▾' : '▸'} {r.studentCode}</button></td>
-                          <td>{r.taskLabel}</td>
-                          <td>{r.latest.completion}</td>
-                          <td>{r.latest.inspection}</td>
-                          <td>{r.latest.errorCount}</td>
-                          <td>{r.latest.duration}</td>
-                          <td>{r.count}</td>
-                        </tr>
-                        {open && r.attempts.map((a, i) => (
-                          <tr key={a.recordId} className="achv-attempt">
-                            <td className="small">{i + 1}번째 · {whenText(a.completedAt)}</td>
-                            <td />
-                            <td>{a.completion}</td>
-                            <td>{a.inspection}</td>
-                            <td>{a.errorCount}</td>
-                            <td>{a.duration}</td>
-                            <td />
-                          </tr>
-                        ))}
-                      </Fragment>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <AchievementGrid rows={rows} openKey={openKey} onToggle={(k) => setOpenKey(openKey === k ? null : k)} />
           )}
-          <p className="small">걸린 시간은 화면을 가린 시간을 뺀 활성 시간입니다. ‘완료’는 교관 검사를 통과해야만 되므로 검사 칸에 몇 번째에 통과했는지를 보입니다. 학번은 학생을 알아볼 수 있는 값이니 화면을 공유하지 마세요.</p>
+          <p className="small">걸린 시간은 화면을 가린 시간을 뺀 활성 시간입니다. ‘완료’는 교관 검사를 통과해야만 되므로 검사 칸에 몇 번째에 통과했는지를 보입니다. 접수 시각은 서버 시계입니다. 접수 시각이 수업 시간과 다르면 수업 밖에서 들어온 기록일 수 있습니다. 학번은 학생을 알아볼 수 있는 값이니 화면을 공유하지 마세요.</p>
         </>
       )}
     </section>
+  )
+}
+
+/** 표 그리기만(서버 호출 없음) — 한 줄 = 학번×과제, 줄을 누르면 모든 수행(끝낸 시각·접수 시각) */
+export function AchievementGrid({ rows, openKey, onToggle }: { rows: AchievementRow[]; openKey: string | null; onToggle: (key: string) => void }) {
+  return (
+    <div className="achv-scroll">
+      <table className="sheet small achv-table">
+        <thead><tr><th>학번</th><th>과제</th><th>완료 여부</th><th>검사</th><th>오류 수</th><th>걸린 시간</th><th>수행 횟수</th><th>최근 접수</th></tr></thead>
+        <tbody>
+          {rows.map((r) => {
+            const open = openKey === r.key
+            return (
+              <Fragment key={r.key}>
+                <tr className="achv-row" onClick={() => onToggle(r.key)}>
+                  <td><button className="link" aria-expanded={open} onClick={(e) => { e.stopPropagation(); onToggle(r.key) }}>{open ? '▾' : '▸'} {r.studentCode}</button></td>
+                  <td>{r.taskLabel}</td>
+                  <td>{r.latest.completion}</td>
+                  <td>{r.latest.inspection}</td>
+                  <td>{r.latest.errorCount}</td>
+                  <td>{r.latest.duration}</td>
+                  <td>{r.count}</td>
+                  <td>{whenText(r.lastAcceptedAt)}</td>
+                </tr>
+                {open && r.attempts.map((a, i) => (
+                  <tr key={a.recordId} className="achv-attempt">
+                    <td className="small" colSpan={2}>{i + 1}번째 · 끝냄 {whenText(a.completedAt)} · 접수 {whenText(a.acceptedAt)}</td>
+                    <td>{a.completion}</td>
+                    <td>{a.inspection}</td>
+                    <td>{a.errorCount}</td>
+                    <td>{a.duration}</td>
+                    <td />
+                    <td />
+                  </tr>
+                ))}
+              </Fragment>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
