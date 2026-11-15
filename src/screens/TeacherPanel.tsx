@@ -104,7 +104,8 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
     void f()
   }
 
-  // 교사 조작으로만 전송한다(설계 05 §6). 대기열의 같은 ID·같은 원본을 보내고, 서버 ack를 검증한 뒤에만 '접수 확인됨'으로 저장한다.
+  // 교사 조작 전송(설계 05 §6). 대기열의 같은 ID·같은 원본을 보내고, 서버 ack를 검증한 뒤에만 '접수 확인됨'으로 저장한다.
+  // 수업용 세션 기록은 앱이 자동으로도 보낸다(설계 2026-11-15-class-records §3-3, delivery/autoSend.ts). 이 버튼은 수동으로 다시 보내기다.
   const send = async (force: boolean) => {
     if (!endpoint) return
     setSending(true)
@@ -142,7 +143,9 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         ))}
         {sessionDef(form.sessionCode)?.kind === 'rehearsal'
           ? <span className="small">리허설 세션은 학생이 가상 코드(D-01~D-99)로 들어오고, 서버가 그 기록을 받습니다. 연구 기록이 아닙니다.</span>
-          : <span className="small">이 세션은 학생이 학번 네 자리로 들어옵니다. 학번은 학생을 알아볼 수 있는 값입니다. 서버는 리허설 세션의 가상 코드(D-01~D-99) 기록만 받습니다. 학번으로 한 수행 기록은 ③ 수업 후에서 이 기기 기록으로 내려받으세요. AI 교관에게 질문하면 서버 대화 기록에 학번이 남습니다.</span>}
+          : sessionDef(form.sessionCode)?.kind === 'class'
+            ? <span className="small">수업용 세션은 학생이 학번 네 자리로 들어오고, 수행을 마치거나 중단하면 기록이 서버로 바로 갑니다(인터넷이 끊기면 이 기기에 남았다가 다시 보냅니다). 학번은 학생을 알아볼 수 있는 값입니다. 서버 기록은 교사 계정만 읽고, ③ 수업 후의 학생별 성취 표에서 봅니다. 서버 기록은 고치거나 지울 수 없으니 시험은 리허설 세션으로 하세요. 연구 기록이 아닙니다. AI 교관에게 질문하면 서버 대화 기록에 학번이 남습니다.</span>
+            : <span className="small">이 세션은 학생이 학번 네 자리로 들어옵니다. 학번은 학생을 알아볼 수 있는 값입니다. 서버는 이 세션의 학번 기록을 받지 않아 보내지 않습니다. 학번으로 한 수행 기록은 ③ 수업 후에서 이 기기 기록으로 내려받으세요. 수업 기록을 서버에 모으려면 수업용 세션을 고르세요. AI 교관에게 질문하면 서버 대화 기록에 학번이 남습니다.</span>}
       </div>
       <div className="field-group">
         <span className="small">과제 사례</span>
@@ -204,13 +207,13 @@ export function TeacherPanel({ repo, tasks, preset, counts, onPresetChange, onCo
         <div role="tabpanel" aria-label="수업 후">
       <h3>기록 관리</h3>
       <p className="small">이 기기에 저장된 확정 기록 {counts?.records ?? '…'}건 · 전송 대기 {counts?.outbox ?? '…'}건</p>
-      <p className="small">기록은 이 기기에 먼저 저장되고, 서버 전송은 이 화면의 교사 조작으로만 합니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 서버는 리허설 세션의 가상 코드(D-01~D-99) 기록만 받습니다. 학번으로 한 기록은 서버로 보내지 못합니다. 요약 CSV·연구용 묶음으로 이 기기에서 내려받으세요. 학번·코드 형식 검사는 본인 확인이 아닙니다.</p>
+      <p className="small">기록은 이 기기에 먼저 저장됩니다{SUBMIT_IS_FAKE ? '(지금은 개발용 가짜 수신점)' : ''}. 수업용 세션 기록은 학생이 마치면 바로 서버로 갑니다. 못 보낸 기록은 앱을 열 때·인터넷이 다시 연결될 때·다음 수행을 마칠 때 다시 보내고, 아래 버튼으로 지금 보낼 수도 있습니다. 리허설 세션 기록(가상 코드 D-01~D-99)은 아래 버튼으로 보냅니다. 시연 세션에 학번으로 남은 기록은 서버가 받지 않아 보내지 않습니다. 요약 CSV·연구용 묶음으로 이 기기에서 내려받으세요. 학번·코드 형식 검사는 본인 확인이 아닙니다.</p>
       <DeviceExports open={deviceOpen} hasRecords={!!counts?.records} onCsv={whileLoggedIn(downloadCsv)} onBundle={whileLoggedIn(downloadBundle)} />
       <div className="row">
         {endpoint ? (
           <>
             <button onClick={() => void send(false)} disabled={sending || !counts?.outbox}>{sending ? '전송 중…' : '대기 기록 지금 전송'}</button>
-            <button onClick={() => void send(true)} disabled={sending || !counts?.outbox} title="재시도 대기 시각을 무시하고 보냄(거절·충돌은 제외)">강제 재전송</button>
+            <button onClick={() => void send(true)} disabled={sending || !counts?.outbox} title="재시도 대기 시각을 무시하고 보냄(거절·충돌은 제외, 서버가 아직 몰라 거절한 수업용 기록은 다시 보냄)">강제 재전송</button>
           </>
         ) : (
           <span className="small">전송 주소 미설정(VITE_SUBMIT_ENDPOINT)</span>
