@@ -41,3 +41,6 @@ export function requestCopy(taskId?: string): RequestCopy {
 
 /** 검사 통과 끄덕임 때 교관 한마디(과제·모드 무관, 통과일 때만 뜸). 문구를 한 곳에 모은다(독립 검토 6번) */
 export const NOD_LINE = '좋아, 검사 통과야. 수고했어!'
+
+/** 수행 뒤 둘러보기에서 교관 대사(설계 2026-11-16-debrief-and-free-roam 1-6). 과제를 다시 받을 수 없다 */
+export const DONE_LINE = '오늘 의뢰는 끝났어. 남은 시간엔 장비를 둘러보면서 도감을 채워 봐.'

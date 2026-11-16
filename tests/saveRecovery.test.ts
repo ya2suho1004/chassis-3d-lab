@@ -209,7 +209,7 @@ describe('화면 연결', () => {
     expect(src).toMatch(/ctx\.retrySave/)
   })
 
-  test('결과 화면: 확정 저장 실패 시 다시 저장, 저장 전 다음 학생은 한 번 더 확인', () => {
+  test('결과 화면: 확정 저장 실패 시 다시 저장, 저장 전 마치기(예전 다음 학생)는 한 번 더 확인', () => {
     const src = read('src/screens/ResultScreen.tsx')
     expect(src).toMatch(/onRetrySave/)
     expect(src).toMatch(/다시 저장/)

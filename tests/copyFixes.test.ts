@@ -9,10 +9,10 @@ describe('결과 화면 수업 시점 이름', () => {
     expect(LESSON_SHORT).toEqual({ preview: '1~2차시 연습', review: '5차시 정리', other: '그 밖의 사용' })
     for (const k of ['preview', 'review', 'other'] as const) expect(LESSON_LABEL[k].startsWith(LESSON_SHORT[k])).toBe(true)
   })
-  it('결과 화면에 옛 이름(대기 중 예습·실습 후 복습)이 남지 않는다', () => {
+  it('결과 화면에 옛 이름(대기 중 예습·실습 후 복습)이 남지 않는다 — 정리 화면에서는 수업 시점 줄 자체를 뺐다(설계 2026-11-16-debrief-and-free-roam 1-2)', () => {
     const src = fs.readFileSync('src/screens/ResultScreen.tsx', 'utf8')
     expect(src).not.toMatch(/대기 중 예습|실습 후 복습/)
-    expect(src).toMatch(/LESSON_SHORT\[session\.usagePhase\]/)
+    expect(src).not.toMatch(/LESSON_SHORT\[session\.usagePhase\]/)
   })
 })
 

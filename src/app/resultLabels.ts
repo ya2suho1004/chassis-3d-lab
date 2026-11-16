@@ -17,6 +17,8 @@ const TIME_LABEL: Record<string, string> = { continuous: '끊김 없음', resume
 export const itemLabel = (id: string): string => ITEM_LABEL[id] ?? id
 export const verdictLabel = (v: string | null): string => (v === 'pass' ? '양호' : v === 'fail' ? '불량' : v ?? '판정 불가')
 export const timeQualityLabel = (q: string): string => TIME_LABEL[q] ?? q
+/** 오류 유형·안전 조건 하나의 화면 이름(모르는 키는 그대로) */
+export const countLabel = (k: string): string => COUNT_LABEL[k] ?? k
 export const countsText = (m: Record<string, number>): string => Object.entries(m).map(([k, v]) => `${COUNT_LABEL[k] ?? k} ${v}`).join(', ') || '없음'
 
 /** 저장 시각(UTC ISO)을 한국 시각 'YYYY. M. D. HH:MM'으로. 학교 기기 시간대 설정과 관계없이 +9시간. 읽을 수 없으면 그대로 */

@@ -20,7 +20,7 @@ import { buildTrack, type ArrowTrack } from '../scene/feel/edgeArrow'
 import { ARROW_PART_NAME, hudBoxes } from '../app/hudLayout'
 import { addEffects, dropExpired, EMPTY_FX, nextExpiry, resetFxIfIdle, shouldNodBeforeResult, shouldPopOnDone, type Fx } from '../app/cozyState'
 import { createFinishGate, type FinishGate } from '../app/finishGate'
-import { NOD_LINE } from '../app/requests'
+import { DONE_LINE, NOD_LINE } from '../app/requests'
 import { actionForStep, actionTarget, newCue } from '../scene/avatarActions'
 import { brakeRigState } from '../scene/brakeRig'
 import { turningRigState } from '../scene/turningRig'
@@ -44,7 +44,7 @@ import { AvatarScreen } from './AvatarScreen'
 import { IntroArt } from './IntroArt'
 import { tipsFor } from '../app/intro'
 import { requestCopy } from '../app/requests'
-import { chatTaskId, loadBadge, nextHighlightId } from '../app/labGuide'
+import { chatTaskId, loadBadge, nextHighlightId, roamLine } from '../app/labGuide'
 import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
 import { addToCodex, loadCodex } from '../app/codexStore'
 import { CodexWindow } from './CodexWindow'
@@ -77,7 +77,7 @@ function measureTrack(root: HTMLElement | null): ArrowTrack | null {
   return buildTrack({ w: r.width, h: r.height }, boxes)
 }
 
-export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, onReceiveTask, onRunChange, onFinish }: {
+export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = false, profile = DEFAULT_PROFILE, onProfileChange, session, task, mode, run, after = null, onEnd, onReceiveTask, onRunChange, onFinish }: {
   /** 소리 엔진과 켬 상태(설계 2026-11-12 §4.7): App이 갖고 있어 결과 화면까지 이어진다. 교실에서 여러 대가 함께 켜지므로 처음엔 끔 */
   sound: LabSound
   soundOn: boolean
@@ -93,6 +93,10 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   session: SessionContext
   task: ApprovedTask
   run: TaskRun | null
+  /** 수행을 마친 뒤 둘러보기(설계 2026-11-16-debrief-and-free-roam 1-6): 그 수행이 통과했는지 중단했는지. run은 null이고 과제를 다시 받을 수 없다 */
+  after?: 'completed' | 'aborted' | null
+  /** 마치기(수행 뒤 둘러보기에서만 보임) = 예전 '다음 학생' */
+  onEnd?: () => void
   onReceiveTask: () => Promise<string | null>
   onRunChange: (run: TaskRun) => void
   onFinish: (run: TaskRun, status: 'completed' | 'aborted', envelope: DeliveryEnvelope | null, saveError: string | null, payload?: RecordPayload | null) => void
@@ -422,7 +426,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep} tapPulse={tapPulse} goalArrow={goalArrow} arrowTrack={arrowTrack}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
-            onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording || codexOpen} />
+            onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording || codexOpen} studentName={nickname} />
         </div>
         {/* 목적지 방향 화살표(안내 있음): 걷기 조작이 되는 상태에서만 그린다. 자리와 방향은 3D 쪽(GoalBeacon)이 매 화면 정한다 */}
         {requiredNow && !talking && !viewing && !practicing && !recording && !drawerOpen && !chatOpen && <div ref={goalArrow} className="g-goalarrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 4l15 8-15 8 4-8z" fill="currentColor" /></svg></div>}
@@ -445,14 +449,15 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               <button className="g-icon" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>☰</button>
               {menuOpen && (
                 <div className="g-menu" role="menu">
+                  {after && <button onClick={() => { setMenuOpen(false); onEnd?.() }}>마치기</button>}
                   <button onClick={() => { setAvatarEdit(true); setMenuOpen(false) }}>캐릭터 다시 꾸미기</button>
                   <button onClick={() => { setGuideOpen(true); setMenuOpen(false) }}>조작 안내 다시 보기</button>
                   <button onClick={() => setLabelChoice(labelMode === 'all' ? 'near' : 'all')}>{labelMode === 'all' ? '이름표 가까운 것만' : '이름표 모두 보기'}</button>
                   <label className="g-check"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
                   {run && <button onClick={toggleDisplay}>도식 모드로</button>}
                   <button onClick={() => { setUiStyle('classic'); setMenuOpen(false) }}>기본 화면(패널)으로</button>
-                  {!run && <button onClick={() => { setUiStyle('classic'); setTeacherTool('review'); setMenuOpen(false) }}>배치 눈검토(교사)</button>}
-                  {!run && <button onClick={() => { setUiStyle('classic'); setTeacherTool('survey'); setMenuOpen(false) }}>실측 입력(교사)</button>}
+                  {!run && !after && <button onClick={() => { setUiStyle('classic'); setTeacherTool('review'); setMenuOpen(false) }}>배치 눈검토(교사)</button>}
+                  {!run && !after && <button onClick={() => { setUiStyle('classic'); setTeacherTool('survey'); setMenuOpen(false) }}>실측 입력(교사)</button>}
                   <p className="small">실제 배치 아님(개발용 임시 배치). 제동력 구역 일부 실측, 나머지는 손 스케치 비례·가정.</p>
                 </div>
               )}
@@ -461,12 +466,13 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
             {!practicing && !ttSide && <div className="g-quest">
               <div className="g-quest-title">{run ? '오늘의 의뢰' : '실습장 둘러보기'}</div>
               {run && <p className="g-req">“{requestCopy(run.task.taskId).complaint}” <span className="g-req-task">{task.title}</span></p>}
-              {!run && <p>장비를 눌러 도감을 채우고, 교관에게 가서 과제를 받으세요.</p>}
+              {!run && <p>{roamLine(after)}</p>}
               {run?.task.taskId === 'min-turning-radius' && <p className="g-order">작업지시서: <b>{run.task.measurement.turnDirection === 'left' ? '좌회전' : '우회전'}</b> · 축거 L {run.task.measurement.wheelbaseM} m · r {run.task.measurement.kingpinOffsetM} m</p>}
               {run && ctx?.next && <p className="g-next">▶ {ctx.next.num}. {ctx.next.text}</p>}
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
               {run && ctx && <ProgressDots done={ctx.doneCount} total={ctx.total} pop={!!fx.on.checkPop} />}
               <div className="g-quest-btns" data-feel="press">
+                {after && <button className="primary" onClick={() => onEnd?.()}>마치기</button>}
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
                 <button onClick={() => goTo(npcSpot, true)}>교관에게</button>
                 {navTargets.map((e) => <button key={e.id} onClick={() => goTo(e.accessPoint!)}>{e.label.replace(/\(.*\)/, '').trim()}</button>)}
@@ -612,7 +618,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
           </div>
         )}
         {npcOpen && !gate.closed && (
-          <NpcDialog near={nearNpc} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
+          <NpcDialog near={nearNpc} done={!!after} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
             onGoToNpc={() => { setNpcOpen(false); goTo(npcSpot, true) }}
             onOpenTasks={() => { setNpcOpen(false); setDrawerOpen(true) }}
@@ -637,10 +643,11 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         <div><b>섀시정비 실습실 (개발용 임시 배치)</b> · {noRecord ? '기록 안 됨' : `코드 ${session.anonymousStudentCode}`} · 도감 {codex.length}/{layout.equipment.length} <button className="link codex-openbtn" aria-haspopup="dialog" disabled={sceneQuiet} onClick={openCodex}>도감 보기</button></div>
         <div className="small">
           <span className="warnchip">실제 배치 아님 · layoutConfirmed=false</span>
+          {after && <button className="link" onClick={() => onEnd?.()}>마치기</button>}
           {run && <button className="link" onClick={toggleDisplay}>{displayMode === 'threeD' ? '도식 모드로' : '3D 모드로'}</button>}
           {displayMode === 'threeD' && !reviewOpen && <button className="link" onClick={() => setUiStyle('game')}>게임 화면으로</button>}
-          {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('review')}>배치 눈검토(교사)</button>}
-          {!run && !reviewOpen && <button className="link" onClick={() => setTeacherTool('survey')}>실측 입력(교사)</button>}
+          {!run && !after && !reviewOpen && <button className="link" onClick={() => setTeacherTool('review')}>배치 눈검토(교사)</button>}
+          {!run && !after && !reviewOpen && <button className="link" onClick={() => setTeacherTool('survey')}>실측 입력(교사)</button>}
           {displayMode === 'threeD' && <button className="link" onClick={() => setLabelChoice(labelMode === 'all' ? 'focus' : 'all')}>{labelMode === 'all' ? '이름표 줄이기' : '이름표 모두 보기'}</button>}
           <label className="inline" title="낮음: 실시간 그림자·화면 효과를 끄고 해상도를 낮춰 태블릿에서 부드럽게(모델·빛은 같음)"><input type="checkbox" checked={lowSpec} onChange={(e) => setLowSpec(e.target.checked)} /> 품질 낮음(태블릿)</label>
         </div>
@@ -650,7 +657,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         {displayMode === 'threeD' && (
           <section className="canvaswrap">
             <LabScene layout={layout} start={layout.studentStart} selectedId={selectedId} highlightIds={requiredNow ? [requiredNow] : []} lowSpec={lowSpec} antialias={antialias} raisedLiftIds={raisedLifts}
-              onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} tapPulse={tapPulse} />
+              onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} turning={turning} labelMode={labelMode} tapPulse={tapPulse} studentName={nickname} />
             <div className="quicknav">
               <button onClick={() => goTo({ x: layout.npc.x - 1.0, z: layout.npc.z })}>교관에게 가기</button>
               {layout.equipment.filter((e) => e.interactive && e.accessPoint).map((e) => (
@@ -697,7 +704,9 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
           {!run && !reviewOpen && (
             <div className="card npc">
               <b>NPC 교관</b>
-              {npcOpen ? (
+              {after ? (
+                <p>{DONE_LINE}</p>
+              ) : npcOpen ? (
                 nearNpc ? (
                   <>
                     <p>오늘 작업지시서: {panelWorkOrder(task.taskId)} 과제: <b>{task.title}</b></p>

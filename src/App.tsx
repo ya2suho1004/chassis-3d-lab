@@ -43,9 +43,11 @@ type Screen =
   // noRecord: 비기록 모드(설계 2026-11-02) — runRepo는 메모리 저장소이고 AI 교관·기록 표시를 끈다
   // avatar: 캐릭터 만들기(설계 2026-11-03) — 그 코드의 캐릭터가 이 기기에 없을 때만(비기록은 매번)
   | { name: 'avatar'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; noRecord: boolean; runRepo: Repository; initial: AvatarProfile }
-  | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository; profile: AvatarProfile }
+  // after: 수행을 마친 뒤 둘러보기(설계 2026-11-16-debrief-and-free-roam 1-6) — 정리 화면에서 '실습장으로 이동'으로 온다. run은 null이고 과제를 다시 받지 않는다
+  | { name: 'lab'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; run: TaskRun | null; noRecord: boolean; runRepo: Repository; profile: AvatarProfile; after: 'completed' | 'aborted' | null }
   // sending: 수업용 세션 기록을 자동으로 보내는 중(설계 2026-11-15-class-records §3-3) — 결과 화면 전송 상태 한 줄에 쓴다
-  | { name: 'result'; session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile; frozenPayload: RecordPayload | null; sending: boolean }
+  // task·mode·runRepo: 정리 화면에서 수행 뒤 둘러보기로 돌아갈 때 쓴다
+  | { name: 'result'; session: SessionContext; task: ApprovedTask; mode: DifficultyMode; runRepo: Repository; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null; noRecord: boolean; profile: AvatarProfile; frozenPayload: RecordPayload | null; sending: boolean }
 
 /** classLink: 앱이 열릴 때 읽은 수업 주소(main.tsx, 설계 2026-11-14 §3-4) — 시작 화면이 안내에 쓴다 */
 export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
@@ -131,6 +133,9 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
     return () => { cancelled = true; senderRef.current?.dispose() }
   }, [])
 
+  /** 마치기(설계 2026-11-16-debrief-and-free-roam 1-6) = 예전 '다음 학생': 기록 모드면 현재 수행 포인터를 비우고 시작 화면(확정 기록은 그대로) */
+  const finish = (noRecord: boolean) => { if (!noRecord) repo?.clearCurrent(); setScreen({ name: 'start' }) }
+
   if (!introDone && intro !== 'none') return <IntroScreen plan={intro} onDone={() => setIntroDone(true)} />
   if (screen.name === 'loading') return <main className="screen"><p>저장소를 여는 중…</p></main>
   if (screen.name === 'storageError') return <main className="screen"><p className="error">이 기기의 저장소(IndexedDB)를 열 수 없습니다: {screen.message}</p><p className="small">시크릿 모드이거나 브라우저가 저장을 막고 있을 수 있습니다. 일반 창(시크릿 모드가 아닌 창)이나 다른 기기에서 다시 열어 보세요. 그래도 안 되면 선생님께 알려 주세요.</p></main>
@@ -148,7 +153,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
           const run = rehydrateRun(screen.draft.snapshot)
           const task = listTasks().find((t) => t.measurement.caseId === run.task.measurement.caseId) ?? run.task
           const code = screen.draft.session.anonymousStudentCode
-          setScreen({ name: 'lab', session: screen.draft.session, task, mode: run.difficultyMode, run, noRecord: false, runRepo: repo!, profile: loadAvatar(code) ?? DEFAULT_PROFILE })
+          setScreen({ name: 'lab', session: screen.draft.session, task, mode: run.difficultyMode, run, noRecord: false, runRepo: repo!, profile: loadAvatar(code) ?? DEFAULT_PROFILE, after: null })
         }}
         onDiscard={async () => {
           if (screen.startFresh) {
@@ -170,7 +175,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
     const runRepo = noRecord ? openMemoryRepository() : repo!
     const saved = noRecord ? null : loadAvatar(session.anonymousStudentCode)
     setScreen(saved
-      ? { name: 'lab', session, task, mode, run: null, noRecord, runRepo, profile: saved }
+      ? { name: 'lab', session, task, mode, run: null, noRecord, runRepo, profile: saved, after: null }
       : { name: 'avatar', session, task, mode, noRecord, runRepo, initial: { ...DEFAULT_PROFILE, ...randomNickname() } })
     return null
   }} />
@@ -178,7 +183,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
   if (screen.name === 'avatar') {
     const { session, task, mode, noRecord, runRepo } = screen
     return <AvatarScreen initial={screen.initial} saveNote={noRecord ? '기록 없이 하기라서 캐릭터도 저장하지 않습니다.' : `이 기기에 코드 ${session.anonymousStudentCode}의 캐릭터로 저장되고, 연구 기록·서버에는 보내지 않습니다.`}
-      onDone={(profile) => { if (!noRecord) saveAvatar(session.anonymousStudentCode, profile); setScreen({ name: 'lab', session, task, mode, run: null, noRecord, runRepo, profile }) }} />
+      onDone={(profile) => { if (!noRecord) saveAvatar(session.anonymousStudentCode, profile); setScreen({ name: 'lab', session, task, mode, run: null, noRecord, runRepo, profile, after: null }) }} />
   }
 
   if (screen.name === 'lab') {
@@ -194,6 +199,8 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
         task={task}
         mode={mode}
         run={screen.run}
+        after={screen.after}
+        onEnd={() => finish(noRecord)}
         onReceiveTask={async () => {
           const run = createTaskRun(task, { difficultyMode: mode, displayMode: 'threeD' })
           const r = await runRepo.saveDraft({ recordId: session.recordId, session, snapshot: serializeRun(run), savedAt: new Date().toISOString() })
@@ -204,7 +211,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
         }}
         onRunChange={(run) => setScreen((s) => (s.name === 'lab' ? { ...s, run } : s))}
         onFinish={(run, completionStatus, envelope, saveError, frozenPayload = null) => {
-          setScreen({ name: 'result', session, run, completionStatus, envelope, saveError, noRecord, profile, frozenPayload, sending: !noRecord && !!envelope && autoSendOn && isClassSession(session.sessionCode) })
+          setScreen({ name: 'result', session, task, mode, runRepo, run, completionStatus, envelope, saveError, noRecord, profile, frozenPayload, sending: !noRecord && !!envelope && autoSendOn && isClassSession(session.sessionCode) })
           // 기록을 확정하면 보낸다(이 기록과, 전에 못 보낸 수업용 기록). 기록 없이 하기와 저장 실패는 보낼 것이 없다
           if (!noRecord && envelope) void sendNow()
         }}
@@ -224,6 +231,7 @@ export function App({ classLink }: { classLink?: ClassLinkTaken } = {}) {
         void sendNow()
         return null
       } : undefined}
-      onNextStudent={() => { if (!screen.noRecord) repo?.clearCurrent(); setScreen({ name: 'start' }) }} />
+      onToLab={() => setScreen({ name: 'lab', session: screen.session, task: screen.task, mode: screen.mode, run: null, noRecord: screen.noRecord, runRepo: screen.runRepo, profile: screen.profile, after: screen.completionStatus })}
+      onEnd={() => finish(screen.noRecord)} />
   )
 }
