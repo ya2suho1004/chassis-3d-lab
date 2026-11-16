@@ -121,8 +121,8 @@ export function parseDebriefRequest(contentType: string | null, body: string, la
 /** 숫자 조각(정수·소수). 1,000 같은 자리 쉼표는 쓰지 않는 글이라 따로 다루지 않는다 */
 const numbersIn = (s: string): string[] => s.match(/\d+(?:\.\d+)?/g) ?? []
 const KOREAN_COUNT: Record<string, string> = { 한: '1', 두: '2', 세: '3', 네: '4', 다섯: '5', 여섯: '6', 일곱: '7', 여덟: '8', 아홉: '9', 열: '10' }
-/** 한글 수사 + 번("세 번", "다섯번")의 수. "한 가지" 같은 다른 단위는 보지 않는다. 낱말 가운데(앞이 한글)는 수사로 보지 않는다 */
-const koreanCountsIn = (s: string): string[] => [...s.matchAll(/(?<![가-힣])(다섯|여섯|일곱|여덟|아홉|한|두|세|네|열) ?번/g)].map((m) => KOREAN_COUNT[m[1]!]!)
+/** 한글 수사 + 번·회("세 번", "다섯번", "두 회")의 수. "한 가지" 같은 다른 단위는 보지 않는다. 낱말 가운데(앞이 한글)는 수사로 보지 않는다 */
+const koreanCountsIn = (s: string): string[] => [...s.matchAll(/(?<![가-힣])(다섯|여섯|일곱|여덟|아홉|한|두|세|네|열) ?(?:번|회)/g)].map((m) => KOREAN_COUNT[m[1]!]!)
 
 /** 답의 숫자를 견줄 원본: 요약 글 + 그 과제의 [학교 승인 판정 기준] 구역 글(작업 순서 번호·말투 구역의 숫자는 넣지 않는다) */
 export function debriefAllowedNumbers(context: TaskContext, taskId: DebriefTaskId, summary: string): string {
@@ -138,7 +138,7 @@ function stripFence(text: string): string {
 
 /**
  * 답 검사(설계 2-3 ⑥): JSON 하나, good·improve·hard가 문자열 목록, 묶음마다 3문장(목록 칸) 이하, 문장마다 120자 이하,
- * "양호"·"불량" 없음, 답의 숫자(전각 숫자는 NFKC로 바꿔, "세 번" 같은 한글 수사 + 번은 1~10으로)는 모두 allowedSource에 있는 숫자.
+ * "양호"·"불량" 없음, 답의 숫자(전각 숫자는 NFKC로 바꿔, "세 번"·"두 회" 같은 한글 수사 + 번·회는 1~10으로)는 모두 allowedSource에 있는 숫자.
  * allowedSource는 debriefAllowedNumbers(요약 + 판정 기준 구역). 빈 문장은 버리고 앞뒤 공백은 다듬는다(돌려주는 글은 NFKC로 바꾼 것).
  */
 export function checkDebriefAnswer(text: string, allowedSource: string): { ok: true; notes: DebriefNotes } | { ok: false; reason: string } {

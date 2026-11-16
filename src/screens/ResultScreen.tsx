@@ -1,7 +1,7 @@
 // 정리 화면(설계 docs/superpowers/specs/2026-11-16-debrief-and-free-roam-design.md 1-2): 검사 통과·중단 뒤 30초 동안 정리를 읽고
 // "실습장으로 이동"(수행 뒤 둘러보기) 또는 "마치기"(시작 화면). 화면 이름(result)과 구성요소 이름은 그대로 쓴다.
 // 기록(payload)에는 아무것도 더하지 않는다. 정리 글·공식은 app/debrief.ts.
-// 2단계(설계 2-4): 검사 통과한 수행이면 뜰 때 한 번 AI 정리를 부르고 8초 기다린다. 오지 않거나 실패하면 규칙 정리. AI 글은 화면 상태뿐(기록·기기 저장 없음).
+// 2단계(설계 2-4): 검사 통과한 수행이면 뜰 때 한 번 AI 정리를 부르고 12초 기다린다. 오지 않거나 실패하면 규칙 정리. AI 글은 화면 상태뿐(기록·기기 저장 없음).
 import { useEffect, useMemo, useState } from 'react'
 import { buildRecordPayload, type RecordPayload, type SessionContext } from '../domain/record'
 import { resolveResultPayload } from '../app/resultPayload'
@@ -123,7 +123,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
   const facts = debriefFacts(run.task)
   const durationSeconds = payload.ok ? payload.value.durationSeconds : null
   const stats = debriefStats(run, durationSeconds, { withheld: notes.withheld })
-  // AI 정리(설계 2-4): 확정 기록의 수행 번호로 한 번만 부른다. 8초는 화면이 뜬 때부터 센다(30초 잠금과 따로)
+  // AI 정리(설계 2-4): 확정 기록의 수행 번호로 한 번만 부른다. 12초는 화면이 뜬 때부터 센다(30초 잠금과 따로)
   const recordId = frozenPayload?.recordId ?? null
   const [shownAt] = useState(() => performance.now())
   const [view, setView] = useState<DebriefView>(() => (shouldAskDebrief({ completionStatus, noRecord, endpoint: chatEndpoint, recordId, saved: !saveError, online: typeof navigator === 'undefined' || navigator.onLine !== false }) ? { kind: 'waiting' } : { kind: 'rule' }))

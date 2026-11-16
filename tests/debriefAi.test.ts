@@ -1,5 +1,5 @@
 // tests/debriefAi.test.ts — 정리 화면의 AI 정리(설계 docs/superpowers/specs/2026-11-16-debrief-and-free-roam-design.md 2-4)
-// 부르는 조건, 보내는 사실(정오는 불리언만, 값 없음), 8초 기다림과 규칙 정리, 늦게 온 답 무시, 같은 수행에 한 번, AI 표시, 빈 묶음.
+// 부르는 조건, 보내는 사실(정오는 불리언만, 값 없음), 12초 기다림과 규칙 정리, 늦게 온 답 무시, 같은 수행에 한 번, AI 표시, 빈 묶음.
 // 화면 시험 도구(jsdom)가 없어 그리기는 renderToStaticMarkup, 타이머 배선은 소스로 고정한다(1단계와 같은 방식).
 import fs from 'node:fs'
 import { createElement } from 'react'
@@ -75,7 +75,7 @@ describe('부르는 조건', () => {
 
 describe('기다림과 결정(한번 보인 글은 바꾸지 않는다)', () => {
   const notes = { good: ['좋았어요.'], improve: [], hard: [] }
-  test('기다리는 중에 답이 오면 AI 글, 실패·8초가 먼저면 규칙 정리', () => {
+  test('기다리는 중에 답이 오면 AI 글, 실패·12초가 먼저면 규칙 정리', () => {
     expect(settleDebrief({ kind: 'waiting' }, { type: 'answer', notes })).toEqual({ kind: 'ai', notes: aiDebriefNotes(notes) })
     expect(settleDebrief({ kind: 'waiting' }, { type: 'fail' })).toEqual({ kind: 'rule' })
     expect(settleDebrief({ kind: 'waiting' }, { type: 'timeout' })).toEqual({ kind: 'rule' })
@@ -88,10 +88,10 @@ describe('기다림과 결정(한번 보인 글은 바꾸지 않는다)', () => 
     expect(settleDebrief(ai, { type: 'fail' })).toBe(ai)
     expect(settleDebrief(ai, { type: 'answer', notes: { good: ['다른 글'], improve: [], hard: [] } })).toBe(ai)
   })
-  test('8초는 화면이 뜬 때부터(다시 그려져도 남은 시간만)', () => {
-    expect(DEBRIEF_WAIT_MS).toBe(8000)
-    expect(debriefWaitLeft(1000, 1000)).toBe(8000)
-    expect(debriefWaitLeft(1000, 6000)).toBe(3000)
+  test('12초는 화면이 뜬 때부터(다시 그려져도 남은 시간만)', () => {
+    expect(DEBRIEF_WAIT_MS).toBe(12000)
+    expect(debriefWaitLeft(1000, 1000)).toBe(12000)
+    expect(debriefWaitLeft(1000, 6000)).toBe(7000)
     expect(debriefWaitLeft(1000, 20000)).toBe(0)
   })
   test('빈 묶음은 지금의 고정 문장으로', () => {
@@ -127,7 +127,7 @@ describe('정리 요청 보내기(debriefClient)', () => {
     expect(seen.init).toMatchObject({ method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'text/plain;charset=UTF-8' } })
     expect(await askDebrief('https://e', ask, (async () => { throw new TypeError('x') }) as any)).toEqual({ ok: false, code: 'NETWORK' })
   })
-  test('8초가 지나면 요청을 끊고 TIMEOUT', async () => {
+  test('12초가 지나면 요청을 끊고 TIMEOUT', async () => {
     vi.useFakeTimers()
     let aborted = false
     const p = askDebrief('https://e', ask, ((_u: string, init: any) => new Promise((_r, rej) => { init.signal.addEventListener('abort', () => { aborted = true; rej(new Error('abort')) }) })) as any)

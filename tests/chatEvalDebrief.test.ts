@@ -72,6 +72,7 @@ describe('결과 기록', () => {
     const md = renderDebriefSheet(results, { provider: 'fake', model: 'fake-model', promptVersion: DEBRIEF_PROMPT_VERSION, ranAt: '2026-11-16T00:00:00.000Z' })
     expect(md).toContain(`fake / fake-model / ${DEBRIEF_PROMPT_VERSION}`)
     expect(md).toContain('handleDebrief')
+    expect(md).toContain('앱은 12초까지 기다린다')
     expect(md).toContain('연구 자료가 아니')
     expect(md).toContain('검사 통과 1 · 걸림 1')
     expect(md).toContain(results[0].summary)

@@ -5,8 +5,8 @@ import { deadline } from '../delivery/timeout'
 import type { ChatMode } from './chatClient'
 
 export const DEBRIEF_PROTOCOL = 'debrief-1'
-/** 정리 화면이 AI 글을 기다리는 시간(화면이 뜬 때부터). 요청도 이때 끊는다 */
-export const DEBRIEF_WAIT_MS = 8000
+/** 정리 화면이 AI 글을 기다리는 시간(화면이 뜬 때부터). 요청도 이때 끊는다. 8초였으나 실제 모델 시험(0.1.1)에서 11개 중 2개가 11~13초라 12초로 */
+export const DEBRIEF_WAIT_MS = 12_000
 const LINES_MAX = 3
 const LINE_MAX_CHARS = 120
 

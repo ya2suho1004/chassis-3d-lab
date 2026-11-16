@@ -6,7 +6,8 @@
 import { criteriaSection, stepsSection, type TaskContext } from './prompt.ts'
 
 // 0.1.1(2026-11-16 독립 검토): [쓸 수 있는 사실]에 '횟수는 요약에 적힌 숫자 그대로 쓴다.' 한 줄(서버 답 검사가 한글 수사 횟수도 요약과 견준다)
-export const DEBRIEF_PROMPT_VERSION = 'debrief-ko-0.1.1'
+// 0.2.0(2026-11-16 실제 모델 시험 0.1.1 반영): 요약 모양(묶음을 줄 머리로, 횟수는 '회'), 연결 지어내기·단계 번호 금지, 보완 방법을 종류별로 한정, 항목 이름 늘어놓지 않기
+export const DEBRIEF_PROMPT_VERSION = 'debrief-ko-0.2.0'
 /** chat_logs에서 정리 행을 가르는 머리(prompt_version이 이것으로 시작) */
 export const DEBRIEF_PROMPT_PREFIX = 'debrief-'
 
@@ -42,13 +43,16 @@ export function buildDebriefSystemPrompt(task: TaskContext, taskId: DebriefTaskI
 - [수행 요약]에 있는 것: 항목 이름, 처음 답과 마지막 답의 맞음·틀림, 오류 종류와 횟수, 안전 위반 종류와 횟수, 힌트·검사 횟수, 걸린 시간.
 - [학교 승인 판정 기준]에 있는 공식과 기준, [작업 순서]에 있는 확인 사항.
 - 그 밖의 사실은 쓰지 않는다. 학생이 넣은 값, 측정값, 계산 결과, 차량 상태는 너에게 주어지지 않았다. 짐작해서도 말하지 않는다.
+- 요약에 없는 연결을 지어내지 않는다. 힌트를 어느 항목·어느 단계에서 썼는지, 검사를 왜 다시 받았는지, 오류가 왜 났는지는 요약에 없다. 힌트·검사·오류는 횟수로만 말한다.
 - 숫자는 요약에 있는 횟수·시간과 판정 기준에 있는 숫자만 쓴다. 새 숫자·규정값·법규 수치를 지어내지 않는다.
 - 횟수는 요약에 적힌 숫자 그대로 쓴다.
+- 작업 순서의 단계 번호(몇 번째 단계인지)를 말하지 않는다. 요약의 "작업 순서 어긋남"은 순서를 어긴 횟수다.
 - "양호", "불량"이라는 말을 쓰지 않는다. 판정 항목은 "판정"이라고만 부른다.
 
 [세 묶음]
 - good(잘한 점): 요약에서 확인되는 잘한 점만 쓴다. 근거 없는 칭찬은 쓰지 않는다. 없으면 빈 목록.
-- improve(보완할 점): 처음에 틀렸거나 끝까지 틀린 항목, 오류, 안전 위반을 짚고, 다음에 어떻게 하면 되는지 한 가지를 같은 문장에 붙인다. 방법은 [학교 승인 판정 기준]과 [작업 순서]에 있는 것만 쓴다. 안전 위반이 있으면 맨 앞에 쓴다. 없으면 빈 목록(보완할 점을 지어내지 않는다).
+- improve(보완할 점): 처음에 틀렸거나 끝까지 틀린 항목, 오류, 안전 위반을 짚고, 다음에 어떻게 하면 되는지 한 가지를 같은 문장에 붙인다. 안전 위반이 있으면 맨 앞에 쓴다. 없으면 빈 목록(보완할 점을 지어내지 않는다).
+- 보완 방법은 종류에 맞는 것만 쓴다. 계산 항목: [학교 승인 판정 기준]의 그 공식을 다시 확인하기. 판정 항목: 계산한 값을 판정 기준과 다시 견주기. 판독 항목: 계기나 측정판의 눈금을 한 번 더 읽고 확인하기. 작업 순서 어긋남: 작업지시서의 순서를 먼저 확인하기. 입력 형식: 적는 형식을 확인하고 적기. 안전 위반: 그 안전 확인을 작업 전에 먼저 하기.
 - hard(어려웠던 것으로 보이는 점): 오류가 몰린 곳, 힌트를 쓴 것, 검사를 여러 번 받은 것처럼 요약에서 보이는 어려움을 "~가 어려웠던 것 같아요"처럼 짐작임이 드러나게 쓴다. 없으면 빈 목록.
 
 [하지 않는 것]
@@ -59,7 +63,7 @@ export function buildDebriefSystemPrompt(task: TaskContext, taskId: DebriefTaskI
 
 [말투]
 - 해요체("~했어요", "~해 보세요"). 고등학생 눈높이. 한 문장은 60자 안쪽. 묶음마다 문장 3개 이하.
-- 항목 이름은 요약에 적힌 그대로 쓴다.
+- 항목 이름은 요약에 적힌 그대로 쓰고, 한 문장에 항목 이름은 2개까지만 쓴다. 한 묶음(판독·계산·판정)의 항목 결과가 모두 같으면 "판독 항목을 모두"처럼 묶어 말한다.
 
 [출력 형식]
 - 아래 모양의 JSON 하나만 출력한다. 다른 글이나 설명, 코드 표시를 붙이지 않는다.
@@ -80,9 +84,12 @@ function durationText(sec: number): string {
   return m ? `${m}분 ${sec % 60}초` : `${sec}초`
 }
 
-/** 횟수 목록: 이름표 순서대로, 0번은 뺀다. 없으면 '없음' */
+/** 요약에서만 쓰는 이름(화면 이름표 COUNT_LABEL은 그대로): '작업 순서 N회'를 단계 번호로 읽지 않게 */
+const SUMMARY_LABEL: Record<string, string> = { order: '작업 순서 어긋남' }
+
+/** 횟수 목록: 이름표 순서대로, 0회는 뺀다. 없으면 '없음' */
 function countsLine(labels: Record<string, string>, counts: Record<string, number>): string {
-  const parts = Object.entries(labels).filter(([k]) => (counts[k] ?? 0) > 0).map(([k, name]) => `${name} ${counts[k]}번`)
+  const parts = Object.entries(labels).filter(([k]) => (counts[k] ?? 0) > 0).map(([k, name]) => `${SUMMARY_LABEL[k] ?? name} ${counts[k]}회`)
   return parts.length ? parts.join(', ') : '없음'
 }
 
@@ -98,12 +105,16 @@ export function buildDebriefSummary(labels: DebriefContext, r: { taskId: Debrief
     '[수행 요약]',
     `과제: ${t.title}`,
     `조건: ${MODE_NAME[r.difficultyMode] ?? MODE_NAME.unguided}`,
-    `결과: 검사 통과(검사 ${f.npcInspectionCount}번)`,
+    `결과: 검사 통과(검사 받은 횟수 ${f.npcInspectionCount}회)`,
     ...(f.durationSeconds === null ? [] : [`걸린 시간: ${durationText(f.durationSeconds)}`]),
     '항목별 정오(처음 답 → 마지막 답):',
-    ...t.items.map((i) => { const x = byId.get(i.itemId); return `- ${i.group} / ${i.label}: ${ox(x?.first ?? null)} → ${ox(x?.final ?? null)}` }),
-    `오류: ${countsLine(labels.errorLabels, f.errorTypes)}`,
-    `안전 위반: ${countsLine(labels.safetyLabels, f.safetyViolationTypes)}`,
-    `힌트: ${f.hintCount}번`,
+    // 묶음(판독·계산·판정)을 줄 머리로 — 'AI가 "판독 / 좌 제동력" 꼴을 그대로 베껴 늘어놓던 것'(0.1.1 시험)
+    ...[...new Set(t.items.map((i) => i.group))].flatMap((g) => [
+      g,
+      ...t.items.filter((i) => i.group === g).map((i) => { const x = byId.get(i.itemId); return `- ${i.label}: ${ox(x?.first ?? null)} → ${ox(x?.final ?? null)}` }),
+    ]),
+    `오류 횟수: ${countsLine(labels.errorLabels, f.errorTypes)}`,
+    `안전 위반 횟수: ${countsLine(labels.safetyLabels, f.safetyViolationTypes)}`,
+    `힌트 사용 횟수: ${f.hintCount}회`,
   ].join('\n')
 }

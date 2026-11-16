@@ -3,7 +3,7 @@
 // - 교관의 정리: 고정 틀에 항목 이름·횟수만 끼운다. 사례의 측정값·계산 기준값·정답 판정·학생이 넣은 값은 넣지 않는다.
 // - 오늘 쓴 공식과 규정값: 과제 자료의 feedback.wrong_calc.why·wrong_verdict.why 그대로(사례 값 없음).
 // - 30초 잠금: 남은 초 계산과 타이머(가짜 타이머로 시험).
-// - AI 정리(2단계, 설계 2-4): 부르는 조건, 보내는 사실(정오는 불리언만), 8초 기다림과 결정(한번 보인 글은 바꾸지 않음), 빈 묶음 고정 문장.
+// - AI 정리(2단계, 설계 2-4): 부르는 조건, 보내는 사실(정오는 불리언만), 12초 기다림과 결정(한번 보인 글은 바꾸지 않음), 빈 묶음 고정 문장.
 // 기록(payload)에는 아무것도 더하지 않는다. 채점·기록 로직은 읽기만 한다.
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
 import { summarizeResponses, type ResponseSummary } from '../domain/grading'
@@ -183,7 +183,7 @@ export function startLockTimer(startMs: number, onLeft: (secondsLeft: number) =>
 
 /** AI 글일 때 '교관의 정리' 제목 옆에 늘 보이는 표시 */
 export const DEBRIEF_AI_LABEL = 'AI 교관이 쓴 글이에요(사람 아님).'
-/** AI 글을 기다리는 동안(최대 8초) 묶음 자리에 보이는 한 줄 */
+/** AI 글을 기다리는 동안(최대 12초) 묶음 자리에 보이는 한 줄 */
 export const DEBRIEF_WAITING_LINE = '교관이 정리를 쓰고 있어요…'
 
 const COUNT_MAX = 999

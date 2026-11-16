@@ -76,7 +76,7 @@ describe('갈래 나누기', () => {
     expect(src.match(/\.like\('prompt_version', `\$\{DEBRIEF_PROMPT_PREFIX\}%`\)/g)?.length).toBe(2)
     expect(DEBRIEF_PROMPT_PREFIX).toBe('debrief-')
     expect(DEBRIEF_PROMPT_VERSION.startsWith(DEBRIEF_PROMPT_PREFIX)).toBe(true)
-    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.1.1')
+    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.2.0')
   })
 })
 
@@ -160,32 +160,42 @@ describe('AI 회사로 가는 글', () => {
     expect(c.system).toBe(buildDebriefSystemPrompt(context, 'braking-force'))
     expect(c.question).toBe(buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'unguided', facts: facts() as any }))
   })
+  test('요약의 작업 순서 이름만 "작업 순서 어긋남"(화면 이름표는 그대로), 단계 번호처럼 읽히는 "N번" 꼴이 없다', () => {
+    expect(COUNT_LABEL.order).toBe('작업 순서')
+    const s = buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'unguided', facts: facts({ errorTypes: { order: 2 } }) as any })
+    expect(s).toContain('오류 횟수: 작업 순서 어긋남 2회')
+    expect(s).not.toMatch(/\d+번/)
+    expect(s).not.toMatch(/(판독|계산|판정) \//)
+  })
   test('요약 글 모양(지시문 초안의 입력 본보기와 같은 틀)', () => {
     expect(buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'unguided', facts: facts() as any })).toBe([
       '[수행 요약]',
       '과제: 제동력 측정 및 판독',
       '조건: 안내 없음',
-      '결과: 검사 통과(검사 2번)',
+      '결과: 검사 통과(검사 받은 횟수 2회)',
       '걸린 시간: 6분 40초',
       '항목별 정오(처음 답 → 마지막 답):',
-      '- 판독 / 좌 제동력: 맞음 → 맞음',
-      '- 판독 / 우 제동력: 틀림 → 맞음',
-      '- 판독 / 축중: 맞음 → 맞음',
-      '- 계산 / 편차(%): 틀림 → 맞음',
-      '- 계산 / 합(%): 맞음 → 맞음',
-      '- 판정 / 판정: 맞음 → 맞음',
-      '오류: 작업 순서 1번, 판독값 1번, 계산 2번',
-      '안전 위반: 보호구 1번',
-      '힌트: 0번',
+      '판독',
+      '- 좌 제동력: 맞음 → 맞음',
+      '- 우 제동력: 틀림 → 맞음',
+      '- 축중: 맞음 → 맞음',
+      '계산',
+      '- 편차(%): 틀림 → 맞음',
+      '- 합(%): 맞음 → 맞음',
+      '판정',
+      '- 판정: 맞음 → 맞음',
+      '오류 횟수: 작업 순서 어긋남 1회, 판독값 1회, 계산 2회',
+      '안전 위반 횟수: 보호구 1회',
+      '힌트 사용 횟수: 0회',
     ].join('\n'))
   })
   test('요약: 답 없음·0번 생략·없음·시간 모름·안내 있음·최소회전반경', () => {
     const s = buildDebriefSummary(labels, { taskId: 'min-turning-radius', difficultyMode: 'guided', facts: { items: items(TURN_ITEMS, { radius: [null, false] }), errorTypes: { calc: 0 }, safetyViolationTypes: {}, hintCount: 3, npcInspectionCount: 1, durationSeconds: null } })
     expect(s).toBe([
-      '[수행 요약]', '과제: 최소회전반경 측정 및 판정', '조건: 안내 있음', '결과: 검사 통과(검사 1번)',
+      '[수행 요약]', '과제: 최소회전반경 측정 및 판정', '조건: 안내 있음', '결과: 검사 통과(검사 받은 횟수 1회)',
       '항목별 정오(처음 답 → 마지막 답):',
-      '- 판독 / 좌측 바퀴 조향각: 맞음 → 맞음', '- 판독 / 우측 바퀴 조향각: 맞음 → 맞음', '- 계산 / 최소회전반경(m): 답 없음 → 틀림', '- 판정 / 판정: 맞음 → 맞음',
-      '오류: 없음', '안전 위반: 없음', '힌트: 3번',
+      '판독', '- 좌측 바퀴 조향각: 맞음 → 맞음', '- 우측 바퀴 조향각: 맞음 → 맞음', '계산', '- 최소회전반경(m): 답 없음 → 틀림', '판정', '- 판정: 맞음 → 맞음',
+      '오류 횟수: 없음', '안전 위반 횟수: 없음', '힌트 사용 횟수: 3회',
     ].join('\n'))
     expect(buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'guided', facts: facts({ durationSeconds: 59 }) as any })).toContain('걸린 시간: 59초')
   })
@@ -206,9 +216,19 @@ describe('AI 회사로 가는 글', () => {
   })
 })
 
-describe('지시문(debrief-ko-0.1.1)', () => {
+describe('지시문(debrief-ko-0.2.0)', () => {
   const draft = readFileSync('docs/copy/2026-11-16_AI정리_지시문_초안.md', 'utf8')
   const block = draft.split('## 지시문 (전문)')[1]!.split('```')[1]!.replace(/^\n/, '').replace(/\n$/, '')
+  test('0.2.0 지시: 연결 지어내기·단계 번호 금지, 보완 방법은 종류별로, 항목 이름은 한 문장에 2개까지', () => {
+    const p = buildDebriefSystemPrompt(context, 'braking-force')
+    for (const l of [
+      '- 요약에 없는 연결을 지어내지 않는다. 힌트를 어느 항목·어느 단계에서 썼는지, 검사를 왜 다시 받았는지, 오류가 왜 났는지는 요약에 없다. 힌트·검사·오류는 횟수로만 말한다.',
+      '- 작업 순서의 단계 번호(몇 번째 단계인지)를 말하지 않는다. 요약의 "작업 순서 어긋남"은 순서를 어긴 횟수다.',
+      '- 보완 방법은 종류에 맞는 것만 쓴다.',
+      '- 항목 이름은 요약에 적힌 그대로 쓰고, 한 문장에 항목 이름은 2개까지만 쓴다.',
+    ]) expect(p).toContain(l)
+    expect(p).not.toContain('- 항목 이름은 요약에 적힌 그대로 쓴다.\n')
+  })
   test('지시문 초안 문서의 글 그대로 — 판정 기준·작업 순서 구역만 과제별로 채운다', () => {
     for (const taskId of ['braking-force', 'min-turning-radius'] as const) {
       const want = block
@@ -281,6 +301,10 @@ describe('답 검사', () => {
     expect(ok({ good: [], improve: [], hard: ['검사를 다섯번 받았어요.'] })).toMatchObject({ ok: false })
     expect(ok({ good: ['한 번에 맞혔어요.'], improve: [], hard: ['검사를 두 번 받았어요.'] })).toMatchObject({ ok: true })
     expect(ok({ good: ['한 가지를 잘했어요. 세 가지 확인을 했어요.'], improve: [], hard: [] })).toMatchObject({ ok: true })
+    // 단위 "회"도 같은 규칙
+    expect(ok({ good: [], improve: [], hard: ['힌트를 세 회 썼어요.'] })).toMatchObject({ ok: false })
+    expect(ok({ good: [], improve: [], hard: ['검사를 두회 받았어요.'] })).toMatchObject({ ok: true })
+    expect(ok({ good: [], improve: [], hard: ['검사를 5회 받았어요.'] })).toMatchObject({ ok: false })
     // 요약에 1이 없으면 "한 번에"도 거절(최소회전반경 기준 구역에는 1이 있으므로 기준 없이 본다)
     expect(checkDebriefAnswer(JSON.stringify({ good: ['한 번에 통과했어요.'], improve: [], hard: [] }), '검사 2번')).toMatchObject({ ok: false })
     expect(checkDebriefAnswer(JSON.stringify({ good: ['한 번에 통과했어요.'], improve: [], hard: [] }), '검사 1번')).toMatchObject({ ok: true })

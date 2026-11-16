@@ -58,7 +58,7 @@ export function renderDebriefSheet(results, meta) {
   const versions = [...new Set(results.map((r) => r.modelVersion).filter(Boolean))].join(', ') || '-'
   return [
     `# AI 정리 평가 판독표 — ${meta.provider} / ${meta.model} / ${meta.promptVersion}`, '',
-    `- 실행 ${meta.ranAt} · 수행 요약 ${results.length}개 · 모델 버전 ${versions} · 평균 걸린 시간 ${avg}ms(앱은 8초까지 기다린다)`,
+    `- 실행 ${meta.ranAt} · 수행 요약 ${results.length}개 · 모델 버전 ${versions} · 평균 걸린 시간 ${avg}ms(앱은 12초까지 기다린다)`,
     '- 조건: 서버 처리 본체(handleDebrief)를 그대로 거침 — 요청 허용 목록 검사, 서버가 만든 요약 글, 정리 지시문, 답 길이 제한, 429 재시도, 답 검사(JSON·세 묶음·문장 수·길이·양호/불량·숫자).',
     '- 다른 점: 이 기기 키로 직접 부르므로 Supabase 함수·세션 설정·재사용·한도를 거치지 않고 대화 기록(chat_logs)이 남지 않는다.',
     '- 합성 수행 사실만 썼다. 실제 학생 자료 없음. 이 표는 지시문·모델을 고르기 위한 개발 자료로, **연구 자료가 아니다**.',
