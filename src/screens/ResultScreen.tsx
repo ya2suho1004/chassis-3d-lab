@@ -1,6 +1,7 @@
 // 정리 화면(설계 docs/superpowers/specs/2026-11-16-debrief-and-free-roam-design.md 1-2): 검사 통과·중단 뒤 30초 동안 정리를 읽고
 // "실습장으로 이동"(수행 뒤 둘러보기) 또는 "마치기"(시작 화면). 화면 이름(result)과 구성요소 이름은 그대로 쓴다.
 // 기록(payload)에는 아무것도 더하지 않는다. 정리 글·공식은 app/debrief.ts.
+// 2단계(설계 2-4): 검사 통과한 수행이면 뜰 때 한 번 AI 정리를 부르고 12초 기다린다. 오지 않거나 실패하면 규칙 정리. AI 글은 화면 상태뿐(기록·기기 저장 없음).
 import { useEffect, useMemo, useState } from 'react'
 import { buildRecordPayload, type RecordPayload, type SessionContext } from '../domain/record'
 import { resolveResultPayload } from '../app/resultPayload'
@@ -10,7 +11,12 @@ import type { DeliveryEnvelope } from '../records/types'
 import { WorkLog } from './WorkLog'
 import { isRequestPassed } from '../app/cozyState'
 import { itemLabel, verdictLabel } from '../app/resultLabels'
-import { DEBRIEF_LOCK_SECONDS, DEBRIEF_WITHHELD_LINE, debriefFacts, debriefInputOf, debriefNotes, debriefStats, endStep, startLockTimer } from '../app/debrief'
+import {
+  DEBRIEF_AI_LABEL, DEBRIEF_LOCK_SECONDS, DEBRIEF_WAITING_LINE, DEBRIEF_WITHHELD_LINE, debriefFacts, debriefInputOf, debriefNotes, debriefRequestFacts, debriefStats, debriefWaitLeft,
+  endStep, settleDebrief, shouldAskDebrief, startLockTimer, type DebriefEvent, type DebriefNotes, type DebriefView,
+} from '../app/debrief'
+import { getChatEndpoint } from '../chat/chatClient'
+import { askDebrief, askDebriefOnce } from '../chat/debriefClient'
 import type { LabSound } from '../scene/sound'
 
 /** 정리 화면 단추 줄: 잠긴 동안(secondsLeft > 0) 둘 다 누를 수 없고 주 단추에 남은 초를 보인다.
@@ -39,7 +45,27 @@ export function DebriefActions({ secondsLeft, showToLab, onToLab, onEnd, endLabe
   )
 }
 
-export function ResultScreen({ sound, session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onToLab, onEnd, onRetrySave, sendLine = null }: {
+/** 교관의 정리 칸: 기다리는 중(한 줄) → AI 글(제목 옆 AI 표시) 또는 규칙 정리. 수치 줄은 늘 앱이 만든다 */
+export function DebriefNotesCard({ view, ruleNotes, stats }: { view: DebriefView; ruleNotes: DebriefNotes; stats: string[] }) {
+  const notes = view.kind === 'ai' ? view.notes : ruleNotes
+  return (
+    <section className="card debrief" aria-label="교관의 정리">
+      <h2>교관의 정리{view.kind === 'ai' && <> <span className="debrief-ai">{DEBRIEF_AI_LABEL}</span></>}</h2>
+      <p className="debrief-stats small">{stats.join(' · ')}</p>
+      {view.kind === 'waiting'
+        ? <p className="debrief-wait" role="status">{DEBRIEF_WAITING_LINE}</p>
+        : (
+          <div className="debrief-groups">
+            <div><h3>잘한 점</h3><ul>{notes.good.map((l, i) => <li key={i}>{l}</li>)}</ul></div>
+            <div><h3>보완할 점</h3><ul>{notes.improve.map((l, i) => <li key={i}>{l}</li>)}</ul></div>
+            <div><h3>어려웠던 것으로 보이는 점</h3><ul>{notes.hard.map((l, i) => <li key={i}>{l}</li>)}</ul></div>
+          </div>
+        )}
+    </section>
+  )
+}
+
+export function ResultScreen({ sound, session, run, completionStatus, envelope, saveError, frozenPayload = null, noRecord = false, nickname, onToLab, onEnd, onRetrySave, sendLine = null, chatEndpoint = getChatEndpoint() }: {
   /** 소리 엔진(설계 2026-11-12 §4.7): 실습 화면에서 켠 채 넘어왔으면 통과 도장에 소리가 난다. 이 화면에는 배경 소음도 소리 버튼도 없다 */
   sound?: Pick<LabSound, 'enabled' | 'play'>
   session: SessionContext; run: TaskRun; completionStatus: 'completed' | 'aborted'; envelope: DeliveryEnvelope | null; saveError: string | null
@@ -57,6 +83,8 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
   onRetrySave?: () => Promise<string | null>
   /** 수업용 세션 기록의 전송 상태 한 줄(설계 2026-11-15-class-records §3-3, delivery/autoSend.ts). 정오·판정은 넣지 않는다 */
   sendLine?: string | null
+  /** AI 정리를 부를 대화 주소(기본은 빌드의 VITE_CHAT_ENDPOINT). 없으면 규칙 정리만 */
+  chatEndpoint?: string | null
 }) {
   const [retrying, setRetrying] = useState(false)
   const [retryError, setRetryError] = useState<string | null>(null)
@@ -93,7 +121,21 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
   const sum = summarizeResponses(run.responses)
   const notes = useMemo(() => debriefNotes(debriefInputOf(run, completionStatus)), [run, completionStatus])
   const facts = debriefFacts(run.task)
-  const stats = debriefStats(run, payload.ok ? payload.value.durationSeconds : null, { withheld: notes.withheld })
+  const durationSeconds = payload.ok ? payload.value.durationSeconds : null
+  const stats = debriefStats(run, durationSeconds, { withheld: notes.withheld })
+  // AI 정리(설계 2-4): 확정 기록의 수행 번호로 한 번만 부른다. 12초는 화면이 뜬 때부터 센다(30초 잠금과 따로)
+  const recordId = frozenPayload?.recordId ?? null
+  const [shownAt] = useState(() => performance.now())
+  const [view, setView] = useState<DebriefView>(() => (shouldAskDebrief({ completionStatus, noRecord, endpoint: chatEndpoint, recordId, saved: !saveError, online: typeof navigator === 'undefined' || navigator.onLine !== false }) ? { kind: 'waiting' } : { kind: 'rule' }))
+  useEffect(() => {
+    if (view.kind !== 'waiting' || !chatEndpoint || !recordId) return
+    let live = true
+    const settle = (e: DebriefEvent) => { if (live) setView((v) => settleDebrief(v, e)) }
+    const t = setTimeout(() => settle({ type: 'timeout' }), debriefWaitLeft(shownAt, performance.now()))
+    askDebriefOnce(recordId, () => askDebrief(chatEndpoint, { sessionCode: session.sessionCode, anonymousStudentCode: session.anonymousStudentCode, recordId, taskId: run.task.taskId, difficultyMode: run.difficultyMode, facts: debriefRequestFacts(run, durationSeconds) }))
+      .then((r) => settle(r.ok ? { type: 'answer', notes: r.notes } : { type: 'fail' }))
+    return () => { live = false; clearTimeout(t) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- 화면이 뜰 때 한 번만(같은 수행 번호에는 askDebriefOnce가 한 번만 보낸다)
   const savedHere = !noRecord && !unsaved && envelope?.localSaveStatus === 'saved'
 
   return (
@@ -132,15 +174,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
         {/* 정답 값(실제 판독값·계산 기준값·정답 판정)은 이 화면에 보이지 않는다 — 사례가 둘뿐이라 옆 학생이 답을 볼 수 있다(마무리 §5) */}
         <p className="small">정답 값은 교사 화면에서 확인합니다.</p>
       </section>
-      <section className="card debrief" aria-label="교관의 정리">
-        <h2>교관의 정리</h2>
-        <p className="debrief-stats small">{stats.join(' · ')}</p>
-        <div className="debrief-groups">
-          <div><h3>잘한 점</h3><ul>{notes.good.map((l) => <li key={l}>{l}</li>)}</ul></div>
-          <div><h3>보완할 점</h3><ul>{notes.improve.map((l) => <li key={l}>{l}</li>)}</ul></div>
-          <div><h3>어려웠던 것으로 보이는 점</h3><ul>{notes.hard.map((l) => <li key={l}>{l}</li>)}</ul></div>
-        </div>
-      </section>
+      <DebriefNotesCard view={view} ruleNotes={notes} stats={stats} />
       <section className="card debrief-facts" aria-label="오늘 쓴 공식과 규정값">
         <h2>오늘 쓴 공식과 규정값</h2>
         {notes.withheld

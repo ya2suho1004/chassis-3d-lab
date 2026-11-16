@@ -2,7 +2,7 @@
 // 수업 중 학생 질문(서버에서 가린 글)·AI 답을 시간순으로 보고, 문제가 보이면 같은 자리에서 AI를 끈다.
 // 서버에 있는 것만 보인다(기기에 저장하지 않음). 10초마다 새 대화만 불러와 붙인다.
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FLAG_LABEL, MASK_LABEL, chatFlags, filterChatLogs, latestCreatedAt, mergeChatLogs, studentCodesOf } from '../teacher/chatReview'
+import { DEBRIEF_LOG_LABEL, FLAG_LABEL, MASK_LABEL, chatFlags, debriefAnswerText, filterChatLogs, isDebriefLog, latestCreatedAt, mergeChatLogs, studentCodesOf } from '../teacher/chatReview'
 import { listChatLogsSince, ServerError, type ChatLogRecord, type ServerConfig, type SessionRow, type TeacherAuth } from '../teacher/serverAdmin'
 
 const POLL_MS = 10_000
@@ -76,14 +76,17 @@ export function ChatReview({ cfg, auth, session, busy, onToggleChat, onExpired, 
         <ol className="cr-list">
           {shown.map((r) => {
             const flags = chatFlags(r)
+            // AI 정리 행(2026-11-16): 질문 대신 서버가 만든 수행 요약, 답은 정리 세 묶음
+            const debrief = isDebriefLog(r)
             return (
               <li key={r.chat_id} className={flags.length ? 'flagged' : ''}>
                 <div className="cr-meta">
                   <span>{hhmmss(r.created_at)}</span> · <b>{r.anonymous_student_code}</b>{r.step_id ? ` · 단계 ${r.step_id}` : ''}{r.difficulty_mode === 'unguided' ? ' · 안내 없음' : ''}
+                  {debrief && <span className="cr-flag cr-debrief">{DEBRIEF_LOG_LABEL}</span>}
                   {flags.map((f) => <span key={f} className={`cr-flag cr-${f}`}>{FLAG_LABEL[f]}{f === 'masked' ? `(${r.masked_patterns.map((m) => MASK_LABEL[m] ?? m).join('·')})` : ''}</span>)}
                 </div>
-                <p className="cr-q"><b>학생</b> {r.question_masked}</p>
-                <p className="cr-a"><b>AI</b> {r.answer ?? '(답 없음)'}</p>
+                <p className="cr-q"><b>{debrief ? '요약' : '학생'}</b> {r.question_masked}</p>
+                <p className="cr-a"><b>AI</b> {(debrief ? debriefAnswerText(r.answer) : r.answer) ?? '(답 없음)'}</p>
               </li>
             )
           })}

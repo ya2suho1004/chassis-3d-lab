@@ -2,7 +2,8 @@
 // 로그인 토큰은 교사 화면이 열려 있는 동안 메모리에만 둔다. 교사 명단에 없으면 RLS가 막는다.
 // 2026-11-03: 교사 화면 탭(수업 중·수업 후)에 나눠 쓰도록 훅과 화면 조각으로 나눔(설계 2026-11-03-teacher-chat-review-design.md).
 import { useState } from 'react'
-import { serverRecordsToSummaryCsv, toChatCsv } from '../records/csv'
+import { serverRecordsToSummaryCsv } from '../records/csv'
+import { toChatLogCsv } from '../teacher/chatReview'
 import { serverRows } from '../records/researchBundle'
 import { downloadResearchBundle } from '../teacher/downloadBundle'
 import { reconcileSession, reconcileToCsv, type ReconcileResult } from '../records/reconcile'
@@ -150,7 +151,7 @@ export function ServerAfter({ s, repo }: { s: ServerAdminState; repo: Repository
         <div key={x.session_code} className="sessionrow">
           <p><b>{x.session_code}</b> · {FLOW_LABEL[x.lesson_flow]} · 조건 {x.class_condition_code}</p>
           <div className="row">
-            <button disabled={s.busy} onClick={() => void s.run(async () => { const rows = await listChatLogs(cfg, auth, x.session_code); saveAll('chat-logs', '대화 기록', x.session_code, rows, toChatCsv(rows as any)) })}>대화 기록 CSV</button>
+            <button disabled={s.busy} onClick={() => void s.run(async () => { const rows = await listChatLogs(cfg, auth, x.session_code); saveAll('chat-logs', '대화 기록', x.session_code, rows, toChatLogCsv(rows)) })}>대화 기록 CSV</button>
             <button disabled={s.busy} onClick={() => void s.run(async () => { const rows = await listAllServerRecords(cfg, auth, x.session_code); saveAll('server-records', '수행 기록', x.session_code, rows, serverRecordsToSummaryCsv(rows)) })}>서버 수행 기록 CSV</button>
             <button disabled={s.busy} onClick={() => void s.run(async () => setBundleNote(await downloadResearchBundle('server', x.session_code, serverRows(await listAllServerRecords(cfg, auth, x.session_code)))))}>연구용 묶음(ZIP)</button>
             <button disabled={s.busy} onClick={() => void s.run(async () => {
