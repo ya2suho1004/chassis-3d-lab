@@ -13,7 +13,7 @@ if (!KEY_ENV[provider]) {
 }
 
 if (!args.includes('--run')) {
-  console.log(`[계획] ${provider} · 합성 수행 요약 ${DEBRIEF_CASES.length}개 · 호출 ${DEBRIEF_CASES.length}번(429면 1번 더) · 약 ${Math.ceil((DEBRIEF_CASES.length * PAUSE_MS) / 60000)}분 이상`)
+  console.log(`[계획] ${provider} · 합성 수행 요약 ${DEBRIEF_CASES.length}개 · 호출 ${DEBRIEF_CASES.length}번(429·모델 서버 일시 오류면 1번 더) · 약 ${Math.ceil((DEBRIEF_CASES.length * PAUSE_MS) / 60000)}분 이상`)
   for (const c of DEBRIEF_CASES) console.log(`- ${c.id} ${c.title} (${c.mode === 'guided' ? '안내 있음' : '안내 없음'})`)
   console.log('실제 호출하지 않았습니다. 합성 수행 요약을 AI 회사로 보내려면 --run을 붙이세요.')
   process.exit(0)

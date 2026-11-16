@@ -76,7 +76,7 @@ describe('갈래 나누기', () => {
     expect(src.match(/\.like\('prompt_version', `\$\{DEBRIEF_PROMPT_PREFIX\}%`\)/g)?.length).toBe(2)
     expect(DEBRIEF_PROMPT_PREFIX).toBe('debrief-')
     expect(DEBRIEF_PROMPT_VERSION.startsWith(DEBRIEF_PROMPT_PREFIX)).toBe(true)
-    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.3.0')
+    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.3.1')
   })
 })
 
@@ -185,7 +185,7 @@ describe('AI 회사로 가는 글', () => {
       '판정',
       '- 판정: 맞음 → 맞음',
       '오류 횟수: 작업 순서 어긋남 1회, 판독값 1회, 계산 2회',
-      '안전 위반 횟수: 보호구 1회',
+      '안전 수칙을 지키지 않은 횟수: 보호구 1회',
       '힌트 사용 횟수: 0회',
     ].join('\n'))
   })
@@ -195,7 +195,7 @@ describe('AI 회사로 가는 글', () => {
       '[수행 요약]', '과제: 최소회전반경 측정 및 판정', '조건: 안내 있음', '결과: 검사 통과(검사 받은 횟수 1회)',
       '항목별 정오(처음 답 → 마지막 답):',
       '판독', '- 좌측 바퀴 조향각: 맞음 → 맞음', '- 우측 바퀴 조향각: 맞음 → 맞음', '계산', '- 최소회전반경(m): 답 없음 → 틀림', '판정', '- 판정: 맞음 → 맞음',
-      '오류 횟수: 없음', '안전 위반 횟수: 없음', '힌트 사용 횟수: 3회',
+      '오류 횟수: 없음', '안전 수칙을 지키지 않은 횟수: 없음', '힌트 사용 횟수: 3회',
     ].join('\n'))
     expect(buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'guided', facts: facts({ durationSeconds: 59 }) as any })).toContain('걸린 시간: 59초')
   })
@@ -216,7 +216,7 @@ describe('AI 회사로 가는 글', () => {
   })
 })
 
-describe('지시문(debrief-ko-0.3.0)', () => {
+describe('지시문(debrief-ko-0.3.1)', () => {
   const draft = readFileSync('docs/copy/2026-11-16_AI정리_지시문_초안.md', 'utf8')
   const block = draft.split('## 지시문 (전문)')[1]!.split('```')[1]!.replace(/^\n/, '').replace(/\n$/, '')
   test('0.2.0 지시: 연결 지어내기·단계 번호 금지, 보완 방법은 종류별로, 항목 이름은 한 문장에 2개까지', () => {
@@ -247,12 +247,35 @@ describe('지시문(debrief-ko-0.3.0)', () => {
       expect(checkDebriefAnswer(JSON.stringify({ good: [], improve: [], hard: [l] }), allowed), l).toMatchObject({ ok: false })
     }
   })
-  test('지시문 초안 문서의 글 그대로 — 판정 기준·작업 순서 구역만 과제별로 채운다', () => {
+  test('지시문 초안 문서의 글 그대로 — 판정 기준·작업 순서 구역과 보완할 점 본보기만 과제별로 채운다', () => {
+    // 초안 문서는 제동력 꼴을 본문에, 최소회전반경 꼴을 괄호 설명 한 줄에 적는다: (최소회전반경 과제: "A" → "B", 셋째 본보기 → "C")
+    const note = block.match(/\n {2}\(최소회전반경 과제: "([^"]+)" → "([^"]+)", 셋째 본보기 → "([^"]+)"\)/)
+    expect(note, '최소회전반경 본보기 설명 줄').not.toBeNull()
+    const [line, fromRead, toRead, turnCalc] = note!
+    const brakeCalc = block.match(/보완할 점: "[^"]+" \/ "[^"]+" \/ "([^"]+)"/)![1]!
+    expect(brakeCalc).toContain('편차(%)')
     for (const taskId of ['braking-force', 'min-turning-radius'] as const) {
-      const want = block
+      let want = block
+        .replace(line!, '')
         .replace(/\(과제에 따라 지금 AI 교관 지시문의 같은 구역을 그대로 넣는다\.[\s\S]*?절사\)/, criteriaSection(context, taskId))
         .replace('(과제의 단계 목록)', stepsSection(context, taskId))
+      if (taskId === 'min-turning-radius') want = want.replace(`"${fromRead}`, `"${toRead}`).replace(brakeCalc, turnCalc!)
       expect(buildDebriefSystemPrompt(context, taskId)).toBe(want)
+    }
+  })
+  test('0.3.1: 보완할 점 계산 본보기는 과제별(제동력은 편차 공식, 최소회전반경은 R 공식과 좌측 바퀴 조향각)', () => {
+    const b = buildDebriefSystemPrompt(context, 'braking-force')
+    const t = buildDebriefSystemPrompt(context, 'min-turning-radius')
+    expect(b).toContain('"편차(%)는 처음에 틀렸다가 고쳤어요. (큰 쪽 제동력 − 작은 쪽 제동력) ÷ 축중 × 100 공식을 다시 확인해 보세요."')
+    expect(b).toContain('"우 제동력은 처음에 틀렸다가 고쳤어요.')
+    expect(t).toContain('"최소회전반경(m)은 처음에 틀렸다가 고쳤어요. R = L ÷ sin α + r 공식을 다시 확인해 보세요."')
+    expect(t).toContain('"좌측 바퀴 조향각은 처음에 틀렸다가 고쳤어요.')
+    expect(t).not.toMatch(/제동력|편차/)
+    for (const p of [b, t]) {
+      expect(p).toContain('"안전 수칙(보호구)을 1회 지키지 않았어요. 작업을 시작하기 전에 그것부터 확인해 보세요."')
+      expect(p).toContain('공식은 한 문장에 하나만 쓰고, 틀린 계산 항목이 둘이면 문장을 나눈다.')
+      expect(p).toContain('검사 받은 횟수가 1회면 검사 이야기를 쓰지 않는다. 오류도 힌트도 없고 검사도 1회면 빈 목록.')
+      expect(p).not.toContain('보라고 한다')
     }
   })
   test('두 구역은 대화 지시문의 같은 구역과 같은 글이다', () => {
@@ -296,7 +319,7 @@ describe('답 검사', () => {
     expect(ok({ good: [], improve: [], hard: ['검사를 2번 받았어요. 계산이 2번 막혔어요.'] })).toMatchObject({ ok: true })
     expect(ok({ good: [], improve: ['편차는 8% 이하인지 확인해 보세요.'], hard: [] })).toMatchObject({ ok: true })
     expect(ok({ good: ['6분 40초 동안 끝까지 해냈어요.'], improve: [], hard: [] })).toMatchObject({ ok: true })
-    expect(ok({ good: ['가'.repeat(120)], improve: [], hard: [] })).toMatchObject({ ok: true })
+    expect(ok({ good: ['가'.repeat(119) + '요'], improve: [], hard: [] })).toMatchObject({ ok: true })
   })
   test('숫자 허용 원본은 요약 + 그 과제의 판정 기준 구역뿐(작업 순서 번호·말투 구역의 수는 안 됨)', () => {
     expect(allowed).toBe(`${sum}\n${criteriaSection(context, 'braking-force')}`)
@@ -307,6 +330,14 @@ describe('답 검사', () => {
     const tallowed = debriefAllowedNumbers(context, 'min-turning-radius', tsum)
     expect(checkDebriefAnswer(JSON.stringify({ good: [], improve: ['최소회전반경은 12 m 이하인지 보세요.'], hard: [] }), tallowed)).toMatchObject({ ok: true })
     expect(checkDebriefAnswer(JSON.stringify({ good: [], improve: ['편차는 8% 이하예요.'], hard: [] }), tallowed)).toMatchObject({ ok: false })
+  })
+  test('문장 끝은 "요"(끝의 마침표·느낌표·공백은 떼고 본다): "~한다"·"~하기"·"~바랍니다"는 거절', () => {
+    for (const l of ['확인해 보세요.', '잘했어요!', '좋았어요 ', '확인해 볼까요?']) expect(ok({ good: [], improve: [l], hard: [] }), l).toMatchObject({ ok: true })
+    for (const l of ['작업을 시작하기 전에 그 확인부터 해 보라고 한다.', '공식을 다시 확인하기', '다시 확인하시기 바랍니다.', '잘했음']) {
+      const r = ok({ good: [], improve: [l], hard: [] })
+      expect(r, l).toMatchObject({ ok: false })
+      expect((r as { reason: string }).reason).toContain('improve')
+    }
   })
   test('전각 숫자도 잡는다(NFKC로 바꿔 검사)', () => {
     expect(ok({ good: ['검사를 ５번 받았어요.'], improve: [], hard: [] })).toMatchObject({ ok: false })
@@ -360,10 +391,36 @@ describe('모델 호출·기록·응답', () => {
     expect(await long.run(req())).toEqual({ protocolVersion: DEBRIEF_PROTOCOL, ok: false, code: 'UPSTREAM_BUSY', retryable: true })
     expect(long.calls).toHaveLength(1); expect(long.logs[0]).toMatchObject({ status: 'error', answer: null })
     expect(await harness({ results: [{ ok: false, status: 429 }, { ok: false, status: 429 }] }).run(req())).toMatchObject({ code: 'UPSTREAM_BUSY' })
-    expect(await harness({ results: [{ ok: false, status: 500 }] }).run(req())).toMatchObject({ code: 'UPSTREAM_ERROR', retryable: true })
+    expect(await harness({ results: [{ ok: false, status: 500 }, { ok: false, status: 500 }] }).run(req())).toMatchObject({ code: 'UPSTREAM_ERROR', retryable: true })
     const net = harness()
     net.deps.callModel = async () => { throw new Error('net') }
     expect(await net.run(req())).toMatchObject({ code: 'UPSTREAM_ERROR' })
+  })
+  test('검사 받은 횟수가 1회 이하면 hard에서 "검사"가 든 문장만 빼고 돌려준다(2회면 남긴다)', async () => {
+    const text = JSON.stringify({ good: ['힌트 없이 끝까지 해냈어요.'], improve: [], hard: ['검사를 1회 받은 걸 보면 한 번에 마무리하기가 어려웠던 것 같아요.', '판독이 어려웠던 것 같아요.'] })
+    const one = harness({ results: [{ ok: true, status: 200, text, finishReason: 'STOP' }] })
+    expect(await one.run(req({ facts: facts({ npcInspectionCount: 1 }) }))).toMatchObject({ ok: true, notes: { good: ['힌트 없이 끝까지 해냈어요.'], improve: [], hard: ['판독이 어려웠던 것 같아요.'] } })
+    expect(JSON.parse(one.logs[0]!.answer!).hard).toEqual(['판독이 어려웠던 것 같아요.'])
+    const only = harness({ results: [{ ok: true, status: 200, text: JSON.stringify({ good: [], improve: [], hard: ['검사를 1회 받았어요.'] }), finishReason: 'STOP' }] })
+    expect(await only.run(req({ facts: facts({ npcInspectionCount: 1 }) }))).toMatchObject({ ok: true, notes: { hard: [] } })
+    const two = harness({ results: [{ ok: true, status: 200, text: JSON.stringify({ good: [], improve: [], hard: ['검사를 2회 받은 걸 보면 마무리가 어려웠던 것 같아요.'] }), finishReason: 'STOP' }] })
+    expect(await two.run(req())).toMatchObject({ ok: true, notes: { hard: ['검사를 2회 받은 걸 보면 마무리가 어려웠던 것 같아요.'] } })
+  })
+  test('모델 서버 일시 오류(500·502·503·504)는 1초 뒤 한 번만 다시 부른다(429와 합쳐 최대 1번)', async () => {
+    for (const status of [500, 502, 503, 504]) {
+      const h = harness({ results: [{ ok: false, status }, { ok: true, status: 200, text: GOOD }] })
+      expect(await h.run(req()), String(status)).toMatchObject({ ok: true })
+      expect(h.calls).toHaveLength(2); expect(h.sleeps).toEqual([1000])
+    }
+    const twice = harness({ results: [{ ok: false, status: 503 }, { ok: false, status: 503 }, { ok: true, status: 200, text: GOOD }] })
+    expect(await twice.run(req())).toEqual({ protocolVersion: DEBRIEF_PROTOCOL, ok: false, code: 'UPSTREAM_ERROR', retryable: true })
+    expect(twice.calls).toHaveLength(2)
+    const mixed = harness({ results: [{ ok: false, status: 429, retryAfterMs: 500 }, { ok: false, status: 503 }, { ok: true, status: 200, text: GOOD }] })
+    expect(await mixed.run(req())).toMatchObject({ ok: false, code: 'UPSTREAM_ERROR' })
+    expect(mixed.calls).toHaveLength(2)
+    const other = harness({ results: [{ ok: false, status: 400 }, { ok: true, status: 200, text: GOOD }] })
+    expect(await other.run(req())).toMatchObject({ ok: false, code: 'UPSTREAM_ERROR' })
+    expect(other.calls).toHaveLength(1)
   })
   test('기록 저장이 실패해도 정리는 주되 logged=false', async () => {
     expect(await harness({ failLog: true }).run(req())).toMatchObject({ ok: true, logged: false, chatId: null })

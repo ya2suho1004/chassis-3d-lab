@@ -48,7 +48,7 @@ export async function runDebriefCase(c, { callModel, provider, model, apiKey, co
   if (!res.ok) {
     if (res.code !== 'DEBRIEF_INVALID' || !call) reason = res.code
     else {
-      const checked = raw ? checkDebriefAnswer(raw, debriefAllowedNumbers(context, c.taskId, call.question)) : { ok: false, reason: '빈 답' }
+      const checked = raw ? checkDebriefAnswer(raw, debriefAllowedNumbers(context, c.taskId, call.question), { dropHardInspection: c.facts.npcInspectionCount <= 1 }) : { ok: false, reason: '빈 답' }
       reason = checked.ok ? `끝난 이유 ${finishReason ?? '없음'}` : checked.reason
     }
   }

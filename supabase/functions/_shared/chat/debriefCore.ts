@@ -18,6 +18,9 @@ export const DEBRIEF_LINES_MAX = 3
 export const DEBRIEF_LINE_MAX_CHARS = 120
 export const DEBRIEF_COUNT_MAX = 999
 export const DEBRIEF_DURATION_MAX_SECONDS = 86_400
+/** 모델 서버 일시 오류(이 HTTP 상태면 기다렸다 한 번 다시 부른다 — 429와 합쳐 다시 부르기는 최대 1번) */
+const SERVER_RETRY_STATUSES = new Set([500, 502, 503, 504])
+export const DEBRIEF_SERVER_RETRY_MS = 1000
 /** 검사에서 걸린 모델 원문을 기록에 남길 때의 최대 길이 */
 const RAW_LOG_MAX_CHARS = 4000
 
@@ -139,9 +142,10 @@ function stripFence(text: string): string {
 /**
  * 답 검사(설계 2-3 ⑥): JSON 하나, good·improve·hard가 문자열 목록, 묶음마다 3문장(목록 칸) 이하, 문장마다 120자 이하,
  * "양호"·"불량" 없음, 답의 숫자(전각 숫자는 NFKC로 바꿔, "세 번"·"두 회" 같은 한글 수사 + 번·회는 1~10으로)는 모두 allowedSource에 있는 숫자.
+ * 문장마다 끝(마침표·느낌표·물음표·공백을 뗀 뒤)이 '요'여야 한다. dropHardInspection이면 hard에서 '검사'가 든 문장을 먼저 뺀다.
  * allowedSource는 debriefAllowedNumbers(요약 + 판정 기준 구역). 빈 문장은 버리고 앞뒤 공백은 다듬는다(돌려주는 글은 NFKC로 바꾼 것).
  */
-export function checkDebriefAnswer(text: string, allowedSource: string): { ok: true; notes: DebriefNotes } | { ok: false; reason: string } {
+export function checkDebriefAnswer(text: string, allowedSource: string, opts: { dropHardInspection?: boolean } = {}): { ok: true; notes: DebriefNotes } | { ok: false; reason: string } {
   let v: unknown
   try { v = JSON.parse(stripFence(text)) } catch { return { ok: false, reason: 'JSON이 아님' } }
   if (!isPlainObject(v)) return { ok: false, reason: 'JSON 객체가 아님' }
@@ -152,11 +156,14 @@ export function checkDebriefAnswer(text: string, allowedSource: string): { ok: t
   for (const k of GROUP_KEYS) {
     const list = v[k]
     if (!Array.isArray(list) || list.some((x) => typeof x !== 'string')) return { ok: false, reason: `${k}가 문자열 목록이 아님` }
-    const lines = (list as string[]).map((x) => x.normalize('NFKC').trim()).filter((x) => x.length > 0)
+    let lines = (list as string[]).map((x) => x.normalize('NFKC').trim()).filter((x) => x.length > 0)
+    // 검사 받은 횟수가 1회 이하면 어려웠던 점의 검사 이야기는 사실과 어긋나므로 그 문장만 뺀다(거절하지 않음)
+    if (k === 'hard' && opts.dropHardInspection) lines = lines.filter((l) => !l.includes('검사'))
     if (lines.length > DEBRIEF_LINES_MAX) return { ok: false, reason: `${k} 문장 ${lines.length}개` }
     for (const l of lines) {
       if (l.length > DEBRIEF_LINE_MAX_CHARS) return { ok: false, reason: `${k} 문장 ${l.length}자` }
       if (/양호|불량/.test(l)) return { ok: false, reason: `${k}에 양호·불량` }
+      if (!l.replace(/[\s.!?]+$/, '').endsWith('요')) return { ok: false, reason: `${k} 문장 끝이 '요'가 아님` }
       const stray = [...numbersIn(l), ...koreanCountsIn(l)].filter((n) => !allowed.has(n))
       if (stray.length) return { ok: false, reason: `${k}에 없는 숫자 ${stray.join(',')}` }
     }
@@ -204,8 +211,12 @@ export async function handleDebrief(contentType: string | null, body: string, de
 
   const t0 = deps.now()
   let res = await deps.callModel(call).catch((): ModelResult => ({ ok: false, status: 0, error: 'NETWORK' }))
-  if (!res.ok && res.status === 429 && (res.retryAfterMs ?? 1000) <= RETRY_MAX_WAIT_MS) {
-    await deps.sleep(res.retryAfterMs ?? 1000)
+  // 다시 부르기는 최대 1번: 429(짧은 retry-after, 대화와 같음) 또는 모델 서버 일시 오류(500·502·503·504, 1초 뒤)
+  const retryWait = res.ok ? null
+    : res.status === 429 ? ((res.retryAfterMs ?? 1000) <= RETRY_MAX_WAIT_MS ? res.retryAfterMs ?? 1000 : null)
+      : SERVER_RETRY_STATUSES.has(res.status) ? DEBRIEF_SERVER_RETRY_MS : null
+  if (retryWait !== null) {
+    await deps.sleep(retryWait)
     res = await deps.callModel(call).catch((): ModelResult => ({ ok: false, status: 0, error: 'NETWORK' }))
   }
   const latency = deps.now() - t0
@@ -219,7 +230,7 @@ export async function handleDebrief(contentType: string | null, body: string, de
   }
   // 막히거나 끊긴 답은 고쳐 쓰지 않고 버린다(화면은 규칙 정리)
   const checked = classifyFinish(res.finishReason) === 'complete' && res.text
-    ? checkDebriefAnswer(res.text, debriefAllowedNumbers(deps.context, req.taskId, summary))
+    ? checkDebriefAnswer(res.text, debriefAllowedNumbers(deps.context, req.taskId, summary), { dropHardInspection: req.facts.npcInspectionCount <= 1 })
     : { ok: false as const, reason: `끝난 이유 ${res.finishReason ?? '없음'}` }
   if (!checked.ok) {
     await deps.insertLog({ ...base, answer: res.text ? res.text.slice(0, RAW_LOG_MAX_CHARS) : null, model_version: res.modelVersion ?? null, status: 'error' }).catch(() => null)
