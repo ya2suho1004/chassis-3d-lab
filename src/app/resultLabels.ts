@@ -6,8 +6,8 @@ export const ITEM_LABEL: Record<string, string> = {
   leftAngle: '좌측 바퀴 조향각', rightAngle: '우측 바퀴 조향각', radius: '최소회전반경(m)',
 }
 
-/** 오류 유형(taskEngine countBlocked·submitResponse 키)과 안전 조건 */
-const COUNT_LABEL: Record<string, string> = {
+/** 오류 유형(taskEngine countBlocked·submitResponse 키)과 안전 조건('s-'로 시작). AI 정리 서버의 허용 목록도 이것에서 만든다(scripts/build-chat-context.mjs) */
+export const COUNT_LABEL: Record<string, string> = {
   order: '작업 순서', format: '입력 형식', reading: '판독값', calc: '계산', verdict: '판정',
   's-ppe': '보호구', 's-engine': '시동 OFF 확인', 's-lift': '리프트 주변 확인', 's-motor': '롤러 구동 전 확인', 's-accel': '가속 페달 조작', 's-exit': '차량 빼기 전 정지 확인',
 }

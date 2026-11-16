@@ -4,6 +4,7 @@
 // v0.3(2026-11-02): 최소회전반경 과제 문맥 추가 — 요청의 taskId가 min-turning-radius면 그 과제 기준·순서로 답한다
 // v0.4(2026-11-03): 안내 없음 단계에서 다음 단계·작업 순서를 알려 주지 않는다는 규칙을 명시(작업 순서 목록은 안전 판단 근거로만). 두 과제 공통
 // v0.4.1(2026-11-03): 최소회전반경 안전 답변 — 첫 문장 '멈추고 선생님 부르기', 이유·장비 부품·조작법을 지어내지 않기(0.4.0 시험 T07·T08)
+// 2026-11-16: 판정 기준·작업 순서 구역을 함수로 뽑아 AI 정리 지시문(debriefPrompt.ts)과 함께 쓴다. 대화 지시문의 출력 글자는 그대로(판 그대로)
 export const PROMPT_VERSION = 'chat-system-ko-0.4.1'
 
 export interface TaskContext {
@@ -17,7 +18,7 @@ export interface TaskContext {
 export function buildSystemPrompt(task: TaskContext, { mode, stepId = null, taskId = null }: { mode: 'guided' | 'unguided'; stepId?: string | null; taskId?: string | null }): string {
   if (taskId === 'min-turning-radius' && task.turning) return buildTurningPrompt(task.turning, { mode, stepId })
   const r = task.ruleset
-  const steps = task.steps.map((s, i) => `${i + 1}. ${s.instruction ?? s.stepId}`).join('\n')
+  const steps = numberedSteps(task.steps)
   const current = stepId ? task.steps.find((s) => s.stepId === stepId) ?? null : null
   const modeRule = mode === 'unguided'
     ? `지금은 "안내 없음(정비사)" 단계다. 학생이 스스로 순서를 찾고 계산·판정해야 한다.
@@ -40,11 +41,7 @@ export function buildSystemPrompt(task: TaskContext, { mode, stepId = null, task
 - 범위 밖 질문(다른 과목, 게임, 연애, 일상 잡담, 시험 문제 유출 요청 등)은 한 문장으로 정중히 거절하고 과제로 돌아오게 한다.
 
 [학교 승인 판정 기준 — 이 값만 쓴다]
-- 편차(%) = (큰 쪽 제동력 − 작은 쪽 제동력) ÷ 해당 축중 × 100. 양호 기준: ${r.deviationMaxPercent}% 이하(경계 포함).
-- 합(%) = (좌 제동력 + 우 제동력) ÷ 해당 축중 × 100. 양호 기준: 앞축 ${r.sumMinFrontPercent}% 이상, 뒤축 ${r.sumMinRearPercent}% 이상(경계 포함).
-- 기재: 소수 ${r.decisionPrecision.digits}째 자리까지 쓰고 그 아래는 버린다(절사). 단위는 kg으로 기록한다.
-- 축중은 측정하는 그 축(앞축 또는 뒤축)에 걸리는 차량 무게다. 차 전체 무게가 아니다.
-- 위에 없는 규정값·법규 수치를 지어내지 않는다. 모르면 "선생님께 확인하세요"라고 말한다.
+${brakingCriteria(r)}
 
 [교과서 예시 — 설명에만 쓰는 숫자]
 - 뒤축, 좌 180 kg, 우 170 kg, 뒤 축중 500 kg → 편차 = 10 ÷ 500 × 100 = 2%, 합 = 350 ÷ 500 × 100 = 70% → 양호.
@@ -70,7 +67,7 @@ ${modeRule}
 /** 최소회전반경 과제용(공통 역할·안전·개인정보·말투는 제동력과 같다). 학생 사례의 각도·R·판정은 받지도 넣지도 않는다. */
 function buildTurningPrompt(task: NonNullable<TaskContext['turning']>, { mode, stepId }: { mode: 'guided' | 'unguided'; stepId: string | null }): string {
   const r = task.ruleset
-  const steps = task.steps.map((s, i) => `${i + 1}. ${s.instruction ?? s.stepId}`).join('\n')
+  const steps = numberedSteps(task.steps)
   const current = stepId ? task.steps.find((s) => s.stepId === stepId) ?? null : null
   const modeRule = mode === 'unguided'
     ? `지금은 "안내 없음(정비사)" 단계다. 학생이 스스로 순서를 찾고 계산·판정해야 한다.
@@ -93,11 +90,7 @@ function buildTurningPrompt(task: NonNullable<TaskContext['turning']>, { mode, s
 - 범위 밖 질문(다른 과목, 게임, 연애, 일상 잡담, 시험 문제 유출 요청 등)은 한 문장으로 정중히 거절하고 과제로 돌아오게 한다.
 
 [학교 승인 판정 기준 — 이 값만 쓴다]
-- 최소회전반경 R(m) = 축거 L ÷ sin α + r. α는 회전할 때 바깥쪽 앞바퀴의 최대 조향각이다(좌회전이면 우측 바퀴, 우회전이면 좌측 바퀴). r은 바퀴 접지면 중심과 킹핀 사이 거리다.
-- 안쪽 바퀴는 바깥쪽 바퀴보다 더 많이 꺾인다(애커먼 장토식). 계산에는 바깥쪽 바퀴 각도를 쓴다.
-- 양호 기준: ${r.radiusMaxM} m 이하(경계 포함). 기재: 소수 ${r.decisionPrecision.digits}째 자리까지 쓰고 그 아래는 버린다(절사). 단위는 m.
-- 축거 L, r, sin 값은 화면에 제시된 값을 쓴다(시험위원 제시).
-- 위에 없는 규정값·법규 수치를 지어내지 않는다. 모르면 "선생님께 확인하세요"라고 말한다.
+${turningCriteria(r)}
 
 [교과서 예시 — 설명에만 쓰는 숫자]
 - 우회전, 바깥쪽(좌측) 바퀴 30°, 축거 3 m, r 0.1 m → R = 3 ÷ 0.5 + 0.1 = 6.1 m → 12 m 이하이므로 양호.
@@ -120,4 +113,42 @@ ${modeRule}
 [말투]
 - 존댓말, 고등학생 눈높이. 핵심부터 3~5문장. 전문용어는 쉬운 말로 한 번 풀어 준다. 목록은 3개 이하.
 - 질문과 관계없는 안내(NPC 검사 받으라는 말 등)는 덧붙이지 않는다.`
+}
+
+type BrakingRuleset = TaskContext['ruleset']
+type TurningRuleset = NonNullable<TaskContext['turning']>['ruleset']
+
+/** 제동력 [학교 승인 판정 기준] 구역의 글(머리 줄 빼고) */
+function brakingCriteria(r: BrakingRuleset): string {
+  return `- 편차(%) = (큰 쪽 제동력 − 작은 쪽 제동력) ÷ 해당 축중 × 100. 양호 기준: ${r.deviationMaxPercent}% 이하(경계 포함).
+- 합(%) = (좌 제동력 + 우 제동력) ÷ 해당 축중 × 100. 양호 기준: 앞축 ${r.sumMinFrontPercent}% 이상, 뒤축 ${r.sumMinRearPercent}% 이상(경계 포함).
+- 기재: 소수 ${r.decisionPrecision.digits}째 자리까지 쓰고 그 아래는 버린다(절사). 단위는 kg으로 기록한다.
+- 축중은 측정하는 그 축(앞축 또는 뒤축)에 걸리는 차량 무게다. 차 전체 무게가 아니다.
+- 위에 없는 규정값·법규 수치를 지어내지 않는다. 모르면 "선생님께 확인하세요"라고 말한다.`
+}
+
+/** 최소회전반경 [학교 승인 판정 기준] 구역의 글(머리 줄 빼고) */
+function turningCriteria(r: TurningRuleset): string {
+  return `- 최소회전반경 R(m) = 축거 L ÷ sin α + r. α는 회전할 때 바깥쪽 앞바퀴의 최대 조향각이다(좌회전이면 우측 바퀴, 우회전이면 좌측 바퀴). r은 바퀴 접지면 중심과 킹핀 사이 거리다.
+- 안쪽 바퀴는 바깥쪽 바퀴보다 더 많이 꺾인다(애커먼 장토식). 계산에는 바깥쪽 바퀴 각도를 쓴다.
+- 양호 기준: ${r.radiusMaxM} m 이하(경계 포함). 기재: 소수 ${r.decisionPrecision.digits}째 자리까지 쓰고 그 아래는 버린다(절사). 단위는 m.
+- 축거 L, r, sin 값은 화면에 제시된 값을 쓴다(시험위원 제시).
+- 위에 없는 규정값·법규 수치를 지어내지 않는다. 모르면 "선생님께 확인하세요"라고 말한다.`
+}
+
+/** [작업 순서] 구역의 번호 목록 */
+function numberedSteps(steps: Array<{ stepId: string; instruction?: string }>): string {
+  return steps.map((s, i) => `${i + 1}. ${s.instruction ?? s.stepId}`).join('\n')
+}
+
+const isTurning = (task: TaskContext, taskId: string | null | undefined): task is TaskContext & { turning: NonNullable<TaskContext['turning']> } => taskId === 'min-turning-radius' && !!task.turning
+
+/** 과제의 [학교 승인 판정 기준] 구역 글(머리 줄 빼고) — 대화 지시문과 AI 정리 지시문이 함께 쓴다 */
+export function criteriaSection(task: TaskContext, taskId: string | null | undefined): string {
+  return isTurning(task, taskId) ? turningCriteria(task.turning.ruleset) : brakingCriteria(task.ruleset)
+}
+
+/** 과제의 [작업 순서] 구역 글(번호 목록, 머리 줄 빼고) — 대화 지시문과 AI 정리 지시문이 함께 쓴다 */
+export function stepsSection(task: TaskContext, taskId: string | null | undefined): string {
+  return numberedSteps(isTurning(task, taskId) ? task.turning.steps : task.steps)
 }

@@ -1,0 +1,80 @@
+{
+  "source": "src/data/tasks 과제 자료의 requiredResponseItems + src/app/resultLabels.ts(화면 이름)",
+  "tasks": {
+    "braking-force": {
+      "title": "제동력 측정 및 판독",
+      "items": [
+        {
+          "itemId": "left",
+          "group": "판독",
+          "label": "좌 제동력"
+        },
+        {
+          "itemId": "right",
+          "group": "판독",
+          "label": "우 제동력"
+        },
+        {
+          "itemId": "axleWeight",
+          "group": "판독",
+          "label": "축중"
+        },
+        {
+          "itemId": "deviation",
+          "group": "계산",
+          "label": "편차(%)"
+        },
+        {
+          "itemId": "sum",
+          "group": "계산",
+          "label": "합(%)"
+        },
+        {
+          "itemId": "vehicleCondition",
+          "group": "판정",
+          "label": "판정"
+        }
+      ]
+    },
+    "min-turning-radius": {
+      "title": "최소회전반경 측정 및 판정",
+      "items": [
+        {
+          "itemId": "leftAngle",
+          "group": "판독",
+          "label": "좌측 바퀴 조향각"
+        },
+        {
+          "itemId": "rightAngle",
+          "group": "판독",
+          "label": "우측 바퀴 조향각"
+        },
+        {
+          "itemId": "radius",
+          "group": "계산",
+          "label": "최소회전반경(m)"
+        },
+        {
+          "itemId": "vehicleCondition",
+          "group": "판정",
+          "label": "판정"
+        }
+      ]
+    }
+  },
+  "errorLabels": {
+    "order": "작업 순서",
+    "format": "입력 형식",
+    "reading": "판독값",
+    "calc": "계산",
+    "verdict": "판정"
+  },
+  "safetyLabels": {
+    "s-ppe": "보호구",
+    "s-engine": "시동 OFF 확인",
+    "s-lift": "리프트 주변 확인",
+    "s-motor": "롤러 구동 전 확인",
+    "s-accel": "가속 페달 조작",
+    "s-exit": "차량 빼기 전 정지 확인"
+  }
+}
