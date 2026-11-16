@@ -376,6 +376,7 @@ button.g-save.bad { font:inherit; font-weight:700; color:#fff; background:#b3261
 .cr-masked { background:#fff3cd; color:#7a5200; }
 .cr-refused { background:#e3f2fd; color:#0d47a1; }
 .cr-error { background:#fde0e0; color:#b71c1c; }
+.cr-debrief { background:#e3ecfb; color:#1f4e9c; }
 .cr-q, .cr-a { margin:4px 0; white-space:pre-wrap; line-height:1.5; }
 .cr-q b, .cr-a b { display:inline-block; min-width:34px; color:#1f4fa3; }
 
