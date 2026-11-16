@@ -95,6 +95,8 @@ describe('닫기·초점·조용함(원본 글)', () => {
   })
   test('닫으면 연 버튼으로 초점을 돌린다(연 버튼을 모르면 도감 버튼)', () => {
     expect(src).toContain("document.querySelector<HTMLElement>('.g-codexbtn, .codex-openbtn')")
+    // 개발 모드(StrictMode)처럼 닫힌 직후 다시 열렸으면 돌려주지 않는다(제목 초점을 빼앗지 않게)
+    expect(src).toContain("if (document.querySelector('.codex-win')) return")
   })
   test('창은 소리·연출·기록 사건을 내지 않는다(누름 느낌 표시만)', () => {
     expect(src).not.toMatch(/fire\(|LabSound|sound\.|reactionsFor|feelEvents|Repository|from '\.\.\/(domain|delivery|records)|appendEvent|logEvent/)

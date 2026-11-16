@@ -88,7 +88,7 @@ describe('게임 화면 연결(§3.3·§6)', () => {
     expect(lab).toMatch(/\{!viewing && !practicing && !recording && <Joystick/)
     expect(lab).toMatch(/\{!ttSide && !recording && <div className="g-actions"/)
     expect(lab).toMatch(/!noRecord && !recording && <button className="g-chatbtn"/)
-    expect(lab).toMatch(/holdStill=\{recording\}/)
+    expect(lab).toMatch(/holdStill=\{recording \|\| codexOpen\}/) // 도감 창이 열린 동안에도 멈춘다(설계 2026-11-16)
     expect(lab).toMatch(/joystickRef\.current = \{ x: 0, y: 0 \}/)
     const all = lab.match(/className="g-gaugebtn/g)?.length ?? 0
     expect(all).toBeGreaterThan(0)

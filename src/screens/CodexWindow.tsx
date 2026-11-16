@@ -44,6 +44,7 @@ export function CodexWindow({ equipment, collected, note, onClose }: {
     return () => {
       const opener = openerRef.current ?? null
       setTimeout(() => {
+        if (document.querySelector('.codex-win')) return // 개발 모드에서 곧바로 다시 열렸으면 제목 초점을 그대로 둔다
         const back = opener && opener.isConnected && !(opener as HTMLButtonElement).disabled ? opener : document.querySelector<HTMLElement>('.g-codexbtn, .codex-openbtn')
         back?.focus({ preventScroll: true })
       }, 0)
