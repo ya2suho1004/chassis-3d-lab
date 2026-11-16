@@ -20,6 +20,8 @@ export async function runDebriefCase(c, { callModel, provider, model, apiKey, co
   let raw = null
   let finishReason = null
   let row = null
+  /** 모델 호출마다 HTTP 상태·오류 글·끝난 이유(키·요청 머리글은 남기지 않는다). 서버 본체는 그대로 두고 callModel만 감싼다 */
+  const attempts = []
   const body = JSON.stringify({ protocolVersion: 'debrief-1', sessionCode: 'EVAL-ONLY', anonymousStudentCode: 'E-01', recordId: evalRecordId(c.id), taskId: c.taskId, difficultyMode: c.mode, facts: c.facts })
   const t0 = Date.now()
   const res = await handleDebrief('text/plain', body, {
@@ -28,7 +30,14 @@ export async function runDebriefCase(c, { callModel, provider, model, apiKey, co
     countDebriefToday: async () => 0,
     insertLog: async (r) => { row = r; return null },
     model: () => ({ provider, model, apiKey }),
-    callModel: async (cl) => { call = cl; const r = await callModel(cl); raw = r.text ?? null; finishReason = r.finishReason ?? null; return r },
+    callModel: async (cl) => {
+      call = cl
+      let r
+      try { r = await callModel(cl) } catch (e) { attempts.push({ status: 0, error: String(e).slice(0, 300), finishReason: null }); throw e }
+      attempts.push({ status: r.status, error: r.error ?? null, finishReason: r.finishReason ?? null })
+      raw = r.text ?? null; finishReason = r.finishReason ?? null
+      return r
+    },
     now: () => Date.now(),
     sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     context,
@@ -43,13 +52,16 @@ export async function runDebriefCase(c, { callModel, provider, model, apiKey, co
       reason = checked.ok ? `끝난 이유 ${finishReason ?? '없음'}` : checked.reason
     }
   }
-  return { case: c, system: call?.system ?? null, summary: call?.question ?? null, raw, finishReason, res, reason, elapsedMs, latencyMs: row?.latency_ms ?? null, modelVersion: row?.model_version ?? null }
+  return { case: c, system: call?.system ?? null, summary: call?.question ?? null, raw, finishReason, res, reason, attempts, retries: Math.max(0, attempts.length - 1), elapsedMs, latencyMs: row?.latency_ms ?? null, modelVersion: row?.model_version ?? null }
 }
 
 const modeName = (m) => (m === 'guided' ? '안내 있음' : '안내 없음')
 const taskName = (t) => (t === 'min-turning-radius' ? '최소회전반경' : '제동력')
 const esc = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\s*\n+\s*/g, ' ')
 const fence = (s) => ['```', String(s ?? '(없음)'), '```']
+const attemptText = (a) => [a.status ? `HTTP ${a.status}` : '연결 실패', a.error ? `오류 ${a.error}` : '', a.finishReason ? `끝난 이유 ${a.finishReason}` : ''].filter(Boolean).join(' · ')
+/** 모델 호출 기록 한 줄: 몇 번 불렀는지(다시 부른 횟수), 호출마다 HTTP 상태·오류 글·끝난 이유 */
+const callsLine = (r) => `모델 호출: ${r.attempts.length}번${r.retries ? `(다시 부름 ${r.retries}번)` : ''}${r.attempts.length ? ` · ${r.attempts.map(attemptText).join(' / ')}` : ''}`
 
 export function renderDebriefSheet(results, meta) {
   const passed = results.filter((r) => r.res.ok).length
@@ -73,6 +85,7 @@ export function renderDebriefSheet(results, meta) {
     ...results.flatMap((r) => [
       `## ${r.case.id} ${r.case.title}`, '',
       `${taskName(r.case.taskId)} · ${modeName(r.case.mode)} · 검사 ${r.res.ok ? '통과' : `걸림(${r.reason})`} · 걸린 시간 ${r.elapsedMs}ms${r.finishReason ? ` · 끝난 이유 ${r.finishReason}` : ''}`, '',
+      callsLine(r), '',
       '요약 글(AI가 받은 것):', '', ...fence(r.summary), '',
       '모델 원문:', '', ...fence(r.raw), '',
       ...(r.res.ok ? ['화면에 보일 정리:', '', `- 잘한 점: ${r.res.notes.good.join(' / ') || '(빈 묶음 → 고정 문장)'}`, `- 보완할 점: ${r.res.notes.improve.join(' / ') || '(빈 묶음 → 고정 문장)'}`, `- 어려웠던 점: ${r.res.notes.hard.join(' / ') || '(빈 묶음 → 고정 문장)'}`, ''] : ['화면에는 규칙 정리가 나온다.', '']),

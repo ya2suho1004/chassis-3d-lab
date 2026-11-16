@@ -76,7 +76,7 @@ describe('갈래 나누기', () => {
     expect(src.match(/\.like\('prompt_version', `\$\{DEBRIEF_PROMPT_PREFIX\}%`\)/g)?.length).toBe(2)
     expect(DEBRIEF_PROMPT_PREFIX).toBe('debrief-')
     expect(DEBRIEF_PROMPT_VERSION.startsWith(DEBRIEF_PROMPT_PREFIX)).toBe(true)
-    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.2.0')
+    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.3.0')
   })
 })
 
@@ -216,7 +216,7 @@ describe('AI 회사로 가는 글', () => {
   })
 })
 
-describe('지시문(debrief-ko-0.2.0)', () => {
+describe('지시문(debrief-ko-0.3.0)', () => {
   const draft = readFileSync('docs/copy/2026-11-16_AI정리_지시문_초안.md', 'utf8')
   const block = draft.split('## 지시문 (전문)')[1]!.split('```')[1]!.replace(/^\n/, '').replace(/\n$/, '')
   test('0.2.0 지시: 연결 지어내기·단계 번호 금지, 보완 방법은 종류별로, 항목 이름은 한 문장에 2개까지', () => {
@@ -224,10 +224,28 @@ describe('지시문(debrief-ko-0.2.0)', () => {
     for (const l of [
       '- 요약에 없는 연결을 지어내지 않는다. 힌트를 어느 항목·어느 단계에서 썼는지, 검사를 왜 다시 받았는지, 오류가 왜 났는지는 요약에 없다. 힌트·검사·오류는 횟수로만 말한다.',
       '- 작업 순서의 단계 번호(몇 번째 단계인지)를 말하지 않는다. 요약의 "작업 순서 어긋남"은 순서를 어긴 횟수다.',
-      '- 보완 방법은 종류에 맞는 것만 쓴다.',
+      '- 보완 방법은 종류에 맞는 것만, 학생에게 말하듯 문장으로 쓴다.',
       '- 항목 이름은 요약에 적힌 그대로 쓰고, 한 문장에 항목 이름은 2개까지만 쓴다.',
     ]) expect(p).toContain(l)
     expect(p).not.toContain('- 항목 이름은 요약에 적힌 그대로 쓴다.\n')
+  })
+  test('0.3.0 지시: 보완 방법을 문장으로, 문장 본보기 구역([세 묶음]과 [하지 않는 것] 사이), 문장 끝 규칙, hard 빈 목록 조건', () => {
+    const p = buildDebriefSystemPrompt(context, 'braking-force')
+    expect(p).not.toMatch(/다시 확인하기\.|견주기\.|읽고 확인하기\./)
+    const i = p.indexOf('[세 묶음]'), j = p.indexOf('[문장 본보기 — 말투와 모양만 따른다. 내용은 반드시 [수행 요약]에서 가져온다]'), k = p.indexOf('[하지 않는 것]')
+    expect(i).toBeGreaterThan(-1); expect(j).toBeGreaterThan(i); expect(k).toBeGreaterThan(j)
+    expect(p).toContain('- 모든 문장은 "~어요", "~세요"로 끝낸다. "~바랍니다", "~하기"로 끝내지 않는다.')
+    expect(p).toContain('오류도 힌트도 없고 검사도 1회면 빈 목록.')
+  })
+  test('문장 본보기 구역의 숫자(4·6·3 등)는 답 숫자 허용 목록에 들어가지 않는다(요약 + 판정 기준 구역만)', () => {
+    const sum = buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'unguided', facts: facts() as any })
+    const allowed = debriefAllowedNumbers(context, 'braking-force', sum)
+    const examples = buildDebriefSystemPrompt(context, 'braking-force').split('[문장 본보기')[1]!.split('[하지 않는 것]')[0]!
+    expect(examples).toContain('오류가 4회'); expect(examples).toContain('검사를 3회')
+    expect(allowed).not.toContain('[문장 본보기')
+    for (const l of ['계산에서 오류가 4회 난 걸 보면 계산이 어려웠던 것 같아요.', '검사를 3회 받은 걸 보면 한 번에 마무리하기가 어려웠던 것 같아요.']) {
+      expect(checkDebriefAnswer(JSON.stringify({ good: [], improve: [], hard: [l] }), allowed), l).toMatchObject({ ok: false })
+    }
   })
   test('지시문 초안 문서의 글 그대로 — 판정 기준·작업 순서 구역만 과제별로 채운다', () => {
     for (const taskId of ['braking-force', 'min-turning-radius'] as const) {
