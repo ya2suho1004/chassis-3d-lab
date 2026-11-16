@@ -25,5 +25,5 @@ describe('앱 판 번호 — 커밋 포함(H1)', () => {
     expect(cfg).toMatch(/__APP_COMMIT__/)
     expect(cfg).toMatch(/VERCEL_GIT_COMMIT_SHA/)
   })
-  test('정리 화면과 수행 뒤 둘러보기(2026-11-16)부터 기본 판 0.4.4-demo — 수행 뒤 화면과 흐름이 바뀐 판을 기록에서 가른다(0.4.3-demo는 장비 설명 글 정리, 0.4.2-demo는 시작 화면 체험 안내, 0.4.1-demo는 도감 창, 0.4.0-demo는 수업 자료 모으기, 0.3.7-demo는 학번 입장과 수업 주소, 0.3.6-demo는 공간 채우기, 0.3.5-demo는 캐릭터와 움직임, 0.3.4-demo는 손맛, 0.3.3-demo는 빛과 재질, 0.3.2-demo는 계산기, 0.3.1-demo는 채점 규칙 가)', () => { expect(APP_BASE_VERSION).toBe('0.4.4-demo') })
+  test('정리 화면의 AI 정리(2026-11-16)부터 기본 판 0.4.5-demo — 정리 글을 AI가 쓸 수 있게 된 판을 기록에서 가른다(0.4.4-demo는 정리 화면과 수행 뒤 둘러보기, 0.4.3-demo는 장비 설명 글 정리, 0.4.2-demo는 시작 화면 체험 안내, 0.4.1-demo는 도감 창, 0.4.0-demo는 수업 자료 모으기, 0.3.7-demo는 학번 입장과 수업 주소, 0.3.6-demo는 공간 채우기, 0.3.5-demo는 캐릭터와 움직임, 0.3.4-demo는 손맛, 0.3.3-demo는 빛과 재질, 0.3.2-demo는 계산기, 0.3.1-demo는 채점 규칙 가)', () => { expect(APP_BASE_VERSION).toBe('0.4.5-demo') })
 })
