@@ -46,9 +46,11 @@ await click(btn('NPC 검사 받기'), 2000);
 // A2: 결과표
 out.h1 = await p.$eval('h1', (e) => e.textContent);
 out.resultTable = await p.$$eval('table.sheet tbody tr', (rows) => rows.map((r) => r.innerText.replace(/\s+/g, ' ')));
-out.summary = await p.$$eval('.result li', (lis) => lis.slice(0, 6).map((l) => l.innerText));
-out.detailsClosed = await p.$eval('details', (d) => !d.open).catch(() => 'no details');
-out.nextNote = await p.$$eval('p.small', (ps) => ps.map((x) => x.innerText).find((t) => t.includes('다음 학생')) ?? null);
+// 정리 화면(설계 2026-11-16-debrief-and-free-roam 1-2): 교관의 정리, 공식과 규정값, 30초 동안 잠긴 단추
+out.debrief = await p.$$eval('.debrief li', (lis) => lis.map((l) => l.innerText));
+out.facts = await p.$$eval('.debrief-facts dd, .debrief-facts p', (els) => els.map((e) => e.innerText));
+out.lockedButtons = await p.$$eval('.debrief-actions button', (bs) => bs.map((x) => `${x.innerText}${x.disabled ? ' (잠김)' : ''}`));
+out.nextNote = await p.$$eval('p.small', (ps) => ps.map((x) => x.innerText).find((t) => t.includes('마치기')) ?? null);
 await p.screenshot({ path: `${OUT}/${MODE}_result.png`, fullPage: true });
 console.log(JSON.stringify({ errs, blocked, ...out }, null, 1));
 await b.close();
