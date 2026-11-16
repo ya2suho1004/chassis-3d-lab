@@ -3,12 +3,14 @@
 // - 교관의 정리: 고정 틀에 항목 이름·횟수만 끼운다. 사례의 측정값·계산 기준값·정답 판정·학생이 넣은 값은 넣지 않는다.
 // - 오늘 쓴 공식과 규정값: 과제 자료의 feedback.wrong_calc.why·wrong_verdict.why 그대로(사례 값 없음).
 // - 30초 잠금: 남은 초 계산과 타이머(가짜 타이머로 시험).
+// - AI 정리(2단계, 설계 2-4): 부르는 조건, 보내는 사실(정오는 불리언만), 8초 기다림과 결정(한번 보인 글은 바꾸지 않음), 빈 묶음 고정 문장.
 // 기록(payload)에는 아무것도 더하지 않는다. 채점·기록 로직은 읽기만 한다.
 import { answerFeedbackAllowed } from '../domain/feedbackPolicy'
 import { summarizeResponses, type ResponseSummary } from '../domain/grading'
 import type { DifficultyMode, TaskRun } from '../domain/taskEngine'
 import type { ApprovedTask } from '../domain/types'
-import { countLabel, itemLabel } from './resultLabels'
+import { COUNT_LABEL, countLabel, itemLabel } from './resultLabels'
+import { DEBRIEF_WAIT_MS, type DebriefAiNotes, type DebriefRequestFacts } from '../chat/debriefClient'
 
 export interface DebriefInput {
   /** 응답 요약 — 정오(✓✗)만 읽는다. 값 칸(제시값·기준값·입력값)은 읽지 않는다 */
@@ -175,4 +177,66 @@ export function startLockTimer(startMs: number, onLeft: (secondsLeft: number) =>
     if (left === 0) clearInterval(id)
   }, 250)
   return () => clearInterval(id)
+}
+
+// ---------- AI 정리(2단계, 설계 docs/superpowers/specs/2026-11-16-debrief-and-free-roam-design.md 2-4) ----------
+
+/** AI 글일 때 '교관의 정리' 제목 옆에 늘 보이는 표시 */
+export const DEBRIEF_AI_LABEL = 'AI 교관이 쓴 글이에요(사람 아님).'
+/** AI 글을 기다리는 동안(최대 8초) 묶음 자리에 보이는 한 줄 */
+export const DEBRIEF_WAITING_LINE = '교관이 정리를 쓰고 있어요…'
+
+const COUNT_MAX = 999
+const DURATION_MAX_SECONDS = 86_400
+const ERROR_KEYS = Object.keys(COUNT_LABEL).filter((k) => !k.startsWith('s-'))
+const SAFETY_KEYS = Object.keys(COUNT_LABEL).filter((k) => k.startsWith('s-'))
+const clampCount = (n: number): number => Math.min(COUNT_MAX, Math.max(0, Math.floor(n)))
+/** 알려진 키·1번 이상만, 999에서 자른다(서버 허용 목록과 같은 이름표에서 온 키) */
+function knownCounts(m: Record<string, number>, keys: string[]): Record<string, number> {
+  return Object.fromEntries(keys.filter((k) => Number.isFinite(m[k]) && (m[k] ?? 0) > 0).map((k) => [k, clampCount(m[k]!)]))
+}
+
+/** 서버로 보낼 수행 사실. 항목은 정오(불리언)만 — 학생이 넣은 값·제시값·기준값은 읽지 않는다. 시간은 정수 초(모르거나 하루를 넘으면 null) */
+export function debriefRequestFacts(run: Pick<TaskRun, 'responses' | 'errorTypes' | 'safetyViolationTypes' | 'hintCount' | 'npcInspectionCount'>, durationSeconds: number | null): DebriefRequestFacts {
+  const s = summarizeResponses(run.responses)
+  const items = [...s.measurementInputs, ...s.calculationAnswers, ...s.judgmentAnswers].map((i) => ({ itemId: i.itemId, first: i.firstCorrect, final: i.finalCorrect }))
+  const d = durationSeconds !== null && Number.isFinite(durationSeconds) ? Math.max(0, Math.round(durationSeconds)) : null
+  return {
+    items,
+    errorTypes: knownCounts(run.errorTypes, ERROR_KEYS),
+    safetyViolationTypes: knownCounts(run.safetyViolationTypes, SAFETY_KEYS),
+    hintCount: clampCount(run.hintCount),
+    npcInspectionCount: clampCount(run.npcInspectionCount),
+    durationSeconds: d !== null && d <= DURATION_MAX_SECONDS ? d : null,
+  }
+}
+
+/** 정리 화면이 AI 정리를 부르는가: 검사 통과한 수행, 기록 모드, 대화 주소, 확정 기록의 수행 번호, 온라인이 모두 있을 때만 */
+export function shouldAskDebrief(o: { completionStatus: 'completed' | 'aborted'; noRecord: boolean; endpoint: string | null; recordId: string | null; online: boolean }): boolean {
+  return o.completionStatus === 'completed' && !o.noRecord && !!o.endpoint && !!o.recordId && o.online
+}
+
+/** 교관의 정리 칸의 상태: 기다리는 중 → AI 글 또는 규칙 정리(한번 정해지면 바뀌지 않는다) */
+export type DebriefView = { kind: 'waiting' } | { kind: 'ai'; notes: DebriefNotes } | { kind: 'rule' }
+export type DebriefEvent = { type: 'answer'; notes: DebriefAiNotes } | { type: 'fail' } | { type: 'timeout' }
+
+/** 기다리는 중에만 정해진다. 이미 AI 글이나 규칙 정리가 보이면 늦게 온 답·실패·시간 끝을 무시한다 */
+export function settleDebrief(view: DebriefView, e: DebriefEvent): DebriefView {
+  if (view.kind !== 'waiting') return view
+  return e.type === 'answer' ? { kind: 'ai', notes: aiDebriefNotes(e.notes) } : { kind: 'rule' }
+}
+
+/** 화면이 뜬 시각(shownAtMs)에서 지금까지 — AI 글을 더 기다릴 시간(ms, 0 이상). 다시 그려져도 처음부터 세지 않는다 */
+export function debriefWaitLeft(shownAtMs: number, nowMs: number): number {
+  return Math.max(0, shownAtMs + DEBRIEF_WAIT_MS - nowMs)
+}
+
+/** AI 글을 화면 모양으로: 빈 묶음은 규칙 정리와 같은 고정 문장. AI는 검사 통과한 수행만 쓰므로 가림이 없다 */
+export function aiDebriefNotes(n: DebriefAiNotes): DebriefNotes {
+  return {
+    good: n.good.length ? [...n.good] : [EMPTY.good],
+    improve: n.improve.length ? [...n.improve] : [EMPTY.improve],
+    hard: n.hard.length ? [...n.hard] : [EMPTY.hard],
+    withheld: false,
+  }
 }
