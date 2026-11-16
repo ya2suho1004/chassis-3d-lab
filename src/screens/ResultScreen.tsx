@@ -10,11 +10,12 @@ import type { DeliveryEnvelope } from '../records/types'
 import { WorkLog } from './WorkLog'
 import { isRequestPassed } from '../app/cozyState'
 import { itemLabel, verdictLabel } from '../app/resultLabels'
-import { DEBRIEF_LOCK_SECONDS, DEBRIEF_WITHHELD_LINE, debriefFacts, debriefInputOf, debriefNotes, debriefStats, startLockTimer } from '../app/debrief'
+import { DEBRIEF_LOCK_SECONDS, DEBRIEF_WITHHELD_LINE, debriefFacts, debriefInputOf, debriefNotes, debriefStats, endStep, startLockTimer } from '../app/debrief'
 import type { LabSound } from '../scene/sound'
 
 /** 정리 화면 단추 줄: 잠긴 동안(secondsLeft > 0) 둘 다 누를 수 없고 주 단추에 남은 초를 보인다.
- *  남은 초는 화면 낭독기가 매번 읽지 않게 숨기고, 잠금 안내는 알림 영역이 아닌 설명 글로 한 번 둔다 */
+ *  남은 초는 화면 낭독기가 매번 읽지 않게 숨기고, 잠금 안내는 알림 영역이 아닌 설명 글로 둔다.
+ *  알림 영역(숨김, polite)은 늘 있고 풀리는 순간에만 글이 들어가 한 번 읽힌다(새로 생기는 알림 칸은 읽히지 않는 일이 많다) */
 export function DebriefActions({ secondsLeft, showToLab, onToLab, onEnd, endLabel = '마치기' }: {
   secondsLeft: number
   /** 저장 실패면 거짓(설계 1-2 끝) */
@@ -33,6 +34,7 @@ export function DebriefActions({ secondsLeft, showToLab, onToLab, onEnd, endLabe
         <button className={showToLab ? undefined : 'primary'} disabled={locked} aria-describedby={desc} onClick={onEnd}>{endLabel}{showToLab ? null : count}</button>
       </div>
       {locked && <p className="small" id="debrief-lock-note">{DEBRIEF_LOCK_SECONDS}초 동안 정리를 읽은 뒤 넘어갈 수 있어요.</p>}
+      <p className="sr-only" aria-live="polite">{locked ? '' : '이제 넘어갈 수 있어요.'}</p>
     </>
   )
 }
@@ -62,7 +64,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
   const [confirmLeave, setConfirmLeave] = useState(false)
   /** 30초 잠금(설계 1-2): 화면이 뜬 때부터. 모든 세션·조건에 같다 */
   const [left, setLeft] = useState(DEBRIEF_LOCK_SECONDS)
-  useEffect(() => startLockTimer(Date.now(), setLeft), [])
+  useEffect(() => startLockTimer(performance.now(), setLeft), [])
   const unsaved = !noRecord && !!saveError
   const retry = async () => {
     if (!onRetrySave || retrying) return
@@ -73,8 +75,16 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
     if (err) setRetryError(err)
   }
   const end = () => {
-    if (unsaved && !confirmLeave) return setConfirmLeave(true)
+    if (endStep({ unsaved, confirmed: confirmLeave }) === 'confirm') return setConfirmLeave(true)
     onEnd()
+  }
+  /** 저장 실패일 때만: 확정 원본을 기록 파일(JSON)로 내려받아 선생님께 전달한다(예전 결과 화면의 파일 이름 규칙 그대로) */
+  const downloadRecord = () => {
+    if (!frozenPayload) return
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(frozenPayload, null, 2)], { type: 'application/json' }))
+    a.download = `record-${session.anonymousStudentCode}-${session.recordId.slice(0, 8)}.json`
+    a.click()
   }
   const payload = useMemo(
     () => resolveResultPayload(frozenPayload, () => buildRecordPayload(run, session, { completedAtIso: new Date().toISOString(), completionStatus })),
@@ -83,7 +93,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
   const sum = summarizeResponses(run.responses)
   const notes = useMemo(() => debriefNotes(debriefInputOf(run, completionStatus)), [run, completionStatus])
   const facts = debriefFacts(run.task)
-  const stats = debriefStats(run, payload.ok ? payload.value.durationSeconds : null)
+  const stats = debriefStats(run, payload.ok ? payload.value.durationSeconds : null, { withheld: notes.withheld })
   const savedHere = !noRecord && !unsaved && envelope?.localSaveStatus === 'saved'
 
   return (
@@ -98,8 +108,11 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
       {unsaved && (
         <div className="card" role="alert">
           <p className="error">이 기기에 확정 기록을 저장하지 못했습니다 ({retryError ?? saveError}). 먼저 ‘다시 저장’을 눌러 보세요. 같은 수행 번호·같은 내용으로 다시 저장합니다.</p>
-          {onRetrySave && <div className="row"><button className="primary" onClick={() => void retry()} disabled={retrying}>{retrying ? '저장 중…' : '다시 저장'}</button></div>}
-          <p className="small">계속 안 되면 선생님께 알려 주세요. 손실 방지를 보장하지는 않습니다.</p>
+          <div className="row">
+            {onRetrySave && <button className="primary" onClick={() => void retry()} disabled={retrying}>{retrying ? '저장 중…' : '다시 저장'}</button>}
+            {frozenPayload && <button onClick={downloadRecord}>기록 파일 내려받기</button>}
+          </div>
+          <p className="small">{frozenPayload ? '계속 안 되면 기록 파일을 내려받아 선생님께 전달하세요.' : '계속 안 되면 선생님께 알려 주세요.'} 손실 방지를 보장하지는 않습니다.</p>
         </div>
       )}
       <section className="card" aria-label="내 답">
@@ -138,9 +151,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
         {noRecord && <p>기록 없이 한 수행이라 결과는 이 화면에만 보입니다. 화면을 나가면 사라집니다.</p>}
         <DebriefActions secondsLeft={left} showToLab={!unsaved} onToLab={onToLab} onEnd={end} endLabel={unsaved && confirmLeave ? '저장 안 된 채로 마치기' : '마치기'} />
         {unsaved && confirmLeave && <p className="error" role="alert">이 수행은 아직 이 기기에 확정 저장되지 않았습니다. ‘다시 저장’을 한 뒤 넘어가세요. 그래도 넘어가려면 버튼을 한 번 더 누르세요.</p>}
-        {!noRecord && <p className="small">{sendLine
-          ? '‘마치기’는 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않고, 아직 보내지 못한 기록은 인터넷이 연결되면 다시 보냅니다.'
-          : '‘마치기’는 화면과 현재 수행만 비웁니다. 이 기기에 저장된 확정 기록은 지워지지 않고, 교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다.'}</p>}
+        <p className="small">{noRecord || unsaved ? '‘마치기’를 누르면 처음 화면으로 돌아가요.' : '‘마치기’를 누르면 처음 화면으로 돌아가요. 저장된 기록은 지워지지 않아요.'}</p>
       </section>
     </main>
   )

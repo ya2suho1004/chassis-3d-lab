@@ -54,10 +54,10 @@ describe('결과 화면 — 전송 상태 한 줄', () => {
     expect(t).not.toMatch(/교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다/)
     expect(t).not.toMatch(/대기\(교사가 전송 전\)/)
   })
-  test('줄이 없으면(시연·리허설) 이 기기에 저장했다는 한 줄과 교사 전송 안내(정리 화면, 설계 2026-11-16-debrief-and-free-roam 1-2)', () => {
+  test('줄이 없으면(시연·리허설) 이 기기에 저장했다는 한 줄(정리 화면, 설계 2026-11-16-debrief-and-free-roam 1-2). 교사 전송 안내는 학생 화면에 없다', () => {
     const t = result(null)
     expect(t).toContain('기록을 이 기기에 저장했어요.')
-    expect(t).toMatch(/교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다/)
+    expect(t).not.toMatch(/교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다/)
     for (const v of Object.values(CLASS_SEND_TEXT)) expect(t).not.toContain(v)
   })
   test('교사용 상세 기록(researchEligible 줄)은 학생 정리 화면에 없다 — 수업용·시연 모두(설계 2026-11-16-debrief-and-free-roam 1-2)', () => {
