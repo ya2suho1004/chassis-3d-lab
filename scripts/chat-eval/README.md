@@ -24,6 +24,13 @@
 - 질문을 고치면 `conversations.mjs`, 항목 뜻은 그 파일의 `DIMENSIONS`. 정답 값은 판독표가 과제 자료(`taskContext.generated.json`)에서 가져온다.
 - 키(.env.local)는 chassis-3d-lab 폴더에만 있다. 브랜치 작업 폴더로 복사하지 않고, 합친 뒤 그 폴더에서 돌린다.
 
+## AI 정리 평가 (2026-11-16, 설계 docs/superpowers/specs/2026-11-16-debrief-and-free-roam-design.md 2-5)
+정리 화면의 "교관의 정리"를 AI가 쓰게 하는 지시문(`debrief-ko-…`)을 서버 반영 전에 실제 모델로 본다. 서버 처리 본체(`handleDebrief`)를 그대로 거쳐 요청 허용 목록 검사·서버가 만든 요약 글·지시문·답 길이 제한·429 재시도·답 검사(JSON·세 묶음·문장 수·길이·양호/불량·숫자)가 실제와 같다. 재사용·한도·대화 기록(chat_logs)은 거치지 않는다.
+- 계획만 보기(키를 읽지 않고 아무것도 보내지 않음): `node scripts/chat-eval/run-debrief.mjs gemini`
+- 실제 호출: `node scripts/chat-eval/run-debrief.mjs gemini --run` (합성 수행 요약 11개, 11번 + 429면 다시)
+- 결과: `docs/chat-eval/<날짜>_debrief_<공급자>_<모델>_<지시문 판>.md` — 요약 글(AI가 받은 것)·모델 원문·검사 통과 여부(걸린 까닭)·걸린 시간, 사람 판독 칸. 같은 날 다시 돌려도 덮어쓰지 않는다.
+- 합성 사례는 `debrief-cases.mjs`(앱이 보내는 facts 모양), 시험기·판독표는 `debrief-run.mjs`. 키는 위와 같이 `.env.local`(chassis-3d-lab 폴더)에서 읽는다.
+
 ## 조건 (2026-10-28 결정, docs/design/docs/20 D7)
 - Gemini는 약관상 18세 미만 대상 앱에 쓸 수 없다. 개발·시연(교사·교수·연구자)에만 쓰고 학생 적용 전 유료 모델로 바꾼다.
 - 무료 등급 입력은 구글이 학습·사람 검토에 쓸 수 있다. 합성 질문만 넣는다.
@@ -36,3 +43,5 @@
 - `questions-turning.mjs` 합성 질문 20개, `run-suite.mjs` 그 한 번짜리 시험(답 길이는 서버 값)
 - `conversations.mjs` 합성 다중 대화 12개·판독 항목, `conversation-run.mjs` 시험기·판독표, `run-conversations.mjs` 실행 명령
 - `build-doc.mjs` 교사 검토 문서 `docs/06_챗봇_시스템프롬프트_초안.md` 생성
+- `debrief-cases.mjs` AI 정리 합성 수행 사실 11개, `debrief-run.mjs` 시험기·판독표, `run-debrief.mjs` 실행 명령
+- `build-debrief-doc.mjs` AI 정리 지시문 교사 검토 문서 `docs/06b_AI정리_지시문_초안.md` 생성(지시문을 고치면 다시 만든다 — 시험이 최신인지 본다)
