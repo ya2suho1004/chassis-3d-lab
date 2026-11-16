@@ -29,7 +29,7 @@ export interface DebriefNotes { good: string[]; improve: string[]; hard: string[
 export interface DebriefFact { label: '공식' | '판정 기준'; text: string }
 
 /** 안내 없음 중단에서 공식·규정값과 정오 문장 대신 보이는 한 줄(설계 1-5) */
-export const DEBRIEF_WITHHELD_LINE = '과제를 끝까지 마치면 정리를 볼 수 있어요.'
+export const DEBRIEF_WITHHELD_LINE = '과제를 끝까지 마치면 공식과 규정값을 볼 수 있어요.'
 
 /** 정답에 기대는 오류 유형(판독·계산·판정). 가림일 때 '가장 자주 막힌 곳'에서 뺀다 */
 const ANSWER_ERROR_KEYS = new Set(['reading', 'calc', 'verdict'])
@@ -82,7 +82,8 @@ export function debriefNotes(i: DebriefInput): DebriefNotes {
     if (perfect.length === groups.length) good.push('판독·계산·판정을 처음부터 모두 맞혔어요.')
     else for (const g of perfect) good.push(`${g.name}${josa(g.name, '을', '를')} 처음부터 모두 맞혔어요.`)
   }
-  if (i.safetyViolationCount === 0) good.push('안전 수칙을 한 번도 어기지 않았어요.')
+  // 통과한 수행에서만(받자마자 중단해도 칭찬하지 않게)
+  if (completed && i.safetyViolationCount === 0) good.push('안전 수칙을 한 번도 어기지 않았어요.')
   if (completed && i.npcInspectionCount === 1) good.push('검사를 한 번에 통과했어요.')
   if (completed && i.hintCount === 0) good.push('힌트 없이 끝까지 해냈어요.')
 
@@ -129,15 +130,21 @@ export function debriefFacts(task: Pick<ApprovedTask, 'feedback'>): DebriefFact[
   return out
 }
 
-/** 정리 위의 짧은 수치 줄(설계 1-2 남기는 수치) */
-export function debriefStats(run: Pick<TaskRun, 'errorCount' | 'safetyViolationCount' | 'hintCount' | 'npcInspectionCount'>, durationSeconds: number | null): string[] {
+/** 정리 위의 짧은 수치 줄(설계 1-2 남기는 수치).
+ *  withheld(안내 없음 중단 가림)면 학습 오류 수를 뺀다 — 판독·계산·판정 오답이 더해진 수라 숫자만으로 오답 수가 드러난다 */
+export function debriefStats(run: Pick<TaskRun, 'errorCount' | 'safetyViolationCount' | 'hintCount' | 'npcInspectionCount'>, durationSeconds: number | null, opts: { withheld?: boolean } = {}): string[] {
   return [
     `걸린 시간 ${durationText(durationSeconds)}`,
-    `학습 오류 ${run.errorCount}번`,
+    ...(opts.withheld ? [] : [`학습 오류 ${run.errorCount}번`]),
     `안전 위반 ${run.safetyViolationCount}번`,
     `힌트 ${run.hintCount}번`,
     `검사 ${run.npcInspectionCount}번`,
   ]
+}
+
+/** 정리 화면의 마치기(D4): 확정 저장이 안 됐으면 첫 누름은 확인을 묻고(confirm), 확인한 뒤에는 넘어간다(leave) */
+export function endStep(s: { unsaved: boolean; confirmed: boolean }): 'confirm' | 'leave' {
+  return s.unsaved && !s.confirmed ? 'confirm' : 'leave'
 }
 
 function durationText(sec: number | null): string {
@@ -155,8 +162,9 @@ export function lockLeft(startMs: number, nowMs: number): number {
   return Math.max(0, Math.ceil((startMs + DEBRIEF_LOCK_SECONDS * 1000 - nowMs) / 1000))
 }
 
-/** 남은 초가 바뀔 때마다 onLeft를 부르고 0이 되면 스스로 멈춘다. 돌려준 함수로 멈출 수 있다 */
-export function startLockTimer(startMs: number, onLeft: (secondsLeft: number) => void, now: () => number = Date.now): () => void {
+/** 남은 초가 바뀔 때마다 onLeft를 부르고 0이 되면 스스로 멈춘다. 돌려준 함수로 멈출 수 있다.
+ *  시계는 뒤로 가지 않는 performance.now(기기 시계를 바꿔도 30초가 늘거나 줄지 않음). 탭이 가려진 동안에도 시간은 흐른다 */
+export function startLockTimer(startMs: number, onLeft: (secondsLeft: number) => void, now: () => number = () => performance.now()): () => void {
   let last = lockLeft(startMs, now())
   if (last === 0) return () => {}
   const id = setInterval(() => {

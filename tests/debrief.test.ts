@@ -1,6 +1,6 @@
 // tests/debrief.test.ts — 정리 화면의 규칙 정리·공식과 규정값·30초 잠금(설계 docs/superpowers/specs/2026-11-16-debrief-and-free-roam-design.md 1-3·1-4·1-5·1-8)
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { DEBRIEF_LOCK_SECONDS, DEBRIEF_WITHHELD_LINE, debriefFacts, debriefInputOf, debriefNotes, debriefStats, lockLeft, startLockTimer, type DebriefInput } from '../src/app/debrief'
+import { DEBRIEF_LOCK_SECONDS, DEBRIEF_WITHHELD_LINE, debriefFacts, debriefInputOf, debriefNotes, debriefStats, endStep, lockLeft, startLockTimer, type DebriefInput } from '../src/app/debrief'
 import { listTasks } from '../src/app/session'
 import { createTaskRun, submitResponse, type TaskRun } from '../src/domain/taskEngine'
 import { summarizeResponses } from '../src/domain/grading'
@@ -66,6 +66,13 @@ describe('규칙 정리 — 묶음별 문장(1-3)', () => {
     expect(d.good).not.toContain('힌트 없이 끝까지 해냈어요.')
   })
 
+  test('안전 칭찬은 통과한 수행에서만 — 받자마자 중단하면 칭찬하지 않는다', () => {
+    const run = createTaskRun(brake1, { difficultyMode: 'guided' })
+    expect(debriefNotes(debriefInputOf(run, 'aborted')).good).not.toContain('안전 수칙을 한 번도 어기지 않았어요.')
+    expect(debriefNotes(debriefInputOf({ ...allRight(), npcInspectionCount: 1 }, 'completed')).good).toContain('안전 수칙을 한 번도 어기지 않았어요.')
+    expect(debriefNotes(debriefInputOf({ ...allRight(), npcInspectionCount: 1, safetyViolationCount: 1 }, 'completed')).good).not.toContain('안전 수칙을 한 번도 어기지 않았어요.')
+  })
+
   test('해당하는 것이 없는 묶음은 고정 문장 한 줄', () => {
     const run = createTaskRun(brake1, { difficultyMode: 'guided' })
     const d = debriefNotes({ ...debriefInputOf(run, 'aborted'), safetyViolationCount: 1, safetyViolationTypes: { 's-ppe': 1 }, hintCount: 0 })
@@ -128,7 +135,7 @@ describe('안내 없음 규칙(1-5)', () => {
     expect(text).not.toMatch(/처음부터 모두 맞혔어요|고친 항목|맞히지 못한 항목|판독값/)
     expect(d.hard).toContain('가장 자주 막힌 곳은 작업 순서였어요(1번).')
     expect(d.improve).toContain('과제를 끝까지 마치지 못했어요.')
-    expect(DEBRIEF_WITHHELD_LINE).toBe('과제를 끝까지 마치면 정리를 볼 수 있어요.')
+    expect(DEBRIEF_WITHHELD_LINE).toBe('과제를 끝까지 마치면 공식과 규정값을 볼 수 있어요.')
   })
   test('안내 있음 중단, 안내 없음이라도 최초 응답이 다 찼거나 검사 통과면 가리지 않는다', () => {
     let g = createTaskRun(brake1, { difficultyMode: 'guided' })
@@ -146,12 +153,23 @@ describe('짧은 수치 줄', () => {
     expect(debriefStats(run, 42)[0]).toBe('걸린 시간 42초')
     expect(debriefStats(run, null)[0]).toBe('걸린 시간 —')
   })
+  test('가림 상태면 학습 오류 수를 빼고 나머지는 보인다(오류 수에 오답이 들어 있어 숫자로 드러나지 않게)', () => {
+    const run = { ...createTaskRun(brake1, { difficultyMode: 'unguided' }), errorCount: 2, safetyViolationCount: 1, hintCount: 3, npcInspectionCount: 0 }
+    const s = debriefStats(run, 42, { withheld: true })
+    expect(s).toEqual(['걸린 시간 42초', '안전 위반 1번', '힌트 3번', '검사 0번'])
+    expect(s.join(' ')).not.toContain('학습 오류')
+    expect(debriefStats(run, 42, { withheld: false })).toContain('학습 오류 2번')
+  })
 })
 
 describe('30초 잠금', () => {
   afterEach(() => { vi.useRealTimers() })
   test('남은 초: 처음 30, 반올림 위로, 30초가 지나면 0', () => {
     expect(DEBRIEF_LOCK_SECONDS).toBe(30)
+    expect(lockLeft(0, 0)).toBe(30)
+    expect(lockLeft(0, 29_900)).toBe(1)
+    expect(lockLeft(0, 30_000)).toBe(0)
+    expect(lockLeft(0, 30_001)).toBe(0)
     expect(lockLeft(1000, 1000)).toBe(30)
     expect(lockLeft(1000, 3500)).toBe(28)
     expect(lockLeft(1000, 30_999)).toBe(1)
@@ -160,9 +178,40 @@ describe('30초 잠금', () => {
   })
   test('타이머: 초가 바뀔 때만 알리고, 0이 되면 멈춘다', () => {
     vi.useFakeTimers()
+    // 넣어 주는 시계(실제 화면은 performance.now). 가짜 타이머가 움직이는 시계를 쓴다
+    let t = 5_000
+    const clock = () => t
+    const tick = (ms: number) => { for (let k = 0; k < ms; k += 50) { t += 50; vi.advanceTimersByTime(50) } }
+    const seen: number[] = []
+    const stop = startLockTimer(clock(), (s) => seen.push(s), clock)
+    tick(3000)
+    expect(seen).toEqual([29, 28, 27])
+    tick(30_000)
+    expect(seen.at(-1)).toBe(0)
+    expect(seen.filter((s) => s === 0)).toHaveLength(1)
+    expect(vi.getTimerCount()).toBe(0)
+    stop()
+  })
+  test('기기 시계(Date)를 바꿔도 넣어 준 시계로만 센다', () => {
+    vi.useFakeTimers()
+    let t = 0
+    const seen: number[] = []
+    startLockTimer(0, (s) => seen.push(s), () => t)
+    vi.setSystemTime(Date.now() + 3_600_000) // 기기 시계를 한 시간 앞으로
+    vi.advanceTimersByTime(1000)
+    expect(seen).toEqual([])
+    t = 30_000
+    vi.advanceTimersByTime(300)
+    expect(seen).toEqual([0])
+  })
+  test('기본 시계는 뒤로 가지 않는 performance.now', () => {
+    expect(startLockTimer.toString()).toContain('performance.now()')
+  })
+  test('(옛) 타이머 동작 — Date 시계를 넣어도 같다', () => {
+    vi.useFakeTimers()
     vi.setSystemTime(10_000)
     const seen: number[] = []
-    const stop = startLockTimer(Date.now(), (s) => seen.push(s))
+    const stop = startLockTimer(Date.now(), (s) => seen.push(s), () => Date.now())
     vi.advanceTimersByTime(3000)
     expect(seen).toEqual([29, 28, 27])
     vi.advanceTimersByTime(30_000)
@@ -174,10 +223,20 @@ describe('30초 잠금', () => {
   test('멈추면 더 알리지 않는다', () => {
     vi.useFakeTimers()
     const seen: number[] = []
-    const stop = startLockTimer(Date.now(), (s) => seen.push(s))
+    const stop = startLockTimer(0, (s) => seen.push(s), () => 0)
     stop()
     vi.advanceTimersByTime(5000)
     expect(seen).toEqual([])
     expect(vi.getTimerCount()).toBe(0)
+  })
+})
+
+describe('저장 실패에서 마치기', () => {
+  test('저장된 수행은 바로 넘어간다', () => {
+    expect(endStep({ unsaved: false, confirmed: false })).toBe('leave')
+  })
+  test('저장 안 된 수행은 첫 누름에 확인을 묻고, 확인 뒤 누름에 넘어간다', () => {
+    expect(endStep({ unsaved: true, confirmed: false })).toBe('confirm')
+    expect(endStep({ unsaved: true, confirmed: true })).toBe('leave')
   })
 })
