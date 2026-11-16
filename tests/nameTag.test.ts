@@ -16,10 +16,10 @@ describe('머리 위 닉네임 — 보임과 높이', () => {
     expect(studentShown(false, 'first')).toBe(false)
     expect(studentShown(true, 'follow')).toBe(false)
   })
-  test('높이는 교관 이름표와 같은 규칙(키 + 0.33), 체형 2는 줄인 키', () => {
-    expect(NAME_TAG_GAP).toBe(0.33)
-    expect(studentNameTagY('a')).toBeCloseTo(STUDENT_HEIGHT + 0.33)
-    expect(studentNameTagY('b')).toBeCloseTo(STUDENT_HEIGHT * bodyScale('b') + 0.33)
+  test('높이는 머리 바로 위(키 + 0.15, 따라가기 시점에서 뒤쪽 물건에 붙어 보이지 않게), 체형 2는 줄인 키', () => {
+    expect(NAME_TAG_GAP).toBe(0.15)
+    expect(studentNameTagY('a')).toBeCloseTo(STUDENT_HEIGHT + 0.15)
+    expect(studentNameTagY('b')).toBeCloseTo(STUDENT_HEIGHT * bodyScale('b') + 0.15)
   })
 })
 

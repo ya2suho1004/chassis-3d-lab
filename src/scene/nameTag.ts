@@ -4,8 +4,8 @@ import { bodyScale, type BodyType } from '../app/avatar'
 import { STUDENT_HEIGHT } from './models/CharacterModel'
 import type { ViewMode } from './viewMode'
 
-/** 키 위 간격(m) — 교관 이름표(INSTRUCTOR_HEIGHT + 0.33)와 같은 규칙 */
-export const NAME_TAG_GAP = 0.33
+/** 키 위 간격(m) — 머리 바로 위. 교관 이름표(+0.33)만큼 띄우면 따라가기 시점에서 머리와 떨어져 뒤쪽 물건에 붙은 것처럼 보였다(2026-11-16 화면 확인) */
+export const NAME_TAG_GAP = 0.15
 
 /** 이름표 높이: 체형에 맞춘 키 + 간격 */
 export function studentNameTagY(body: BodyType): number {

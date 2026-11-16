@@ -472,6 +472,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               {run && ctx && !ctx.guided && <p>작업 순서는 목록에서 직접 고르세요(안내 없음).</p>}
               {run && ctx && <ProgressDots done={ctx.doneCount} total={ctx.total} pop={!!fx.on.checkPop} />}
               <div className="g-quest-btns" data-feel="press">
+                {after && <button className="primary" onClick={() => onEnd?.()}>마치기</button>}
                 {run && <button onClick={() => setDrawerOpen(true)}>작업 목록</button>}
                 <button onClick={() => goTo(npcSpot, true)}>교관에게</button>
                 {navTargets.map((e) => <button key={e.id} onClick={() => goTo(e.accessPoint!)}>{e.label.replace(/\(.*\)/, '').trim()}</button>)}

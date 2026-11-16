@@ -52,6 +52,10 @@ describe('실습장 배선 — 수행 뒤', () => {
     expect(lab).toContain("{after && <button onClick={() => { setMenuOpen(false); onEnd?.() }}>마치기</button>}")
     expect(lab).toContain('{after && <button className="link" onClick={() => onEnd?.()}>마치기</button>}')
   })
+  test('게임 화면 둘러보기 안내 카드에도 마치기(수행 뒤에만, 같은 onEnd)', () => {
+    const quest = lab.slice(lab.indexOf('<div className="g-quest-btns"'), lab.indexOf('</div>', lab.indexOf('<div className="g-quest-btns"')))
+    expect(quest).toContain('{after && <button className="primary" onClick={() => onEnd?.()}>마치기</button>}')
+  })
   test('교사용 배치 눈검토·실측 입력은 수행 뒤에 보이지 않는다', () => {
     expect(lab.match(/\{!run && !after && <button[^\n]*배치 눈검토\(교사\)/g)).toHaveLength(1)
     expect(lab.match(/\{!run && !after && <button[^\n]*실측 입력\(교사\)/g)).toHaveLength(1)
