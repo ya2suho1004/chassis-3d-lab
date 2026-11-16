@@ -33,6 +33,7 @@ import type { ArrowTrack } from './feel/edgeArrow'
 import { AIM_RANGE, EYE_HEIGHT, FIRST_FOV, FIRST_LABEL_RADIUS, ORBIT_PRESET, aimedTarget, firstPersonLabel, lookStep, orbitPlacement, yawFromForward, type ViewMode } from './viewMode'
 import { CHARACTER_LAYER, CharacterModel, DEFAULT_LOOK, INSTRUCTOR_EYE, INSTRUCTOR_HEIGHT, SAFETY_SHOES, INSTRUCTOR_OUTFIT, STUDENT_OUTFIT, WALK_CYCLE_DISTANCE, headingFor, type CharacterAction, type CharacterLook } from './models/CharacterModel'
 import { bodyScale } from '../app/avatar'
+import { studentNameTagY, studentShown } from './nameTag'
 import { AVANTE_SPEC, AvanteModel, SCISSOR, ScissorLiftModel, fitsScissorLift, scissorPose, type ScissorParts } from './models/ScissorLiftModel'
 import { CEILING_H, hallBounds } from './Surroundings'
 import { FOG, PALETTE, labBounds, lookFor } from './look/lookConfig'
@@ -105,6 +106,8 @@ export interface LabSceneProps {
   turntableCloseUp?: 'left' | 'right' | null
   /** 기록 창이 열린 동안 걷기 멈춤(설계 2026-11-10 §3.3): 가던 길·이동 요청·조이스틱을 버린다. 학생은 숨기지 않는다 */
   holdStill?: boolean
+  /** 학생 머리 위 닉네임(설계 2026-11-16-debrief-and-free-roam 1-1). 화면 표시만 — 기록·서버·AI에는 없음 */
+  studentName?: string
 }
 
 export interface AvatarCue { action: AvatarAction; seq: number; target: Pt | null }
@@ -144,7 +147,8 @@ function BlobShadow({ size = 0.95 }: { size?: number }) {
 }
 
 /** speed: 현재 이동 속도(m/s, Walker의 ref). 걷기 동작 재생 속도를 여기서 프레임마다 정해 rate ref로 넘긴다(React 상태를 거치지 않는다) */
-function Avatar({ pos, heading, moving, speed, oneShot, ppe, look }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; speed: React.MutableRefObject<number>; oneShot: AvatarAction | null; ppe: boolean; look: CharacterLook }) {
+/** name: 머리 위 닉네임(설계 2026-11-16-debrief-and-free-roam 1-1). 없으면 이름표를 그리지 않는다 */
+function Avatar({ pos, heading, moving, speed, oneShot, ppe, look, name }: { pos: Pt; heading: React.MutableRefObject<number>; moving: boolean; speed: React.MutableRefObject<number>; oneShot: AvatarAction | null; ppe: boolean; look: CharacterLook; name?: string }) {
   const outfit = useMemo(() => (ppe ? { ...STUDENT_OUTFIT, shoes: SAFETY_SHOES } : STUDENT_OUTFIT), [ppe])
   const turn = useRef<THREE.Group>(null)
   const rate = useRef(1)
@@ -165,6 +169,7 @@ function Avatar({ pos, heading, moving, speed, oneShot, ppe, look }: { pos: Pt; 
       <group ref={turn}>
         <Suspense fallback={code}><CharacterModel action={moving ? 'Walk' : oneShot ?? 'Idle'} outfit={outfit} goggles={ppe} look={look} rate={rate} /></Suspense>
       </group>
+      {name && <Html position={[0, studentNameTagY(look.body), 0]} center style={{ pointerEvents: 'none' }}><div className="label3d me">{name}</div></Html>}
     </group>
   )
 }
@@ -699,7 +704,7 @@ function AimProbe({ layout, onAim }: { layout: SceneLayout; onAim: (id: string |
   return null
 }
 
-function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, holdStill = false, posRef, view, onStep, cue, ppe, look }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; holdStill?: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void; cue: AvatarCue | null; ppe: boolean; look: CharacterLook }) {
+function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, frozen, holdStill = false, posRef, view, onStep, cue, ppe, look, name }: { layout: SceneLayout; start: Pt; onMove: (p: Pt, moving: boolean) => void; requestRef: React.MutableRefObject<Pt | null>; lowSpec: boolean; joystickRef?: React.MutableRefObject<MoveInput>; frozen: boolean; holdStill?: boolean; posRef: React.MutableRefObject<Pt>; view: ViewMode; onStep?: () => void; cue: AvatarCue | null; ppe: boolean; look: CharacterLook; name?: string }) {
   const grid = useMemo(() => buildNavGrid(layout, 0.5), [layout])
   const [pos, setPos] = useState<Pt>(start)
   // 1인칭은 카메라를 FirstPersonLook이 눈높이에 직접 둔다. 궤도 시점만 이동량만큼 카메라를 함께 옮긴다
@@ -837,11 +842,13 @@ function Walker({ layout, start, onMove, requestRef, lowSpec, joystickRef, froze
   })
 
   useEffect(() => { onMove(start, false) }, [start, onMove])
-  // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼). 1인칭은 내 몸을 숨긴다
-  return <group visible={!frozen && view !== 'first'}><Avatar pos={pos} heading={heading} moving={walking} speed={speed} oneShot={oneShot} ppe={ppe} look={look} /></group>
+  // 대화 중에는 학생을 숨겨 교관을 가리지 않게 한다(게임 대화 장면처럼). 1인칭은 내 몸을 숨긴다.
+  // 머리 위 이름표(drei Html)는 부모의 visible을 따르지 않으므로 숨길 때는 아예 그리지 않는다
+  const shown = studentShown(frozen, view)
+  return <group visible={shown}><Avatar pos={pos} heading={heading} moving={walking} speed={speed} oneShot={oneShot} ppe={ppe} look={look} name={shown ? name : undefined} /></group>
 }
 
-export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, antialias = false, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, tapPulse = null, goalArrow, arrowTrack, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false }: LabSceneProps) {
+export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, antialias = false, raisedLiftIds = [], joystickRef, npcTalking = false, npcNod = false, onSelectEquipment, onNpcTap, onMove, moveRequestRef, rig, labelMode, viewMode = 'overview', playerPos, onAim, glowIds = [], onStep, tapPulse = null, goalArrow, arrowTrack, panelReadout = null, panelCloseUp = false, onFps, avatarCue = null, ppe = false, studentLook = DEFAULT_LOOK, discPractice = null, backlashPractice = null, turning = STRAIGHT, turntableCloseUp = null, holdStill = false, studentName }: LabSceneProps) {
   const m = useMaterials()
   const tester = layout.equipment.find((e) => e.id === 'brake-tester-01')
   const vehicle = layout.equipment.find((e) => e.id === 'brake-vehicle-01')
@@ -988,7 +995,7 @@ export function LabScene({ layout, start, selectedId, highlightIds, lowSpec, ant
       {/* 시작점 표시 */}
       <mesh rotation-x={-Math.PI / 2} position={[layout.studentStart.x, 0.02, layout.studentStart.z]} receiveShadow><ringGeometry args={[0.3, 0.45, 24]} /><meshStandardMaterial color={PALETTE.line} roughness={0.5} /></mesh>
       <TapRing pulse={tapPulse} />
-      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} holdStill={holdStill} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} />
+      <Walker layout={layout} start={start} onMove={onMove} requestRef={requestRef} lowSpec={lowSpec} joystickRef={joystickRef} frozen={camBusy} holdStill={holdStill} posRef={posRef} view={viewMode} onStep={onStep} cue={avatarCue} ppe={ppe} look={studentLook} name={studentName} />
       {npcTalking && <NpcCamera npc={layout.npc} facing={NPC_FACING[layout.npc.facing ?? 'west'] ?? 0} />}
       {panelCloseUp && !npcTalking && panel && <PanelCamera panel={panel} facing={facingOf(panel) ?? 0} />}
       {discOpen && discGauge && <DiscCamera gaugeWorld={discGauge} />}
