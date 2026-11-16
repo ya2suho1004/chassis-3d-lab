@@ -482,7 +482,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
             {selected && (
               <div className="g-info" data-feel="press">
                 <button className="g-x" aria-label="닫기" onClick={() => setSelectedId(null)}>✕</button>
-                <b>{selected.label}</b> <span className="small">[{BASIS_LABEL[selected.basis] ?? selected.basis}]</span>
+                <b>{selected.label}</b>
                 {chipOn && <span key={fx.on.codexChip?.seq} className="g-chip" aria-hidden="true">도감에 등록</span>}
                 <p>{selected.info}</p>
                 {selected.kind === 'lift' && <p><button onClick={() => toggleLift(selected.id)}>{raisedLifts.includes(selected.id) ? '리프트 내리기' : '리프트 올리기'}</button> <span className="small">보기 전용(기록 없음). 실제로는 올리기 전 주변 확인, 올린 뒤 안전 고리.</span></p>}
