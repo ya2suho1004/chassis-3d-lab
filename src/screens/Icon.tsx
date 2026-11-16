@@ -26,6 +26,25 @@ const PATHS = {
   joystick: <><rect x="5" y="16" width="14" height="4.5" rx="2" /><path d="M12 16v-6" /><circle cx="12" cy="7" r="3" /></>,
   /** 끌어서 둘러보기 — 네 방향 화살표 */
   drag: <><path d="M12 3.5v17M3.5 12h17" /><path d="M9.5 6L12 3.5 14.5 6M9.5 18l2.5 2.5 2.5-2.5M6 9.5L3.5 12 6 14.5M18 9.5l2.5 2.5-2.5 2.5" /></>,
+  /** 도감 — 펼친 책(설계 2026-11-16 도감 창) */
+  book: <><path d="M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5 2-1.5 5-2 8.5-1.5V5C17 4.5 14 5 12 6.5z" /><path d="M12 6.5v13" /></>,
+  // 도감 카드의 장비 종류 그림(배치 자료의 kind마다 하나). 실제 제품 모양이 아니라 종류만 알아보게 단순하게 그린다
+  /** 제동력 시험기 — 바닥판 위 롤러 둘 */
+  roller: <><path d="M3 18.5h18" /><circle cx="8" cy="13" r="3.5" /><circle cx="16" cy="13" r="3.5" />{dot(8, 13)}{dot(16, 13)}</>,
+  /** 조작부 — 표시창과 버튼 */
+  panel: <><rect x="4" y="3.5" width="16" height="17" rx="2.5" /><rect x="7" y="6.5" width="10" height="5" rx="1" />{dot(8.5, 15.5)}{dot(12, 15.5)}{dot(15.5, 15.5)}</>,
+  /** 기록 책상 — 책상 위 기록표 */
+  desk: <><path d="M3 13h18M5.5 13v6.5M18.5 13v6.5" /><rect x="8" y="3.5" width="8" height="7" rx="1" /><path d="M10 6h4M10 8.2h3" /></>,
+  /** 차량 — 옆모습 */
+  car: <><path d="M3 15.5V13l2-4.3A2 2 0 0 1 6.8 7.5h10.4a2 2 0 0 1 1.8 1.2L21 13v2.5z" /><path d="M5.5 13h13" /><circle cx="7.5" cy="17" r="2" /><circle cx="16.5" cy="17" r="2" /></>,
+  /** 토 게이지 — 바퀴 달린 가로대와 바늘 */
+  toe: <><path d="M3.5 10h17M6 10v6M18 10v6" /><circle cx="6" cy="18" r="1.8" /><circle cx="18" cy="18" r="1.8" /><path d="M12 10V5.5M10 7.5l2-2 2 2" /></>,
+  /** 리프트 — 판과 가위 다리 */
+  lift: <path d="M3.5 6.5h17M5 19.5h14M7 6.5l10 13M17 6.5l-10 13" />,
+  /** 분해 스탠드 — 기둥·받침·물림쇠 */
+  stand: <><path d="M12 7.5v12M6 19.5h12M8.5 19.5L12 15l3.5 4.5" /><rect x="8" y="3.5" width="8" height="4" rx="1.5" /></>,
+  /** 작업대 — 판·다리·바이스 */
+  bench: <><path d="M3 11.5h18M5 11.5v8M19 11.5v8M5 16h14" /><rect x="7" y="6.5" width="5" height="5" rx="1" /><path d="M12 8.5h4" /></>,
 } satisfies Record<string, ReactElement>
 
 export type IconName = keyof typeof PATHS

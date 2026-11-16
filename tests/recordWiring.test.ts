@@ -85,10 +85,10 @@ describe('게임 화면 연결(§3.3·§6)', () => {
   })
   test('창이 열린 동안 조이스틱·행동 버튼·가운데 버튼·바깥 질문 버튼을 숨기고 3D 장면에 멈춤을 알린다', () => {
     expect(lab).toMatch(/const recording = !!ctx\?\.recordOpen/)
-    expect(lab).toMatch(/\{!viewing && !practicing && !recording && <Joystick/)
+    expect(lab).toMatch(/\{!viewing && !practicing && !recording && !codexOpen && <Joystick/) // 도감 창이 열린 동안에도(설계 2026-11-16)
     expect(lab).toMatch(/\{!ttSide && !recording && <div className="g-actions"/)
     expect(lab).toMatch(/!noRecord && !recording && <button className="g-chatbtn"/)
-    expect(lab).toMatch(/holdStill=\{recording\}/)
+    expect(lab).toMatch(/holdStill=\{recording \|\| codexOpen\}/) // 도감 창이 열린 동안에도 멈춘다(설계 2026-11-16)
     expect(lab).toMatch(/joystickRef\.current = \{ x: 0, y: 0 \}/)
     const all = lab.match(/className="g-gaugebtn/g)?.length ?? 0
     expect(all).toBeGreaterThan(0)
@@ -96,7 +96,7 @@ describe('게임 화면 연결(§3.3·§6)', () => {
   })
   test('창이 열리면 교관에게 걷던 걸음·조작 안내가 창 위로 뜨지 않고, 질문 창은 창 위에서 열고 닫으면 창으로 초점이 돌아온다', () => {
     expect(lab).toMatch(/joystickRef\.current = \{ x: 0, y: 0 \}\n\s+setTalkOnArrive\(false\)/)
-    expect(lab).toMatch(/guideOpen && !talking && !recording && \(/)
+    expect(lab).toMatch(/guideOpen && !talking && !recording && !codexOpen && \(/) // 도감 창이 열린 동안에도 숨김(설계 2026-11-16)
     expect(lab).toMatch(/onClick=\{closeChat\}/)
     expect(lab).toMatch(/if \(recording\) setTimeout\(\(\) => document\.querySelector<HTMLElement>\('\.g-record \.rec-ai'\)/)
   })

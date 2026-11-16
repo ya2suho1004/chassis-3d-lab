@@ -43,6 +43,8 @@ export const HUD_EXCLUDED: Readonly<Record<string, string>> = {
   '.g-more': '대화 말풍선 안의 넘기기 표시',
   '.g-recordwrap': '기록 창의 어두운 바탕. 게임 화면 전체를 덮는다',
   '.g-record': '기록 창. 바탕 위에 뜨는 창이라 다른 부품과 겹쳐도 된다(창 안 배치는 브라우저로 확인)',
+  '.g-codexbtn::after': '도감 버튼의 보이지 않는 누름 영역(손가락 크기로 넓힘). 버튼 자신은 상태 줄 안에 있다',
+  '.codex-wrap': '도감 창의 어두운 바탕. 화면 전체를 덮는 창이다(화면 고정)',
 }
 
 export function findOverlaps(boxes: Box[], tolerance = 0): Overlap[] {

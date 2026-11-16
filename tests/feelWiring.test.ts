@@ -93,7 +93,7 @@ describe('누름 고리(설계 §4.3)', () => {
     expect(lab).toContain('const sceneQuiet = viewing || practicing || recording')
     expect(lab.match(/fire\('sceneTap'/g)).toHaveLength(2)
     expect(lab.match(/if \(!sceneQuiet\) fire\('sceneTap'/g)).toHaveLength(2)
-    expect(lab).toContain("    if (!codex.includes(id)) { setCodex([...codex, id]); if (!sceneQuiet) fire('codexNew') }")
+    expect(lab).toContain("    if (!codex.includes(id)) { setCodex([...codex, id]); if (!noRecord) addToCodex(session.anonymousStudentCode, id); if (!sceneQuiet) fire('codexNew') }")
     // 그 값들은 장비 선택 함수보다 먼저 정해진다
     for (const name of ['const viewing = ', 'const practicing = ', 'const recording = ']) expect(lab.indexOf(name), name).toBeLessThan(lab.indexOf('const sceneQuiet = '))
     expect(lab.indexOf('const sceneQuiet = ')).toBeLessThan(lab.indexOf('const selectEquipment = '))
@@ -146,7 +146,7 @@ describe('버튼 누름 소리의 허용 구역(설계 §4.1)', () => {
     expect(lab.match(/data-feel="press"/g)).toHaveLength(10)
     expect(npc).toContain('<div className="g-dialog" role="dialog" aria-label="교관과 대화" data-feel="press">')
   })
-  test('표시(data-feel)를 다는 파일은 실습 화면·교관 대화·과제 패널 셋뿐이다(판정 파일은 표시의 이름만 안다). 다른 화면에 표시가 붙으면 여기서 걸린다', () => {
+  test('표시(data-feel)를 다는 파일은 실습 화면·교관 대화·과제 패널·도감 창(닫기 버튼, 설계 2026-11-16) 넷뿐이다(판정 파일은 표시의 이름만 안다). 다른 화면에 표시가 붙으면 여기서 걸린다', () => {
     const found: string[] = []
     const walk = (dir: string): void => {
       for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -156,7 +156,7 @@ describe('버튼 누름 소리의 허용 구역(설계 §4.1)', () => {
       }
     }
     walk('src')
-    expect(found.sort()).toEqual(['src/app/feelZones.ts', 'src/screens/LabScreen.tsx', 'src/screens/NpcDialog.tsx', 'src/screens/TaskScreen.tsx'])
+    expect(found.sort()).toEqual(['src/app/feelZones.ts', 'src/screens/CodexWindow.tsx', 'src/screens/LabScreen.tsx', 'src/screens/NpcDialog.tsx', 'src/screens/TaskScreen.tsx'])
   })
   test('소리 버튼은 허용 구역 안에 있어도 조용하다(켜졌다는 확인음은 엔진이 한 번 낸다. 끌 때는 소리가 없다)', () => {
     expect(lab).toMatch(/<button className="g-icon" data-feel="none" aria-label=\{soundOn \? '소리 끄기' : '소리 켜기'\}/)
@@ -183,7 +183,7 @@ describe('버튼 누름 소리의 허용 구역(설계 §4.1)', () => {
 
 describe('도감(설계 §4.1·§4.3)', () => {
   test("처음 누른 장비면 'codexNew'를 낸다", () => {
-    expect(lab).toContain("{ setCodex([...codex, id]); if (!sceneQuiet) fire('codexNew') }")
+    expect(lab).toContain("{ setCodex([...codex, id]); if (!noRecord) addToCodex(session.anonymousStudentCode, id); if (!sceneQuiet) fire('codexNew') }")
     expect(lab.match(/fire\('codexNew'\)/g)).toHaveLength(1)
   })
   test('도감 숫자는 처음 누른 장비일 때 튄다(끄는 것은 연출 수명이 맡는다)', () => {

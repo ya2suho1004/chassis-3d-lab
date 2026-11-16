@@ -46,6 +46,8 @@ import { tipsFor } from '../app/intro'
 import { requestCopy } from '../app/requests'
 import { chatTaskId, loadBadge, nextHighlightId } from '../app/labGuide'
 import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
+import { addToCodex, loadCodex } from '../app/codexStore'
+import { CodexWindow } from './CodexWindow'
 import type { DifficultyMode } from '../domain/taskEngine'
 
 const NEAR_RADIUS = 1.3
@@ -101,7 +103,10 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   const [selectedId, setSelectedId] = useState<string | null>(null)
   /** 올려 둔 리프트(보기 전용 — 과제 기록·판정과 무관) */
   const [raisedLifts, setRaisedLifts] = useState<string[]>([])
-  const [codex, setCodex] = useState<string[]>([])
+  /** 도감(설계 2026-11-16 도감 창 §3-3): 들어올 때 이 기기에 남긴 그 코드의 목록으로 채운다. 기록 없이 하기는 읽지도 쓰지도 않는다(그 수행 동안만) */
+  const [codex, setCodex] = useState<string[]>(() => (noRecord ? [] : loadCodex(session.anonymousStudentCode, layout.equipment.map((e) => e.id))))
+  const [codexOpen, setCodexOpen] = useState(false)
+  const codexNote = noRecord ? '기록 없이 하기라서 도감을 저장하지 않습니다(이번에만 모읍니다).' : '이 기기에만 남고 연구 기록·서버에는 보내지 않습니다.'
   const [npcOpen, setNpcOpen] = useState(false)
   const [npcError, setNpcError] = useState<string | null>(null)
   /** 품질 단계(설계 07 §7-5): 터치 기기(태블릿·폰)는 '낮음'(실시간 그림자·화면 효과 끔, 해상도 1배 — 빛과 구운 바닥 그림자는 그대로)으로 시작, 교사·학생이 바꿀 수 있다 */
@@ -350,8 +355,19 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     if (!id) return
     const e = layout.equipment.find((x) => x.id === id)
     if (!sceneQuiet) fire('sceneTap', e ? tapSpotOf(e) : undefined)
-    if (!codex.includes(id)) { setCodex([...codex, id]); if (!sceneQuiet) fire('codexNew') }
+    if (!codex.includes(id)) { setCodex([...codex, id]); if (!noRecord) addToCodex(session.anonymousStudentCode, id); if (!sceneQuiet) fire('codexNew') }
   }
+  /** 도감 창(설계 2026-11-16): 조용한 때(가까이 보기·연습·기록 창)에는 열지 않는다. 열고 닫기는 사건을 내지 않는다(버튼 누름 느낌만).
+   *  열 때 기록 창을 열 때처럼 걷던 입력과 교관에게 걸어가던 대화 예약을 거두고, 뒤의 창(메뉴·교관 말풍선·작업 목록·AI 질문 창)을 닫는다 —
+   *  화면 낭독기가 뒤 내용에 닿지 않게. 화면 상태만 바꾼다(과제 패널·질문 대화는 붙은 채 숨겨질 뿐이라 진행·기록은 그대로) */
+  const openCodex = () => {
+    if (sceneQuiet) return
+    joystickRef.current = { x: 0, y: 0 }
+    setTalkOnArrive(false)
+    setMenuOpen(false); setNpcOpen(false); setDrawerOpen(false); setChatOpen(false)
+    setCodexOpen(true)
+  }
+  const closeCodex = () => setCodexOpen(false)
   /** 교관을 눌렀다(3D에서 누르거나 1인칭 조준 버튼으로): 장면 누름 사건 */
   const tapNpc = () => { if (!sceneQuiet) fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS }) }
   /** '도감에 등록' 꼬리표: 둘러보기에서, 방금 등록한 그 장비의 카드에만 */
@@ -406,7 +422,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
             glowIds={aimId && aimId !== NPC_AIM ? [...nearIds, aimId] : nearIds} onStep={onStep} tapPulse={tapPulse} goalArrow={goalArrow} arrowTrack={arrowTrack}
             panelReadout={run ? ctx?.panel ?? null : null} panelCloseUp={closeUp && !talking} onFps={onFps}
             avatarCue={avatarCue} ppe={ppe} studentLook={studentLook} discPractice={discPractice} backlashPractice={backlashPractice} turning={turning} turntableCloseUp={talking ? null : ttSide}
-            onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording} />
+            onSelectEquipment={selectEquipment} onNpcTap={() => { tapNpc(); if (!gate.closed) setNpcOpen(true) }} onMove={onMove} moveRequestRef={moveRequestRef} rig={rig} labelMode={labelMode} holdStill={recording || codexOpen} />
         </div>
         {/* 목적지 방향 화살표(안내 있음): 걷기 조작이 되는 상태에서만 그린다. 자리와 방향은 3D 쪽(GoalBeacon)이 매 화면 정한다 */}
         {requiredNow && !talking && !viewing && !practicing && !recording && !drawerOpen && !chatOpen && <div ref={goalArrow} className="g-goalarrow" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 4l15 8-15 8 4-8z" fill="currentColor" /></svg></div>}
@@ -420,7 +436,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               <div className="g-badge"><b className="g-nick">{nickname}</b>{noRecord ? <b className="g-norec">기록 안 됨</b> : <span>{session.anonymousStudentCode}</span>}{run && ctx && (() => {
                 const sb = saveBadge(ctx.saveStatus, noRecord)
                 return sb && sb.tone !== 'bad' ? <span className={`g-save ${sb.tone}`}>{sb.text}</span> : null
-              })()}<span key={fx.on.codexPop?.seq ?? 'codex'} className={`g-codex ${fx.on.codexPop ? 'pop' : ''}`}>도감 {codex.length}/{layout.equipment.length}</span>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.on.sparkle?.seq ?? 'ppe'} className={`g-ppe ${fx.on.sparkle ? 'spark' : ''}`}>보호구 착용</span>}</div>
+              })()}<button className="g-codexbtn" aria-haspopup="dialog" disabled={sceneQuiet} onClick={openCodex}><span key={fx.on.codexPop?.seq ?? 'codex'} className={`g-codex ${fx.on.codexPop ? 'pop' : ''}`}>도감 {codex.length}/{layout.equipment.length}</span></button>{run && <span>안전 위반 {run.safetyViolationCount}</span>}{ppe && <span key={fx.on.sparkle?.seq ?? 'ppe'} className={`g-ppe ${fx.on.sparkle ? 'spark' : ''}`}>보호구 착용</span>}</div>
               {/* 저장 실패(D4)는 배지 아래 줄에 따로 — 배지가 길어져 오른쪽 의뢰 카드와 겹치지 않게 */}
               {run && ctx && saveBadge(ctx.saveStatus, noRecord)?.tone === 'bad' && <button className="g-save bad" role="alert" onClick={ctx.retrySave}>저장 실패 · 다시 저장</button>}
               </div>
@@ -482,7 +498,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               </button>
             )}
 
-            {!viewing && !practicing && !recording && <Joystick input={joystickRef} />}
+            {!viewing && !practicing && !recording && !codexOpen && <Joystick input={joystickRef} />}
             {run && !viewing && !recording && panelNear && <button className="g-gaugebtn" data-feel="press" onClick={() => setCloseUp(true)}><Icon name="gauge" /> 계기 보기</button>}
             {run && !viewing && !practicing && !recording && turningNear && <button className="g-gaugebtn" data-feel="press" onClick={() => setTtSide('left')}><Icon name="gauge" /> 측정판 보기</button>}
             {!practicing && !viewing && !recording && discNear && <button className="g-gaugebtn" data-feel="press" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}><Icon name="look" /> 디스크 런아웃 연습</button>}
@@ -552,7 +568,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
             <p className="g-tip"><b>TIP</b>{tips[tipIdx % tips.length]}</p>
           </div>
         )}
-        {loadedOnce && guideOpen && !talking && !recording && (
+        {loadedOnce && guideOpen && !talking && !recording && !codexOpen && (
           <div className="g-guide" role="dialog" aria-label="조작 안내">
             <b>조작 안내</b>
             <ul>
@@ -604,6 +620,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
             onClose={() => setNpcOpen(false)} />
         )}
 
+        {codexOpen && <CodexWindow equipment={layout.equipment} collected={codex} note={codexNote} onClose={closeCodex} />}
         {avatarEdit && (
           <div className="av-overlay warm" role="dialog" aria-modal="true" aria-label="캐릭터 다시 꾸미기">
             <AvatarScreen initial={profile} editing saveNote={noRecord ? '기록 없이 하기라서 캐릭터도 저장하지 않습니다.' : '이 기기에만 저장되고 연구 기록·서버에는 보내지 않습니다.'}
@@ -617,7 +634,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   return (
     <main className="screen lab">
       <header className="topbar">
-        <div><b>섀시정비 실습실 (개발용 임시 배치)</b> · {noRecord ? '기록 안 됨' : `코드 ${session.anonymousStudentCode}`} · 도감 {codex.length}/{layout.equipment.length}</div>
+        <div><b>섀시정비 실습실 (개발용 임시 배치)</b> · {noRecord ? '기록 안 됨' : `코드 ${session.anonymousStudentCode}`} · 도감 {codex.length}/{layout.equipment.length} <button className="link codex-openbtn" aria-haspopup="dialog" disabled={sceneQuiet} onClick={openCodex}>도감 보기</button></div>
         <div className="small">
           <span className="warnchip">실제 배치 아님 · layoutConfirmed=false</span>
           {run && <button className="link" onClick={toggleDisplay}>{displayMode === 'threeD' ? '도식 모드로' : '3D 모드로'}</button>}
@@ -713,6 +730,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
         </section>
       </div>
       <p className="small">임시 배치 근거: 제동력 구역 일부 실측(2026-10-21), 나머지는 손 스케치 비례·가정. 실측 뒤 교사 재대조 전까지 실제 학교 재현이 아닙니다.</p>
+      {codexOpen && <CodexWindow equipment={layout.equipment} collected={codex} note={codexNote} onClose={closeCodex} />}
     </main>
   )
 }
