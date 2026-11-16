@@ -72,7 +72,10 @@ describe('3D 장면 걷기 멈춤(§3.3)', () => {
     expect(scene).toMatch(/<Walker [^\n]*frozen=\{camBusy\} holdStill=\{holdStill\}/)
   })
   test('학생 모습은 숨기지 않는다(숨김은 대화·확대 때의 frozen만)', () => {
-    expect(scene).toMatch(/<group visible=\{!frozen && view !== 'first'\}>/)
+    // 보임 판단은 scene/nameTag.ts의 studentShown(frozen, view) — 머리 위 닉네임과 함께 쓴다(설계 2026-11-16-debrief-and-free-roam 1-1). holdStill은 넣지 않는다
+    expect(scene).toContain('const shown = studentShown(frozen, view)')
+    expect(scene).toMatch(/<group visible=\{shown\}>/)
+    expect(fs.readFileSync('src/scene/nameTag.ts', 'utf8')).toContain("return !frozen && view !== 'first'")
   })
 })
 
