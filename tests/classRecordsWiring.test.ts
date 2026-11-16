@@ -47,24 +47,24 @@ describe('결과 화면 — 전송 상태 한 줄', () => {
   const session = createDemoSession({ studentCode: '2211', sessionCode: 'CLS-L12', attemptRole: 'practice', usagePhase: 'preview', task: tasks[0]!, difficultyMode: 'unguided' })
   const run = createTaskRun(tasks[0]!, { difficultyMode: 'unguided', displayMode: 'threeD' })
   const env: DeliveryEnvelope = { recordId: session.recordId, localSaveStatus: 'saved', uploadStatus: 'pending', uploadedAt: null, receiptId: null, payloadHash: null, uploadAttemptCount: 0, lastErrorCode: null, nextRetryAt: null }
-  const result = (sendLine: string | null) => text(renderToStaticMarkup(createElement(ResultScreen, { session, run, completionStatus: 'aborted', envelope: env, saveError: null, onNextStudent: () => {}, sendLine })))
+  const result = (sendLine: string | null) => text(renderToStaticMarkup(createElement(ResultScreen, { session, run, completionStatus: 'aborted', envelope: env, saveError: null, onToLab: () => {}, onEnd: () => {}, sendLine })))
   test('줄이 오면 그 문구를 보이고, 교사가 보낸다는 안내 대신 기기에 남아 다시 보낸다고 알린다', () => {
     const t = result(CLASS_SEND_TEXT.notYet)
     expect(t).toContain(CLASS_SEND_TEXT.notYet)
     expect(t).not.toMatch(/교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다/)
     expect(t).not.toMatch(/대기\(교사가 전송 전\)/)
   })
-  test('줄이 없으면(시연·리허설) 지금 그대로', () => {
+  test('줄이 없으면(시연·리허설) 이 기기에 저장했다는 한 줄과 교사 전송 안내(정리 화면, 설계 2026-11-16-debrief-and-free-roam 1-2)', () => {
     const t = result(null)
+    expect(t).toContain('기록을 이 기기에 저장했어요.')
     expect(t).toMatch(/교사가 교사 화면 ③ 수업 후에서 이 기기의 기록을 서버로 보냅니다/)
     for (const v of Object.values(CLASS_SEND_TEXT)) expect(t).not.toContain(v)
   })
-  test('교사용 상세 줄: 수업용 세션은 "연구용 접수가 아니므로", 시연은 지금처럼 "시연이므로"', () => {
-    expect(result(CLASS_SEND_TEXT.sent)).toMatch(/연구용 접수가 아니므로 researchEligible=false/)
-    expect(result(CLASS_SEND_TEXT.sent)).not.toMatch(/시연이므로/)
+  test('교사용 상세 기록(researchEligible 줄)은 학생 정리 화면에 없다 — 수업용·시연 모두(설계 2026-11-16-debrief-and-free-roam 1-2)', () => {
+    expect(result(CLASS_SEND_TEXT.sent)).not.toMatch(/researchEligible|교사용 상세/)
     const demo = createDemoSession({ studentCode: 'D-01', sessionCode: 'DEMO-ONLY', attemptRole: 'practice', usagePhase: 'preview', task: tasks[0]!, difficultyMode: 'guided' })
-    const t = text(renderToStaticMarkup(createElement(ResultScreen, { session: demo, run, completionStatus: 'aborted', envelope: { ...env, recordId: demo.recordId }, saveError: null, onNextStudent: () => {} })))
-    expect(t).toMatch(/시연이므로 researchEligible=false/)
+    const t = text(renderToStaticMarkup(createElement(ResultScreen, { session: demo, run, completionStatus: 'aborted', envelope: { ...env, recordId: demo.recordId }, saveError: null, onToLab: () => {}, onEnd: () => {} })))
+    expect(t).not.toMatch(/researchEligible|교사용 상세/)
   })
   test('전송 상태 줄은 알림 영역(role=status)', () => {
     expect(read('src/screens/ResultScreen.tsx')).toMatch(/<span className="send-line" role="status">\{sendLine\}<\/span>/)

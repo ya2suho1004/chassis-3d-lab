@@ -11,6 +11,13 @@ export function nextHighlightId(run: TaskRun | null): string | null {
   return run.task.steps.find((s) => s.stepId === run.nextStepId)?.equipmentId ?? null
 }
 
+/** 둘러보기 화면 위 안내(설계 2026-11-16-debrief-and-free-roam 1-6): 수행 전은 과제를 받으라고, 수행 뒤는 도감만 */
+export function roamLine(after: 'completed' | 'aborted' | null): string {
+  if (after === 'completed') return '의뢰 완료 — 장비를 눌러 도감을 모아 보세요.'
+  if (after === 'aborted') return '장비를 눌러 도감을 모아 보세요.'
+  return '장비를 눌러 도감을 채우고, 교관에게 가서 과제를 받으세요.'
+}
+
 /** AI 교관에 보낼 과제 — 과제 수령 전에도 시작 화면에서 고른 과제 기준으로 답하게 한다(없으면 서버가 제동력으로 본다) */
 export function chatTaskId(task: ApprovedTask, run: TaskRun | null): 'min-turning-radius' | null {
   return (run?.task ?? task).taskId === 'min-turning-radius' ? 'min-turning-radius' : null
