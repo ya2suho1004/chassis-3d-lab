@@ -39,6 +39,9 @@ export const ENTRY_TEXT: Record<EntryKind, { word: string; label: string; exampl
 /** 학번 형식(학년 1~3 + 반 1~9 + 번호 01~99)인가 — 입장 검사와 전송함 안전장치(delivery/outbox.ts)가 같이 쓴다 */
 export const isStudentNumber = (code: string) => STUDENT_NUMBER_RE.test(code)
 
+/** 시연 세션 시작 화면: 학번이 없는 사람(공개 주소로 체험하러 온 사람)에게 들어가는 길을 알려 준다. 수업용·리허설 세션에서는 보이지 않는다 */
+export const GUEST_HINT = '학번이 없으면 아래 ‘기록 없이 하기’를 누르세요.'
+
 export function entryKindFor(sessionCode: string): EntryKind {
   return sessionDef(sessionCode)?.kind === 'rehearsal' ? 'virtualCode' : 'studentNumber'
 }

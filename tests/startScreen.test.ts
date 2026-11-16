@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { StartScreen } from '../src/screens/StartScreen'
 import { caseKey, PRESET_KEY, type TeacherPreset } from '../src/app/teacherPreset'
-import { listTasks } from '../src/app/session'
+import { GUEST_HINT, listTasks } from '../src/app/session'
 import type { ClassLinkTaken } from '../src/app/classLink'
 import type { Repository } from '../src/records/repository'
 
@@ -147,5 +147,21 @@ describe('흐름 확인·시연 영상 스크립트(puppeteer-core, 설치돼 �
     }
     expect(flow).toMatch(/p\.type\('input\[aria-label="학번"\]', '3999'\)/)
     expect(flow).toMatch(/m=\$\{MODE === 'unguided' \? 'u' : 'g'\}/)
+  })
+  test('시연 세션에서는 학번이 없는 사람에게 기록 없이 하기를 알려 준다(수업용·리허설 세션에서는 알리지 않는다)', () => {
+    withPreset(null)
+    expect(text(render())).toContain(GUEST_HINT)
+    expect(GUEST_HINT).toMatch(/학번이 없으면/)
+    expect(GUEST_HINT).toMatch(/기록 없이 하기/)
+    withPreset({ sessionCode: 'CLS-L12' })
+    expect(text(render())).not.toContain(GUEST_HINT)
+    withPreset({ sessionCode: 'REH-L12' })
+    expect(text(render())).not.toContain(GUEST_HINT)
+  })
+
+  test('시연 세션에서 학번 형식이 틀렸다는 안내에도 같은 길을 붙인다(원본 글 검사)', () => {
+    const src = fs.readFileSync('src/screens/StartScreen.tsx', 'utf8')
+    expect(src).toMatch(/role="alert">\{error\}\{guest \? ` \$\{GUEST_HINT\}` : ''\}</)
+    expect(src).toMatch(/const guest = isDemoSession\(sessionCode\) && entryKind === 'studentNumber'/)
   })
 })
