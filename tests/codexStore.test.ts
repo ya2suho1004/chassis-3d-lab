@@ -70,6 +70,26 @@ describe('배치에 없는 번호와 망가진 값', () => {
   })
 })
 
+describe('저장 열쇠 방어 — 코드가 객체 원형의 이름이어도 안전하다', () => {
+  test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty', 'valueOf'])('%s: 처음엔 빈 목록, 더하면 그 코드에만 남고 다른 코드는 그대로', (code) => {
+    expect(loadCodex(code, KNOWN)).toEqual([])
+    expect(addToCodex('3999', 'lift-zone-01/a')).toBe(true)
+    expect(addToCodex(code, 'brake-tester-01')).toBe(true)
+    expect(loadCodex(code, KNOWN)).toEqual(['brake-tester-01'])
+    expect(loadCodex('3999', KNOWN)).toEqual(['lift-zone-01/a'])
+    expect(Object.prototype.hasOwnProperty.call(JSON.parse(store.get(CODEX_KEY)!), code)).toBe(true)
+  })
+  test('저장값에 __proto__ 열쇠가 있어도 원형을 바꾸지 않고 그 코드의 목록으로만 읽는다', () => {
+    store.set(CODEX_KEY, '{"__proto__":["brake-tester-01"],"3999":["lift-zone-01/a"]}')
+    const all = parseCodexStore(store.get(CODEX_KEY)!)
+    expect(Object.prototype.hasOwnProperty.call(all, '__proto__')).toBe(true)
+    expect(Object.getPrototypeOf(all)).toBeNull()
+    expect(loadCodex('__proto__', KNOWN)).toEqual(['brake-tester-01'])
+    expect(loadCodex('constructor', KNOWN)).toEqual([])
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined()
+  })
+})
+
 describe('저장 공간이 막혀도 실습은 그대로', () => {
   test('쓰기가 막히면 false를 돌려줄 뿐 던지지 않는다', () => {
     failWrite = true

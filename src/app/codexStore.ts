@@ -5,13 +5,17 @@
 
 export const CODEX_KEY = 'chassis.codex.v1'
 
+// 코드는 밖에서 들어온 글이다. 'constructor'·'toString'·'__proto__' 같은 코드가 객체 원형의 값을 집거나 원형을 바꾸지 않게
+// 저장소는 원형 없는 객체로 만들고, 읽을 때는 자기 열쇠인지 따로 본다
+const own = (o: object, k: string) => Object.prototype.hasOwnProperty.call(o, k)
+
 /** 저장소 전체(코드 → 모은 번호 목록)를 읽어 쓸 수 있는 것만 남긴다. 겹친 번호는 하나만 */
 export function parseCodexStore(raw: string | null): Record<string, string[]> {
-  if (!raw) return {}
+  const out: Record<string, string[]> = Object.create(null)
+  if (!raw) return out
   let v: unknown
-  try { v = JSON.parse(raw) } catch { return {} }
-  if (typeof v !== 'object' || v === null || Array.isArray(v)) return {}
-  const out: Record<string, string[]> = {}
+  try { v = JSON.parse(raw) } catch { return out }
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return out
   for (const [code, ids] of Object.entries(v as Record<string, unknown>)) {
     if (!Array.isArray(ids)) continue
     out[code] = [...new Set(ids.filter((x): x is string => typeof x === 'string'))]
@@ -23,7 +27,8 @@ export function parseCodexStore(raw: string | null): Record<string, string[]> {
 export function loadCodex(code: string, knownIds: readonly string[]): string[] {
   try {
     const known = new Set(knownIds)
-    return (parseCodexStore(localStorage.getItem(CODEX_KEY))[code] ?? []).filter((id) => known.has(id))
+    const all = parseCodexStore(localStorage.getItem(CODEX_KEY))
+    return (own(all, code) ? all[code]! : []).filter((id) => known.has(id))
   } catch { return [] }
 }
 
@@ -31,7 +36,7 @@ export function loadCodex(code: string, knownIds: readonly string[]): string[] {
 export function addToCodex(code: string, id: string): boolean {
   try {
     const all = parseCodexStore(localStorage.getItem(CODEX_KEY))
-    const mine = all[code] ?? []
+    const mine = own(all, code) ? all[code]! : []
     if (!mine.includes(id)) all[code] = [...mine, id]
     localStorage.setItem(CODEX_KEY, JSON.stringify(all))
     return true

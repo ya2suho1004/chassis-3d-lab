@@ -357,8 +357,16 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
     if (!sceneQuiet) fire('sceneTap', e ? tapSpotOf(e) : undefined)
     if (!codex.includes(id)) { setCodex([...codex, id]); if (!noRecord) addToCodex(session.anonymousStudentCode, id); if (!sceneQuiet) fire('codexNew') }
   }
-  /** 도감 창(설계 2026-11-16): 조용한 때(가까이 보기·연습·기록 창)에는 열지 않는다. 열고 닫기는 사건을 내지 않는다(버튼 누름 느낌만) */
-  const openCodex = () => { if (sceneQuiet) return; setMenuOpen(false); setTalkOnArrive(false); setCodexOpen(true) }
+  /** 도감 창(설계 2026-11-16): 조용한 때(가까이 보기·연습·기록 창)에는 열지 않는다. 열고 닫기는 사건을 내지 않는다(버튼 누름 느낌만).
+   *  열 때 기록 창을 열 때처럼 걷던 입력과 교관에게 걸어가던 대화 예약을 거두고, 뒤의 창(메뉴·교관 말풍선·작업 목록·AI 질문 창)을 닫는다 —
+   *  화면 낭독기가 뒤 내용에 닿지 않게. 화면 상태만 바꾼다(과제 패널·질문 대화는 붙은 채 숨겨질 뿐이라 진행·기록은 그대로) */
+  const openCodex = () => {
+    if (sceneQuiet) return
+    joystickRef.current = { x: 0, y: 0 }
+    setTalkOnArrive(false)
+    setMenuOpen(false); setNpcOpen(false); setDrawerOpen(false); setChatOpen(false)
+    setCodexOpen(true)
+  }
   const closeCodex = () => setCodexOpen(false)
   /** 교관을 눌렀다(3D에서 누르거나 1인칭 조준 버튼으로): 장면 누름 사건 */
   const tapNpc = () => { if (!sceneQuiet) fire('sceneTap', { x: layout.npc.x, z: layout.npc.z, r: NPC_TAP_RADIUS }) }
@@ -490,7 +498,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
               </button>
             )}
 
-            {!viewing && !practicing && !recording && <Joystick input={joystickRef} />}
+            {!viewing && !practicing && !recording && !codexOpen && <Joystick input={joystickRef} />}
             {run && !viewing && !recording && panelNear && <button className="g-gaugebtn" data-feel="press" onClick={() => setCloseUp(true)}><Icon name="gauge" /> 계기 보기</button>}
             {run && !viewing && !practicing && !recording && turningNear && <button className="g-gaugebtn" data-feel="press" onClick={() => setTtSide('left')}><Icon name="gauge" /> 측정판 보기</button>}
             {!practicing && !viewing && !recording && discNear && <button className="g-gaugebtn" data-feel="press" onClick={() => { setDiscOpen(true); setDiscMsg(null) }}><Icon name="look" /> 디스크 런아웃 연습</button>}
@@ -560,7 +568,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
             <p className="g-tip"><b>TIP</b>{tips[tipIdx % tips.length]}</p>
           </div>
         )}
-        {loadedOnce && guideOpen && !talking && !recording && (
+        {loadedOnce && guideOpen && !talking && !recording && !codexOpen && (
           <div className="g-guide" role="dialog" aria-label="조작 안내">
             <b>조작 안내</b>
             <ul>

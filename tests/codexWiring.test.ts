@@ -40,8 +40,10 @@ describe('여는 곳', () => {
     expect(lab.match(/disabled=\{sceneQuiet\} onClick=\{openCodex\}/g)).toHaveLength(2)
     expect(lab.match(/onClick=\{openCodex\}/g)).toHaveLength(2)
   })
-  test('열 때 메뉴를 닫고 교관에게 걸어가던 대화 예약을 취소한다. 사건은 내지 않는다', () => {
-    expect(lab).toContain('const openCodex = () => { if (sceneQuiet) return; setMenuOpen(false); setTalkOnArrive(false); setCodexOpen(true) }')
+  test('열 때 뒤의 창(메뉴·교관 말풍선·작업 목록·AI 질문 창)을 닫고, 걷던 입력과 교관에게 걸어가던 대화 예약을 거둔다. 화면 상태만 — 사건·과제 진행은 건드리지 않는다', () => {
+    expect(lab).toContain('const openCodex = () => {\n    if (sceneQuiet) return\n    joystickRef.current = { x: 0, y: 0 }\n    setTalkOnArrive(false)\n    setMenuOpen(false); setNpcOpen(false); setDrawerOpen(false); setChatOpen(false)\n    setCodexOpen(true)\n  }')
+    const body = lab.slice(lab.indexOf('const openCodex = () => {'), lab.indexOf('const closeCodex = '))
+    expect(body).not.toMatch(/fire\(|onRunChange|ctx\?*\.|repo\.|gate\.|onFinish/)
     expect(lab).toContain('const closeCodex = () => setCodexOpen(false)')
     expect(lab.indexOf('const sceneQuiet = ')).toBeLessThan(lab.indexOf('const openCodex = '))
   })
@@ -56,6 +58,14 @@ describe('창', () => {
   test('저장 방식 안내: 기록 없이 하기는 저장하지 않는다고, 아니면 이 기기에만', () => {
     expect(lab).toContain("const codexNote = noRecord ? '기록 없이 하기라서 도감을 저장하지 않습니다(이번에만 모읍니다).' : '이 기기에만 남고 연구 기록·서버에는 보내지 않습니다.'")
   })
+  test('열린 동안 조작 안내 카드를 숨긴다(닫지는 않는다 — 도감을 닫으면 다시 보인다)', () => {
+    expect(lab).toMatch(/\{loadedOnce && guideOpen && !talking && !recording && !codexOpen && \(/)
+    for (const line of lab.split('\n').filter((l) => /codexOpen|openCodex|closeCodex/.test(l))) expect(line).not.toMatch(/setGuideOpen|closeGuide/)
+  })
+  test('열린 동안 조이스틱을 그리지 않는다(화살표·W·A·S·D를 가로채지 않아 카드 목록을 키보드로 내려 볼 수 있다)', () => {
+    expect(lab).toMatch(/\{!viewing && !practicing && !recording && !codexOpen && <Joystick input=\{joystickRef\} \/>\}/)
+    expect(lab.match(/<Joystick /g)).toHaveLength(1)
+  })
   test('열린 동안 뒤 장면의 캐릭터는 키보드로도 걷지 않는다', () => {
     expect(lab).toContain('holdStill={recording || codexOpen}')
   })
@@ -69,6 +79,10 @@ describe('창', () => {
 describe('겉모습', () => {
   test('창 바탕은 화면에 고정되어 게임 화면·기본 화면 모두를 덮고, 작업 목록·질문 창·교관 대화보다 위', () => {
     expect(css).toMatch(/\.codex-wrap \{[^}]*position:fixed; inset:0; z-index:10;/)
+  })
+  test('기본 화면의 3D 이름표(drei Html, 아주 큰 z-index)가 도감 창 위로 올라오지 않게 장면 틀 안에 가둔다(게임 화면 .g-canvas와 같은 방식)', () => {
+    expect(css).toMatch(/\.canvaswrap \{[^}]*isolation:isolate/)
+    expect(css).toMatch(/\.game \.g-canvas \{[^}]*isolation:isolate/)
   })
   test('카드 줄은 좁은 폭에서도 가로로 넘치지 않는다(칸 최소 폭이 창 폭을 넘지 않고, 긴 낱말도 끊긴다)', () => {
     expect(css).toMatch(/\.codex-list \{[^}]*grid-template-columns:repeat\(auto-fill, minmax\(min\(220px, 100%\), 1fr\)\)/)

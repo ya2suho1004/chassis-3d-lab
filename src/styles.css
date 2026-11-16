@@ -59,7 +59,7 @@ button.link { min-height:0; padding:0 4px; border:none; background:none; text-de
 .labgrid.withtask { grid-template-columns: minmax(320px, 1.1fr) minmax(360px, 1fr); }
 .labgrid.diagram { grid-template-columns: 1fr; }
 @media (max-width: 1000px) { .labgrid.withtask { grid-template-columns: 1fr; } }
-.canvaswrap { position:relative; height:min(62vh, 560px); min-height:320px; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#dfe6ec; }
+.canvaswrap { position:relative; height:min(62vh, 560px); min-height:320px; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#dfe6ec; isolation:isolate; } /* 3D 이름표(drei Html은 아주 큰 z-index를 단다)가 도감 창 위로 올라오지 않게 장면 틀 안에 가둔다(게임 화면 .g-canvas와 같은 까닭) */
 .canvaswrap canvas { display:block; }
 .hud { position:absolute; left:8px; right:8px; bottom:8px; display:flex; flex-wrap:wrap; gap:8px; pointer-events:none; }
 .hud span { background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:6px; padding:4px 8px; font-size:13px; }
