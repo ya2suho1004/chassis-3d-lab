@@ -56,9 +56,9 @@ export function DebriefNotesCard({ view, ruleNotes, stats }: { view: DebriefView
         ? <p className="debrief-wait" role="status">{DEBRIEF_WAITING_LINE}</p>
         : (
           <div className="debrief-groups">
-            <div><h3>잘한 점</h3><ul>{notes.good.map((l) => <li key={l}>{l}</li>)}</ul></div>
-            <div><h3>보완할 점</h3><ul>{notes.improve.map((l) => <li key={l}>{l}</li>)}</ul></div>
-            <div><h3>어려웠던 것으로 보이는 점</h3><ul>{notes.hard.map((l) => <li key={l}>{l}</li>)}</ul></div>
+            <div><h3>잘한 점</h3><ul>{notes.good.map((l, i) => <li key={i}>{l}</li>)}</ul></div>
+            <div><h3>보완할 점</h3><ul>{notes.improve.map((l, i) => <li key={i}>{l}</li>)}</ul></div>
+            <div><h3>어려웠던 것으로 보이는 점</h3><ul>{notes.hard.map((l, i) => <li key={i}>{l}</li>)}</ul></div>
           </div>
         )}
     </section>
