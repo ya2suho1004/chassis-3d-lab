@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import {
-  checkDebriefAnswer, handleDebrief, isDebriefBody, parseDebriefRequest,
+  checkDebriefAnswer, debriefAllowedNumbers, handleDebrief, isDebriefBody, parseDebriefRequest,
   DEBRIEF_CAP_PER_STUDENT, DEBRIEF_PROTOCOL, type DebriefDeps,
 } from '../supabase/functions/_shared/chat/debriefCore'
 import { buildDebriefSummary, buildDebriefSystemPrompt, DEBRIEF_PROMPT_PREFIX, DEBRIEF_PROMPT_VERSION } from '../supabase/functions/_shared/chat/debriefPrompt'
@@ -22,6 +22,9 @@ import { COUNT_LABEL, ITEM_LABEL } from '../src/app/resultLabels'
 import { buildDebriefContext } from '../scripts/build-chat-context.mjs'
 
 const NOW = Date.parse('2026-11-16T05:00:00.000Z')
+/** 앱이 만드는 수행 번호 모양(src/domain/uuid.ts, UUID v4) */
+const RID = '3f2a9c1e-7b4d-4e8a-9c21-5d6e7f8a9b0c'
+const SEC = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d'
 const BRAKE_ITEMS = ['left', 'right', 'axleWeight', 'deviation', 'sum', 'vehicleCondition']
 const TURN_ITEMS = ['leftAngle', 'rightAngle', 'radius', 'vehicleCondition']
 const items = (ids: string[], o: Record<string, [boolean | null, boolean | null]> = {}) => ids.map((itemId) => ({ itemId, first: o[itemId] ? o[itemId]![0] : true, final: o[itemId] ? o[itemId]![1] : true }))
@@ -30,7 +33,7 @@ const facts = (o: Record<string, unknown> = {}) => ({
   errorTypes: { reading: 1, calc: 2, order: 1 }, safetyViolationTypes: { 's-ppe': 1 }, hintCount: 0, npcInspectionCount: 2, durationSeconds: 400, ...o,
 })
 const req = (o: Record<string, unknown> = {}) => JSON.stringify({
-  protocolVersion: 'debrief-1', sessionCode: 'DEMO-ONLY', anonymousStudentCode: 'D-01', recordId: 'rec-1', taskId: 'braking-force', difficultyMode: 'unguided', facts: facts(), ...o,
+  protocolVersion: 'debrief-1', sessionCode: 'DEMO-ONLY', anonymousStudentCode: 'D-01', recordId: RID, taskId: 'braking-force', difficultyMode: 'unguided', facts: facts(), ...o,
 })
 const GOOD = JSON.stringify({ good: ['좌 제동력과 축중을 처음부터 정확히 읽었어요.'], improve: ['보호구를 놓친 적이 있어요. 작업 전에 보호구부터 확인해 보세요.'], hard: ['계산에서 2번 막힌 걸 보면 편차 계산이 어려웠던 것 같아요.'] })
 
@@ -73,13 +76,17 @@ describe('갈래 나누기', () => {
     expect(src.match(/\.like\('prompt_version', `\$\{DEBRIEF_PROMPT_PREFIX\}%`\)/g)?.length).toBe(2)
     expect(DEBRIEF_PROMPT_PREFIX).toBe('debrief-')
     expect(DEBRIEF_PROMPT_VERSION.startsWith(DEBRIEF_PROMPT_PREFIX)).toBe(true)
-    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.1.0')
+    expect(DEBRIEF_PROMPT_VERSION).toBe('debrief-ko-0.1.1')
   })
 })
 
 describe('요청 검사(허용 목록)', () => {
+  test('수행 번호는 앱이 만드는 UUID 모양만(대소문자 무관)', () => {
+    expect(parseDebriefRequest('text/plain', req({ recordId: RID.toUpperCase() }), labels)).not.toBeNull()
+    for (const id of ['rec-1', '', `urn:uuid:${RID}`, RID.replace(/-/g, ''), `${RID} `, '3f2a9c1e-7b4d-4e8a-9c21-5d6e7f8a9b0g']) expect(parseDebriefRequest('text/plain', req({ recordId: id }), labels), id).toBeNull()
+  })
   test('정상 요청은 통과', () => {
-    expect(parseDebriefRequest('text/plain', req(), labels)).toMatchObject({ taskId: 'braking-force', recordId: 'rec-1' })
+    expect(parseDebriefRequest('text/plain', req(), labels)).toMatchObject({ taskId: 'braking-force', recordId: RID })
     expect(parseDebriefRequest('text/plain', req({ taskId: 'min-turning-radius', facts: facts({ items: items(TURN_ITEMS), errorTypes: {}, safetyViolationTypes: { 's-engine': 1 }, durationSeconds: null }) }), labels)).not.toBeNull()
   })
   test('잘못된 요청은 INVALID_REQUEST, 모델 호출·기록·DB 조회 없음', async () => {
@@ -88,7 +95,7 @@ describe('요청 검사(허용 목록)', () => {
       ['MIME', req(), 'application/json'], ['빈 본문', '', 'text/plain'], ['JSON 아님', '{x', 'text/plain'], ['16KB 초과', req({ pad: 'x'.repeat(17000) }), 'text/plain'],
       ['추가 키', req({ question: '안녕' }), 'text/plain'], ['프로토콜', req({ protocolVersion: 'chat-1' }), 'text/plain'],
       ['세션 형식', req({ sessionCode: '수업 1' }), 'text/plain'], ['학생 형식', req({ anonymousStudentCode: 'a b' }), 'text/plain'],
-      ['recordId 없음', req({ recordId: null }), 'text/plain'], ['recordId 빈', req({ recordId: '' }), 'text/plain'], ['recordId 65자', req({ recordId: 'r'.repeat(65) }), 'text/plain'],
+      ['recordId 없음', req({ recordId: null }), 'text/plain'], ['recordId 빈', req({ recordId: '' }), 'text/plain'], ['recordId 65자', req({ recordId: 'r'.repeat(65) }), 'text/plain'], ['recordId UUID 아님', req({ recordId: 'rec-1' }), 'text/plain'], ['recordId 글', req({ recordId: '좌 제동력 240 kg' }), 'text/plain'], ['recordId 뒤에 덧붙임', req({ recordId: `${RID}x` }), 'text/plain'],
       ['과제 없음', req({ taskId: undefined }), 'text/plain'], ['모르는 과제', req({ taskId: 'wheel' }), 'text/plain'], ['단계 모드', req({ difficultyMode: 'easy' }), 'text/plain'],
       ['facts 없음', req({ facts: null }), 'text/plain'], ['facts 추가 키', req({ facts: { ...facts(), note: '잘했어요' } }), 'text/plain'],
       ['항목 빠짐', req({ facts: facts({ items: items(BRAKE_ITEMS).slice(1) }) }), 'text/plain'],
@@ -121,7 +128,7 @@ describe('켜짐·재사용·한도', () => {
   test('같은 수행(recordId·세션·학번)의 저장된 정리가 있으면 모델을 부르지 않고 그대로 돌려준다(한도도 세지 않음)', async () => {
     const h = harness({ stored: { chatId: 'chat-9', answer: GOOD }, mine: 99, all: 9999 })
     expect(await h.run(req())).toEqual({ protocolVersion: DEBRIEF_PROTOCOL, ok: true, notes: JSON.parse(GOOD), logged: true, chatId: 'chat-9', reused: true })
-    expect(h.finds).toEqual([['DEMO-ONLY', 'D-01', 'rec-1']])
+    expect(h.finds).toEqual([['DEMO-ONLY', 'D-01', RID]])
     expect(h.calls).toHaveLength(0); expect(h.logs).toHaveLength(0); expect(h.counts).toHaveLength(0)
   })
   test('저장된 정리가 읽을 수 없는 글이면 무시하고 새로 쓴다', async () => {
@@ -145,11 +152,11 @@ describe('켜짐·재사용·한도', () => {
 describe('AI 회사로 가는 글', () => {
   test('지시문 + 요약만 보낸다: 학번·세션 코드·수행 번호가 없고, 앞 대화 없음', async () => {
     const h = harness()
-    await h.run(req({ anonymousStudentCode: '2317', sessionCode: 'CLS-L12', recordId: 'REC-SECRET-77' }))
+    await h.run(req({ anonymousStudentCode: '2317', sessionCode: 'CLS-L12', recordId: SEC }))
     const c = h.calls[0]!
     expect(c.history).toEqual([])
     const sent = JSON.stringify({ system: c.system, question: c.question })
-    for (const s of ['2317', 'CLS-L12', 'REC-SECRET-77', 'TEST-KEY']) expect(sent).not.toContain(s)
+    for (const s of ['2317', 'CLS-L12', SEC, 'TEST-KEY']) expect(sent).not.toContain(s)
     expect(c.system).toBe(buildDebriefSystemPrompt(context, 'braking-force'))
     expect(c.question).toBe(buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'unguided', facts: facts() as any }))
   })
@@ -199,7 +206,7 @@ describe('AI 회사로 가는 글', () => {
   })
 })
 
-describe('지시문(debrief-ko-0.1.0)', () => {
+describe('지시문(debrief-ko-0.1.1)', () => {
   const draft = readFileSync('docs/copy/2026-11-16_AI정리_지시문_초안.md', 'utf8')
   const block = draft.split('## 지시문 (전문)')[1]!.split('```')[1]!.replace(/^\n/, '').replace(/\n$/, '')
   test('지시문 초안 문서의 글 그대로 — 판정 기준·작업 순서 구역만 과제별로 채운다', () => {
@@ -229,7 +236,7 @@ describe('지시문(debrief-ko-0.1.0)', () => {
 describe('답 검사', () => {
   const sys = buildDebriefSystemPrompt(context, 'braking-force')
   const sum = buildDebriefSummary(labels, { taskId: 'braking-force', difficultyMode: 'unguided', facts: facts() as any })
-  const allowed = `${sys}\n${sum}`
+  const allowed = debriefAllowedNumbers(context, 'braking-force', sum)
   const ok = (v: unknown) => checkDebriefAnswer(typeof v === 'string' ? v : JSON.stringify(v), allowed)
   test('정상: JSON 하나, 세 묶음, 빈 묶음 허용, 앞뒤 공백·빈 문장은 다듬는다', () => {
     expect(ok(GOOD)).toEqual({ ok: true, notes: JSON.parse(GOOD) })
@@ -253,6 +260,31 @@ describe('답 검사', () => {
     expect(ok({ good: ['6분 40초 동안 끝까지 해냈어요.'], improve: [], hard: [] })).toMatchObject({ ok: true })
     expect(ok({ good: ['가'.repeat(120)], improve: [], hard: [] })).toMatchObject({ ok: true })
   })
+  test('숫자 허용 원본은 요약 + 그 과제의 판정 기준 구역뿐(작업 순서 번호·말투 구역의 수는 안 됨)', () => {
+    expect(allowed).toBe(`${sum}\n${criteriaSection(context, 'braking-force')}`)
+    expect(sys).toMatch(/\n5\. /); expect(sys).toMatch(/\n9\. /); expect(sys).toContain('60자')
+    for (const l of ['검사를 5번 받았어요.', '9번째 단계를 다시 보세요.', '한 문장은 60자예요.', '힌트를 3번 썼어요.']) expect(ok({ good: [], improve: [], hard: [l] }), l).toMatchObject({ ok: false })
+    for (const l of ['편차는 8% 이하, 합은 뒤축 20% 이상인지 보세요.', '앞축은 50% 이상이에요.', '× 100을 빠뜨리지 마세요.']) expect(ok({ good: [], improve: [l], hard: [] }), l).toMatchObject({ ok: true })
+    const tsum = buildDebriefSummary(labels, { taskId: 'min-turning-radius', difficultyMode: 'guided', facts: { items: items(TURN_ITEMS), errorTypes: {}, safetyViolationTypes: {}, hintCount: 0, npcInspectionCount: 1, durationSeconds: null } })
+    const tallowed = debriefAllowedNumbers(context, 'min-turning-radius', tsum)
+    expect(checkDebriefAnswer(JSON.stringify({ good: [], improve: ['최소회전반경은 12 m 이하인지 보세요.'], hard: [] }), tallowed)).toMatchObject({ ok: true })
+    expect(checkDebriefAnswer(JSON.stringify({ good: [], improve: ['편차는 8% 이하예요.'], hard: [] }), tallowed)).toMatchObject({ ok: false })
+  })
+  test('전각 숫자도 잡는다(NFKC로 바꿔 검사)', () => {
+    expect(ok({ good: ['검사를 ５번 받았어요.'], improve: [], hard: [] })).toMatchObject({ ok: false })
+    expect(ok({ good: ['검사를 ２번 받았어요.'], improve: [], hard: [] })).toMatchObject({ ok: true })
+    expect(ok({ good: [], improve: ['편차가 ７.３%였어요.'], hard: [] })).toMatchObject({ ok: false })
+  })
+  test('한글 수사 + 번(한~열)도 같은 허용 목록으로: 요약에 없는 횟수는 거절', () => {
+    // 이 요약의 수: 6·40·2·1·0(+기준 100·8·50·20·1)
+    expect(ok({ good: [], improve: [], hard: ['힌트를 세 번 썼어요.'] })).toMatchObject({ ok: false })
+    expect(ok({ good: [], improve: [], hard: ['검사를 다섯번 받았어요.'] })).toMatchObject({ ok: false })
+    expect(ok({ good: ['한 번에 맞혔어요.'], improve: [], hard: ['검사를 두 번 받았어요.'] })).toMatchObject({ ok: true })
+    expect(ok({ good: ['한 가지를 잘했어요. 세 가지 확인을 했어요.'], improve: [], hard: [] })).toMatchObject({ ok: true })
+    // 요약에 1이 없으면 "한 번에"도 거절(최소회전반경 기준 구역에는 1이 있으므로 기준 없이 본다)
+    expect(checkDebriefAnswer(JSON.stringify({ good: ['한 번에 통과했어요.'], improve: [], hard: [] }), '검사 2번')).toMatchObject({ ok: false })
+    expect(checkDebriefAnswer(JSON.stringify({ good: ['한 번에 통과했어요.'], improve: [], hard: [] }), '검사 1번')).toMatchObject({ ok: true })
+  })
 })
 
 describe('모델 호출·기록·응답', () => {
@@ -261,7 +293,7 @@ describe('모델 호출·기록·응답', () => {
     const res = await h.run(req())
     expect(res).toEqual({ protocolVersion: DEBRIEF_PROTOCOL, ok: true, notes: JSON.parse(GOOD), logged: true, chatId: 'chat-1', reused: false })
     const row = h.logs[0]!
-    expect(row).toMatchObject({ record_id: 'rec-1', session_code: 'DEMO-ONLY', anonymous_student_code: 'D-01', difficulty_mode: 'unguided', step_id: null, turn_index: 0, masked_patterns: [], provider: 'gemini', model: 'gemini-3.5-flash-lite', model_version: 'gemini-3.5-flash-lite', prompt_version: DEBRIEF_PROMPT_VERSION, status: 'answered' })
+    expect(row).toMatchObject({ record_id: RID, session_code: 'DEMO-ONLY', anonymous_student_code: 'D-01', difficulty_mode: 'unguided', step_id: null, turn_index: 0, masked_patterns: [], provider: 'gemini', model: 'gemini-3.5-flash-lite', model_version: 'gemini-3.5-flash-lite', prompt_version: DEBRIEF_PROMPT_VERSION, status: 'answered' })
     expect(row.question_masked).toBe(h.calls[0]!.question)
     expect(JSON.parse(row.answer!)).toEqual(JSON.parse(GOOD))
     expect(typeof row.latency_ms).toBe('number')

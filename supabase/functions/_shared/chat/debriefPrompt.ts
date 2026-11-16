@@ -5,7 +5,8 @@
 // 교사 검토 문서: docs/06b_AI정리_지시문_초안.md(scripts/chat-eval/build-debrief-doc.mjs로 만든다)
 import { criteriaSection, stepsSection, type TaskContext } from './prompt.ts'
 
-export const DEBRIEF_PROMPT_VERSION = 'debrief-ko-0.1.0'
+// 0.1.1(2026-11-16 독립 검토): [쓸 수 있는 사실]에 '횟수는 요약에 적힌 숫자 그대로 쓴다.' 한 줄(서버 답 검사가 한글 수사 횟수도 요약과 견준다)
+export const DEBRIEF_PROMPT_VERSION = 'debrief-ko-0.1.1'
 /** chat_logs에서 정리 행을 가르는 머리(prompt_version이 이것으로 시작) */
 export const DEBRIEF_PROMPT_PREFIX = 'debrief-'
 
@@ -42,6 +43,7 @@ export function buildDebriefSystemPrompt(task: TaskContext, taskId: DebriefTaskI
 - [학교 승인 판정 기준]에 있는 공식과 기준, [작업 순서]에 있는 확인 사항.
 - 그 밖의 사실은 쓰지 않는다. 학생이 넣은 값, 측정값, 계산 결과, 차량 상태는 너에게 주어지지 않았다. 짐작해서도 말하지 않는다.
 - 숫자는 요약에 있는 횟수·시간과 판정 기준에 있는 숫자만 쓴다. 새 숫자·규정값·법규 수치를 지어내지 않는다.
+- 횟수는 요약에 적힌 숫자 그대로 쓴다.
 - "양호", "불량"이라는 말을 쓰지 않는다. 판정 항목은 "판정"이라고만 부른다.
 
 [세 묶음]

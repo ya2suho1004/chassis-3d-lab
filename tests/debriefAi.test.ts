@@ -53,21 +53,23 @@ describe('보내는 사실(facts)', () => {
   })
   test('만든 요청은 서버의 허용 목록 검사를 통과한다(두 과제)', () => {
     for (const [t, ans] of [[task, undefined], [turn, { leftAngle: '35', rightAngle: '30', radius: '5.5', vehicleCondition: 'pass' }]] as const) {
-      const body = buildDebriefBody({ sessionCode: 'DEMO-ONLY', anonymousStudentCode: 'D-01', recordId: 'rec-1', taskId: t.taskId, difficultyMode: 'unguided', facts: debriefRequestFacts(run(ans as any, t), 61) })
+      const body = buildDebriefBody({ sessionCode: 'DEMO-ONLY', anonymousStudentCode: 'D-01', recordId: '0d9c8b7a-6f5e-4d3c-8b2a-1f0e9d8c7b6a', taskId: t.taskId, difficultyMode: 'unguided', facts: debriefRequestFacts(run(ans as any, t), 61) })
       expect(parseDebriefRequest('text/plain', body, labels), t.taskId).not.toBeNull()
     }
   })
 })
 
 describe('부르는 조건', () => {
-  const base = { completionStatus: 'completed' as const, noRecord: false, endpoint: 'https://x.supabase.co/functions/v1/chat', recordId: 'rec-1', online: true }
-  test('검사 통과·기록 모드·대화 주소·확정 기록 번호·온라인이 모두 있을 때만', () => {
+  const base = { completionStatus: 'completed' as const, noRecord: false, endpoint: 'https://x.supabase.co/functions/v1/chat', recordId: 'rec-1', online: true, saved: true }
+  test('검사 통과·기록 모드·대화 주소·확정 기록 번호·저장됨·온라인이 모두 있을 때만', () => {
     expect(shouldAskDebrief(base)).toBe(true)
     expect(shouldAskDebrief({ ...base, completionStatus: 'aborted' })).toBe(false)
     expect(shouldAskDebrief({ ...base, noRecord: true })).toBe(false)
     expect(shouldAskDebrief({ ...base, endpoint: null })).toBe(false)
     expect(shouldAskDebrief({ ...base, recordId: null })).toBe(false)
     expect(shouldAskDebrief({ ...base, online: false })).toBe(false)
+    // 확정 저장에 실패했으면 부르지 않는다(다시 저장에 성공해도 그 화면에서는 규칙 정리 그대로)
+    expect(shouldAskDebrief({ ...base, saved: false })).toBe(false)
   })
 })
 
@@ -174,7 +176,7 @@ describe('정리 화면 — AI 정리 그리기', () => {
   test('대화 주소가 있고 부를 조건이면 처음엔 기다림, 주소가 없거나 조건이 아니면 처음부터 규칙 정리', () => {
     const r = run()
     expect(screen({ run: r, frozenPayload: frozen(r), chatEndpoint: 'https://e' })).toContain(DEBRIEF_WAITING_LINE)
-    for (const p of [{ frozenPayload: frozen(r), chatEndpoint: null }, { frozenPayload: frozen(r), chatEndpoint: 'https://e', noRecord: true, envelope: null }, { frozenPayload: null, chatEndpoint: 'https://e' }, { frozenPayload: frozen(r), chatEndpoint: 'https://e', completionStatus: 'aborted' }]) {
+    for (const p of [{ frozenPayload: frozen(r), chatEndpoint: 'https://e', envelope: null, saveError: 'QUOTA' }, { frozenPayload: frozen(r), chatEndpoint: null }, { frozenPayload: frozen(r), chatEndpoint: 'https://e', noRecord: true, envelope: null }, { frozenPayload: null, chatEndpoint: 'https://e' }, { frozenPayload: frozen(r), chatEndpoint: 'https://e', completionStatus: 'aborted' }]) {
       const t = screen({ run: r, ...p })
       expect(t, JSON.stringify(Object.keys(p))).not.toContain(DEBRIEF_WAITING_LINE)
       expect(t).toContain('잘한 점')
@@ -186,6 +188,7 @@ describe('정리 화면 — AI 정리 그리기', () => {
     expect(src).toMatch(/setTimeout\(\(\) => settle\(\{ type: 'timeout' \}\), debriefWaitLeft\(shownAt, performance\.now\(\)\)\)/)
     expect(src).toMatch(/return \(\) => \{ live = false; clearTimeout\(t\) \}/)
     expect(src).toContain('const [shownAt] = useState(() => performance.now())')
+    expect(src).toMatch(/shouldAskDebrief\(\{[^}]*saved: !saveError/)
     // AI 글(view)은 화면 상태뿐: 저장소·기록 만들기·전송으로 가지 않는다
     expect(src).not.toMatch(/saveDraft|freeze|outbox|localStorage|indexedDB/i)
     const client = read('src/chat/debriefClient.ts')

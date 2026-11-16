@@ -5,7 +5,7 @@
 // 판정·채점은 하지 않는다. 학번·수행 번호·세션 코드는 기록·한도·재사용에만 쓰고 AI 회사로 보내지 않는다.
 import { startOfTodayKstIso, RETRY_MAX_WAIT_MS, classifyFinish, type ChatLogRow, type SessionSettings } from './chatCore.ts'
 import { buildDebriefSummary, buildDebriefSystemPrompt, DEBRIEF_PROMPT_VERSION, type DebriefContext, type DebriefFacts, type DebriefTaskId } from './debriefPrompt.ts'
-import type { TaskContext } from './prompt.ts'
+import { criteriaSection, type TaskContext } from './prompt.ts'
 import type { ModelCall, ModelResult } from './providers.ts'
 
 export const DEBRIEF_PROTOCOL = 'debrief-1'
@@ -22,6 +22,8 @@ export const DEBRIEF_DURATION_MAX_SECONDS = 86_400
 const RAW_LOG_MAX_CHARS = 4000
 
 const CODE_RE = /^[A-Za-z0-9_-]{1,32}$/
+/** 수행 번호: 앱이 만드는 UUID(src/domain/uuid.ts — crypto.randomUUID 또는 같은 모양의 v4). 대소문자 무관 */
+const RECORD_ID_RE = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i
 const MODES = new Set(['guided', 'unguided', 'timedAssessment'])
 const REQUEST_KEYS = ['protocolVersion', 'sessionCode', 'anonymousStudentCode', 'recordId', 'taskId', 'difficultyMode', 'facts']
 const FACT_KEYS = ['items', 'errorTypes', 'safetyViolationTypes', 'hintCount', 'npcInspectionCount', 'durationSeconds']
@@ -92,7 +94,7 @@ export function parseDebriefRequest(contentType: string | null, body: string, la
   if (v.protocolVersion !== DEBRIEF_PROTOCOL) return null
   if (typeof v.sessionCode !== 'string' || !CODE_RE.test(v.sessionCode)) return null
   if (typeof v.anonymousStudentCode !== 'string' || !CODE_RE.test(v.anonymousStudentCode)) return null
-  if (typeof v.recordId !== 'string' || v.recordId.length < 1 || v.recordId.length > 64) return null
+  if (typeof v.recordId !== 'string' || !RECORD_ID_RE.test(v.recordId)) return null
   if (typeof v.taskId !== 'string' || !Object.prototype.hasOwnProperty.call(labels.tasks, v.taskId)) return null
   if (typeof v.difficultyMode !== 'string' || !MODES.has(v.difficultyMode)) return null
   if (!isPlainObject(v.facts)) return null
@@ -118,6 +120,14 @@ export function parseDebriefRequest(contentType: string | null, body: string, la
 
 /** 숫자 조각(정수·소수). 1,000 같은 자리 쉼표는 쓰지 않는 글이라 따로 다루지 않는다 */
 const numbersIn = (s: string): string[] => s.match(/\d+(?:\.\d+)?/g) ?? []
+const KOREAN_COUNT: Record<string, string> = { 한: '1', 두: '2', 세: '3', 네: '4', 다섯: '5', 여섯: '6', 일곱: '7', 여덟: '8', 아홉: '9', 열: '10' }
+/** 한글 수사 + 번("세 번", "다섯번")의 수. "한 가지" 같은 다른 단위는 보지 않는다. 낱말 가운데(앞이 한글)는 수사로 보지 않는다 */
+const koreanCountsIn = (s: string): string[] => [...s.matchAll(/(?<![가-힣])(다섯|여섯|일곱|여덟|아홉|한|두|세|네|열) ?번/g)].map((m) => KOREAN_COUNT[m[1]!]!)
+
+/** 답의 숫자를 견줄 원본: 요약 글 + 그 과제의 [학교 승인 판정 기준] 구역 글(작업 순서 번호·말투 구역의 숫자는 넣지 않는다) */
+export function debriefAllowedNumbers(context: TaskContext, taskId: DebriefTaskId, summary: string): string {
+  return `${summary}\n${criteriaSection(context, taskId)}`
+}
 
 /** 코드 표시(```json … ```)를 벗긴다 */
 function stripFence(text: string): string {
@@ -128,7 +138,8 @@ function stripFence(text: string): string {
 
 /**
  * 답 검사(설계 2-3 ⑥): JSON 하나, good·improve·hard가 문자열 목록, 묶음마다 3문장(목록 칸) 이하, 문장마다 120자 이하,
- * "양호"·"불량" 없음, 답의 숫자는 모두 allowedSource(지시문 + 요약)에 있는 숫자. 빈 문장은 버리고 앞뒤 공백은 다듬는다.
+ * "양호"·"불량" 없음, 답의 숫자(전각 숫자는 NFKC로 바꿔, "세 번" 같은 한글 수사 + 번은 1~10으로)는 모두 allowedSource에 있는 숫자.
+ * allowedSource는 debriefAllowedNumbers(요약 + 판정 기준 구역). 빈 문장은 버리고 앞뒤 공백은 다듬는다(돌려주는 글은 NFKC로 바꾼 것).
  */
 export function checkDebriefAnswer(text: string, allowedSource: string): { ok: true; notes: DebriefNotes } | { ok: false; reason: string } {
   let v: unknown
@@ -141,12 +152,12 @@ export function checkDebriefAnswer(text: string, allowedSource: string): { ok: t
   for (const k of GROUP_KEYS) {
     const list = v[k]
     if (!Array.isArray(list) || list.some((x) => typeof x !== 'string')) return { ok: false, reason: `${k}가 문자열 목록이 아님` }
-    const lines = (list as string[]).map((x) => x.trim()).filter((x) => x.length > 0)
+    const lines = (list as string[]).map((x) => x.normalize('NFKC').trim()).filter((x) => x.length > 0)
     if (lines.length > DEBRIEF_LINES_MAX) return { ok: false, reason: `${k} 문장 ${lines.length}개` }
     for (const l of lines) {
       if (l.length > DEBRIEF_LINE_MAX_CHARS) return { ok: false, reason: `${k} 문장 ${l.length}자` }
       if (/양호|불량/.test(l)) return { ok: false, reason: `${k}에 양호·불량` }
-      const stray = numbersIn(l).filter((n) => !allowed.has(n))
+      const stray = [...numbersIn(l), ...koreanCountsIn(l)].filter((n) => !allowed.has(n))
       if (stray.length) return { ok: false, reason: `${k}에 없는 숫자 ${stray.join(',')}` }
     }
     notes[k] = lines
@@ -208,7 +219,7 @@ export async function handleDebrief(contentType: string | null, body: string, de
   }
   // 막히거나 끊긴 답은 고쳐 쓰지 않고 버린다(화면은 규칙 정리)
   const checked = classifyFinish(res.finishReason) === 'complete' && res.text
-    ? checkDebriefAnswer(res.text, `${system}\n${summary}`)
+    ? checkDebriefAnswer(res.text, debriefAllowedNumbers(deps.context, req.taskId, summary))
     : { ok: false as const, reason: `끝난 이유 ${res.finishReason ?? '없음'}` }
   if (!checked.ok) {
     await deps.insertLog({ ...base, answer: res.text ? res.text.slice(0, RAW_LOG_MAX_CHARS) : null, model_version: res.modelVersion ?? null, status: 'error' }).catch(() => null)

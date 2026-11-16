@@ -1,7 +1,7 @@
 // AI 정리 평가 시험기와 사람 판독표(설계 docs/superpowers/specs/2026-11-16-debrief-and-free-roam-design.md 2-5).
 // 합성 수행 사실을 서버 처리 본체(debriefCore.handleDebrief)에 그대로 통과시킨다 — 요청 검사·요약 글·지시문·답 길이 제한·429 재시도·답 검사가 서버와 같다.
 // 저장소는 메모리 흉내뿐이라 대화 기록(chat_logs)이 남지 않는다. 판독은 사람이 한다.
-import { checkDebriefAnswer, handleDebrief } from '../../supabase/functions/_shared/chat/debriefCore.ts'
+import { checkDebriefAnswer, debriefAllowedNumbers, handleDebrief } from '../../supabase/functions/_shared/chat/debriefCore.ts'
 
 /** 사람이 판독할 항목 */
 export const DEBRIEF_DIMENSIONS = {
@@ -11,13 +11,16 @@ export const DEBRIEF_DIMENSIONS = {
   tone: { label: '말투·길이', how: '해요체, 고등학생 눈높이, 한 문장 60자 안쪽, 이름·인사·점수 없음.' },
 }
 
+/** 합성 사례의 수행 번호(서버가 UUID 모양만 받는다): D07 → 00000000-0000-4000-8000-000000000007 */
+const evalRecordId = (id) => `00000000-0000-4000-8000-${String(id.replace(/\D/g, '')).padStart(12, '0')}`
+
 /** @param opts { callModel, provider, model, apiKey, context, labels } */
 export async function runDebriefCase(c, { callModel, provider, model, apiKey, context, labels }) {
   let call = null
   let raw = null
   let finishReason = null
   let row = null
-  const body = JSON.stringify({ protocolVersion: 'debrief-1', sessionCode: 'EVAL-ONLY', anonymousStudentCode: 'E-01', recordId: `eval-${c.id}`, taskId: c.taskId, difficultyMode: c.mode, facts: c.facts })
+  const body = JSON.stringify({ protocolVersion: 'debrief-1', sessionCode: 'EVAL-ONLY', anonymousStudentCode: 'E-01', recordId: evalRecordId(c.id), taskId: c.taskId, difficultyMode: c.mode, facts: c.facts })
   const t0 = Date.now()
   const res = await handleDebrief('text/plain', body, {
     getSession: async () => ({ active: true, chatbotEnabled: true, capPerStudent: 1_000_000, dailyCap: 1_000_000 }),
@@ -36,7 +39,7 @@ export async function runDebriefCase(c, { callModel, provider, model, apiKey, co
   if (!res.ok) {
     if (res.code !== 'DEBRIEF_INVALID' || !call) reason = res.code
     else {
-      const checked = raw ? checkDebriefAnswer(raw, `${call.system}\n${call.question}`) : { ok: false, reason: '빈 답' }
+      const checked = raw ? checkDebriefAnswer(raw, debriefAllowedNumbers(context, c.taskId, call.question)) : { ok: false, reason: '빈 답' }
       reason = checked.ok ? `끝난 이유 ${finishReason ?? '없음'}` : checked.reason
     }
   }

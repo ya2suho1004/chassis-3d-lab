@@ -211,9 +211,10 @@ export function debriefRequestFacts(run: Pick<TaskRun, 'responses' | 'errorTypes
   }
 }
 
-/** 정리 화면이 AI 정리를 부르는가: 검사 통과한 수행, 기록 모드, 대화 주소, 확정 기록의 수행 번호, 온라인이 모두 있을 때만 */
-export function shouldAskDebrief(o: { completionStatus: 'completed' | 'aborted'; noRecord: boolean; endpoint: string | null; recordId: string | null; online: boolean }): boolean {
-  return o.completionStatus === 'completed' && !o.noRecord && !!o.endpoint && !!o.recordId && o.online
+/** 정리 화면이 AI 정리를 부르는가: 검사 통과한 수행, 기록 모드, 대화 주소, 확정 기록의 수행 번호, 이 기기 확정 저장 성공(saved), 온라인이 모두 있을 때만.
+ *  저장에 실패한 채 뜬 화면은 뒤에 '다시 저장'에 성공해도 부르지 않는다(규칙 정리 그대로 — 한번 보인 글은 바꾸지 않는다) */
+export function shouldAskDebrief(o: { completionStatus: 'completed' | 'aborted'; noRecord: boolean; endpoint: string | null; recordId: string | null; saved: boolean; online: boolean }): boolean {
+  return o.completionStatus === 'completed' && !o.noRecord && !!o.endpoint && !!o.recordId && o.saved && o.online
 }
 
 /** 교관의 정리 칸의 상태: 기다리는 중 → AI 글 또는 규칙 정리(한번 정해지면 바뀌지 않는다) */

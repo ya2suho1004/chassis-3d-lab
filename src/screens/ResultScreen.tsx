@@ -126,7 +126,7 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
   // AI 정리(설계 2-4): 확정 기록의 수행 번호로 한 번만 부른다. 8초는 화면이 뜬 때부터 센다(30초 잠금과 따로)
   const recordId = frozenPayload?.recordId ?? null
   const [shownAt] = useState(() => performance.now())
-  const [view, setView] = useState<DebriefView>(() => (shouldAskDebrief({ completionStatus, noRecord, endpoint: chatEndpoint, recordId, online: typeof navigator === 'undefined' || navigator.onLine !== false }) ? { kind: 'waiting' } : { kind: 'rule' }))
+  const [view, setView] = useState<DebriefView>(() => (shouldAskDebrief({ completionStatus, noRecord, endpoint: chatEndpoint, recordId, saved: !saveError, online: typeof navigator === 'undefined' || navigator.onLine !== false }) ? { kind: 'waiting' } : { kind: 'rule' }))
   useEffect(() => {
     if (view.kind !== 'waiting' || !chatEndpoint || !recordId) return
     let live = true
