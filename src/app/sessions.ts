@@ -27,6 +27,11 @@ export function isClassSession(code: string | null | undefined): boolean {
   return sessionDef(code)?.kind === 'class'
 }
 
+/** 시연 세션인가 — 공개 주소로 구경 온 사람이 들어오는 곳이라, 학번이 없는 사람에게 '기록 없이 하기'를 알려 준다 */
+export function isDemoSession(code: string | null | undefined): boolean {
+  return sessionDef(code)?.kind === 'demo'
+}
+
 /** 고를 수 있는 세션(연구 세션은 IRB 승인 뒤 pending을 풀어야 고를 수 있다) */
 export function selectableSession(code: string | null | undefined): boolean {
   const s = sessionDef(code)

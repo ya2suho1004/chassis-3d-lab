@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createDemoSession, listTasks, validateStudentCode, entryKindFor, ENTRY_TEXT, APP_VERSION } from '../app/session'
+import { createDemoSession, listTasks, validateStudentCode, entryKindFor, ENTRY_TEXT, APP_VERSION, GUEST_HINT } from '../app/session'
 import { knownCaseIds, loadPreset, type TeacherPreset } from '../app/teacherPreset'
 import { screenPreset, type ClassLinkTaken } from '../app/classLink'
 import { todayTask, todayTaskText } from '../app/todayTask'
@@ -11,7 +11,7 @@ import { startOrResume } from '../app/saveRecovery'
 import { NO_RECORD_CODE } from '../records/memoryRepository'
 import { TeacherPanel } from './TeacherPanel'
 import { lessonAttemptRole } from '../app/lesson'
-import { isClassSession } from '../app/sessions'
+import { isClassSession, isDemoSession } from '../app/sessions'
 import { CLASS_START_NOTE } from '../delivery/autoSend'
 
 // 시작 화면(설계 docs/superpowers/specs/2026-11-14-student-number-and-class-link-design.md §3-2·§3-3):
@@ -37,6 +37,8 @@ export function StartScreen({ repo, onStart, onFoundDraft, classLink, autoSend =
   const { sessionCode, task, usagePhase: phase, difficultyMode: mode, vehicleEntryDirection: entryDir } = today
   const entryKind = entryKindFor(sessionCode)
   const entry = ENTRY_TEXT[entryKind]
+  /** 시연 세션(공개 주소로 구경 온 사람)에는 학번이 없는 사람을 위한 길을 알려 준다 */
+  const guest = isDemoSession(sessionCode) && entryKind === 'studentNumber'
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [counts, setCounts] = useState<{ records: number; outbox: number } | null>(null)
@@ -94,12 +96,13 @@ export function StartScreen({ repo, onStart, onFoundDraft, classLink, autoSend =
             {...(entryKind === 'studentNumber' ? { pattern: '[0-9]*' } : { autoCapitalize: 'characters' })} autoComplete="off" autoCorrect="off" spellCheck={false} aria-label={entry.word} />
         </label>
         <span className="small">이름·연락처는 넣지 않아요.</span>
+        {guest && <p className="small guest-hint">{GUEST_HINT}</p>}
       </section>
       <section className="card start-today" aria-label="오늘 과제">
         <p><b>오늘 과제</b> {todayTaskText(today)}</p>
         {autoSend && isClassSession(sessionCode) && <p className="small">{CLASS_START_NOTE}</p>}
       </section>
-      {error && <p className="error" role="alert">{error}</p>}
+      {error && <p className="error" role="alert">{error}{guest ? ` ${GUEST_HINT}` : ''}</p>}
       <button className="primary" onClick={() => start()} disabled={busy}>{busy ? '준비 중…' : '과제 수령하러 가기'}</button>
       <section className="card norecord">
         <button onClick={() => start(true)} disabled={busy}>기록 없이 하기</button>
