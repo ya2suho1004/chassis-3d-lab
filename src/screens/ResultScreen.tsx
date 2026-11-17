@@ -12,7 +12,7 @@ import { WorkLog } from './WorkLog'
 import { isRequestPassed } from '../app/cozyState'
 import { itemLabel, verdictLabel } from '../app/resultLabels'
 import {
-  DEBRIEF_AI_LABEL, DEBRIEF_LOCK_SECONDS, DEBRIEF_WAITING_LINE, DEBRIEF_WITHHELD_LINE, debriefFacts, debriefInputOf, debriefNotes, debriefRequestFacts, debriefStats, debriefWaitLeft,
+  ANSWER_TABLE_WITHHELD_LINE, DEBRIEF_AI_LABEL, DEBRIEF_LOCK_SECONDS, DEBRIEF_WAITING_LINE, DEBRIEF_WITHHELD_LINE, answerCellText, debriefFacts, debriefInputOf, debriefNotes, debriefRequestFacts, debriefStats, debriefWaitLeft,
   endStep, settleDebrief, shouldAskDebrief, startLockTimer, type DebriefEvent, type DebriefNotes, type DebriefView,
 } from '../app/debrief'
 import { getChatEndpoint } from '../chat/chatClient'
@@ -160,15 +160,15 @@ export function ResultScreen({ sound, session, run, completionStatus, envelope, 
       <section className="card" aria-label="내 답">
         <h2>판독·계산·판정</h2>
         <ul>
-          <li>최초 판정 정오: {sum.judgmentCorrect === null ? '미응답' : sum.judgmentCorrect ? '정답' : '오답'} / 최종: {sum.finalJudgmentCorrect === null ? '미응답' : sum.finalJudgmentCorrect ? '정답' : '오답'}</li>
-          <li>최초 정답 {sum.firstCorrectCount}/{sum.requiredCount}, 최종 정답 {sum.finalCorrectCount}/{sum.requiredCount}, 미응답 {sum.unansweredFirstCount}</li>
+          {notes.withheld ? <li>{ANSWER_TABLE_WITHHELD_LINE}</li> : <><li>최초 판정 정오: {sum.judgmentCorrect === null ? '미응답' : sum.judgmentCorrect ? '정답' : '오답'} / 최종: {sum.finalJudgmentCorrect === null ? '미응답' : sum.finalJudgmentCorrect ? '정답' : '오답'}</li>
+          <li>최초 정답 {sum.firstCorrectCount}/{sum.requiredCount}, 최종 정답 {sum.finalCorrectCount}/{sum.requiredCount}, 미응답 {sum.unansweredFirstCount}</li></>}
         </ul>
         <table className="sheet small">
           <thead><tr><th>항목</th><th>최초 답</th><th>최종 답</th></tr></thead>
           <tbody>
-            {sum.measurementInputs.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{i.firstInput ?? '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalInput ?? '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
-            {sum.calculationAnswers.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{i.firstInput ?? '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalInput ?? '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
-            {sum.judgmentAnswers.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{i.firstAnswer ? verdictLabel(i.firstAnswer) : '—'} {i.firstCorrect === true ? '✓' : i.firstCorrect === false ? '✗' : ''}</td><td>{i.finalAnswer ? verdictLabel(i.finalAnswer) : '—'} {i.finalCorrect === true ? '✓' : i.finalCorrect === false ? '✗' : ''}</td></tr>)}
+            {sum.measurementInputs.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{answerCellText(i.firstInput, i.firstCorrect, notes.withheld)}</td><td>{answerCellText(i.finalInput, i.finalCorrect, notes.withheld)}</td></tr>)}
+            {sum.calculationAnswers.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{answerCellText(i.firstInput, i.firstCorrect, notes.withheld)}</td><td>{answerCellText(i.finalInput, i.finalCorrect, notes.withheld)}</td></tr>)}
+            {sum.judgmentAnswers.map((i) => <tr key={i.itemId}><td>{itemLabel(i.itemId)}</td><td>{answerCellText(i.firstAnswer ? verdictLabel(i.firstAnswer) : null, i.firstCorrect, notes.withheld)}</td><td>{answerCellText(i.finalAnswer ? verdictLabel(i.finalAnswer) : null, i.finalCorrect, notes.withheld)}</td></tr>)}
           </tbody>
         </table>
         {/* 정답 값(실제 판독값·계산 기준값·정답 판정)은 이 화면에 보이지 않는다 — 사례가 둘뿐이라 옆 학생이 답을 볼 수 있다(마무리 §5) */}

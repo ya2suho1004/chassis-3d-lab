@@ -26,6 +26,15 @@ export interface DebriefInput {
   answersOpen: boolean
 }
 
+/** 내 답 표의 한 칸 글: 낸 답(없으면 —) 뒤에 맞음 ✓·틀림 ✗. withheld(안내 없음 + 중단 + 최초 응답이 다 차지 않음)면 표시를 붙이지 않는다 */
+export function answerCellText(answer: string | null | undefined, correct: boolean | null | undefined, withheld: boolean): string {
+  const mark = withheld ? '' : correct === true ? '✓' : correct === false ? '✗' : ''
+  return `${answer ?? '—'} ${mark}`
+}
+
+/** 내 답 표 위의 정오 줄 대신 보이는 한 줄(withheld일 때) */
+export const ANSWER_TABLE_WITHHELD_LINE = '과제를 끝까지 마치면 맞았는지 볼 수 있어요.'
+
 export interface DebriefNotes { good: string[]; improve: string[]; hard: string[]; withheld: boolean }
 
 export interface DebriefFact { label: '공식' | '판정 기준'; text: string }
