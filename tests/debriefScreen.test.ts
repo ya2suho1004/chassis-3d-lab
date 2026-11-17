@@ -5,7 +5,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { DebriefActions, ResultScreen } from '../src/screens/ResultScreen'
-import { DEBRIEF_WITHHELD_LINE, debriefFacts } from '../src/app/debrief'
+import { ANSWER_TABLE_WITHHELD_LINE, DEBRIEF_WITHHELD_LINE, answerCellText, debriefFacts } from '../src/app/debrief'
 import { createDemoSession, listTasks } from '../src/app/session'
 import { createTaskRun, submitResponse } from '../src/domain/taskEngine'
 import type { DeliveryEnvelope } from '../src/records/types'
@@ -184,6 +184,51 @@ describe('정리 화면 — 안내 없음 중단(1-5)', () => {
     const t = text(render({ run: doneRun('unguided') }))
     expect(t).not.toContain(DEBRIEF_WITHHELD_LINE)
     for (const f of debriefFacts(task)) expect(t).toContain(f.text)
+  })
+})
+
+describe('정리 화면 — 내 답 표 가림(2026-11-17)', () => {
+  const partial = (mode: 'guided' | 'unguided', status: 'aborted' | 'completed' = 'aborted') => {
+    let r = createTaskRun(task, { difficultyMode: mode })
+    r = submitResponse(r, 'left', '240', `w${++n}`).run
+    r = submitResponse(r, 'right', '199', `w${++n}`).run
+    return render({ run: r, completionStatus: status })
+  }
+  const tableZone = (h: string) => { const i = h.indexOf('aria-label="내 답"'); return h.slice(i, h.indexOf('</section>', i)) }
+  test('안내 없음 + 중단 + 일부만 답함: 답 값만 있고 ✓✗·정오 줄이 없고 새 한 줄이 있다', () => {
+    const h = partial('unguided')
+    const z = text(tableZone(h))
+    expect(z).toContain('240')
+    expect(z).toContain('199')
+    expect(z).not.toMatch(/[✓✗]/)
+    expect(z).not.toContain('최초 정답')
+    expect(z).not.toContain('최초 판정 정오')
+    expect(z).toContain(ANSWER_TABLE_WITHHELD_LINE)
+    expect(ANSWER_TABLE_WITHHELD_LINE).toBe('과제를 끝까지 마치면 맞았는지 볼 수 있어요.')
+    expect(z).toContain('정답 값은 교사 화면에서 확인합니다')
+  })
+  test('안내 있음의 중단: ✓✗와 두 줄이 그대로', () => {
+    const z = text(tableZone(partial('guided')))
+    expect(z).toContain('✓')
+    expect(z).toContain('✗')
+    expect(z).toContain('최초 정답')
+    expect(z).toContain('최초 판정 정오')
+    expect(z).not.toContain(ANSWER_TABLE_WITHHELD_LINE)
+  })
+  test('검사 통과: ✓와 두 줄이 그대로', () => {
+    for (const mode of ['guided', 'unguided'] as const) {
+      const z = text(tableZone(render({ run: doneRun(mode) })))
+      expect(z).toContain('✓')
+      expect(z).toContain('최초 정답')
+      expect(z).not.toContain(ANSWER_TABLE_WITHHELD_LINE)
+    }
+  })
+  test('answerCellText: 가리면 답만, 아니면 ✓✗', () => {
+    expect(answerCellText('240', true, true).trim()).toBe('240')
+    expect(answerCellText(null, null, true).trim()).toBe('—')
+    expect(answerCellText('240', true, false)).toBe('240 ✓')
+    expect(answerCellText('199', false, false)).toBe('199 ✗')
+    expect(answerCellText(null, null, false).trim()).toBe('—')
   })
 })
 
