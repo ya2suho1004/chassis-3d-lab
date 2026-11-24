@@ -1,6 +1,6 @@
 // NPC 대화 대본: 거리·과제 상태에 따라 대사가 바뀐다(판정·채점과 무관한 대본)
 import { describe, expect, it } from 'vitest'
-import { npcLines, panelWorkOrder } from '../src/screens/NpcDialog'
+import { npcLines, panelWorkOrder, receivedLine } from '../src/screens/NpcDialog'
 
 describe('NPC 교관 대화 대본', () => {
   it('멀리 있으면 가까이 오라는 한 줄만', () => {
@@ -30,5 +30,20 @@ describe('NPC 교관 대화 대본', () => {
   it('비기록 모드(AI 교관 없음)에서는 AI 교관을 권하지 않는다', () => {
     expect(npcLines({ near: true, running: true, taskTitle: 'T', aiAvailable: false }).join(' ')).not.toContain('AI 교관')
     expect(npcLines({ near: true, running: true, taskTitle: 'T' }).join(' ')).toContain('AI 교관')
+  })
+})
+
+describe('안내 없음 교관 대사는 순서를 암시하지 않는다', () => {
+  it('진행 중 대사', () => {
+    const g = npcLines({ near: true, running: true, taskTitle: 'T' }).join(' ')
+    const u = npcLines({ near: true, running: true, taskTitle: 'T', guided: false }).join(' ')
+    expect(g).toContain('작업 순서대로')
+    expect(u).not.toContain('작업 순서대로')
+    expect(u).toContain('스스로 정해')
+  })
+  it('과제를 받은 뒤 대사', () => {
+    expect(receivedLine()).toContain('작업 순서는 작업 목록에서 확인해')
+    expect(receivedLine(false)).not.toContain('작업 순서는')
+    expect(receivedLine(false)).toContain('순서는 스스로 정해')
   })
 })

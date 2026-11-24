@@ -58,3 +58,8 @@ export function stepIssueLabel(steps: ReadonlyArray<{ stepId: string; instructio
   if (mode === 'guided') return `${i + 1}번 단계`
   return i >= 0 ? `「${steps[i]!.instruction}」` : stepId
 }
+
+/** AI 교관에 보낼 '학생의 현재 단계'. 안내 없음(guided가 아닌 모든 방식)에서는 정답 기준 다음 단계가 순서 단서가 되므로 보내지 않는다(null). */
+export function chatStepIdFor(mode: string | undefined, nextStepId: string | null | undefined): string | null {
+  return mode === 'guided' ? nextStepId ?? null : null
+}

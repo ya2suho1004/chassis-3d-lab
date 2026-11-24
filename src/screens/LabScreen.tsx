@@ -49,6 +49,7 @@ import { DEFAULT_PROFILE, nicknameOf, type AvatarProfile } from '../app/avatar'
 import { addToCodex, loadCodex } from '../app/codexStore'
 import { CodexWindow } from './CodexWindow'
 import type { DifficultyMode } from '../domain/taskEngine'
+import { chatStepIdFor } from '../app/stepDisplayOrder'
 
 const NEAR_RADIUS = 1.3
 const NPC_RADIUS = 2.0
@@ -135,6 +136,9 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
   const [loadedOnce, setLoadedOnce] = useState(false)
   useEffect(() => { if (!loadingActive && progress >= 100) { const t = setTimeout(() => setLoadedOnce(true), 400); return () => clearTimeout(t) } }, [loadingActive, progress])
   // 로딩 화면 팁(설계 2026-11-03): 안내 없음이면 순서 팁 없음, 비기록이면 AI 팁 없음. 3초마다 바뀐다
+  // 안내 없음에서는 정답 기준 '다음 단계'를 AI 교관에 보내지 않는다(순서 단서 차단, 요구 ST-04). 안내 있음은 그대로.
+  const helpGuided = (run?.difficultyMode ?? mode) === 'guided'
+  const chatStepId = chatStepIdFor(run?.difficultyMode ?? mode, run?.nextStepId)
   const tips = useMemo(() => tipsFor({ guided: mode === 'guided', aiAvailable: !noRecord }), [mode, noRecord])
   const [tipIdx, setTipIdx] = useState(() => Math.floor(Math.random() * 1000))
   useEffect(() => { if (loadedOnce) return; const t = setInterval(() => setTipIdx((i) => i + 1), 3000); return () => clearInterval(t) }, [loadedOnce])
@@ -605,7 +609,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
           <aside className={`g-chat ${chatOpen ? 'open' : ''}`} aria-hidden={!chatOpen}>
             <button className="g-x" aria-label="질문 창 닫기" onClick={closeChat}>✕</button>
             <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
-              stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
+              stepId={chatStepId} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} initialOpen />
           </aside>
         )}
 
@@ -618,7 +622,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
           </div>
         )}
         {npcOpen && !gate.closed && (
-          <NpcDialog near={nearNpc} done={!!after} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord}
+          <NpcDialog near={nearNpc} done={!!after} taskTitle={task.title} taskId={task.taskId} running={!!run} error={npcError} nickname={nickname} aiAvailable={!noRecord} guided={helpGuided}
             onReceive={async () => { const err = await onReceiveTask(); setNpcError(err); return err }}
             onGoToNpc={() => { setNpcOpen(false); goTo(npcSpot, true) }}
             onOpenTasks={() => { setNpcOpen(false); setDrawerOpen(true) }}
@@ -734,7 +738,7 @@ export function LabScreen({ sound, soundOn, onSoundChange, repo, noRecord = fals
 
           {!reviewOpen && !noRecord && (
             <ChatPanel conversation={chat} sessionCode={session.sessionCode} anonymousStudentCode={session.anonymousStudentCode} recordId={run ? session.recordId : null}
-              stepId={run?.nextStepId ?? null} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} />
+              stepId={chatStepId} taskId={chatTaskId(task, run)} difficultyMode={run?.difficultyMode ?? mode} />
           )}
         </section>
       </div>

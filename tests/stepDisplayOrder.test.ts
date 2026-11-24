@@ -3,7 +3,7 @@
 import { createTaskRun } from '../src/domain/taskEngine'
 import type { InspectionIssue } from '../src/domain/npcInspection'
 import { describe, expect, test } from 'vitest'
-import { inspectionIssueOrder, shuffledSteps, stepIssueLabel, stepsForDisplay } from '../src/app/stepDisplayOrder'
+import { chatStepIdFor, inspectionIssueOrder, shuffledSteps, stepIssueLabel, stepsForDisplay } from '../src/app/stepDisplayOrder'
 import { brake, brakeToEnter, renderPanel, step, turn } from './helpers/recordRuns'
 
 const ids = (s: ReadonlyArray<{ stepId: string }>) => s.map((x) => x.stepId)
@@ -117,5 +117,17 @@ describe('과제 화면 작업 목록', () => {
     expect(lis[at]![1]).toContain('class="done"')
     expect(lis[at]![2]).toContain('완료')
     expect(lis.filter((l) => (l[1] ?? '').includes('class="done"'))).toHaveLength(1)
+  })
+})
+
+describe('AI 교관에 보내는 현재 단계', () => {
+  test('안내 있음은 다음 단계를 그대로 보낸다', () => {
+    expect(chatStepIdFor('guided', 's-03')).toBe('s-03')
+    expect(chatStepIdFor('guided', null)).toBeNull()
+  })
+  test('안내 없음·그 밖의 방식은 보내지 않는다', () => {
+    expect(chatStepIdFor('unguided', 's-03')).toBeNull()
+    expect(chatStepIdFor('timedAssessment', 's-03')).toBeNull()
+    expect(chatStepIdFor(undefined, 's-03')).toBeNull()
   })
 })
