@@ -23,6 +23,7 @@ import { steeredRig, turningRigState } from '../scene/turningRig'
 import { dialCaption, ReviewToggle, TurningDialPicture } from './TurningDialPicture'
 import { NumberField, type FieldIo } from './RecordFields'
 import { CalculatorPanel } from './Calculator'
+import { inspectionIssueOrder, stepIssueLabel, stepsForDisplay } from '../app/stepDisplayOrder'
 import type { CalcEvaluation } from '../app/calculator'
 
 const newId = () => newUuid()
@@ -194,6 +195,9 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
   const isTurning = task.taskId === TURNING_TASK_ID
   const dirLabel = m.turnDirection ? DIR_LABEL[m.turnDirection] : '-'
   const done = (id: string) => run.completedSteps.includes(id)
+  // 작업 목록 보이는 순서(2026-11-24): 안내 있음은 정답 순서와 번호, 안내 없음은 수행 번호로 섞은 순서·번호 없음(app/stepDisplayOrder)
+  const guidedList = run.difficultyMode === 'guided'
+  const shownSteps = stepsForDisplay(task.steps, run.difficultyMode, session.recordId)
   const guidance = guidanceFor(run)
   const showMarks = answerFeedbackAllowed(run)
   // 칸 표시는 수행 기록의 최종 답에서 읽는다(설계 §7) — 안내 없음은 최초 답이 다 모이기 전까지 '저장'만
@@ -437,12 +441,12 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         <section className="card" data-feel="press">
           <h2>검사 작업 순서</h2>
           <ol className="steps">
-            {task.steps.map((s, i) => {
+            {shownSteps.map((s, i) => {
               const isDone = done(s.stepId)
               const isNext = run.nextStepId === s.stepId
               return (
-                <li key={s.stepId} className={isDone ? 'done' : isNext && run.difficultyMode === 'guided' ? 'next' : ''}>
-                  <span className="num">{i + 1}</span>
+                <li key={s.stepId} className={isDone ? 'done' : isNext && guidedList ? 'next' : ''}>
+                  {guidedList && <span className="num">{i + 1}</span>}
                   <span className="text">{s.instruction}{s.requiredSafetyConditions.some((c) => c !== 's-ppe') && <em className="safe"> 안전</em>}</span>
                   {!isDone && (
                     <span className="btns">
@@ -528,7 +532,7 @@ export function TaskScreen({ repo, noRecord = false, session, initialRun, onFini
         </div>
         {inspection && inspection.result !== 'passed' && (
           <div className="feedback explanatory"><b>NPC: 보완이 필요합니다 ({inspection.issues.length}건)</b>
-            <ul>{inspection.issues.map((i, k) => (<li key={k}>{i.kind === 'step' ? `${task.steps.findIndex((s) => s.stepId === i.stepId) + 1}번 단계` : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}{i.kind === 'response' && itemOpen(run, i.itemId, true) && <> <button className="link" onClick={() => fixItem(i.itemId)}>고치기</button></>}</li>))}</ul>
+            <ul>{inspectionIssueOrder(inspection.issues, shownSteps).map((i, k) => (<li key={k}>{i.kind === 'step' ? stepIssueLabel(task.steps, i.stepId, run.difficultyMode) : i.kind === 'response' ? ITEM_LABEL[i.itemId] ?? i.itemId : i.conditionId}: {ISSUE_LABEL[i.reasonCode] ?? i.reasonCode}{i.kind === 'response' && itemOpen(run, i.itemId, true) && <> <button className="link" onClick={() => fixItem(i.itemId)}>고치기</button></>}</li>))}</ul>
             {inspection.answersLocked && <p className="small">입력한 답이 맞는지는 모든 칸에 처음 답을 적은 뒤 알려 줍니다.</p>}
           </div>
         )}
