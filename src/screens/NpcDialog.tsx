@@ -5,11 +5,16 @@ import { DONE_LINE, requestCopy } from '../app/requests'
 
 /** nickname: 캐릭터 만들기 닉네임(설계 2026-11-03) — 첫 인사에서 부른다. aiAvailable=false(비기록 모드)면 AI 교관을 권하지 않는다.
  *  done: 수행을 마친 뒤 둘러보기(설계 2026-11-16-debrief-and-free-roam 1-6) — 과제를 다시 주지 않는다 */
-export function npcLines(opts: { near: boolean; running: boolean; done?: boolean; taskTitle: string; taskId?: string; nickname?: string; aiAvailable?: boolean }): string[] {
+/** guided=false(안내 없음): 정답 순서를 암시하지 않는다(요구 ST-04) — 순서는 학생이 정한다 */
+export const RECEIVED_LINE_GUIDED = '좋아. 작업 순서는 작업 목록에서 확인해. 안전 수칙 꼭 지키고!'
+export const RECEIVED_LINE_UNGUIDED = '좋아. 할 일은 작업 목록에 있어. 순서는 스스로 정해 봐. 안전 수칙 꼭 지키고!'
+export function receivedLine(guided = true): string { return guided ? RECEIVED_LINE_GUIDED : RECEIVED_LINE_UNGUIDED }
+
+export function npcLines(opts: { near: boolean; running: boolean; done?: boolean; taskTitle: string; taskId?: string; nickname?: string; aiAvailable?: boolean; guided?: boolean }): string[] {
   const hi = opts.nickname ? `어서 와, ${opts.nickname}.` : '어서 와.'
   if (!opts.near) return ['여기야! 가까이 와서 이야기하자.']
   if (opts.done) return [DONE_LINE]
-  if (opts.running) return ['작업 순서대로 차근차근 해. 안전 수칙은 꼭 지키고.', opts.aiAvailable === false ? '막히면 힌트를 눌러 봐. 다 끝나면 나한테 검사를 받아.' : '궁금한 건 AI 교관에게 물어봐도 돼. 다 끝나면 나한테 검사를 받아.']
+  if (opts.running) return [opts.guided === false ? '어떤 순서로 할지는 스스로 정해서 해. 안전 수칙은 꼭 지키고.' : '작업 순서대로 차근차근 해. 안전 수칙은 꼭 지키고.', opts.aiAvailable === false ? '막히면 힌트를 눌러 봐. 다 끝나면 나한테 검사를 받아.' : '궁금한 건 AI 교관에게 물어봐도 돼. 다 끝나면 나한테 검사를 받아.']
   const c = requestCopy(opts.taskId)
   return [`${hi} ${c.npcToday}`, c.npcAsk, `오늘 과제는 「${opts.taskTitle}」야. 준비됐으면 과제를 받아.`]
 }
@@ -19,12 +24,12 @@ export function panelWorkOrder(taskId?: string): string {
   return requestCopy(taskId).workOrder
 }
 
-export function NpcDialog({ near, running, done = false, taskTitle, taskId, nickname, aiAvailable = true, error, onReceive, onGoToNpc, onOpenTasks, onInspect, onClose }: {
-  near: boolean; running: boolean; done?: boolean; taskTitle: string; taskId?: string; nickname?: string; aiAvailable?: boolean; error: string | null
+export function NpcDialog({ near, running, done = false, taskTitle, taskId, nickname, aiAvailable = true, guided = true, error, onReceive, onGoToNpc, onOpenTasks, onInspect, onClose }: {
+  near: boolean; running: boolean; done?: boolean; taskTitle: string; taskId?: string; nickname?: string; aiAvailable?: boolean; guided?: boolean; error: string | null
   onReceive: () => Promise<string | null>
   onGoToNpc: () => void; onOpenTasks: () => void; onInspect: () => void; onClose: () => void
 }) {
-  const lines = npcLines({ near, running, done, taskTitle, taskId, nickname, aiAvailable })
+  const lines = npcLines({ near, running, done, taskTitle, taskId, nickname, aiAvailable, guided })
   const [page, setPage] = useState(0)
   const [after, setAfter] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -63,7 +68,7 @@ export function NpcDialog({ near, running, done = false, taskTitle, taskId, nick
                 setBusy(true)
                 const err = await onReceive()
                 setBusy(false)
-                if (!err) setAfter('좋아. 작업 순서는 작업 목록에서 확인해. 안전 수칙 꼭 지키고!')
+                if (!err) setAfter(receivedLine(guided))
               }}>과제 받기</button>
               <button onClick={onClose}>조금 더 둘러볼게요</button>
             </>
